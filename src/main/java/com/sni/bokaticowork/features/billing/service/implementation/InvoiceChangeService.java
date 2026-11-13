@@ -158,7 +158,7 @@ public class InvoiceChangeService {
     void apply(BillingDocumentChangeRequest change, String decidedBy) {
         BillingDocument invoice = billing.serviceByNumber(change.getDocumentNumber());
         if (invoice.getPaidAmount() != null && invoice.getPaidAmount().signum() > 0) {
-            throw new ConflictException("invoice_change", "La facture " + invoice.getDocumentNumber()
+            throw ConflictException.coded("INVOICE_CHANGE", "La facture " + invoice.getDocumentNumber()
                     + " a reçu un paiement depuis la demande : la modification passe désormais par un avoir ou une rectificative");
         }
         UpdateBillingDocumentRequest proposed = read(change.getChangesJson());

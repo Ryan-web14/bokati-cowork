@@ -58,7 +58,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
             throw new BadRequestException("Cette facture n'a pas de solde restant à échelonner");
         }
         scheduleRepository.findActiveByDocumentNumber(documentNumber).ifPresent(s -> {
-            throw new ConflictException("payment_schedule", "Un échéancier actif existe déjà pour cette facture");
+            throw ConflictException.coded("PAYMENT_SCHEDULE", "Un échéancier actif existe déjà pour cette facture");
         });
 
         BigDecimal totalInstallments = request.installments().stream()

@@ -34,6 +34,24 @@ public class BillingStockGuard {
 
     private final InventoryItemRepository items;
     private final StockLevelRepository levels;
+    private com.sni.bokaticowork.features.billing.repository.ServiceCatalogItemRepository catalog;
+
+    /** Lot B10 : un article du catalogue lie a l'inventaire est controle comme l'article d'inventaire. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCatalog(com.sni.bokaticowork.features.billing.repository.ServiceCatalogItemRepository catalog) {
+        this.catalog = catalog;
+    }
+
+    /** Ligne visant un article du catalogue lie a l'inventaire : la meme ligne, sur l'article d'inventaire. */
+    private Line resolved(Line line) {
+        if (catalog == null || !StringUtils.hasText(line.itemCode())) {
+            return line;
+        }
+        return catalog.findByItemCode(line.itemCode().trim()).map(com.sni.bokaticowork.features.billing.model.ServiceCatalogItem::getInventoryItemCode)
+                .filter(StringUtils::hasText)
+                .map(code -> new Line(line.index(), code, "INVENTORY_ITEM", line.lineType(), line.description(), line.quantity()))
+                .orElse(line);
+    }
 
     /** Une ligne a controler : son rang dans la piece, son article, sa provenance et sa quantite. */
     public record Line(int index, String itemCode, String sourceType, BillingLineType lineType, String description, BigDecimal quantity) {
@@ -49,7 +67,8 @@ public class BillingStockGuard {
         if (lines == null) {
             return alerts;
         }
-        for (Line line : lines) {
+        for (Line raw : lines) {
+            Line line = resolved(raw);
             if (!inventoryLine(line) || line.quantity() == null || line.quantity().signum() <= 0) {
                 continue;
             }
@@ -90,7 +109,8 @@ public class BillingStockGuard {
     }
 
     /** Etat du stock d'une ligne d'article suivi (lot B7) ; vide pour un service ou un article non suivi. */
-    public Optional<StockView> view(Line line) {
+    public Optional<StockView> view(Line raw) {
+        Line line = resolved(raw);
         if (!inventoryLine(line)) {
             return Optional.empty();
         }

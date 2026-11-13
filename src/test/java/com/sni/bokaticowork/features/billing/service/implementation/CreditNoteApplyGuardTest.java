@@ -51,7 +51,7 @@ class CreditNoteApplyGuardTest {
 
         assertThatThrownBy(() -> service.applyCreditNote("CRN-010"))
                 .isInstanceOf(ConflictException.class)
-                .hasMessageContaining("doit etre valide");
+                .hasMessageContaining("doit être validé");
         verify(documentRepository, never()).lockByDocumentNumber("INV-010");
         verify(documentRepository, never()).save(any(BillingDocument.class));
     }

@@ -21,7 +21,7 @@ public class BillingLifecycleSupport {
 
     public void ensureCanIssue(BillingDocument document) {
         if (document.getStatus() != BillingDocumentStatus.DRAFT) {
-            throw new BadRequestException("Only draft billing documents can be issued");
+            throw BadRequestException.coded("NOT_A_DRAFT", "Seul un brouillon s'émet");
         }
     }
 
@@ -32,18 +32,18 @@ public class BillingLifecycleSupport {
         }
         if (document.getStatus() == BillingDocumentStatus.CANCELLED
                 || document.getStatus() == BillingDocumentStatus.REFUNDED) {
-            throw new BadRequestException("Billing document cannot be sent in status " + document.getStatus());
+            throw BadRequestException.coded("NOT_SENDABLE", "Un document au statut " + document.getStatus() + " ne s'envoie pas");
         }
     }
 
     public void ensureCanPay(BillingDocument document) {
         // Lot B5 : une proforma ne s'encaisse pas directement ; son paiement devient un acompte du devis.
         if (document.getDocumentType() != BillingDocumentType.INVOICE) {
-            throw new BadRequestException("Payments can only be allocated to invoices");
+            throw BadRequestException.coded("NOT_PAYABLE", "Un paiement s'impute sur une facture");
         }
         if (document.getStatus() == BillingDocumentStatus.CANCELLED
                 || document.getStatus() == BillingDocumentStatus.REFUNDED) {
-            throw new BadRequestException("Billing document cannot be paid in status " + document.getStatus());
+            throw BadRequestException.coded("NOT_PAYABLE", "Un document au statut " + document.getStatus() + " ne s'encaisse pas");
         }
     }
 
@@ -66,7 +66,7 @@ public class BillingLifecycleSupport {
 
     public void ensureQuoteCanConvert(BillingDocument quote) {
         if (quote.getDocumentType() != BillingDocumentType.QUOTE) {
-            throw new BadRequestException("Billing document is not a quote");
+            throw BadRequestException.coded("NOT_A_QUOTE", "Ce document n'est pas un devis");
         }
         // Lot B3 : un devis dont les acomptes sont demandes se convertit aussi ; la facture deduira ce
         // qui est encaisse et reclamera le reste.

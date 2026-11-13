@@ -489,7 +489,23 @@ public class SalesAccountingService {
     }
 
     /** Compte de produit d'une ligne : reglage par type de ligne. */
+    private com.sni.bokaticowork.features.billing.repository.ServiceCatalogItemRepository catalogItems;
+
+    /** Lot B10 : facultatif, pour ne pas changer le constructeur. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCatalogItems(com.sni.bokaticowork.features.billing.repository.ServiceCatalogItemRepository catalogItems) {
+        this.catalogItems = catalogItems;
+    }
+
     public String productAccount(BillingDocumentLine line) {
+        // Lot B10 : le compte de produit propre a l'article du catalogue passe avant celui du type de ligne.
+        if (catalogItems != null && StringUtils.hasText(line.getItemCode())) {
+            java.util.Optional<String> own = catalogItems.findByItemCode(line.getItemCode().trim())
+                    .map(com.sni.bokaticowork.features.billing.model.ServiceCatalogItem::getRevenueAccount).filter(StringUtils::hasText);
+            if (own.isPresent()) {
+                return own.get();
+            }
+        }
         String type = line.getLineType() == null ? "SERVICE" : line.getLineType().name();
         String fallback = switch (type) {
             case "PRODUCT" -> "701";

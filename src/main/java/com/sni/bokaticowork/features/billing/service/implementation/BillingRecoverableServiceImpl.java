@@ -70,7 +70,7 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
     public BillingRecoverableResponse markRecovered(String documentNumber, String recoverableNumber, RecoverItemRequest request) {
         BillingDocumentRecoverable recoverable = findRecoverable(documentNumber, recoverableNumber);
         if ("RECOVERED".equals(recoverable.getStatus()) || "WRITTEN_OFF".equals(recoverable.getStatus())) {
-            throw new BadRequestException("Item is already " + recoverable.getStatus());
+            throw BadRequestException.coded("RECOVERABLE_CLOSED", "Cet objet est déjà " + recoverable.getStatus());
         }
         boolean partial = request != null && request.partialQuantity() != null
                 && request.partialQuantity().compareTo(recoverable.getQuantity()) < 0;
@@ -89,7 +89,7 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
     public BillingRecoverableResponse writeOff(String documentNumber, String recoverableNumber, WriteOffRecoverableRequest request) {
         BillingDocumentRecoverable recoverable = findRecoverable(documentNumber, recoverableNumber);
         if ("WRITTEN_OFF".equals(recoverable.getStatus())) {
-            throw new BadRequestException("Item is already WRITTEN_OFF");
+            throw BadRequestException.coded("RECOVERABLE_CLOSED", "Cet objet est déjà passé en perte");
         }
         recoverable.setStatus("WRITTEN_OFF");
         if (request != null && StringUtils.hasText(request.notes())) {
@@ -176,16 +176,16 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
     private BillingDocumentRecoverable findRecoverable(String documentNumber, String recoverableNumber) {
         BillingDocument document = findDocument(documentNumber);
         BillingDocumentRecoverable recoverable = recoverableRepository.findByRecoverableNumber(recoverableNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Recoverable not found: " + recoverableNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Objet à récupérer introuvable : " + recoverableNumber));
         if (!recoverable.getDocument().getId().equals(document.getId())) {
-            throw new BadRequestException("Recoverable does not belong to document " + documentNumber);
+            throw BadRequestException.coded("RECOVERABLE_OTHER_DOCUMENT", "Cet objet n'appartient pas au document " + documentNumber);
         }
         return recoverable;
     }
 
     private BillingDocument findDocument(String documentNumber) {
         return documentRepository.findByDocumentNumber(documentNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Billing document not found: " + documentNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable : " + documentNumber));
     }
 
     private BillingRecoverableResponse toResponse(BillingDocumentRecoverable r) {

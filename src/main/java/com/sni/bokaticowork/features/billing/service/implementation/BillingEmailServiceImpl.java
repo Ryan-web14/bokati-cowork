@@ -70,7 +70,7 @@ public class BillingEmailServiceImpl implements BillingEmailService {
         String documentNumber = document.documentNumber();
         String to = recipient(document);
         if (!StringUtils.hasText(to)) {
-            throw new BadRequestException("Billing document customer has no email");
+            throw BadRequestException.coded("CUSTOMER_NO_EMAIL", "Le client du document n'a pas d'adresse électronique");
         }
         byte[] pdf = billingDocumentPdfService.generatePdf(documentNumber);
         try {
@@ -83,7 +83,7 @@ public class BillingEmailServiceImpl implements BillingEmailService {
             ).join();
         } catch (CompletionException ex) {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-            throw new BadRequestException("Billing document email send failed: " + cause.getMessage(), cause);
+            throw new BadRequestException("Envoi du courriel impossible : " + cause.getMessage(), cause);
         }
     }
 

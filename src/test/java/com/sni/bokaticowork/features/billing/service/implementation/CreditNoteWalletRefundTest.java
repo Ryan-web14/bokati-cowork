@@ -102,7 +102,7 @@ class CreditNoteWalletRefundTest {
 
         assertThatThrownBy(() -> service.refundCreditNoteToWallet("CRN-003", null))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("doit etre valide");
+                .hasMessageContaining("doit être validé");
         verify(walletService, never()).credit(any(), any(), any(), any(), any(), any(), any(), any());
     }
 

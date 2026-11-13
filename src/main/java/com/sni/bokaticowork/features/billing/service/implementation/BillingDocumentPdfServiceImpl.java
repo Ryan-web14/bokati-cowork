@@ -115,7 +115,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             try {
                 return duplicateWatermark == null ? duplicate : addWatermark(duplicate, duplicateWatermark);
             } catch (Exception ex) {
-                throw new BadRequestException("Unable to watermark billing document PDF", ex);
+                throw new BadRequestException("Impossible d'apposer le filigrane sur le PDF", ex);
             }
         }
         if (canonical == null) {
@@ -135,7 +135,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         try {
             return addWatermark(canonical, watermark);
         } catch (Exception ex) {
-            throw new BadRequestException("Unable to watermark billing document PDF", ex);
+            throw new BadRequestException("Impossible d'apposer le filigrane sur le PDF", ex);
         }
     }
 
@@ -232,7 +232,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             // alors que ces octets-ci sont la version canonique et doivent rester stables.
             return pdf;
         } catch (Exception ex) {
-            throw new BadRequestException("Unable to generate billing document PDF", ex);
+            throw new BadRequestException("Impossible de produire le PDF du document", ex);
         }
     }
 

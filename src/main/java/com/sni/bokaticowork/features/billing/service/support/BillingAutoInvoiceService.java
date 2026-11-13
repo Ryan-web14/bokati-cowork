@@ -130,7 +130,7 @@ public class BillingAutoInvoiceService {
 
     private void validate(BillingAutoInvoiceRequest request) {
         if (!StringUtils.hasText(request.customerType()) || !StringUtils.hasText(request.customerCode())) {
-            throw new BadRequestException("Customer type and code are required for automatic invoice generation");
+            throw BadRequestException.coded("CUSTOMER_REQUIRED", "Le type et le code client sont requis pour la facturation automatique");
         }
         if (!StringUtils.hasText(request.sourceType()) || !StringUtils.hasText(request.sourceCode())) {
             throw new BadRequestException("Source type and code are required for automatic invoice generation");

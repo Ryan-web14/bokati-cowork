@@ -114,7 +114,7 @@ public class BillingCalculationService {
         BigDecimal discountAmount = money(lineDiscount.add(discountOnBase));
 
         if (total.signum() < 0) {
-            throw new BadRequestException("Billing document total cannot be negative");
+            throw BadRequestException.coded("NEGATIVE_TOTAL", "Le total du document ne peut pas être négatif");
         }
         return new CalculatedDocument(
                 calculatedLines,
@@ -191,8 +191,8 @@ public class BillingCalculationService {
     private BillingDocumentLine calculateLine(CreateBillingDocumentLineRequest request,
                                               int defaultOrder,
                                               BillingTaxRuleResolver.TaxProfile taxProfile) {
-        BigDecimal quantity = positiveOrDefault(request.quantity(), BigDecimal.ONE, "Line quantity must be positive");
-        BigDecimal unitPrice = positiveOrDefault(request.unitPrice(), BigDecimal.ZERO, "Line unit price cannot be negative");
+        BigDecimal quantity = positiveOrDefault(request.quantity(), BigDecimal.ONE, "La quantité d'une ligne doit être positive");
+        BigDecimal unitPrice = positiveOrDefault(request.unitPrice(), BigDecimal.ZERO, "Le prix unitaire d'une ligne ne peut pas être négatif");
         boolean taxable = request.taxable() == null || request.taxable();
         boolean taxIncluded = taxable && Boolean.TRUE.equals(request.taxIncluded());
         BigDecimal vatRate = request.vatRate() == null ? taxProfile.vatRate() : request.vatRate();
@@ -245,7 +245,7 @@ public class BillingCalculationService {
                                                     BigDecimal additionalCentRate) {
         BigDecimal subtotal = money(quantity.multiply(unitPrice));
         BigDecimal rateDiscount = percentage(subtotal, discountRate);
-        BigDecimal fixedDiscount = positiveOrDefault(discountAmount, BigDecimal.ZERO, "Line discount cannot be negative");
+        BigDecimal fixedDiscount = positiveOrDefault(discountAmount, BigDecimal.ZERO, "La remise d'une ligne ne peut pas être négative");
         BigDecimal discount = money(rateDiscount.add(fixedDiscount).min(subtotal));
         BigDecimal taxableAmount = taxable ? money(subtotal.subtract(discount)) : BigDecimal.ZERO;
         BigDecimal vatAmount = taxable ? percentage(taxableAmount, vatRate) : BigDecimal.ZERO;
@@ -263,7 +263,7 @@ public class BillingCalculationService {
                                                     BigDecimal additionalCentRate) {
         BigDecimal grossSubtotal = money(quantity.multiply(unitPrice));
         BigDecimal grossRateDiscount = percentage(grossSubtotal, discountRate);
-        BigDecimal grossFixedDiscount = positiveOrDefault(discountAmount, BigDecimal.ZERO, "Line discount cannot be negative");
+        BigDecimal grossFixedDiscount = positiveOrDefault(discountAmount, BigDecimal.ZERO, "La remise d'une ligne ne peut pas être négative");
         BigDecimal grossDiscount = money(grossRateDiscount.add(grossFixedDiscount).min(grossSubtotal));
         BigDecimal grossTotal = money(grossSubtotal.subtract(grossDiscount));
         BigDecimal factor = taxFactor(vatRate, additionalCentRate);
@@ -327,7 +327,7 @@ public class BillingCalculationService {
             return BigDecimal.ZERO;
         }
         if (rate.signum() < 0) {
-            throw new BadRequestException("Percentage rate cannot be negative");
+            throw BadRequestException.coded("NEGATIVE_RATE", "Un taux ne peut pas être négatif");
         }
         return money(amount.multiply(rate).divide(HUNDRED, 4, RoundingMode.HALF_UP));
     }
@@ -343,7 +343,7 @@ public class BillingCalculationService {
             return BigDecimal.ZERO;
         }
         if (rate.signum() < 0) {
-            throw new BadRequestException("Percentage rate cannot be negative");
+            throw BadRequestException.coded("NEGATIVE_RATE", "Un taux ne peut pas être négatif");
         }
         return rate.divide(HUNDRED, 8, RoundingMode.HALF_UP);
     }

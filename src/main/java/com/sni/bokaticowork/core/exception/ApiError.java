@@ -21,6 +21,9 @@ public class ApiError {
     private String message;
     private String traceId;
 
+    /** Code stable de la regle en cause (lot B10), quand l'erreur en porte un. */
+    private String reason;
+
     // Validation field errors · included when non-empty
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<String> errors;

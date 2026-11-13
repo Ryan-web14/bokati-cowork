@@ -658,7 +658,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 || document.getStatus() == BillingDocumentStatus.SENT;
 
         if (!isDraft && !isRestrictedEdit) {
-            throw new BadRequestException("Document in status " + document.getStatus() + " cannot be modified");
+            throw BadRequestException.coded("BILLING_DOCUMENT_NOT_EDITABLE", "Un document au statut " + document.getStatus() + " ne se modifie plus");
         }
 
         // L'etat precedent est archive AVANT toute modification · c'est lui qui permet de
@@ -1808,7 +1808,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         BillingDocument source = serviceByNumber(documentNumber);
         List<BillingDocumentLine> sourceLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(source);
         if (sourceLines.isEmpty()) {
-            throw new BadRequestException("Cannot duplicate a document with no lines");
+            throw BadRequestException.coded("BILLING_DOCUMENT_NO_LINES", "Impossible de dupliquer un document sans ligne");
         }
         List<CreateBillingDocumentLineRequest> lines = sourceLines.stream()
                 .map(this::toCreateLineRequest)
@@ -1967,7 +1967,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse selectQuoteOptions(String quoteNumber, SelectQuoteOptionsRequest request) {
         BillingDocument quote = quote(quoteNumber);
         if (quote.getStatus() == BillingDocumentStatus.CONVERTED || quote.getStatus() == BillingDocumentStatus.CANCELLED) {
-            throw new BadRequestException("Cannot modify options on a converted or cancelled quote");
+            throw BadRequestException.coded("QUOTE_CLOSED", "Les options d'un devis converti ou annulé ne se modifient plus");
         }
         Set<Integer> selected = request.selectedLineOrders() == null ? Set.of() : Set.copyOf(request.selectedLineOrders());
         List<BillingDocumentLine> allLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote);
@@ -2034,7 +2034,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (quote.getStatus() != BillingDocumentStatus.SENT
                 && quote.getStatus() != BillingDocumentStatus.VIEWED
                 && quote.getStatus() != BillingDocumentStatus.ACCEPTED) {
-            throw new BadRequestException("Cannot start negotiation in status " + quote.getStatus());
+            throw BadRequestException.coded("QUOTE_NOT_NEGOTIABLE", "Négociation impossible sur un devis au statut " + quote.getStatus());
         }
         quote.setStatus(BillingDocumentStatus.NEGOTIATION);
         BillingDocument saved = documentRepository.save(quote);
@@ -2046,7 +2046,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse requestDeposit(String quoteNumber) {
         BillingDocument quote = quote(quoteNumber);
         if (quote.getStatus() != BillingDocumentStatus.ACCEPTED) {
-            throw new BadRequestException("Deposit can only be requested on an accepted quote");
+            throw BadRequestException.coded("QUOTE_NOT_ACCEPTED", "Un acompte se demande sur un devis accepté");
         }
         quote.setStatus(BillingDocumentStatus.DEPOSIT_REQUESTED);
         BillingDocument saved = documentRepository.save(quote);
@@ -2058,7 +2058,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse markDepositPaid(String quoteNumber) {
         BillingDocument quote = quote(quoteNumber);
         if (quote.getStatus() != BillingDocumentStatus.DEPOSIT_REQUESTED) {
-            throw new BadRequestException("Quote must be in DEPOSIT_REQUESTED status to mark deposit as paid");
+            throw BadRequestException.coded("QUOTE_NO_DEPOSIT_REQUESTED", "Le devis n'a pas d'acompte demandé à marquer comme payé");
         }
         quote.setStatus(BillingDocumentStatus.DEPOSIT_PAID);
         BillingDocument saved = documentRepository.save(quote);
@@ -2117,7 +2117,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (quote.getStatus() != BillingDocumentStatus.DRAFT && quote.getStatus() != BillingDocumentStatus.SENT
                 && quote.getStatus() != BillingDocumentStatus.VIEWED
                 && quote.getStatus() != BillingDocumentStatus.NEGOTIATION) {
-            throw new BadRequestException("Only draft, sent, viewed or negotiation quotes can be accepted");
+            throw BadRequestException.coded("QUOTE_NOT_ACCEPTABLE", "Seul un devis en brouillon, envoyé, vu ou en négociation s'accepte");
         }
         quote.setStatus(BillingDocumentStatus.ACCEPTED);
         reserveQuoteStock(quote);
@@ -2130,7 +2130,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse rejectQuote(String quoteNumber) {
         BillingDocument quote = quote(quoteNumber);
         if (quote.getStatus() == BillingDocumentStatus.CONVERTED) {
-            throw new BadRequestException("Converted quote cannot be rejected");
+            throw BadRequestException.coded("QUOTE_CONVERTED", "Un devis converti ne se refuse plus");
         }
         quote.setStatus(BillingDocumentStatus.REJECTED);
         quote.setBalanceDue(BigDecimal.ZERO);
@@ -2255,7 +2255,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         lifecycleSupport.ensureCanCredit(invoice);
         BigDecimal amount = request.amount() == null ? invoice.getBalanceDue() : request.amount();
         if (amount.signum() <= 0 || amount.compareTo(invoice.getTotalAmount()) > 0) {
-            throw new BadRequestException("Invalid credit note amount");
+            throw BadRequestException.coded("CREDIT_NOTE_AMOUNT", "Montant d'avoir invalide : positif et au plus le total de la facture");
         }
         List<CreateBillingDocumentLineRequest> lines = request.lines() == null || request.lines().isEmpty()
                 ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null, null))
@@ -2330,8 +2330,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
         if (!Boolean.TRUE.equals(creditNote.getLocked())) {
             throw new BadRequestException(
-                    "L'avoir " + creditNoteNumber + " doit etre valide (SEFC) avant d'etre reverse · "
-                            + "un avoir non scelle n'a pas de valeur");
+                    "L'avoir " + creditNoteNumber + " doit être validé avant d'être reversé · "
+                            + "un avoir non validé n'a pas de valeur");
         }
         if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
             throw new BadRequestException("L'avoir " + creditNoteNumber + " a déjà été consommé");
@@ -2385,15 +2385,15 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // et reglaient deux fois la facture.
         BillingDocument creditNote = lockedByNumber(creditNoteNumber);
         if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE || !"INVOICE".equalsIgnoreCase(creditNote.getSourceType())) {
-            throw new BadRequestException("Credit note is not linked to an invoice");
+            throw BadRequestException.coded("CREDIT_NOTE_NOT_LINKED", "L'avoir n'est rattaché à aucune facture");
         }
         if (requireSealed && !Boolean.TRUE.equals(creditNote.getLocked())) {
             throw new ConflictException("credit_note",
-                    "l'avoir " + creditNoteNumber + " doit etre valide (SEFC) avant d'etre impute");
+                    "l'avoir " + creditNoteNumber + " doit être validé avant d'être imputé");
         }
         // Un avoir consomme (APPLIED, REFUNDED) ne s'impute plus
         if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
-            throw new ConflictException("credit_note", "l'avoir " + creditNoteNumber + " a déjà été consommé");
+            throw ConflictException.coded("CREDIT_NOTE", "l'avoir " + creditNoteNumber + " a déjà été consommé");
         }
         BillingDocument invoice = applyPayment(creditNote.getSourceCode(), creditNote.getTotalAmount());
         creditNote.setStatus(BillingDocumentStatus.APPLIED);
@@ -2550,10 +2550,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Transactional(readOnly = true)
     public BillingDocument serviceByNumber(String documentNumber) {
         if (!StringUtils.hasText(documentNumber)) {
-            throw new BadRequestException("Billing document number is required");
+            throw BadRequestException.coded("BILLING_DOCUMENT_NUMBER_REQUIRED", "Le numéro du document est requis");
         }
         return documentRepository.findByDocumentNumber(documentNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Billing document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
     }
 
     /**
@@ -2567,11 +2567,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
      */
     private BillingDocument lockedByNumber(String documentNumber) {
         if (!StringUtils.hasText(documentNumber)) {
-            throw new BadRequestException("Billing document number is required");
+            throw BadRequestException.coded("BILLING_DOCUMENT_NUMBER_REQUIRED", "Le numéro du document est requis");
         }
         entityManager.flush();
         BillingDocument document = documentRepository.lockByDocumentNumber(documentNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Billing document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         entityManager.refresh(document, LockModeType.PESSIMISTIC_WRITE);
         return document;
     }
@@ -2579,7 +2579,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocument applyPayment(String documentNumber, BigDecimal amount) {
         if (amount == null || amount.signum() <= 0) {
-            throw new BadRequestException("Payment amount must be positive");
+            throw BadRequestException.coded("PAYMENT_AMOUNT", "Le montant du paiement doit être positif");
         }
         BillingDocument target = serviceByNumber(documentNumber);
         if (target.getDocumentType() == BillingDocumentType.PROFORMA_INVOICE) {
@@ -2647,7 +2647,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocument reversePayment(String documentNumber, BigDecimal amount) {
         if (amount == null || amount.signum() <= 0) {
-            throw new BadRequestException("Reversal amount must be positive");
+            throw BadRequestException.coded("REVERSAL_AMOUNT", "Le montant à annuler doit être positif");
         }
         BillingDocument document = lockedByNumber(documentNumber);
         BigDecimal paid = document.getPaidAmount().subtract(amount);
@@ -3149,7 +3149,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private BillingDocument quote(String quoteNumber) {
         BillingDocument quote = serviceByNumber(quoteNumber);
         if (quote.getDocumentType() != BillingDocumentType.QUOTE) {
-            throw new BadRequestException("Billing document is not a quote");
+            throw BadRequestException.coded("NOT_A_QUOTE", "Ce document n'est pas un devis");
         }
         return quote;
     }
@@ -3256,7 +3256,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private String normalizeCustomerType(String customerType, String customerCode) {
         String normalized = trim(customerType);
         if (normalized == null) {
-            throw new BadRequestException("Customer type is required");
+            throw BadRequestException.coded("CUSTOMER_TYPE_REQUIRED", "Le type de client est requis");
         }
         normalized = normalized.toUpperCase(Locale.ROOT);
         if (normalized.equals("CLIENT") || normalized.equals("CUSTOMER")) {
@@ -3276,7 +3276,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private String requiredCustomerCode(String customerCode) {
         String normalized = trim(customerCode);
         if (normalized == null) {
-            throw new BadRequestException("Customer code is required");
+            throw BadRequestException.coded("CUSTOMER_CODE_REQUIRED", "Le code client est requis");
         }
         return normalized;
     }

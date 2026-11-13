@@ -15,4 +15,9 @@ public class ConflictException extends BaseException {
     public ConflictException(String entityName, String conflictReason) {
         super(String.format("Could not process %s: %s", entityName, conflictReason), ERROR_CODE);
     }
+
+    /** Conflit avec un code stable et un message en francais, sans prefixe anglais (lot B10). */
+    public static ConflictException coded(String reason, String message) {
+        return new ConflictException(message).withReason(reason);
+    }
 }
