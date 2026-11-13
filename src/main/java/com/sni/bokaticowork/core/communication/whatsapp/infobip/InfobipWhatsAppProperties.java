@@ -35,4 +35,26 @@ public class InfobipWhatsAppProperties {
     private int connectTimeoutMs = 5000;
 
     private int readTimeoutMs = 15000;
+
+    /**
+     * Secret HMAC des webhooks d'Infobip (statuts de remise et de lecture) ; sans lui, tout webhook
+     * est refuse.
+     */
+    private String webhookSecret;
+
+    /** Algorithme HMAC declare chez Infobip. */
+    private String webhookAlgorithm = "HMAC_SHA_256";
+
+    /** Adresse publique de l'API, a laquelle Infobip envoie les webhooks (APP_BASE_URL). */
+    private String webhookBaseUrl;
+
+    /** Identifiants de l'abonnement, du profil et de la securite crees chez Infobip. */
+    private String subscriptionId = "BOKATI-WHATSAPP";
+
+    private String profileId = "BOKATI-WHATSAPP-PROFILE";
+
+    private String authId = "BOKATI-WHATSAPP-HMAC";
+
+    /** Adresse de l'espace client, base des boutons de lien des modeles. */
+    private String portalUrl = "https://espace.elleaose.com";
 }

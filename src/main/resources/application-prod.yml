@@ -122,6 +122,11 @@ bokati:
       sender: ${INFOBIP_WHATSAPP_SENDER:}
       language: ${INFOBIP_WHATSAPP_LANGUAGE:fr}
       free-text-allowed: ${INFOBIP_WHATSAPP_FREE_TEXT:false}
+      # Webhook des statuts (remise, lecture) : secret HMAC partage avec Infobip, adresse publique https de l API.
+      webhook-secret: ${INFOBIP_WEBHOOK_SECRET:}
+      webhook-base-url: ${INFOBIP_WEBHOOK_BASE_URL:${APP_BASE_URL:}}
+      # Espace client, base des boutons de lien des modeles.
+      portal-url: ${INFOBIP_WHATSAPP_PORTAL_URL:https://espace.elleaose.com}
   websocket:
     use-stomp-relay: ${BOKATI_WEBSOCKET_USE_STOMP_RELAY:true}
     stomp:

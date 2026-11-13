@@ -14,7 +14,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -32,7 +32,8 @@ class WhatsAppServiceTest {
     private final WhatsAppTemplateRepository templates = mock(WhatsAppTemplateRepository.class);
     private final WhatsAppMessageRepository messages = mock(WhatsAppMessageRepository.class);
     private final PhoneNumberService phones = mock(PhoneNumberService.class);
-    private final WhatsAppService service = new WhatsAppService(properties, provider, templates, messages, phones);
+    private final WhatsAppService service = new WhatsAppService(properties, provider, templates, messages, phones,
+            mock(org.springframework.context.ApplicationEventPublisher.class));
 
     @BeforeEach
     void setUp() {
@@ -47,7 +48,7 @@ class WhatsAppServiceTest {
     void sendsThroughTheApprovedTemplate() {
         when(templates.findFirstByPurposeAndLanguageAndStatusOrderByCreatedAtDesc("BALANCE_CONFIRMATION", "fr", "APPROVED"))
                 .thenReturn(Optional.of(WhatsAppTemplate.builder().name("confirmation_solde").language("fr").placeholders(2).status("APPROVED").build()));
-        when(client.sendTemplate(eq("242050000000"), eq("242061234567"), eq("confirmation_solde"), eq("fr"), eq(List.of("A", "B")), anyString()))
+        when(client.sendTemplate(eq("242050000000"), eq("242061234567"), eq("confirmation_solde"), eq("fr"), eq(List.of("A", "B")), eq(null), anyString()))
                 .thenReturn(new InfobipWhatsAppClient.Sent("m1", "PENDING", "PENDING_ENROUTE", null));
         WhatsAppMessageSender.Result result = service.send("06 123 45 67", "BALANCE_CONFIRMATION", List.of("A", "B"), "texte", "CONF-1");
         assertThat(result.kind()).isEqualTo("TEMPLATE");
@@ -82,7 +83,18 @@ class WhatsAppServiceTest {
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("exemples");
         assertThatThrownBy(() -> service.createTemplate(new WhatsAppService.TemplateRequest("X", "Modele X", "fr", "UTILITY", "Solde", List.of())))
                 .isInstanceOf(BadRequestException.class);
-        verify(client, never()).createTemplate(anyString(), anyString(), anyString(), anyString(), anyString(), anyList());
-        assertThat(WhatsAppService.DEFAULTS.get(0).examples()).hasSize(WhatsAppService.variables(WhatsAppService.DEFAULTS.get(0).text()));
+        verify(client, never()).createTemplate(anyString(), anyString(), anyString(), anyString(), anyMap());
+        for (WhatsAppService.DefaultTemplate item : WhatsAppService.DEFAULTS) {
+            if (item.text() != null) {
+                assertThat(item.examples()).as(item.name()).hasSize(WhatsAppService.variables(item.text()));
+                assertThat(item.text().trim()).as(item.name()).doesNotStartWith("{{").doesNotEndWith("}}");
+            }
+        }
+        // Bouton de lien : suffixe exige ; code d'authentification : le code sert au bouton.
+        WhatsAppTemplate invoice = WhatsAppTemplate.builder().name("facture_payee").buttonType("URL").buttonUrl("https://espace.elleaose.com/{{1}}").build();
+        assertThat(WhatsAppService.buttonParameter(invoice, List.of("A"), "/factures/F1")).isEqualTo("factures/F1");
+        assertThatThrownBy(() -> WhatsAppService.buttonParameter(invoice, List.of("A"), null)).isInstanceOf(BadRequestException.class);
+        WhatsAppTemplate otp = WhatsAppTemplate.builder().name("code_verification").buttonType("COPY_CODE").build();
+        assertThat(WhatsAppService.buttonParameter(otp, List.of("482913"), null)).isEqualTo("482913");
     }
 }

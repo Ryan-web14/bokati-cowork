@@ -70,4 +70,26 @@ public class WhatsAppTemplate {
 
     @Column(name = "synced_at")
     private Instant syncedAt;
+
+    /** Pied de page (60 caracteres). */
+    @Column(name = "footer_text")
+    private String footerText;
+
+    /** URL (lien, suffixe variable possible) ou COPY_CODE (code d'authentification). */
+    @Column(name = "button_type")
+    private String buttonType;
+
+    @Column(name = "button_text")
+    private String buttonText;
+
+    /** Lien du bouton ; {{1}} en fin d'adresse recoit le suffixe donne a l'envoi. */
+    @Column(name = "button_url")
+    private String buttonUrl;
+
+    @Column(name = "button_example")
+    private String buttonExample;
+
+    /** Duree de validite affichee d'un code d'authentification. */
+    @Column(name = "code_expiration_minutes")
+    private Integer codeExpirationMinutes;
 }

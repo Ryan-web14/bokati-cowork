@@ -63,4 +63,26 @@ public class WhatsAppMessage {
     @Builder.Default
     @Column(name = "created_at")
     private Instant createdAt = Instant.now();
+
+    /** Notification correspondante dans notification_message (WA- suivi de l'identifiant du message). */
+    @Column(name = "notification_number")
+    private String notificationNumber;
+
+    @Column(name = "status_description")
+    private String statusDescription;
+
+    @Column(name = "sent_at")
+    private Instant sentAt;
+
+    /** Remise (ou echec definitif) annoncee par Infobip. */
+    @Column(name = "done_at")
+    private Instant doneAt;
+
+    /** Lecture par le destinataire. */
+    @Column(name = "seen_at")
+    private Instant seenAt;
+
+    /** Derniere relecture des journaux d'Infobip. */
+    @Column(name = "checked_at")
+    private Instant checkedAt;
 }

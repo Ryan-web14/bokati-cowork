@@ -24,5 +24,14 @@ public interface WhatsAppMessageSender {
      * @param text         texte libre equivalent
      * @param reference    reference metier, pour le journal des envois
      */
-    Result send(String phone, String purpose, List<String> placeholders, String text, String reference);
+    default Result send(String phone, String purpose, List<String> placeholders, String text, String reference) {
+        return send(phone, purpose, placeholders, text, reference, null);
+    }
+
+    /**
+     * Comme {@link #send(String, String, List, String, String)}, avec le suffixe du lien du bouton du
+     * modele (par exemple {@code espace-client/factures/FAC-2026-00012}). Pour un code
+     * d'authentification, le code est la seule variable ; il sert aussi au bouton de copie.
+     */
+    Result send(String phone, String purpose, List<String> placeholders, String text, String reference, String buttonParameter);
 }

@@ -53,6 +53,22 @@ public class WhatsAppController {
         return ResponseEntity.ok(whatsapp.messages(reference));
     }
 
+    @GetMapping("/subscription")
+    public ResponseEntity<java.util.Map<String, Object>> subscription() {
+        return ResponseEntity.ok(whatsapp.subscription().orElse(java.util.Map.of()));
+    }
+
+    @Audited(module = "WHATSAPP", action = "SUBSCRIBE", ressource = "whatsapp_subscription")
+    @PostMapping("/subscription")
+    public ResponseEntity<java.util.Map<String, Object>> subscribe() {
+        return ResponseEntity.ok(whatsapp.subscribe());
+    }
+
+    @PostMapping("/messages/refresh")
+    public ResponseEntity<java.util.Map<String, Integer>> refresh() {
+        return ResponseEntity.ok(java.util.Map.of("updated", whatsapp.poll(200)));
+    }
+
     @Audited(module = "WHATSAPP", action = "TEST_MESSAGE", ressource = "whatsapp_message")
     @PostMapping("/test")
     public ResponseEntity<WhatsAppMessageSender.Result> test(@RequestBody TestRequest request) {
