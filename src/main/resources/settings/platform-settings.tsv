@@ -52,6 +52,11 @@ accounting.exchange.provider-url	ACCOUNTING	TEXT	LIVE	https://api.frankfurter.de
 accounting.expense.deferral	ACCOUNTING	ENUM	LIVE	MONTHLY	Charges constatees d'avance : MONTHLY, YEAR_END ou NONE
 accounting.expense.deferral-threshold	ACCOUNTING	INTEGER	LIVE	50000	Seuil de signification des charges a etaler (XAF HT par ligne)
 accounting.expense.deferred-account	ACCOUNTING	TEXT	LIVE	476	Compte des charges constatees d'avance
+accounting.export.odoo.account-length	ACCOUNTING	INTEGER	LIVE	0	Export Odoo : longueur des comptes, completes par des zeros (0 : inchanges)
+accounting.export.sage100.account-length	ACCOUNTING	INTEGER	LIVE	8	Export Sage 100 : longueur des comptes generaux, completes par des zeros
+accounting.export.sagex3.account-length	ACCOUNTING	INTEGER	LIVE	0	Export Sage X3 : longueur des comptes, completes par des zeros (0 : inchanges)
+accounting.export.sagex3.entry-type	ACCOUNTING	TEXT	LIVE	OD	Export Sage X3 : type de piece des en-tetes G
+accounting.export.sagex3.site	ACCOUNTING	TEXT	LIVE		Export Sage X3 : site des en-tetes G
 accounting.financing.analytic-axis	ACCOUNTING	TEXT	LIVE		Axe analytique des sections portees par les emprunts et la paie (vide : pas de ventilation)
 accounting.financing.cron	ACCOUNTING	CRON	LIVE	0 45 6 * * *	Tenue quotidienne : echeances d'emprunt, alertes, hors bilan
 accounting.fixed-asset.commission-alert-days	ACCOUNTING	INTEGER	LIVE	30	Immobilisations : jours avant alerte d'un bien recu non mis en service
