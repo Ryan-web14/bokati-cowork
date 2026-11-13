@@ -9,6 +9,7 @@ Demandé par l'exploitant le 13/11/2026 : d'abord corriger les écarts relevés,
 | Fichier | Contenu |
 | --- | --- |
 | [ecarts.md](ecarts.md) | Les 19 écarts relevés, revérifiés dans le code le 13/11/2026 : 4 corrigés, 2 partiels, 13 ouverts, avec la correction prévue |
+| [realisation.md](realisation.md) | Plan de réalisation : décisions retenues (D1 à D7), ordre des lots, ce que chaque lot change, ses routes et son test |
 | [ameliorations.md](ameliorations.md) | Les améliorations demandées : négociation et révision des devis, acomptes du devis à la facture, destinataires et canaux d'envoi, proforma, changement de client, devis avec l'inventaire, saisie d'un montant ventilé par le système, relevé client, catalogue |
 
 ## 2. Périmètre
