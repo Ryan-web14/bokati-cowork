@@ -88,7 +88,11 @@ public final class TemplateRenderer {
             default -> 726;
         };
         for (Map<String, Object> block : withAddedFields(content)) {
-            blocks.add(resolve(block, data, contentWidth));
+            if ("SECTIONS".equalsIgnoreCase(text(block.get("type")))) {
+                blocks.addAll(sections(block, data));
+            } else {
+                blocks.add(resolve(block, data, contentWidth));
+            }
         }
         List<Map<String, Object>> copySpecs = content.copies().isEmpty() ? List.of(Map.of("label", "")) : content.copies();
         boolean twoUp = "A5_TWO_UP".equals(content.pageFormat());
@@ -155,6 +159,36 @@ public final class TemplateRenderer {
         }
         blocks.add(at, TemplateContent.block("type", "FIELDS", "title", "Informations complémentaires", "columns", 3, "fields", missing));
         return blocks;
+    }
+
+    /**
+     * Bloc SECTIONS (lot D4) : chaque section de la piece, dans son ordre, avec ses champs puis son
+     * tableau. Sert de modele de depart aux pieces sans maquette. {@code exclude} retire des
+     * sections (cle du titre) ou des champs.
+     */
+    private List<BlockView> sections(Map<String, Object> block, DocumentData data) {
+        int columns = Math.max(1, Math.min(4, integer(block.get("columns"), 2)));
+        java.util.Set<String> excluded = new java.util.HashSet<>();
+        list(block.get("exclude")).forEach(item -> excluded.add(text(item)));
+        List<BlockView> views = new ArrayList<>();
+        for (DocumentData.Section section : data.sections()) {
+            if (excluded.contains(section.key())) {
+                continue;
+            }
+            List<String> keys = section.fieldKeys().stream().filter(key -> !excluded.contains(key)).toList();
+            boolean titled = false;
+            if (!keys.isEmpty()) {
+                views.add(fields(TemplateContent.block("type", "FIELDS", "columns", columns, "fields", keys), section.title(), data));
+                titled = true;
+            }
+            if (section.tableKey() != null && data.tables().containsKey(section.tableKey())) {
+                BlockView table = lines(TemplateContent.block("type", "LINES", "table", section.tableKey()), section.title(), data);
+                views.add(titled ? new BlockView(table.type(), null, table.flag(), table.columns(), table.rows(), table.cols(), table.lines(),
+                        table.text(), table.boxes(), table.width(), table.height(), table.label(), table.amount(), table.words(), table.wordsLabel())
+                        : table);
+            }
+        }
+        return views;
     }
 
     private static BlockView simple(String type, String title, boolean flag) {

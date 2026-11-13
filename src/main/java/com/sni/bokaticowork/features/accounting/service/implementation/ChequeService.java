@@ -224,6 +224,48 @@ public class ChequeService {
         return slipRepository.findAllByOrderByCreatedAtDesc();
     }
 
+    /**
+     * Bordereau de remise en banque imprimable (modeles de documents, lot D4) : especes et cheques
+     * remis, totaux, cases du caissier, du deposant et de la banque. Une reimpression est marquee
+     * DUPLICATA, comme les autres pieces.
+     */
+    public byte[] slipPdf(String number) {
+        BankDepositSlip slip = slip(number);
+        VoucherService.Issued registered = vouchers.find(number)
+                .orElseThrow(() -> new ResourceNotFoundException("Bordereau absent du registre des pièces : " + number));
+        BigDecimal total = slip.getCashAmount().add(slip.getChequeTotal());
+        VoucherService.Issued issued = vouchers.issueAndPrint("BRB", "BANK_DEPOSIT_SLIP", registered.sourceCode(), total, slip.getBankAccountCode(),
+                actors.resolve("SYSTEM"));
+        BankAccount bank = banks.account(slip.getBankAccountCode());
+        List<BankCheque> cheques = chequeRepository.findBySlipNumber(number);
+        List<VoucherService.Section> sections = new ArrayList<>();
+        sections.add(new VoucherService.Section("Remise").pair("Bordereau", slip.getNumber())
+                .pair("Banque", bank.getBankName() == null ? bank.getLabel() : bank.getBankName() + (bank.getBranch() == null ? "" : ", " + bank.getBranch()))
+                .pair("Compte", bank.getRib() == null ? bank.getCode() : bank.getRib()).pair("Caisse", slip.getRegisterCode())
+                .pair("Préparé par", slip.getCreatedBy()).pair("Préparé le", VoucherService.date(slip.getCreatedAt()))
+                .pair("État", switch (slip.getStatus()) {
+                    case "PREPARED" -> "Préparé";
+                    case "DEPOSITED" -> "Remis à la banque";
+                    case "CREDITED" -> "Crédité";
+                    default -> slip.getStatus();
+                })
+                .pair("Remis par", slip.getDepositedBy()).pair("Remis le", VoucherService.date(slip.getDepositedAt())));
+        VoucherService.Section table = new VoucherService.Section("Chèques").columns(List.of("N° chèque", "Banque émettrice", "Tireur", "Transaction", "Montant"),
+                List.of(false, false, false, false, true));
+        cheques.forEach(cheque -> table.row(cheque.getChequeNumber(), cheque.getBankName(), cheque.getDrawer(), cheque.getTransactionNumber(),
+                VoucherService.money(cheque.getAmount())));
+        if (!cheques.isEmpty()) {
+            sections.add(table);
+        }
+        sections.add(new VoucherService.Section("Montants").pair("Espèces", VoucherService.money(slip.getCashAmount()) + " XAF")
+                .pair("Chèques (" + cheques.size() + ")", VoucherService.money(slip.getChequeTotal()) + " XAF")
+                .pair("Total remis", VoucherService.money(total) + " XAF"));
+        return vouchers.render("Bordereau de remise en banque", issued, sections, total, null, List.of(
+                new VoucherService.Signature("Caissier", slip.getCreatedBy(), VoucherService.date(slip.getCreatedAt())),
+                new VoucherService.Signature("Déposant", slip.getDepositedBy(), VoucherService.date(slip.getDepositedAt())),
+                new VoucherService.Signature("Cachet de la banque", null, null)));
+    }
+
     private BankDepositSlip slip(String number) {
         return slipRepository.findByNumber(number).orElseThrow(() -> new ResourceNotFoundException("Bordereau introuvable : " + number));
     }

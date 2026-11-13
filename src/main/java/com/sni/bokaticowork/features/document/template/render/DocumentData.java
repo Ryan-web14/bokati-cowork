@@ -38,6 +38,10 @@ public final class DocumentData {
     public record Signer(String role, String name, String date) {
     }
 
+    /** Section de la piece, dans l'ordre d'impression : ses champs, puis son tableau (lot D4, bloc SECTIONS). */
+    public record Section(String key, String title, List<String> fieldKeys, String tableKey) {
+    }
+
     private final String code;
     private String sourceCode;
     private String title;
@@ -54,6 +58,7 @@ public final class DocumentData {
     private final Map<String, Field> fields = new LinkedHashMap<>();
     private final Map<String, Table> tables = new LinkedHashMap<>();
     private final Map<String, Signer> signers = new LinkedHashMap<>();
+    private final List<Section> sections = new ArrayList<>();
 
     public DocumentData(String code) {
         this.code = code;
@@ -72,13 +77,18 @@ public final class DocumentData {
         data.issuedBy = view.issuedBy();
         for (VoucherService.Section section : view.sections()) {
             String sectionKey = slug(section.getTitle());
+            List<String> keys = new ArrayList<>();
             for (String[] pair : section.getPairs()) {
                 String key = slug(pair[0]);
                 if (data.fields.containsKey(key)) {
                     key = sectionKey + "_" + key;
                 }
-                data.fields.putIfAbsent(key, new Field(pair[0], pair[1]));
+                if (data.fields.putIfAbsent(key, new Field(pair[0], pair[1])) == null) {
+                    keys.add(key);
+                }
             }
+            boolean hasTable = section.getColumns() != null && !section.getColumns().isEmpty();
+            data.sections.add(new Section(sectionKey, section.getTitle(), keys, hasTable ? sectionKey : null));
             if (section.getColumns() != null && !section.getColumns().isEmpty()) {
                 List<Column> columns = new ArrayList<>();
                 for (int index = 0; index < section.getColumns().size(); index++) {
@@ -172,6 +182,16 @@ public final class DocumentData {
     public DocumentData table(String key, Table table) {
         tables.put(key, table);
         return this;
+    }
+
+    /** Section a imprimer par le bloc SECTIONS : champs deja ajoutes, puis le tableau {@code tableKey}. */
+    public DocumentData section(String title, List<String> fieldKeys, String tableKey) {
+        sections.add(new Section(slug(title), title, List.copyOf(fieldKeys), tableKey));
+        return this;
+    }
+
+    public List<Section> sections() {
+        return Collections.unmodifiableList(sections);
     }
 
     public DocumentData signer(String key, String role, String name, String date) {

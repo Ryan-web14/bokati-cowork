@@ -233,9 +233,33 @@ public class VoucherService {
     }
 
     /** Modele de document de chaque type de piece (chantier des modeles de documents). */
-    public static final Map<String, String> TEMPLATE_BY_TYPE = Map.of(
-            "EDB", "NEED_STATEMENT", "DDF", "FUND_REQUEST", "BDF", "DISBURSEMENT_VOUCHER", "JUS", "JUSTIFICATION_SHEET",
-            "BC", "PURCHASE_ORDER", "DTV", "VAT_RETURN", "RAP", "BANK_RECONCILIATION", "EMP", "LOAN_SCHEDULE");
+    public static final Map<String, String> TEMPLATE_BY_TYPE = Map.ofEntries(
+            Map.entry("EDB", "NEED_STATEMENT"), Map.entry("DDF", "FUND_REQUEST"), Map.entry("BDF", "DISBURSEMENT_VOUCHER"),
+            Map.entry("JUS", "JUSTIFICATION_SHEET"), Map.entry("BC", "PURCHASE_ORDER"), Map.entry("DTV", "VAT_RETURN"),
+            Map.entry("RAP", "BANK_RECONCILIATION"), Map.entry("EMP", "LOAN_SCHEDULE"), Map.entry("BRB", "BANK_DEPOSIT_SLIP"),
+            Map.entry("RLF", "SUPPLIER_STATEMENT"), Map.entry("RLP", "PARTNER_STATEMENT"));
+
+    /**
+     * Capture des donnees d'une piece pour l'apercu d'un modele (lot D4) : pendant {@link #capturing},
+     * {@link #render} rend des octets vides et garde les donnees de la piece. L'appelant execute
+     * l'impression dans une transaction annulee : numero et trace d'impression ne sont pas gardes.
+     */
+    private static final ThreadLocal<com.sni.bokaticowork.features.document.template.render.DocumentData[]> CAPTURE = new ThreadLocal<>();
+
+    public static com.sni.bokaticowork.features.document.template.render.DocumentData capturing(Runnable print) {
+        com.sni.bokaticowork.features.document.template.render.DocumentData[] holder =
+                new com.sni.bokaticowork.features.document.template.render.DocumentData[1];
+        CAPTURE.set(holder);
+        try {
+            print.run();
+        } finally {
+            CAPTURE.remove();
+        }
+        if (holder[0] == null) {
+            throw new BadRequestException("La pièce n'a pas été produite");
+        }
+        return holder[0];
+    }
 
     /**
      * Rend la piece : avec la version publiee de son modele s'il en existe une, sinon (ou si ce
@@ -244,6 +268,12 @@ public class VoucherService {
     public byte[] render(String title, Issued issued, List<Section> sections, BigDecimal amount, String commitment, List<Signature> signatures) {
         View view = view(title, issued, sections, amount, commitment, signatures);
         String templateCode = issued == null ? null : TEMPLATE_BY_TYPE.get(issued.type());
+        com.sni.bokaticowork.features.document.template.render.DocumentData[] capture = CAPTURE.get();
+        if (capture != null) {
+            capture[0] = com.sni.bokaticowork.features.document.template.render.DocumentData
+                    .fromVoucher(templateCode == null ? "CAPTURE" : templateCode, view, amount).source(issued.sourceCode());
+            return new byte[0];
+        }
         if (templatePrinter != null && templateCode != null) {
             Optional<byte[]> printed = templatePrinter.tryRender(templateCode,
                     com.sni.bokaticowork.features.document.template.render.DocumentData.fromVoucher(templateCode, view, amount).source(issued.sourceCode()));

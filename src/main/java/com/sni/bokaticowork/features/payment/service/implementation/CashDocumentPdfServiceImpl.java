@@ -22,6 +22,7 @@ import com.sni.bokaticowork.features.payment.service.interfaces.CashDocumentPdfS
 import com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashRequestService;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashStatisticsService;
+import com.sni.bokaticowork.features.payment.service.support.CashReportDocumentData;
 import com.sni.bokaticowork.features.payment.service.support.CashVoucherDocumentData;
 import com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +64,16 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         this.templatePrinter = templatePrinter;
     }
 
+    private com.sni.bokaticowork.features.document.template.render.DocumentData requestData(CashRequestResponse request) {
+        return CashReportDocumentData.request(request, requestTypeLabel(request.requestType()), requestStatusLabel(request.status()));
+    }
+
+    private com.sni.bokaticowork.features.document.template.render.DocumentData closingData(CashSessionSummaryResponse summary,
+                                                                                           List<CashMovementResponse> movements, String reviewedBy) {
+        CashDocumentTemplateFormatter fmt = new CashDocumentTemplateFormatter(appLocale);
+        return CashReportDocumentData.closing(summary, movements, reviewedBy, movement -> fmt.movementTypeLabel(movement.movementType()));
+    }
+
     @Override
     public String templateCode(String movementNumber) {
         return CashVoucherDocumentData.templateCode(cashRegisterMapper.toCashMovementResponse(movement(movementNumber)));
@@ -71,6 +82,15 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
     /** Donnees d'un mouvement pour l'apercu d'un modele de bon de caisse. */
     @Override
     public com.sni.bokaticowork.features.document.template.render.DocumentData previewData(String templateCode, String movementNumber) {
+        if (CashReportDocumentData.REQUEST.equals(templateCode)) {
+            return requestData(cashRequestService.get(movementNumber));
+        }
+        if (CashReportDocumentData.CLOSING.equals(templateCode)) {
+            CashSession session = session(movementNumber);
+            List<CashMovementResponse> movements = movementRepository.findByCashSession_IdOrderByCreatedAtAsc(session.getId()).stream()
+                    .map(cashRegisterMapper::toCashMovementResponse).toList();
+            return closingData(cashRegisterService.sessionSummary(movementNumber), movements, session.getReviewedBy());
+        }
         CashMovement movement = movement(movementNumber);
         CashMovementResponse response = cashRegisterMapper.toCashMovementResponse(movement);
         if (!templateCode.equals(CashVoucherDocumentData.templateCode(response))) {
@@ -119,6 +139,12 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         context.setVariable("generatedAt", Instant.now());
         context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
         brand(context);
+        if (templatePrinter != null) {
+            java.util.Optional<byte[]> printed = templatePrinter.tryRender(CashReportDocumentData.REQUEST, requestData(request));
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         return renderToPdf(templateEngine.process("cash/request-document", context));
     }
 
@@ -140,6 +166,13 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         context.setVariable("generatedAt", Instant.now());
         context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
         brand(context);
+        if (templatePrinter != null) {
+            java.util.Optional<byte[]> printed = templatePrinter.tryRender(CashReportDocumentData.CLOSING,
+                    closingData(summary, movements, session.getReviewedBy()));
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         return renderToPdf(templateEngine.process("cash/session-closing-report", context));
     }
 

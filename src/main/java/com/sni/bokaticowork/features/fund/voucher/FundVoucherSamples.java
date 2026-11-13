@@ -25,6 +25,67 @@ public final class FundVoucherSamples {
         };
     }
 
+    /** Pieces comptables d'exemple (lot D4) : bon de commande, TVA, rapprochement, emprunt, bordereau, releves. */
+    public static DocumentData accounting(String templateCode) {
+        return switch (templateCode) {
+            case "PURCHASE_ORDER" -> {
+                VoucherService.Section lines = new VoucherService.Section("Lignes").columns(List.of("Désignation", "Quantité", "Prix unitaire", "HT", "TVA", "TTC"),
+                        List.of(false, true, true, true, true, true));
+                lines.row("Ramettes de papier A4", "20", "5 000", "100 000", "18 000", "118 000");
+                yield view(templateCode, "Bon de commande", "BC-202611-000007", List.of(
+                        new VoucherService.Section("Commande").pair("Numéro", "BC-202611-000007").pair("Fournisseur", "Papeterie du Centre")
+                                .pair("Objet", "Fournitures de bureau").pair("Livraison souhaitée", "14/11/2026"),
+                        lines), new BigDecimal("118000"), null, List.of(new VoucherService.Signature("Acheteur", "R. Ibara", "12/11/2026"),
+                        new VoucherService.Signature("Fournisseur, pour acceptation", null, null)));
+            }
+            case "VAT_RETURN" -> view(templateCode, "Déclaration de TVA 2026-10", "DTV-202611-000001", List.of(
+                    new VoucherService.Section("Période").pair("Période", "Octobre 2026").pair("Régime", "Réel normal"),
+                    new VoucherService.Section("Calcul").pair("TVA collectée", "1 800 000 XAF").pair("TVA déductible", "450 000 XAF")
+                            .pair("TVA due", "1 350 000 XAF")), new BigDecimal("1350000"), null,
+                    List.of(new VoucherService.Signature("Comptable", "R. Ibara", null), new VoucherService.Signature("Gérant", null, null)));
+            case "BANK_RECONCILIATION" -> view(templateCode, "État de rapprochement bancaire", "RAP-202611-000002", List.of(
+                    new VoucherService.Section("Compte").pair("Banque", "Banque du Congo").pair("Date", "31/10/2026"),
+                    new VoucherService.Section("Soldes").pair("Solde du relevé", "4 520 000 XAF").pair("Solde comptable", "4 470 000 XAF")
+                            .pair("Écart expliqué", "50 000 XAF")), null, null,
+                    List.of(new VoucherService.Signature("Comptable", "R. Ibara", null), new VoucherService.Signature("Contrôleur", null, null)));
+            case "LOAN_SCHEDULE" -> {
+                VoucherService.Section lines = new VoucherService.Section("Échéancier").columns(List.of("Échéance", "Date", "Capital", "Intérêts", "Annuité", "Restant dû"),
+                        List.of(false, false, true, true, true, true));
+                lines.row("1", "30/11/2026", "400 000", "60 000", "460 000", "5 600 000");
+                yield view(templateCode, "Tableau d'amortissement EMP-1", "EMP-1-V1", List.of(
+                        new VoucherService.Section("Emprunt").pair("Code", "EMP-1").pair("Prêteur", "Banque du Congo").pair("Taux", "12 %"),
+                        lines), null, null, List.of());
+            }
+            case "BANK_DEPOSIT_SLIP" -> {
+                VoucherService.Section lines = new VoucherService.Section("Chèques").columns(List.of("N° chèque", "Banque émettrice", "Tireur", "Transaction", "Montant"),
+                        List.of(false, false, false, false, true));
+                lines.row("0004521", "BGFI", "Société Kintele SARL", "PAY-202611-000881", "250 000");
+                yield view(templateCode, "Bordereau de remise en banque", "BRB-202611-000003", List.of(
+                        new VoucherService.Section("Remise").pair("Bordereau", "BRB-202611-000003").pair("Banque", "Banque du Congo, Pointe-Noire")
+                                .pair("Caisse", "GUICHET-1").pair("Préparé par", "A. Mabiala").pair("État", "Préparé"),
+                        lines,
+                        new VoucherService.Section("Montants").pair("Espèces", "150 000 XAF").pair("Chèques (1)", "250 000 XAF").pair("Total remis", "400 000 XAF")),
+                        new BigDecimal("400000"), null, List.of(new VoucherService.Signature("Caissier", "A. Mabiala", "12/11/2026"),
+                                new VoucherService.Signature("Déposant", null, null), new VoucherService.Signature("Cachet de la banque", null, null)));
+            }
+            case "SUPPLIER_STATEMENT", "PARTNER_STATEMENT" -> {
+                boolean supplier = templateCode.equals("SUPPLIER_STATEMENT");
+                VoucherService.Section lines = new VoucherService.Section("Écritures").columns(
+                        List.of("Date", "Écriture", "Libellé", "Référence", "Débit", "Crédit", "Solde"),
+                        List.of(false, false, false, false, true, true, true));
+                lines.row("05/10/2026", "AC-000412", "Facture F-2026-118", "F-2026-118", "0", "118 000", "118 000");
+                lines.row("20/10/2026", "BQ-000233", "Règlement", "VIR-889", "118 000", "0", "0");
+                yield view(templateCode, supplier ? "Relevé fournisseur" : "Relevé de compte partenaire", (supplier ? "RLF" : "RLP") + "-PAP01-20261112",
+                        List.of(new VoucherService.Section(supplier ? "Fournisseur" : "Partenaire").pair("Code", "PAP01")
+                                        .pair("Nom", supplier ? "Papeterie du Centre" : "Partenaire exemple").pair("Période", "Du 01/10/2026 au 31/10/2026"),
+                                lines, new VoucherService.Section("Soldes").pair("Solde d'ouverture", "0 XAF").pair("Solde de clôture", "0 XAF")),
+                        null, null, List.of(new VoucherService.Signature("Comptable", null, null),
+                                new VoucherService.Signature(supplier ? "Fournisseur, pour accord" : "Partenaire, pour accord", null, null)));
+            }
+            default -> null;
+        };
+    }
+
     private static DocumentData need() {
         VoucherService.Section lines = new VoucherService.Section("Besoins").columns(
                 List.of("N°", "Désignation", "Quantité", "Unité", "Prix estimé", "Total", "Nature", "Fournisseur suggéré"),

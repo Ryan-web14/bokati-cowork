@@ -151,7 +151,7 @@ class DocumentTemplateD2IT extends PostgresIntegrationTestBase {
         assertThatThrownBy(() -> service.saveDraft("DISBURSEMENT_VOUCHER",
                 new DocumentTemplateDtos.Content("A4", List.of(), Map.of(), blocks, null)))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("type inconnu");
-        assertThatThrownBy(() -> service.publish("DISBURSEMENT_VOUCHER")).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> service.publish("CASH_OUT_VOUCHER")).isInstanceOf(BadRequestException.class).hasMessageContaining("brouillon");
     }
 
     private static List<Map<String, Object>> blocks(String title) {

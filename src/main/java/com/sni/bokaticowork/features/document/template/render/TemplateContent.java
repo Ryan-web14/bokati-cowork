@@ -20,7 +20,8 @@ public record TemplateContent(String pageFormat, List<Map<String, Object>> copie
                               List<Map<String, Object>> blocks, List<Map<String, Object>> fields) {
 
     public static final Set<String> PAGE_FORMATS = Set.of("A4", "A5_TWO_UP", "A6");
-    public static final Set<String> BLOCK_TYPES = Set.of("HEADER", "TITLE", "FIELDS", "LINES", "TOTALS", "TEXT", "SIGNATURES", "FOOTER");
+    public static final Set<String> BLOCK_TYPES = Set.of("HEADER", "TITLE", "FIELDS", "LINES", "TOTALS", "TEXT", "SIGNATURES", "FOOTER",
+            "SECTIONS");
     /** Champs ajoutes (lot D3) : types, modes et prefixe de leur cle dans les blocs. */
     public static final Set<String> FIELD_TYPES = Set.of("TEXT", "NUMBER", "AMOUNT", "DATE", "LIST", "CHECKBOX");
     public static final Set<String> FIELD_MODES = Set.of("PRINTED_BLANK", "CAPTURED");
@@ -40,7 +41,8 @@ public record TemplateContent(String pageFormat, List<Map<String, Object>> copie
             "TOTALS", Set.of("type", "label", "words", "wordsLabel"),
             "TEXT", Set.of("type", "title", "text", "boxed"),
             "SIGNATURES", Set.of("type", "boxes", "fromData", "width", "height"),
-            "FOOTER", Set.of("type", "text"));
+            "FOOTER", Set.of("type", "text"),
+            "SECTIONS", Set.of("type", "columns", "exclude"));
 
     public TemplateContent {
         pageFormat = pageFormat == null || pageFormat.isBlank() ? "A4" : pageFormat.trim().toUpperCase();
@@ -120,6 +122,13 @@ public record TemplateContent(String pageFormat, List<Map<String, Object>> copie
                     errors.add(where + " : aucun champ");
                 }
                 fields.forEach(item -> checkKey(where, item instanceof Map<?, ?> map ? map.get("key") : item, errors));
+            }
+            case "SECTIONS" -> {
+                int columns = integer(block.get("columns"), 2);
+                if (columns < 1 || columns > 4) {
+                    errors.add(where + " : de une à quatre colonnes");
+                }
+                list(block.get("exclude")).forEach(item -> checkKey(where, item, errors));
             }
             case "LINES" -> {
                 checkKey(where, block.get("table"), errors);
