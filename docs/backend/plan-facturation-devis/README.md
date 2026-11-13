@@ -51,7 +51,9 @@ Demandé par l'exploitant le 13/11/2026 : d'abord corriger les écarts relevés,
 
 Ordre conseillé : B0 et B1 d'abord, puisqu'ils corrigent des défauts existants, dont un de sécurité. Ensuite B2, B3 et B8, le cœur du devis et de la facture ; puis B4, B5, B6 et B7 ; enfin B9 et B10. Les écrans suivent chaque lot, et la doc frontend finale (`docs/final-frontend-doc/billing`) est mise à jour à la fin de chaque lot.
 
-## 5. Décisions à prendre
+## 5. Décisions
+
+Tranchées le 13/11/2026 : voir [realisation.md](realisation.md#1-décisions-retenues). Le tableau ci-dessous garde les propositions d'origine.
 
 | N° | Sujet | Question | Proposition |
 | --- | --- | --- | --- |
