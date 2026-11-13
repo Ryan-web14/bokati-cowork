@@ -37,6 +37,9 @@ public class BillingEmailServiceImpl implements BillingEmailService {
     private final BillingDocumentService billingDocumentService;
     private final BillingDocumentPdfService billingDocumentPdfService;
     private final DefaultEmailSender emailSender;
+
+    /** Lot C5 : objet note dans le journal des courriels, pour relier l'envoi a la piece. */
+    public static final String RELATED_TYPE = "BILLING_DOCUMENT";
     private final SpringTemplateEngine templateEngine;
     private final Locale appLocale;
     private final MemberBillingContact memberContact;
@@ -189,7 +192,8 @@ public class BillingEmailServiceImpl implements BillingEmailService {
         String subject = billingSubject(document);
         try {
             emailSender.sendHtmlEmailWithPdfAttachment(com.sni.bokaticowork.core.utils.validation.EmailRecipients.encode(to, cc, bcc),
-                    subject, renderBillingDocument(document, personalMessage), document.documentNumber() + ".pdf", pdf).join();
+                    subject, renderBillingDocument(document, personalMessage), document.documentNumber() + ".pdf", pdf,
+                    RELATED_TYPE, document.documentNumber()).join();
         } catch (CompletionException ex) {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
             throw new BadRequestException("Envoi du courriel impossible : " + cause.getMessage(), cause);

@@ -9,6 +9,7 @@ import com.sni.bokaticowork.features.billing.dto.request.BillingRecipientPrefere
 import com.sni.bokaticowork.features.billing.dto.request.SendDocumentRequest;
 import com.sni.bokaticowork.features.billing.dto.response.BillingRecipientsResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingSendingResponse;
+import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentSending;
 import com.sni.bokaticowork.features.billing.model.BillingRecipientPreference;
@@ -48,6 +49,10 @@ public class BillingSendingService {
 
     static final String EMAIL = "EMAIL";
     static final String WHATSAPP = "WHATSAPP";
+
+    /** Lot C5 : journal des courriels du socle (absent dans les tests unitaires). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sni.bokaticowork.core.communication.mailService.repository.EmailDeliveryLogRepository emailLogs;
     private static final String PORTAL_PATH = "factures";
 
     private final BillingDocumentServiceImpl billing;
@@ -90,8 +95,15 @@ public class BillingSendingService {
                         .channel(EMAIL).recipientsTo(String.join(", ", to)).recipientsCc(join(cc)).recipientsBcc(join(bcc)).message(message)
                         .duplicate(duplicate).sentBy(author.login()).sentByName(author.name()).sentAt(Instant.now()).build();
                 try {
+                    Instant queuedFrom = Instant.now().minusSeconds(2);
                     sending.setSubject(emails.sendDocumentTo(documentNumber, to, cc, bcc, message));
                     sending.setStatus("QUEUED");
+                    // Lot C5 : numero du courriel dans le journal du socle, pour en suivre le statut reel.
+                    if (emailLogs != null) {
+                        emailLogs.findFirstByRelatedTypeAndRelatedCodeAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+                                        BillingEmailServiceImpl.RELATED_TYPE, documentNumber, queuedFrom)
+                                .ifPresent(log -> sending.setProviderReference(log.getEmailNumber()));
+                    }
                 } catch (RuntimeException exception) {
                     sending.setStatus("FAILED");
                     sending.setError(truncate(exception.getMessage()));
@@ -114,16 +126,41 @@ public class BillingSendingService {
         return result;
     }
 
-    /** WhatsApp : facture soldee (modele facture_payee) ou a regler (modele rappel_paiement), lien vers l'espace client. */
+    /** Modele et variables WhatsApp d'une piece, selon son type (lot C2). */
+    record WhatsAppContent(String purpose, List<String> values, String portalPath) {
+    }
+
+    /**
+     * Devis : devis_disponible ; proforma : proforma_disponible ; avoir : avoir_emis ; facture
+     * soldee : facture_payee ; facture a regler : rappel_paiement. Sans modele approuve pour cet
+     * usage, l'envoi WhatsApp echoue avec un message clair, le courriel part quand meme.
+     */
+    static WhatsAppContent whatsAppContent(BillingDocument document) {
+        String name = StringUtils.hasText(document.getCustomerName()) ? document.getCustomerName().trim().split("\\s+")[0] : "client";
+        String until = document.getDueDate() == null ? "réception" : DateTimeFormatter.ofPattern("dd/MM/yyyy").format(document.getDueDate());
+        BillingDocumentType type = document.getDocumentType();
+        if (type == BillingDocumentType.QUOTE) {
+            return new WhatsAppContent("QUOTE_AVAILABLE", List.of(name, document.getDocumentNumber(), amount(document.getTotalAmount()), until), "devis");
+        }
+        if (type == BillingDocumentType.PROFORMA_INVOICE) {
+            return new WhatsAppContent("PROFORMA_AVAILABLE", List.of(name, document.getDocumentNumber(), amount(document.getTotalAmount()), until), PORTAL_PATH);
+        }
+        if (type == BillingDocumentType.CREDIT_NOTE) {
+            String original = StringUtils.hasText(document.getOriginalDocumentNumber()) ? document.getOriginalDocumentNumber() : "-";
+            return new WhatsAppContent("CREDIT_NOTE_ISSUED", List.of(name, document.getDocumentNumber(), amount(document.getTotalAmount()), original), PORTAL_PATH);
+        }
+        boolean settled = document.getBalanceDue() == null || document.getBalanceDue().signum() <= 0;
+        return settled
+                ? new WhatsAppContent("INVOICE_PAID", List.of(name, amount(document.getPaidAmount()), document.getDocumentNumber()), PORTAL_PATH)
+                : new WhatsAppContent("PAYMENT_REMINDER", List.of(name, document.getDocumentNumber(), amount(document.getBalanceDue()), until), PORTAL_PATH);
+    }
+
+    /** WhatsApp par modele (voir {@link #whatsAppContent}), lien vers l'espace client. */
     private BillingDocumentSending sendWhatsApp(BillingDocument document, String phone, String message, boolean duplicate,
                                                 StaffProfileService.Author author) {
-        boolean settled = document.getBalanceDue() == null || document.getBalanceDue().signum() <= 0;
-        String name = StringUtils.hasText(document.getCustomerName()) ? document.getCustomerName().trim().split("\\s+")[0] : "client";
-        String purpose = settled ? "INVOICE_PAID" : "PAYMENT_REMINDER";
-        List<String> values = settled
-                ? List.of(name, amount(document.getPaidAmount()), document.getDocumentNumber())
-                : List.of(name, document.getDocumentNumber(), amount(document.getBalanceDue()),
-                document.getDueDate() == null ? "réception" : DateTimeFormatter.ofPattern("dd/MM/yyyy").format(document.getDueDate()));
+        WhatsAppContent content = whatsAppContent(document);
+        String purpose = content.purpose();
+        List<String> values = content.values();
         BillingDocumentSending sending = BillingDocumentSending.builder().documentId(document.getId()).documentNumber(document.getDocumentNumber())
                 .channel(WHATSAPP).recipientsTo(phone).subject(purpose).message(message).duplicate(duplicate).sentBy(author.login())
                 .sentByName(author.name()).sentAt(Instant.now()).build();
@@ -134,7 +171,7 @@ public class BillingSendingService {
             return sending;
         }
         try {
-            WhatsAppMessageSender.Result sent = sender.send(phone, purpose, values, message, document.getDocumentNumber(), PORTAL_PATH);
+            WhatsAppMessageSender.Result sent = sender.send(phone, purpose, values, message, document.getDocumentNumber(), content.portalPath());
             sending.setProviderReference(sent.messageId());
             sending.setStatus(sent.statusGroup() == null ? "SENT" : sent.statusGroup());
         } catch (RuntimeException exception) {
@@ -198,6 +235,21 @@ public class BillingSendingService {
         Instant delivered = null;
         Instant seen = null;
         String status = sending.getStatus();
+        String error = sending.getError();
+        if (EMAIL.equals(sending.getChannel()) && StringUtils.hasText(sending.getProviderReference()) && emailLogs != null) {
+            // Lot C5 : statut reel du courriel. SENT : remis au serveur d'envoi (Microsoft 365) ;
+            // FAILED : refuse, avec la raison. Le serveur ne remonte pas les rebonds ulterieurs.
+            Optional<com.sni.bokaticowork.core.communication.mailService.model.EmailDeliveryLog> log =
+                    emailLogs.findByEmailNumber(sending.getProviderReference());
+            if (log.isPresent()) {
+                String real = log.get().getStatus() == null ? null : log.get().getStatus().name();
+                status = "SENDING".equals(real) ? "QUEUED" : real != null ? real : status;
+                delivered = log.get().getSentAt();
+                if ("FAILED".equals(real) && StringUtils.hasText(log.get().getLastError())) {
+                    error = log.get().getLastError();
+                }
+            }
+        }
         if (WHATSAPP.equals(sending.getChannel()) && StringUtils.hasText(sending.getProviderReference())) {
             WhatsAppMessageRepository repository = whatsAppMessages.getIfAvailable();
             Optional<WhatsAppMessage> message = repository == null ? Optional.empty() : repository.findByMessageId(sending.getProviderReference());
@@ -209,7 +261,7 @@ public class BillingSendingService {
         }
         return new BillingSendingResponse(sending.getId(), sending.getDocumentNumber(), sending.getChannel(), split(sending.getRecipientsTo()),
                 split(sending.getRecipientsCc()), split(sending.getRecipientsBcc()), sending.getSubject(), sending.getMessage(),
-                Boolean.TRUE.equals(sending.getDuplicate()), status, sending.getProviderReference(), sending.getError(), sending.getSentBy(),
+                Boolean.TRUE.equals(sending.getDuplicate()), status, sending.getProviderReference(), error, sending.getSentBy(),
                 sending.getSentByName(), sending.getSentAt(), delivered, seen);
     }
 

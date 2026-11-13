@@ -383,6 +383,13 @@
         </tbody>
     </table>
 
+    <!-- Lot C1 : mentions d'exonération des articles (une par règle appliquée). -->
+    <div th:if="${taxExemptions != null and !taxExemptions.isEmpty()}" style="margin:6px 0 4px; font-size:8.5px; color:#3a1e45;">
+        <div th:each="exemption : ${taxExemptions}">
+            <strong th:text="${exemption.label()}">Exonéré de TVA</strong><span th:if="${exemption.reason() != null}"> : <span th:text="${exemption.reason()}"></span></span>
+        </div>
+    </div>
+
     <!-- RÉCAPITULATIF -->
     <table class="summary-wrap">
         <tr>

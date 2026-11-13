@@ -8,7 +8,7 @@ Demandé par l'exploitant le 13/11/2026 : terminer ce que la refonte a laissé �
 
 | Fichier | Contenu |
 | --- | --- |
-| [livraison.md](livraison.md) | **État livré**, lot par lot (C0 livré) |
+| [livraison.md](livraison.md) | **État livré**, lot par lot (C0 à C5) |
 | [lots.md](lots.md) | Détail de chaque lot : ce qui change, tables, routes, paramètres, comptabilité, critère d'acceptation, tests |
 | [decisions.md](decisions.md) | Les décisions à trancher (CD1 à CD9), chacune avec la recommandation retenue par défaut |
 

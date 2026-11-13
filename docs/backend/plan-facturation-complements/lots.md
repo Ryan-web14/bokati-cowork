@@ -48,32 +48,34 @@ Lecture ouverte aux droits de consultation du catalogue ; gestion réservée à 
 
 ## C2. WhatsApp pour devis et proforma
 
-- Paramètres de modèles par type : `billing.whatsapp.template.quote`, `.proforma`, `.invoice`, `.credit-note`, `.statement` (noms des modèles validés chez Meta via Infobip), en plus des deux existants.
-- L'envoi choisit le modèle par type de pièce ; sans modèle configuré pour ce type, le canal WhatsApp est refusé avec `MODELE_WHATSAPP_ABSENT`, le courriel part quand même si demandé.
-- Le texte des modèles à faire valider est donné dans la doc du lot (variables : nom du client, numéro, montant, date de validité).
-- Tests : choix du modèle par type, refus sans modèle, envoi mixte courriel et WhatsApp.
+- Les modèles WhatsApp sont déjà tenus par usage dans le module WhatsApp (créés chez Infobip, approuvés par Meta). Trois usages s'ajoutent aux modèles proposés à la création : `QUOTE_AVAILABLE` (`devis_disponible`), `PROFORMA_AVAILABLE` (`proforma_disponible`), `CREDIT_NOTE_ISSUED` (`avoir_emis`). Aucun paramètre de plus.
+- L'envoi choisit l'usage par type de pièce. Sans modèle approuvé pour cet usage, l'envoi WhatsApp de cette pièce est noté en échec avec un message clair (comportement du module WhatsApp) ; le courriel demandé en même temps part quand même.
+- Tests : choix du modèle par type de pièce, modèles proposés à la création.
 
 ## C3. Dérogation de remise approuvée
 
-- À l'émission (et à l'enregistrement d'une révision de devis), si une ligne passe sous le prix plancher, sous la marge minimale ou au-dessus de la remise maximale de l'article : la pièce passe en `PENDING_APPROVAL` (drapeau `discountApprovalPending`, le statut reste `DRAFT`) et une demande `BILLING_DISCOUNT_OVERRIDE` part au N+1 avec le détail des écarts.
-- Accord : l'émission se fait, l'approbateur est noté sur la pièce et dans le visa. Refus : la pièce reste en brouillon avec le motif. Toute modification des lignes annule la demande en cours.
-- Le droit de dérogation actuel (`BILLING_PRICE_OVERRIDE`) devient le droit d'approuver sans circuit, réservé aux N+ (paramètre `billing.discount.override-mode` : `APPROVAL` par défaut, `PERMISSION` pour l'ancien comportement).
-- Tests : demande créée, émission bloquée, accord puis émission, refus, annulation à la modification.
+- À l'émission, et à la révision d'un devis déjà proposé, une ligne sous le prix plancher, sous la marge minimale ou au-dessus de la remise maximale fait partir une demande `DISCOUNT_OVERRIDE` au centre de la facturation (circuit `BILLING_DISCOUNT_OVERRIDE`, N+1), avec le détail des écarts. La pièce reste en brouillon ; la réponse est un refus 409 `DEROGATION_EN_ATTENTE` qui donne le numéro de la demande (la demande, elle, est enregistrée).
+- L'accord vaut pour l'offre approuvée : une empreinte des lignes le lie. L'émission suivante passe, avec le motif et l'approbateur notés. Une offre modifiée fait annuler la demande en cours et en envoie une nouvelle. L'émission n'est pas automatique à l'accord : le demandeur émet, ce qui garde les autres contrôles (stock, état de la pièce) au moment où la pièce engage.
+- Refus : la pièce reste en brouillon avec le commentaire du responsable (`DEROGATION_REFUSEE`) ; un nouveau motif relance une demande.
+- Sans motif : `DEROGATION_MOTIF_REQUIS`.
+- Le titulaire du droit `BILLING:DISCOUNT_OVERRIDE` passe outre directement avec un motif. Paramètre `billing.discount.override-mode` : `APPROVAL` par défaut, `PERMISSION` pour l'ancien comportement (droit et motif, sans circuit).
+- Tests : demande créée et pièce en attente, attente sans nouvelle demande, accord puis émission, nouvelle demande quand l'offre change, refus puis nouveau motif, droit de dérogation, mode `PERMISSION`.
 
 ## C4. Bon de livraison
 
-- Nouveau type `DELIVERY_NOTE`, non fiscal, numérotation propre (`BL-`), tiré d'un devis accepté ou d'une facture : `POST /billing/quotes/{n}/delivery-notes`, `POST /billing/invoices/{n}/delivery-notes` avec les quantités livrées par ligne.
-- Reste à livrer par ligne de la pièce d'origine, `GET /billing/documents/{n}/delivery-status`. Livraison au-delà du reste refusée.
-- `PATCH /billing/delivery-notes/{n}/deliver` (sortie de stock si `billing.stock.issue-on = DELIVERY`, CD7), `.../cancel` (remise en stock), dépôt du bon signé en GED (`.../signed-copy`).
-- Facture tirée des bons livrés : `POST /billing/delivery-notes/invoice` (plusieurs bons d'un même client en une facture).
-- PDF du bon : sans prix par défaut, avec prix sur option.
-- Tests : livraisons partielles, refus au-delà du reste, sortie de stock à la livraison, facture de plusieurs bons, annulation.
+- Pièce non fiscale tenue à part (`billing_delivery_note` et ses lignes), numérotée `BL-AAAAMM-000001`, tirée d'un devis accepté (aussi après conversion) ou d'une facture émise : `POST /billing/documents/{n}/delivery-notes` avec les quantités par numéro de ligne ; sans lignes, tout le reste à livrer.
+- Reste à livrer par ligne : `GET /billing/documents/{n}/delivery-status` (livré, en brouillon, reste). Une quantité au-delà du reste est refusée, à la création comme à la livraison.
+- `PATCH /billing/delivery-notes/{n}/deliver` : sortie de stock si `billing.stock.issue-on = DELIVERY` (CD7), réservations du devis consommées d'abord. `.../cancel` (motif requis) : la marchandise revient en stock ; un bon facturé ne s'annule pas (avoir sur la facture). `.../signed-copy` : référence de la copie signée déposée en GED.
+- `POST /billing/delivery-notes/invoice` : facture en brouillon des bons livrés d'un même devis, aux quantités livrées (remise fixe de ligne et remise globale fixe au prorata). Le devis passe en `CONVERTED` à sa première facture. Les acomptes du devis ne sont pas repris : un devis avec acomptes se facture par sa conversion. Un bon tiré d'une facture ne se refacture pas.
+- PDF : `GET /billing/delivery-notes/{n}/pdf`, sans prix par défaut (`showPrices` à la création), cases « Remis par » et « Reçu par le client ».
+- Tests : livraisons partielles (3 puis 2), refus au-delà du reste, sortie de stock à chaque livraison, retour en stock à l'annulation, facture de deux bons, devis en brouillon refusé.
 
 ## C5. Statut réel des courriels
 
-- Le journal des envois (`billing_document_sending`) est relié à l'entrée du journal des courriels du socle ; la lecture des envois remonte `QUEUED`, `SENT`, `DELIVERED`, `FAILED`, `BOUNCED` avec la raison.
-- Mise à jour par le traitement qui écrit déjà le journal des courriels, pas de nouvelle tâche planifiée.
-- Tests : envoi réussi, envoi en échec avec raison.
+- Le courriel d'une pièce est noté dans le journal des courriels du socle avec la pièce concernée (`BILLING_DOCUMENT`, numéro). L'envoi garde le numéro du courriel ; la lecture des envois remonte son statut réel : `QUEUED` (en file ou en cours), `SENT` (remis au serveur d'envoi, avec la date), `FAILED` (avec la raison).
+- Limite : le serveur d'envoi (Microsoft 365) ne remonte pas les rebonds qui arrivent après la remise ; un rebond tardif reste visible dans la boîte d'envoi seulement.
+- Pas de nouvelle tâche planifiée : le statut est lu au moment de la consultation.
+- Tests : envoi réussi avec sa date, envoi en échec avec la raison.
 
 ## C6. Retenues à la source
 

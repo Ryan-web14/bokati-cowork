@@ -115,7 +115,21 @@ public class DefaultEmailSender {
                                                                      String content,
                                                                      String attachmentName,
                                                                      byte[] attachmentBytes) {
-        Queued queued = createDelivery(null, to, subject, content, true, null, null);
+        return sendHtmlEmailWithPdfAttachment(to, subject, content, attachmentName, attachmentBytes, null, null);
+    }
+
+    /**
+     * Comme ci-dessus, avec l'objet concerne : le journal des courriels le garde, ce qui permet
+     * de retrouver le statut reel d'un envoi depuis la piece (lot C5 de la facturation).
+     */
+    public CompletableFuture<Boolean> sendHtmlEmailWithPdfAttachment(String to,
+                                                                     String subject,
+                                                                     String content,
+                                                                     String attachmentName,
+                                                                     byte[] attachmentBytes,
+                                                                     String relatedType,
+                                                                     String relatedCode) {
+        Queued queued = createDelivery(null, to, subject, content, true, relatedType, relatedCode);
         if (!queued.duplicate()) {
             publishToRabbit(queued.emailNumber(), to, subject, content, EmailPriority.NORMAL,
                     attachmentName, attachmentBytes, null, null);

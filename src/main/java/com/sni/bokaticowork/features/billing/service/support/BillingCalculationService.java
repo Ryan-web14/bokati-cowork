@@ -7,6 +7,7 @@ import com.sni.bokaticowork.features.billing.enums.BillingDiscountType;
 import com.sni.bokaticowork.features.billing.enums.BillingLineType;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentLine;
 import com.sni.bokaticowork.features.billing.model.ServiceCatalogItem;
+import com.sni.bokaticowork.features.billing.model.TaxRule;
 import com.sni.bokaticowork.features.billing.repository.ServiceCatalogItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -168,8 +169,8 @@ public class BillingCalculationService {
     }
 
     /** Valeurs reprises du catalogue quand la ligne ne les precise pas. */
-    private record CatalogDefaults(String category, String unit) {
-        static final CatalogDefaults NONE = new CatalogDefaults(null, null);
+    private record CatalogDefaults(String category, String unit, String taxRuleCode, Boolean taxableByDefault) {
+        static final CatalogDefaults NONE = new CatalogDefaults(null, null, null, null);
     }
 
     private CatalogDefaults catalogDefaults(String itemCode) {
@@ -177,7 +178,7 @@ public class BillingCalculationService {
             return CatalogDefaults.NONE;
         }
         Optional<ServiceCatalogItem> item = catalogItemRepository.findByItemCode(itemCode.trim());
-        return item.map(found -> new CatalogDefaults(found.getCategory(), found.getUnit()))
+        return item.map(found -> new CatalogDefaults(found.getCategory(), found.getUnit(), found.getTaxRuleCode(), found.getTaxableByDefault()))
                 .orElse(CatalogDefaults.NONE);
     }
 
@@ -193,18 +194,27 @@ public class BillingCalculationService {
                                               BillingTaxRuleResolver.TaxProfile taxProfile) {
         BigDecimal quantity = positiveOrDefault(request.quantity(), BigDecimal.ONE, "La quantité d'une ligne doit être positive");
         BigDecimal unitPrice = positiveOrDefault(request.unitPrice(), BigDecimal.ZERO, "Le prix unitaire d'une ligne ne peut pas être négatif");
-        boolean taxable = request.taxable() == null || request.taxable();
-        boolean taxIncluded = taxable && Boolean.TRUE.equals(request.taxIncluded());
-        BigDecimal vatRate = request.vatRate() == null ? taxProfile.vatRate() : request.vatRate();
-        BigDecimal additionalCentRate = request.additionalCentRate() == null ? taxProfile.additionalCentRate() : request.additionalCentRate();
-        LineAmounts amounts = taxIncluded
-                ? calculateTaxIncludedAmounts(quantity, unitPrice, request.discountRate(), request.discountAmount(), vatRate, additionalCentRate)
-                : calculateTaxExcludedAmounts(quantity, unitPrice, request.discountRate(), request.discountAmount(), taxable, vatRate, additionalCentRate);
-
         // Categorie et unite sont figees sur la ligne. Quand elles ne sont pas fournies et que la
         // ligne designe un article du catalogue, on les en reprend : sans ce repli, elles
         // resteraient nulles dans la quasi-totalite des cas et n'apparaitraient jamais au PDF.
         CatalogDefaults defaults = catalogDefaults(request.itemCode());
+
+        // Lot C1 : la regle de taxe de l'article pilote la ligne quand l'appelant ne fixe pas le
+        // taux. Exoneree ou hors champ : ligne non taxable, meme si l'ecran envoie taxable=true.
+        // Un taux fixe par l'appelant (conversion d'une piece, derogation) reste prioritaire.
+        TaxRule itemRule = taxRuleResolver.ruleFor(defaults.taxRuleCode(), java.time.LocalDate.now()).orElse(null);
+        boolean taxable = request.taxable() != null ? request.taxable() : !Boolean.FALSE.equals(defaults.taxableByDefault());
+        if (request.vatRate() == null && BillingTaxRuleResolver.zeroRated(itemRule)) {
+            taxable = false;
+        }
+        boolean taxIncluded = taxable && Boolean.TRUE.equals(request.taxIncluded());
+        BigDecimal vatRate = request.vatRate() != null ? request.vatRate()
+                : itemRule != null && !BillingTaxRuleResolver.zeroRated(itemRule) ? itemRule.getRate() : taxProfile.vatRate();
+        BigDecimal additionalCentRate = request.additionalCentRate() == null ? taxProfile.additionalCentRate() : request.additionalCentRate();
+        LineAmounts amounts = taxIncluded
+                ? calculateTaxIncludedAmounts(quantity, unitPrice, request.discountRate(), request.discountAmount(), vatRate, additionalCentRate)
+                : calculateTaxExcludedAmounts(quantity, unitPrice, request.discountRate(), request.discountAmount(), taxable, vatRate, additionalCentRate);
+        String appliedRule = appliedRule(itemRule, taxable, vatRate);
 
         return BillingDocumentLine.builder()
                 .lineOrder(request.lineOrder() == null ? defaultOrder : request.lineOrder())
@@ -230,10 +240,25 @@ public class BillingCalculationService {
                 .totalAmount(amounts.totalAmount())
                 .sourceType(trim(request.sourceType()))
                 .sourceCode(trim(request.sourceCode()))
+                .taxRuleCode(appliedRule)
                 .externalReference(trim(request.externalReference()))
                 .notes(trim(request.notes()))
                 .optional(Boolean.TRUE.equals(request.optional()))
                 .build();
+    }
+
+    /**
+     * Regle de l'article retenue sur la ligne si la ligne lui correspond : exoneree et non taxable,
+     * ou taxable au meme taux. Une ligne forcee autrement ne porte pas la mention de l'article.
+     */
+    private static String appliedRule(TaxRule rule, boolean taxable, BigDecimal vatRate) {
+        if (rule == null) {
+            return null;
+        }
+        boolean consistent = BillingTaxRuleResolver.zeroRated(rule)
+                ? !taxable
+                : taxable && vatRate != null && rule.getRate() != null && vatRate.compareTo(rule.getRate()) == 0;
+        return consistent ? rule.getBaseCode() : null;
     }
 
     private LineAmounts calculateTaxExcludedAmounts(BigDecimal quantity,

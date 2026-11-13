@@ -170,6 +170,27 @@ public class BillingDocument {
     @Column(name = "discount_override_at")
     private Instant discountOverrideAt;
 
+    /** Lot C3 : demande d'approbation d'une remise hors limites (numero APR-...). */
+    @Column(name = "discount_approval_number", length = 40)
+    private String discountApprovalNumber;
+
+    /** Lot C3 : PENDING, APPROVED, REJECTED, RETURNED ou CANCELLED. */
+    @Column(name = "discount_approval_status", length = 20)
+    private String discountApprovalStatus;
+
+    /** Lot C3 : empreinte des lignes approuvees ; une offre modifiee n'est plus couverte par l'accord. */
+    @Column(name = "discount_approval_fingerprint", length = 64)
+    private String discountApprovalFingerprint;
+
+    @Column(name = "discount_approval_reason", columnDefinition = "text")
+    private String discountApprovalReason;
+
+    @Column(name = "discount_approval_comment", length = 1000)
+    private String discountApprovalComment;
+
+    @Column(name = "discount_approved_by", length = 180)
+    private String discountApprovedBy;
+
     /**
      * PDF fige a la validation · c'est cette version qui est servie ensuite, et son empreinte
      * qui permet de dire si un fichier presente est bien celui qui a ete emis.
