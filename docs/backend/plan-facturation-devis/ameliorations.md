@@ -2,7 +2,7 @@
 
 Fonctionnalités demandées par l'exploitant le 13/11/2026, avec l'existant relevé dans le code (branche `feature/finance-comptabilite`) et ce qu'il faut ajouter. Les lots sont repris dans le [README](README.md#4-lots).
 
-Principe commun : **une pièce scellée (SEFC) ne se modifie jamais**. Toute correction après scellement passe par un avoir, une rectificative ou un duplicata. Avant scellement, tout est modifiable, avec une version à chaque changement.
+Principe commun : **une pièce certifiée par notre système ne se modifie jamais**. Toute correction après scellement passe par un avoir, une rectificative ou un duplicata. Avant scellement, tout est modifiable, avec une version à chaque changement.
 
 ## B2. Négociation et révision des devis
 
@@ -67,7 +67,7 @@ Principe commun : **une pièce scellée (SEFC) ne se modifie jamais**. Toute cor
 
 ## B5. Facture proforma
 
-**Existant** : le type `PROFORMA_INVOICE` (série `PRF`) existe, mais il se comporte comme une facture : il s'encaisse et se scelle (SEFC).
+**Existant** : le type `PROFORMA_INVOICE` (série `PRF`) existe, mais il se comporte comme une facture : il s'encaisse et se scelle (certifiée par notre système).
 
 **À faire**
 - **Une proforma n'est pas une pièce fiscale** : pas de scellement, pas d'écriture comptable, pas d'encaissement direct.
@@ -194,7 +194,7 @@ Une **affaire** regroupe tout ce qui concerne une vente à un client : devis et 
 - **Une facture se modifie tant qu'elle n'est pas payée** (aucun encaissement imputé). Après le premier paiement, la correction passe par un avoir ou une rectificative.
 - **Aucune suppression** : chaque modification crée une version ; les versions précédentes restent consultables et comparables, avec leur auteur et leur motif.
 - **Approbation** : la modification d'une facture émise passe par le centre d'approbation de la facturation (lot B15) : un responsable ou un administrateur l'accepte ou la refuse. Tant qu'elle est en attente, la facture garde sa version en vigueur.
-- **Facture déjà scellée (SEFC)** : la pièce scellée ne peut pas changer (intégrité fiscale). La modification approuvée produit alors une **facture rectificative**, présentée à l'écran comme la nouvelle version de la facture (décision D8).
+- **Facture déjà certifiée par notre système** : la pièce scellée ne peut pas changer (intégrité fiscale). La modification approuvée produit alors une **facture rectificative**, présentée à l'écran comme la nouvelle version de la facture (décision D8).
 - **Comptabilité** : la nouvelle version, ou la rectificative, corrige les écritures (contre-passation et nouvelle écriture).
 
 **Critère** : une facture émise non payée est modifiée ; la demande attend l'approbation ; une fois approuvée, la version 2 est en vigueur, la version 1 reste consultable, et rien n'a été supprimé.

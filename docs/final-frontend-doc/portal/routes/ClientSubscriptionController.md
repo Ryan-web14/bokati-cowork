@@ -325,7 +325,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `documentNumber` | texte |  |  |
 | `documentType` | enum : `QUOTE`, `PROFORMA_INVOICE`, `INVOICE`, `CREDIT_NOTE`, `CORRECTIVE_INVOICE`, `DEBIT_NOTE` |  |  |
-| `status` | enum : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `VOIDED`, `REFUNDED`, `WRITTEN_OFF` |  |  |
+| `status` | enum : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `REFUNDED`, `APPLIED`, `WRITTEN_OFF` |  |  |
 | `customerType` | texte |  |  |
 | `customerCode` | texte |  |  |
 | `customerName` | texte |  |  |
@@ -400,6 +400,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `companyCustomerCode` | texte |  |  |
 | `companyName` | texte |  |  |
 | `companyLinkSource` | texte |  |  |
+| `author` | [BillingDocumentAuthorResponse](#m-BillingDocumentAuthorResponse) |  |  |
 
 <a id="m-MobileMoneyDepositResponse-AccountDetailsResponse"></a>
 #### MobileMoneyDepositResponse.AccountDetailsResponse
@@ -511,7 +512,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `signerName` | texte |  |  |
 | `signerEmail` | texte |  |  |
-| `status` | enum : `PENDING`, `SIGNED`, `EXPIRED` |  |  |
+| `status` | enum : `PENDING`, `SIGNED`, `EXPIRED`, `CANCELLED` |  |  |
 | `signedAt` | date-heure ISO 8601 UTC |  |  |
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -532,3 +533,15 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `recoveredAt` | date-heure ISO 8601 UTC |  |  |
 | `recoveredBy` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
+
+<a id="m-BillingDocumentAuthorResponse"></a>
+#### BillingDocumentAuthorResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `createdBy` | texte |  |  |
+| `createdByName` | texte |  |  |
+| `createdByTitle` | texte |  |  |
+| `versionAuthor` | texte |  |  |
+| `versionAuthorName` | texte |  |  |
+| `versionAuthorTitle` | texte |  |  |

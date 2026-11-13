@@ -18,6 +18,8 @@ Le module ne contient aucun worker planifié.
 
 Sommaire : [Notions](#notions) · [Statuts](#statuts-et-cycle-de-vie) · [Parcours publics](#parcours) · [Gestion des comptes](#gérer-les-comptes-back-office) · [Rôles et droits](#gérer-les-rôles-et-les-droits-back-office) · [Règles et erreurs](#règles-et-erreurs-à-refléter-dans-lécran) · [À prévoir](#à-prévoir-côté-frontend) · [Effets automatiques](#effets-automatiques) · [Écarts](#écarts-relevés)
 
+Fiche collaborateur (fonction, signature du visa, supérieur direct N+1) : [fiche-collaborateur.md](fiche-collaborateur.md).
+
 ## Notions
 
 | Objet | Identifiant exposé | Ce qu'il faut savoir |

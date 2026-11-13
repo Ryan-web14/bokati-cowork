@@ -2,13 +2,14 @@
 
 Remise à niveau complète du module de facturation (`features/billing`) et des services qui l'entourent : devis, factures, proformas, avoirs, rectificatives, acomptes, échéanciers, catalogue, relevés clients, envois, avec la comptabilité déjà branchée (lot F4 du plan finance).
 
-Demandé par l'exploitant le 13/11/2026 : d'abord corriger les écarts relevés, puis ajouter les fonctionnalités qui manquent, et compléter le module jusqu'au bout.
+Demandé par l'exploitant le 13/11/2026 : d'abord corriger les écarts relevés, puis ajouter les fonctionnalités qui manquent, et compléter le module jusqu'au bout. **Livré le 13/11/2026** sur `feature/facturation-devis` : voir [livraison.md](livraison.md).
 
 ## 1. Sommaire
 
 | Fichier | Contenu |
 | --- | --- |
-| [ecarts.md](ecarts.md) | Les 19 écarts relevés, revérifiés dans le code le 13/11/2026 : 4 corrigés, 2 partiels, 13 ouverts, avec la correction prévue |
+| [livraison.md](livraison.md) | **État livré** (13/11/2026) : les 16 lots, routes, migrations, paramètres, droits, schémas comptables, reprise des données, points ouverts |
+| [ecarts.md](ecarts.md) | Les 19 écarts relevés : tous corrigés ou réglés par les lots du plan |
 | [realisation.md](realisation.md) | Plan de réalisation : décisions retenues (D1 à D7), ordre des lots, ce que chaque lot change, ses routes et son test |
 | [ameliorations.md](ameliorations.md) | Les améliorations demandées : négociation et révision des devis, acomptes du devis à la facture, destinataires et canaux d'envoi, proforma, changement de client, devis avec l'inventaire, saisie d'un montant ventilé par le système, relevé client, catalogue |
 
@@ -17,7 +18,7 @@ Demandé par l'exploitant le 13/11/2026 : d'abord corriger les écarts relevés,
 | Domaine | Aujourd'hui | Cible |
 | --- | --- | --- |
 | Devis | Création, options, signature en ligne, acompte unique, conversion | Négociation avec versions, révision après acceptation, plusieurs acomptes, vérification de l'inventaire, expiration |
-| Factures | Création manuelle ou automatique, émission, scellement SEFC, paiements, avoirs, rectificatives | Cycle de vie strict, acomptes déduits, changement de client, ventilation d'un total, envois tracés |
+| Factures | Création manuelle ou automatique, émission, certification par notre système, paiements, avoirs, rectificatives | Cycle de vie strict, acomptes déduits, changement de client, ventilation d'un total, envois tracés |
 | Proforma | Type existant, traité comme une facture | Document sans valeur fiscale, converti une fois en facture |
 | Envoi | Courriel à une adresse | Destinataires choisis, copies, préférence par client, courriel et WhatsApp, journal des envois |
 | Catalogue | Prix, plancher, marge, remise maximale | Familles, prix par segment et datés, lien à l'inventaire, compte de produit par article, import et export |
@@ -69,4 +70,4 @@ Tranchées le 13/11/2026 : voir [realisation.md](realisation.md#1-décisions-ret
 | D5 | Stock insuffisant sur un devis | Avertissement ou blocage ? | Avertissement sur le devis, blocage à la facturation (paramètre) |
 | D6 | Changement de client d'une facture payée | Refusé, ou paiements reportés en avoir ? | Paiements du client d'origine reportés en avoir à rembourser ou imputer |
 | D7 | Statut VOIDED | Le garder (distinct de CANCELLED), ou le retirer ? | Le retirer : CANCELLED suffit, l'avoir porte la trace |
-| D8 | Facture scellée non payée modifiée | Nouvelle version de la même pièce, ou facture rectificative ? | Rectificative, montrée comme nouvelle version : une pièce scellée (SEFC) ne change pas |
+| D8 | Facture scellée non payée modifiée | Nouvelle version de la même pièce, ou facture rectificative ? | Rectificative, montrée comme nouvelle version : une pièce certifiée par notre système ne change pas |

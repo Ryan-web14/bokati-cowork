@@ -1424,6 +1424,115 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}/staff-profile",
+   "package": "security.admin.user.controller",
+   "controller": "StaffProfileController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/StaffProfileController.java",
+   "handler": "get",
+   "declaredIn": "StaffProfileController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.StaffProfileResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}/staff-profile",
+   "package": "security.admin.user.controller",
+   "controller": "StaffProfileController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/StaffProfileController.java",
+   "handler": "update",
+   "declaredIn": "StaffProfileController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.user.dto.request.UpdateStaffProfileRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.StaffProfileResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/staff/me/profile",
+   "package": "security.admin.user.controller",
+   "controller": "StaffProfileController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/StaffProfileController.java",
+   "handler": "me",
+   "declaredIn": "StaffProfileController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.StaffProfileResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/staff/me/signature",
+   "package": "security.admin.user.controller",
+   "controller": "StaffProfileController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/StaffProfileController.java",
+   "handler": "clearMySignature",
+   "declaredIn": "StaffProfileController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.StaffProfileResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/staff/me/signature",
+   "package": "security.admin.user.controller",
+   "controller": "StaffProfileController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/StaffProfileController.java",
+   "handler": "updateMySignature",
+   "declaredIn": "StaffProfileController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.user.dto.request.UpdateMySignatureRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.StaffProfileResponse>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/admin/provisioning/bootstrap-admin",
@@ -1974,6 +2083,73 @@
     }
    }
   },
+  "StaffProfileResponse": {
+   "type": "object",
+   "properties": {
+    "userCode": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "fullName": {
+     "type": "string"
+    },
+    "jobTitle": {
+     "type": "string"
+    },
+    "hasSignature": {
+     "type": "boolean"
+    },
+    "signatureImageBase64": {
+     "type": "string"
+    },
+    "signatureUpdatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "managerUserCode": {
+     "type": "string"
+    },
+    "managerName": {
+     "type": "string"
+    },
+    "managerEmail": {
+     "type": "string"
+    }
+   }
+  },
+  "UpdateStaffProfileRequest": {
+   "type": "object",
+   "properties": {
+    "jobTitle": {
+     "maxLength": 160,
+     "minLength": 0,
+     "type": "string"
+    },
+    "managerUserCode": {
+     "type": "string"
+    },
+    "signatureImageBase64": {
+     "type": "string"
+    },
+    "clearSignature": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateMySignatureRequest": {
+   "required": [
+    "signatureImageBase64"
+   ],
+   "type": "object",
+   "properties": {
+    "signatureImageBase64": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
   "UserResponse": {
    "type": "object",
    "properties": {
@@ -2079,6 +2255,9 @@
   "UpdateRolePermissionNamesRequest": "com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionNamesRequest",
   "UpdateRolePermissionsRequest": "com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionsRequest",
   "AssignRoleToUserRequest": "com.sni.bokaticowork.security.admin.role.dto.request.AssignRoleToUserRequest",
+  "StaffProfileResponse": "com.sni.bokaticowork.security.admin.user.dto.response.StaffProfileResponse",
+  "UpdateStaffProfileRequest": "com.sni.bokaticowork.security.admin.user.dto.request.UpdateStaffProfileRequest",
+  "UpdateMySignatureRequest": "com.sni.bokaticowork.security.admin.user.dto.request.UpdateMySignatureRequest",
   "UserResponse": "com.sni.bokaticowork.security.admin.user.dto.response.UserResponse",
   "UserRequest": "com.sni.bokaticowork.security.admin.user.dto.request.UserRequest",
   "AddressRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
