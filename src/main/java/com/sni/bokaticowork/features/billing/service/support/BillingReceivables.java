@@ -41,7 +41,6 @@ public final class BillingReceivables {
     public static final Set<BillingDocumentStatus> NOT_ISSUED = EnumSet.of(
             BillingDocumentStatus.DRAFT,
             BillingDocumentStatus.CANCELLED,
-            BillingDocumentStatus.VOIDED,
             BillingDocumentStatus.REJECTED,
             BillingDocumentStatus.EXPIRED,
             BillingDocumentStatus.CONVERTED
@@ -70,9 +69,8 @@ public final class BillingReceivables {
     /**
      * L'avoir est encore disponible · scelle, et pas encore consomme.
      *
-     * <p>Sur un avoir, {@code ISSUED} signifie « consomme » : c'est l'etat pose au moment ou il est
-     * impute sur une facture ou reverse au portefeuille. Un avoir encore utilisable est donc celui
-     * qui est {@code VALIDATED}.</p>
+     * <p>Un avoir emis ({@code ISSUED}) n'a de valeur qu'une fois scelle ({@code VALIDATED}) ; une
+     * fois impute ({@code APPLIED}) ou reverse ({@code REFUNDED}), il est consomme (lot B1).</p>
      */
     public static boolean creditAvailable(BillingDocumentType type, BillingDocumentStatus status) {
         return type == BillingDocumentType.CREDIT_NOTE && status == BillingDocumentStatus.VALIDATED;

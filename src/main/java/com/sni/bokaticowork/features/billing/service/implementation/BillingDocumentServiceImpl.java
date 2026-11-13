@@ -473,7 +473,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         editHistoryRepository.save(BillingDocumentEditHistory.builder()
                 .document(saved)
                 .editType("RECIPIENT_UPDATED")
-                .changedBy(StringUtils.hasText(request.changedBy()) ? request.changedBy().trim() : "SYSTEM")
+                // Lot B1 : l'auteur vient du jeton, jamais du corps de la requete.
+                .changedBy(currentUserName())
                 .changedAt(Instant.now())
                 .snapshotJson(writeJson(auditPayload))
                 .build());
@@ -1075,7 +1076,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse send(String documentNumber) {
         BillingDocument document = serviceByNumber(documentNumber);
         lifecycleSupport.ensureCanSend(document);
-        document.setStatus(document.getDocumentType() == BillingDocumentType.QUOTE ? BillingDocumentStatus.SENT : BillingDocumentStatus.SENT);
+        // Lot B1 : l'envoi se trace (date, version transmise) sans ecraser le statut ; une facture
+        // payee envoyee reste PAID. Seul un devis emis passe a SENT.
+        if (document.getDocumentType() == BillingDocumentType.QUOTE && document.getStatus() == BillingDocumentStatus.ISSUED) {
+            document.setStatus(BillingDocumentStatus.SENT);
+        }
         document.setSentAt(Instant.now());
         BillingDocument saved = documentRepository.save(document);
         // Sans horodatage de transmission, rien ne distingue un brouillon retouche d'une
@@ -1255,6 +1260,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
         quote.setStatus(BillingDocumentStatus.REJECTED);
         quote.setBalanceDue(BigDecimal.ZERO);
+        cancelPendingAdvance(quote);
         BillingDocument saved = documentRepository.save(quote);
         eventWriter.write(saved, "QUOTE_REJECTED", null);
         return mapper.toResponse(saved);
@@ -1406,6 +1412,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
         // Validation SEFC immédiate si demandée (doit précéder applyImmediately)
         if (Boolean.TRUE.equals(request.validateImmediately())) {
+            issue(creditDoc.getDocumentNumber(), null);
             validate(creditDoc.getDocumentNumber());
         }
         if (Boolean.TRUE.equals(request.applyImmediately())) {
@@ -1442,8 +1449,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                     "L'avoir " + creditNoteNumber + " doit etre valide (SEFC) avant d'etre reverse · "
                             + "un avoir non scelle n'a pas de valeur");
         }
-        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
-            throw new BadRequestException("L'avoir " + creditNoteNumber + " a deja ete consomme");
+        if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
+            throw new BadRequestException("L'avoir " + creditNoteNumber + " a déjà été consommé");
         }
         BigDecimal amount = creditNote.getTotalAmount();
         if (amount == null || amount.signum() <= 0) {
@@ -1464,7 +1471,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         walletService.credit(wallet, amount, WalletEntryType.REFUND, "CREDIT_NOTE", creditNoteNumber,
                 motive, currentUserName(), "CREDIT_NOTE_REFUND:" + creditNoteNumber);
 
-        creditNote.setStatus(BillingDocumentStatus.ISSUED);
+        creditNote.setStatus(BillingDocumentStatus.REFUNDED);
         BillingDocument saved = documentRepository.save(creditNote);
 
         fiscalAuditService.log("CREDIT_NOTE_REFUNDED_TO_WALLET", "BILLING_DOCUMENT", creditNoteNumber,
@@ -1500,12 +1507,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             throw new ConflictException("credit_note",
                     "l'avoir " + creditNoteNumber + " doit etre valide (SEFC) avant d'etre impute");
         }
-        // Un avoir consomme (ISSUED) ne s'impute plus
-        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
-            throw new ConflictException("credit_note", "l'avoir " + creditNoteNumber + " a deja ete consomme");
+        // Un avoir consomme (APPLIED, REFUNDED) ne s'impute plus
+        if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
+            throw new ConflictException("credit_note", "l'avoir " + creditNoteNumber + " a déjà été consommé");
         }
         BillingDocument invoice = applyPayment(creditNote.getSourceCode(), creditNote.getTotalAmount());
-        creditNote.setStatus(BillingDocumentStatus.ISSUED);
+        creditNote.setStatus(BillingDocumentStatus.APPLIED);
         BillingDocument saved = documentRepository.save(creditNote);
         eventWriter.write(saved, "CREDIT_NOTE_APPLIED", java.util.Map.of("invoiceNumber", invoice.getDocumentNumber()));
         return mapper.toResponse(saved);
@@ -1543,6 +1550,24 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public int markOverdueDocuments() {
         return documentRepository.markOverdueDocuments();
+    }
+
+    @Override
+    public int expireQuotes() {
+        // Lot B1 : un devis dont la date de validite est passee sans reponse expire ; l'acompte
+        // encore attendu est abandonne. Un devis accepte ou dont l'acompte est encaisse n'expire pas.
+        documentRepository.cancelPendingAdvancesOfExpiringQuotes();
+        return documentRepository.expireQuotes();
+    }
+
+    /** Acompte demande et rien encaisse : abandonne avec le devis (lot B1). */
+    private void cancelPendingAdvance(BillingDocument quote) {
+        advanceRepository.findByDocument(quote)
+                .filter(advance -> advance.getStatus() == BillingAdvanceStatus.PENDING)
+                .ifPresent(advance -> {
+                    advance.setStatus(BillingAdvanceStatus.CANCELLED);
+                    advanceRepository.save(advance);
+                });
     }
 
     @Override
@@ -1697,7 +1722,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         document.setPaidAmount(paid);
         document.setBalanceDue(document.getTotalAmount().subtract(paid));
         if (paid.signum() == 0) {
-            document.setStatus(BillingDocumentStatus.ISSUED);
+            document.setStatus(Boolean.TRUE.equals(document.getLocked()) ? BillingDocumentStatus.VALIDATED : BillingDocumentStatus.ISSUED);
             document.setPaidAt(null);
         } else if (document.getBalanceDue().signum() > 0) {
             document.setStatus(BillingDocumentStatus.PARTIALLY_PAID);
@@ -1776,7 +1801,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
      * en place, donc un document annulé qui continue de peser sur un solde.
      */
     private void releaseCreditNoteBeforeCancellation(BillingDocument creditNote) {
-        if (creditNote.getStatus() != BillingDocumentStatus.ISSUED) {
+        if (!BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
             // Avoir non consommé · rien à défaire.
             return;
         }
@@ -1797,8 +1822,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         String target = creditNote.getSourceCode();
         if (StringUtils.hasText(target) && "INVOICE".equalsIgnoreCase(creditNote.getSourceType())) {
             documentRepository.findByDocumentNumber(target)
-                    .filter(invoice -> invoice.getStatus() != BillingDocumentStatus.CANCELLED
-                            && invoice.getStatus() != BillingDocumentStatus.VOIDED)
+                    .filter(invoice -> invoice.getStatus() != BillingDocumentStatus.CANCELLED)
                     .ifPresent(invoice -> reversePayment(target, creditNote.getTotalAmount()));
         }
     }
@@ -1828,7 +1852,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
         // L'avoir est appliqué via applyPayment, qui solde la facture et la laisse donc en PAID.
         // Une facture annulee ressortait ainsi comme encaissee : elle restait comptee dans le
-        // chiffre d'affaires, puisque les agregats comptables excluent CANCELLED et VOIDED mais
+        // chiffre d'affaires, puisque les agregats comptables excluent CANCELLED mais
         // pas PAID. Le statut est donc repositionne apres l'application de l'avoir.
         BillingDocument cancelled = markCancelledAndArchived(document.getDocumentNumber());
         eventWriter.write(cancelled, "BILLING_DOCUMENT_CANCELLED_VIA_CREDIT_NOTE",
@@ -1868,7 +1892,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (!Boolean.TRUE.equals(creditNote.getLocked())) {
             throw new BadRequestException("L'avoir doit être validé (SEFC) avant d'être appliqué à une autre facture");
         }
-        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
+        if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
             throw new BadRequestException("L'avoir " + creditNoteNumber + " a déjà été consommé");
         }
         if (!creditNote.getCustomerCode().equals(targetInvoice.getCustomerCode())) {
@@ -1881,7 +1905,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
         applyPayment(targetInvoiceNumber, creditNote.getTotalAmount());
 
-        creditNote.setStatus(BillingDocumentStatus.ISSUED);
+        creditNote.setStatus(BillingDocumentStatus.APPLIED);
         BillingDocument savedCreditNote = documentRepository.save(creditNote);
 
         fiscalAuditService.log(FiscalAuditService.CREDIT_NOTE_APPLIED,
@@ -2403,7 +2427,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         document.setSignedAt(Instant.now());
         document.setLocked(true);
         document.setValidatedAt(Instant.now());
-        document.setStatus(BillingDocumentStatus.VALIDATED);
+        // Le scellement ne defait ni un encaissement ni une imputation : une facture payee reste PAID.
+        if (document.getStatus() == BillingDocumentStatus.ISSUED || document.getStatus() == BillingDocumentStatus.SENT) {
+            document.setStatus(BillingDocumentStatus.VALIDATED);
+        }
 
         // 8 · persistance (une seule écriture atomique)
         BillingDocument saved = documentRepository.save(document);

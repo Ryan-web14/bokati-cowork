@@ -286,6 +286,7 @@ bokati.billing.workers.overdue-delay-ms	BILLING	INTEGER	LIVE	3600000	Cadence du 
 bokati.billing.workers.payment-reminder-cooldown-days	BILLING	INTEGER	LIVE	7	Intervalle entre deux rappels (jours)
 bokati.billing.workers.payment-reminder-cron	BILLING	CRON	LIVE	0 0 8 * * *	Planification des rappels de paiement
 bokati.billing.workers.payment-reminder-max	BILLING	INTEGER	LIVE	3	Nombre maximum de rappels
+bokati.billing.workers.quote-expiry-delay-ms	BILLING	INTEGER	LIVE	3600000	Cadence du passage en expiré des devis échus (ms)
 bokati.billing.workers.schedule-overdue-delay-ms	BILLING	INTEGER	LIVE	3600000	Cadence du suivi des échéanciers (ms)
 bokati.booking.lifecycle.worker-delay-ms	BOOKING	INTEGER	LIVE	60000	Cadence du suivi des réservations (ms)
 bokati.booking.no-show.worker-delay-ms	BOOKING	INTEGER	LIVE	60000	Cadence du suivi des absences (ms)

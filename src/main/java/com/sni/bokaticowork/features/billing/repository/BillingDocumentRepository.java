@@ -406,6 +406,34 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     @org.springframework.data.jpa.repository.Modifying
     int markOverdueDocuments();
 
+    /** Devis sans reponse dont la date de validite (due_date) est passee (lot B1). */
+    @Query(nativeQuery = true, value = """
+            UPDATE billing_document
+            SET status = 'EXPIRED', updated_at = NOW()
+            WHERE document_type = 'QUOTE'
+              AND deleted_at IS NULL
+              AND status IN ('ISSUED', 'SENT', 'VIEWED', 'NEGOTIATION', 'DEPOSIT_REQUESTED')
+              AND due_date IS NOT NULL
+              AND due_date < CURRENT_DATE
+              AND NOT EXISTS (SELECT 1 FROM billing_document_advance a WHERE a.document_id = billing_document.id
+                              AND a.status IN ('PAID', 'PARTIALLY_PAID'))
+            """)
+    @org.springframework.data.jpa.repository.Modifying
+    int expireQuotes();
+
+    /** Acomptes encore attendus sur les devis que {@link #expireQuotes()} va faire expirer. */
+    @Query(nativeQuery = true, value = """
+            UPDATE billing_document_advance
+            SET status = 'CANCELLED', updated_at = NOW()
+            WHERE status = 'PENDING'
+              AND document_id IN (SELECT d.id FROM billing_document d
+                                  WHERE d.document_type = 'QUOTE' AND d.deleted_at IS NULL
+                                    AND d.status IN ('ISSUED', 'SENT', 'VIEWED', 'NEGOTIATION', 'DEPOSIT_REQUESTED')
+                                    AND d.due_date IS NOT NULL AND d.due_date < CURRENT_DATE)
+            """)
+    @org.springframework.data.jpa.repository.Modifying
+    int cancelPendingAdvancesOfExpiringQuotes();
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM billing_document

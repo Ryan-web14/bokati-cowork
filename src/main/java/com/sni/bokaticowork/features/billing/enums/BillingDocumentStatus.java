@@ -5,6 +5,7 @@ public enum BillingDocumentStatus {
     ISSUED,
     /** Facture fiscalement scellée (SEFC) · immuable, numéro définitif assigné. */
     VALIDATED,
+    /** Facture : envoi trace sans changer le statut depuis le lot B1 ; reste pour l'historique. */
     SENT,
     /** Devis ouvert par le client (tracking email). */
     VIEWED,
@@ -22,7 +23,9 @@ public enum BillingDocumentStatus {
     PAID,
     OVERDUE,
     CANCELLED,
-    VOIDED,
+    /** Avoir reverse au portefeuille du client (ou rembourse). */
     REFUNDED,
+    /** Avoir impute sur une facture : consomme. */
+    APPLIED,
     WRITTEN_OFF
 }

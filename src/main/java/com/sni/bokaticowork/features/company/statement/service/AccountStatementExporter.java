@@ -121,8 +121,9 @@ public class AccountStatementExporter {
                 case "PAID" -> "Réglée";
                 case "PARTIALLY_PAID" -> "Partiellement réglée";
                 case "OVERDUE" -> "En retard";
-                case "CANCELLED", "VOIDED" -> "Annulée";
+                case "CANCELLED" -> "Annulée";
                 case "REFUNDED" -> "Remboursée";
+                case "APPLIED" -> "Imputée";
                 case "WRITTEN_OFF" -> "Passée en perte";
                 case "VALIDATED" -> "Validée";
                 default -> "Émise";

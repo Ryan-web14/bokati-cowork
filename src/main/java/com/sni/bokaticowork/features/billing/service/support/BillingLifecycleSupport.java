@@ -9,6 +9,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class BillingLifecycleSupport {
 
+    /** Statuts d'un document emis qui admettent le scellement (lot B1). */
+    private static final java.util.Set<BillingDocumentStatus> VALIDATABLE = java.util.EnumSet.of(BillingDocumentStatus.ISSUED,
+            BillingDocumentStatus.SENT, BillingDocumentStatus.PARTIALLY_PAID, BillingDocumentStatus.PAID, BillingDocumentStatus.OVERDUE,
+            BillingDocumentStatus.APPLIED, BillingDocumentStatus.REFUNDED);
+
+    /** Un avoir impute ou reverse est consomme : il ne s'utilise plus. */
+    public static boolean creditNoteConsumed(BillingDocument creditNote) {
+        return creditNote.getStatus() == BillingDocumentStatus.APPLIED || creditNote.getStatus() == BillingDocumentStatus.REFUNDED;
+    }
+
     public void ensureCanIssue(BillingDocument document) {
         if (document.getStatus() != BillingDocumentStatus.DRAFT) {
             throw new BadRequestException("Only draft billing documents can be issued");
@@ -16,8 +26,11 @@ public class BillingLifecycleSupport {
     }
 
     public void ensureCanSend(BillingDocument document) {
+        if (document.getStatus() == BillingDocumentStatus.DRAFT) {
+            // Lot B1 : un brouillon s'emet avant de partir (controle des remises, numero, vendeur fige).
+            throw new BadRequestException("Un brouillon s'émet avant d'être envoyé");
+        }
         if (document.getStatus() == BillingDocumentStatus.CANCELLED
-                || document.getStatus() == BillingDocumentStatus.VOIDED
                 || document.getStatus() == BillingDocumentStatus.REFUNDED) {
             throw new BadRequestException("Billing document cannot be sent in status " + document.getStatus());
         }
@@ -29,7 +42,6 @@ public class BillingLifecycleSupport {
             throw new BadRequestException("Payments can only be allocated to invoices");
         }
         if (document.getStatus() == BillingDocumentStatus.CANCELLED
-                || document.getStatus() == BillingDocumentStatus.VOIDED
                 || document.getStatus() == BillingDocumentStatus.REFUNDED) {
             throw new BadRequestException("Billing document cannot be paid in status " + document.getStatus());
         }
@@ -48,7 +60,6 @@ public class BillingLifecycleSupport {
             throw new BadRequestException("Un avoir se fait sur une facture, une rectificative ou une note de débit");
         }
         if (document.getStatus() == BillingDocumentStatus.CANCELLED
-                || document.getStatus() == BillingDocumentStatus.VOIDED
                 || document.getStatus() == BillingDocumentStatus.REFUNDED) {
             throw new BadRequestException("Aucun avoir possible sur un document au statut " + document.getStatus());
         }
@@ -82,11 +93,12 @@ public class BillingLifecycleSupport {
         if (Boolean.TRUE.equals(document.getLocked())) {
             throw new BadRequestException("Document déjà validé");
         }
-        if (document.getStatus() != BillingDocumentStatus.DRAFT
-                && document.getStatus() != BillingDocumentStatus.ISSUED
-                && document.getStatus() != BillingDocumentStatus.PAID) {
-            throw new BadRequestException(
-                    "Le document doit être en statut DRAFT, ISSUED ou PAID pour être validé, statut actuel : " + document.getStatus());
+        if (document.getStatus() == BillingDocumentStatus.DRAFT) {
+            // Lot B1 : la validation sautait l'emission et ses controles (remises, vendeur, notification).
+            throw new BadRequestException("Un brouillon s'émet avant d'être validé");
+        }
+        if (!VALIDATABLE.contains(document.getStatus())) {
+            throw new BadRequestException("Le document ne peut pas être validé au statut " + document.getStatus());
         }
     }
 }

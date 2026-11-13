@@ -105,6 +105,9 @@ public interface BillingDocumentService {
     BillingDocumentResponse applyCreditNote(String creditNoteNumber);
     CustomerStatementResponse customerStatement(String customerType, String customerCode, Pageable pageable);
     int markOverdueDocuments();
+
+    /** Passe en EXPIRED les devis sans reponse dont la date de validite est passee (lot B1). */
+    int expireQuotes();
     BillingDocumentResponse get(String documentNumber);
     PaginatedResponse<BillingDocumentResponse> list(BillingDocumentType type,
                                                     BillingDocumentStatus status,

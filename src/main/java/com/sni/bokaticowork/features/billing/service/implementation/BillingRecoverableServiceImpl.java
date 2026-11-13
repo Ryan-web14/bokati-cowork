@@ -76,6 +76,9 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
                 && request.partialQuantity().compareTo(recoverable.getQuantity()) < 0;
         recoverable.setStatus(partial ? "PARTIALLY_RECOVERED" : "RECOVERED");
         recoverable.setRecoveredAt(Instant.now());
+        // Lot B1 : l'auteur de la recuperation, pris dans le jeton (le champ restait vide).
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        recoverable.setRecoveredBy(authentication == null || !StringUtils.hasText(authentication.getName()) ? "SYSTEM" : authentication.getName());
         if (request != null && StringUtils.hasText(request.notes())) {
             recoverable.setNotes(request.notes().trim());
         }

@@ -47,8 +47,7 @@ public class SubscriptionBillingLinkService {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final Set<BillingDocumentType> INVOICES = EnumSet.of(BillingDocumentType.INVOICE, BillingDocumentType.CORRECTIVE_INVOICE,
             BillingDocumentType.DEBIT_NOTE);
-    private static final Set<BillingDocumentStatus> CLOSED = EnumSet.of(BillingDocumentStatus.DRAFT, BillingDocumentStatus.CANCELLED,
-            BillingDocumentStatus.VOIDED);
+    private static final Set<BillingDocumentStatus> CLOSED = EnumSet.of(BillingDocumentStatus.DRAFT, BillingDocumentStatus.CANCELLED);
 
     private final BillingDocumentRepository documentRepository;
     private final BillingDocumentService documentService;

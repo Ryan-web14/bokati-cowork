@@ -223,14 +223,14 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         if (status == null) return null;
         if (Boolean.TRUE.equals(locked)) {
             return switch (status) {
-                case CANCELLED, VOIDED -> "ANNULÉ";
+                case CANCELLED -> "ANNULÉ";
                 default -> null;
             };
         }
         return switch (status) {
             case DRAFT -> "BROUILLON";
             case OVERDUE -> "EN RETARD";
-            case CANCELLED, VOIDED -> "ANNULÉ";
+            case CANCELLED -> "ANNULÉ";
             default -> null;
         };
     }

@@ -130,7 +130,7 @@ class BillingCancellationRulesTest {
     void shouldReverseTheImputationWhenCancellingAConsumedCreditNote() {
         // L'avoir avait solde une facture · l'annuler sans defaire l'imputation laisserait la
         // facture creditee par un document annule.
-        BillingDocument creditNote = creditNote("CRN-002", "50000", BillingDocumentStatus.ISSUED, "INV-010");
+        BillingDocument creditNote = creditNote("CRN-002", "50000", BillingDocumentStatus.APPLIED, "INV-010");
         exists(creditNote);
         BillingDocument target = invoice("INV-010", "100000", "50000", true);
         when(documentRepository.findByDocumentNumber("INV-010")).thenReturn(Optional.of(target));
@@ -146,7 +146,7 @@ class BillingCancellationRulesTest {
     void shouldNotReviveAnInvoiceThatIsItselfCancelled() {
         // C'est le cas rencontre en production : la facture cible avait deja ete annulee, d'ou
         // le refus « cannot be paid in status CANCELLED » a l'imputation.
-        BillingDocument creditNote = creditNote("CRN-003", "50000", BillingDocumentStatus.ISSUED, "INV-011");
+        BillingDocument creditNote = creditNote("CRN-003", "50000", BillingDocumentStatus.APPLIED, "INV-011");
         exists(creditNote);
         BillingDocument target = invoice("INV-011", "100000", "50000", true);
         target.setStatus(BillingDocumentStatus.CANCELLED);
@@ -161,7 +161,7 @@ class BillingCancellationRulesTest {
     @Test
     void shouldRefuseToCancelACreditNoteAlreadyPaidIntoAWallet() {
         // Le solde a pu etre depense depuis · on ne le reprend pas silencieusement.
-        BillingDocument creditNote = creditNote("CRN-004", "50000", BillingDocumentStatus.ISSUED, null);
+        BillingDocument creditNote = creditNote("CRN-004", "50000", BillingDocumentStatus.REFUNDED, null);
         exists(creditNote);
         when(walletLedgerEntryRepository.findByIdempotencyKey("CREDIT_NOTE_REFUND:CRN-004"))
                 .thenReturn(Optional.of(new WalletLedgerEntry()));

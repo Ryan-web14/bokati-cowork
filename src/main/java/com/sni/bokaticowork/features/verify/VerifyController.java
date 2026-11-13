@@ -200,7 +200,7 @@ public class VerifyController {
             return "Émis";
         }
         return switch (status) {
-            case "CANCELLED", "VOIDED" -> "Annulé";
+            case "CANCELLED" -> "Annulé";
             case "DRAFT" -> "Brouillon";
             default -> "Émis";
         };

@@ -56,7 +56,7 @@ class BillingReceivablesTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = BillingDocumentStatus.class, names = {"CANCELLED", "VOIDED", "REJECTED", "EXPIRED", "CONVERTED"})
+    @EnumSource(value = BillingDocumentStatus.class, names = {"CANCELLED", "REJECTED", "EXPIRED", "CONVERTED"})
     @DisplayName("Un document abandonne ne compte ni comme facture, ni comme dette")
     void anAbandonedDocumentCountsForNothing(BillingDocumentStatus status) {
         assertThat(BillingReceivables.issued(BillingDocumentType.INVOICE, status)).isFalse();

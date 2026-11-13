@@ -58,18 +58,18 @@ class CreditNoteApplyGuardTest {
 
     @Test
     void shouldRefuseToApplyACreditNoteTwice() {
-        creditNoteExists(creditNote("CRN-011", true, BillingDocumentStatus.ISSUED));
+        creditNoteExists(creditNote("CRN-011", true, BillingDocumentStatus.APPLIED));
 
         assertThatThrownBy(() -> service.applyCreditNote("CRN-011"))
                 .isInstanceOf(ConflictException.class)
-                .hasMessageContaining("deja ete consomme");
+                .hasMessageContaining("déjà été consommé");
         verify(documentRepository, never()).lockByDocumentNumber("INV-010");
         verify(documentRepository, never()).save(any(BillingDocument.class));
     }
 
     @Test
     void shouldReadTheCreditNoteUnderLock() {
-        creditNoteExists(creditNote("CRN-012", true, BillingDocumentStatus.ISSUED));
+        creditNoteExists(creditNote("CRN-012", true, BillingDocumentStatus.APPLIED));
 
         assertThatThrownBy(() -> service.applyCreditNote("CRN-012")).isInstanceOf(ConflictException.class);
         verify(documentRepository).lockByDocumentNumber("CRN-012");

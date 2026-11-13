@@ -321,8 +321,7 @@ public class SubscriptionLifecycleOperator {
             return false;
         }
         boolean settled = billingDocumentRepository.findByDocumentNumber(invoiceNumber)
-                .filter(invoice -> invoice.getStatus() != BillingDocumentStatus.CANCELLED
-                        && invoice.getStatus() != BillingDocumentStatus.VOIDED)
+                .filter(invoice -> invoice.getStatus() != BillingDocumentStatus.CANCELLED)
                 .filter(invoice -> invoice.getBalanceDue() == null || invoice.getBalanceDue().signum() <= 0)
                 .isPresent();
         if (!settled) {
