@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
  * Lot F16 sur le schema de production : une demande sur une ligne bloquante sans disponible part
  * en validation budgetaire ; un engagement de 100 000 realise pour 85 000 libere 15 000.
  */
-@Import({BudgetEngine.class, BudgetService.class, FundRequestService.class, CashActorResolver.class})
+@Import({BudgetEngine.class, BudgetService.class, FundRequestService.class, CashActorResolver.class, com.sni.bokaticowork.features.approval.service.ApprovalEngine.class, com.sni.bokaticowork.features.approval.service.ApprovalHierarchy.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 class BudgetF16IT extends PostgresIntegrationTestBase {
 
@@ -60,6 +60,7 @@ class BudgetF16IT extends PostgresIntegrationTestBase {
     @MockitoBean private CashRegisterService cashRegisterService;
     @MockitoBean private AccountingEventPublisher accountingEvents;
     @MockitoBean private FundNotifier notifier;
+    @MockitoBean private com.sni.bokaticowork.features.approval.service.ApprovalNotifier approvalNotifier;
 
     private Long budgetId;
 

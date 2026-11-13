@@ -43,13 +43,6 @@ public class FundLifecycleService {
     private final FundNotifier notifier;
     private final SequenceGeneratorFacade sequences;
 
-    @Value("${fund.approval.reminder-hours:24}")
-    private long reminderHours;
-    @Value("${fund.approval.escalation-days:3}")
-    private long escalationDays;
-
-    private static final String APPROVAL_REMINDER_HOURS_KEY = "fund.approval.reminder-hours";
-    private static final String APPROVAL_ESCALATION_DAYS_KEY = "fund.approval.escalation-days";
 
     private PlatformSettings platformSettings;
 
@@ -58,13 +51,6 @@ public class FundLifecycleService {
         this.platformSettings = platformSettings;
     }
 
-    private long reminderHours() {
-        return platformSettings == null ? reminderHours : platformSettings.number(APPROVAL_REMINDER_HOURS_KEY, reminderHours);
-    }
-
-    private long escalationDays() {
-        return platformSettings == null ? escalationDays : platformSettings.number(APPROVAL_ESCALATION_DAYS_KEY, escalationDays);
-    }
 
     public Map<String, Integer> runPeriodic() {
         Instant now = Instant.now();
@@ -73,25 +59,7 @@ public class FundLifecycleService {
         int escalated = 0;
         int expired = 0;
         int justification = 0;
-        for (FundRequest request : requestRepository.findByStatusInOrderByCreatedAtAsc(EnumSet.of(FundRequestStatus.IN_APPROVAL))) {
-            Instant since = request.getLevelSince() == null ? request.getSubmittedAt() : request.getLevelSince();
-            if (since == null) {
-                continue;
-            }
-            boolean due = Duration.between(since, now).toHours() >= reminderHours()
-                    && (request.getApproverRemindedAt() == null || Duration.between(request.getApproverRemindedAt(), now).toHours() >= reminderHours());
-            if (due) {
-                notifier.toApprovers(request, request.getCurrentLevel());
-                if (Duration.between(since, now).toDays() >= escalationDays()) {
-                    notifier.toSupervisor(request, "La demande " + request.getNumber() + " attend sa validation de niveau " + request.getCurrentLevel()
-                            + " depuis " + Duration.between(since, now).toDays() + " jours.");
-                    escalated++;
-                }
-                request.setApproverRemindedAt(now);
-                requestRepository.save(request);
-                reminded++;
-            }
-        }
+        // Lot B15 : rappels et escalades des valideurs faits par le moteur commun (ApprovalWorker).
         for (FundRequest request : requestRepository.findByStatusInOrderByCreatedAtAsc(EnumSet.of(FundRequestStatus.APPROVED))) {
             if (request.getExpiresAt() != null && request.getExpiresAt().isBefore(now) && request.getDisbursedAmount().signum() == 0) {
                 request.setStatus(FundRequestStatus.EXPIRED);

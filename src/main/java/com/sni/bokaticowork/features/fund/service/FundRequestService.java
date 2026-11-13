@@ -72,7 +72,7 @@ public class FundRequestService {
     private final FundRequestRepository requestRepository;
     private final FundRequestLineRepository lineRepository;
     private final FundRequestApprovalRepository approvalRepository;
-    private final FundApprovalDelegationRepository delegationRepository;
+    private final com.sni.bokaticowork.features.approval.service.ApprovalEngine approvals;
     private final FundDisbursementRepository disbursementRepository;
     private final ExpenseJustificationLineRepository expenseRepository;
     private final CashOperationNatureRepository natureRepository;
@@ -325,7 +325,10 @@ public class FundRequestService {
         request.setLastComment(null);
         requestRepository.save(request);
         record(request, 0, FundApprovalDecision.SUBMITTED, null, null, null, null);
-        notifier.toApprovers(request, 1);
+        // Lot B15 : centre d'approbation de la caisse, sur le moteur commun (hierarchie, validation
+        // en avance par un N+, historique commun). Il previent les decideurs du premier niveau.
+        approvals.submit(new com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Submission(APPROVAL_CENTER, APPROVAL_TYPE, APPROVAL_TYPE,
+                request.getNumber(), request.getSubject(), amount(request), "XAF", request.getRequester(), null, levelSpecs(request), null));
         return view(request);
     }
 
@@ -339,26 +342,48 @@ public class FundRequestService {
 
     public FundDtos.Request approve(String number, FundDtos.Decision decision) {
         FundRequest request = inApproval(number);
-        String delegatedFrom = assertCanDecide(request);
+        assertNotBeneficiary(request, actor());
         String comment = decision == null ? null : trim(decision.comment());
         BigDecimal before = amount(request);
+        BigDecimal reduced = null;
         if (decision != null && decision.reducedAmount() != null) {
-            BigDecimal reduced = money(decision.reducedAmount());
+            reduced = money(decision.reducedAmount());
             if (reduced.signum() <= 0 || reduced.compareTo(before) >= 0) {
                 throw new BadRequestException("Le montant reduit est positif et inferieur au montant demande (" + plain(before) + ")");
             }
             if (!StringUtils.hasText(comment)) {
                 throw new BadRequestException("Indiquez le motif de la reduction");
             }
-            request.setApprovedAmount(reduced);
-            record(request, request.getCurrentLevel(), FundApprovalDecision.REDUCED, before, reduced, comment, delegatedFrom);
-        } else {
-            record(request, request.getCurrentLevel(), FundApprovalDecision.APPROVED, before, before, comment, delegatedFrom);
         }
-        request.setLastComment(comment);
+        applyApproval(request, approvals.approveSubject(APPROVAL_CENTER, APPROVAL_TYPE, request.getNumber(),
+                new com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Decision(comment, reduced)));
+        return view(request);
+    }
+
+    /**
+     * Effet d'une approbation du moteur commun (route de la caisse ou route commune) : les niveaux
+     * sautes par une validation en avance sont notes dans la frise de la demande.
+     */
+    void applyApproval(FundRequest request, com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Outcome outcome) {
+        BigDecimal before = amount(request);
+        for (int level = outcome.fromLevel(); level < outcome.toLevel(); level++) {
+            record(request, level, FundApprovalDecision.APPROVED, before, before, "Approuve en avance au niveau " + outcome.toLevel(),
+                    outcome.delegatedFrom());
+        }
+        boolean reduced = outcome.amountAfter() != null && outcome.amountBefore() != null
+                && outcome.amountAfter().compareTo(outcome.amountBefore()) != 0;
+        if (reduced) {
+            request.setApprovedAmount(money(outcome.amountAfter()));
+            record(request, outcome.toLevel(), FundApprovalDecision.REDUCED, before, request.getApprovedAmount(), outcome.comment(),
+                    outcome.delegatedFrom());
+        } else {
+            record(request, outcome.toLevel(), FundApprovalDecision.APPROVED, before, before, outcome.comment(), outcome.delegatedFrom());
+        }
+        request.setLastComment(outcome.comment());
         Instant now = Instant.now();
-        if (request.getCurrentLevel() >= request.getRequiredLevels()) {
+        if (outcome.finalApproval()) {
             request.setStatus(FundRequestStatus.APPROVED);
+            request.setCurrentLevel(request.getRequiredLevels());
             request.setApprovedAt(now);
             if (request.getApprovedAmount() == null) {
                 request.setApprovedAmount(request.getTotalAmount());
@@ -368,14 +393,47 @@ public class FundRequestService {
             commitBudget(request);
             notifier.approved(request);
         } else {
-            request.setCurrentLevel(request.getCurrentLevel() + 1);
+            request.setCurrentLevel(outcome.toLevel() + 1);
             request.setLevelSince(now);
             request.setApproverRemindedAt(null);
             requestRepository.save(request);
-            notifier.toApprovers(request, request.getCurrentLevel());
-            notifier.toRequester(request, "Votre demande " + request.getNumber() + " a franchi le niveau " + (request.getCurrentLevel() - 1));
+            notifier.toRequester(request, "Votre demande " + request.getNumber() + " a franchi le niveau " + outcome.toLevel());
         }
-        return view(request);
+    }
+
+    /** Par numero, pour le centre d'approbation commun. */
+    void applyApproval(String number, com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Outcome outcome) {
+        applyApproval(inApproval(number), outcome);
+    }
+
+    /** Niveaux de la demande : chef de service (ou N+1), responsable financier, direction, validation budgetaire. */
+    List<com.sni.bokaticowork.features.approval.dto.ApprovalDtos.LevelSpec> levelSpecs(FundRequest request) {
+        List<String> labels = List.of("Chef de service", "Responsable financier", "Direction");
+        int base = request.getRequiredLevels() - (request.getBudgetApproval() != null ? 1 : 0);
+        List<com.sni.bokaticowork.features.approval.dto.ApprovalDtos.LevelSpec> specs = new ArrayList<>();
+        for (int level = 1; level <= base; level++) {
+            specs.add(new com.sni.bokaticowork.features.approval.dto.ApprovalDtos.LevelSpec(labels.get(Math.min(level, 3) - 1),
+                    level == 1 ? com.sni.bokaticowork.features.approval.enums.ApproverRule.MANAGER
+                            : com.sni.bokaticowork.features.approval.enums.ApproverRule.PERMISSION,
+                    level == 1 ? 1 : null, levelPermission(level), null, null));
+        }
+        if (request.getBudgetApproval() != null) {
+            specs.add(new com.sni.bokaticowork.features.approval.dto.ApprovalDtos.LevelSpec("Validation budgétaire",
+                    com.sni.bokaticowork.features.approval.enums.ApproverRule.PERMISSION, null,
+                    "OVERRIDE".equals(request.getBudgetApproval()) ? "BUDGET:OVERRIDE" : "BUDGET:APPROVE_UNPLANNED", null, null));
+        }
+        return specs;
+    }
+
+    /** On ne valide jamais une avance dont on est le beneficiaire. */
+    void assertNotBeneficiary(FundRequest request, String actor) {
+        if (CashActorResolver.samePerson(actor, request.getRequester()) || CashActorResolver.samePerson(actor, request.getBeneficiaryCode())) {
+            throw new ForbiddenException("On ne valide jamais sa propre demande, meme avec le niveau requis");
+        }
+    }
+
+    void assertNotBeneficiary(String number, String actor) {
+        assertNotBeneficiary(request(number), actor);
     }
 
     /** Lot F16 : engagement des montants approuves sur les lignes de budget. */
@@ -429,36 +487,54 @@ public class FundRequestService {
 
     public FundDtos.Request reject(String number, FundDtos.Decision decision) {
         FundRequest request = inApproval(number);
-        String delegatedFrom = assertCanDecide(request);
+        assertNotBeneficiary(request, actor());
         String comment = decision == null ? null : trim(decision.comment());
         if (!StringUtils.hasText(comment)) {
             throw new BadRequestException("Indiquez le motif du rejet");
         }
-        record(request, request.getCurrentLevel(), FundApprovalDecision.REJECTED, amount(request), null, comment, delegatedFrom);
+        applyRejection(request, approvals.rejectSubject(APPROVAL_CENTER, APPROVAL_TYPE, request.getNumber(),
+                new com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Decision(comment, null)));
+        return view(request);
+    }
+
+    void applyRejection(FundRequest request, com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Outcome outcome) {
+        record(request, request.getCurrentLevel(), FundApprovalDecision.REJECTED, amount(request), null, outcome.comment(), outcome.delegatedFrom());
         request.setStatus(FundRequestStatus.REJECTED);
-        request.setLastComment(comment);
+        request.setLastComment(outcome.comment());
         requestRepository.save(request);
         releaseBudget(request, false);
-        notifier.toRequester(request, "Votre demande " + request.getNumber() + " est rejetee : " + comment);
-        return view(request);
+        notifier.toRequester(request, "Votre demande " + request.getNumber() + " est rejetee : " + outcome.comment());
+    }
+
+    void applyRejection(String number, com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Outcome outcome) {
+        applyRejection(inApproval(number), outcome);
     }
 
     /** Renvoi pour correction : la demande revient en brouillon avec le commentaire. */
     public FundDtos.Request sendBack(String number, FundDtos.Decision decision) {
         FundRequest request = inApproval(number);
-        String delegatedFrom = assertCanDecide(request);
+        assertNotBeneficiary(request, actor());
         String comment = decision == null ? null : trim(decision.comment());
         if (!StringUtils.hasText(comment)) {
             throw new BadRequestException("Dites ce qu'il faut corriger");
         }
-        record(request, request.getCurrentLevel(), FundApprovalDecision.RETURNED, amount(request), null, comment, delegatedFrom);
+        applyReturn(request, approvals.sendBackSubject(APPROVAL_CENTER, APPROVAL_TYPE, request.getNumber(),
+                new com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Decision(comment, null)));
+        return view(request);
+    }
+
+    void applyReturn(FundRequest request, com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Outcome outcome) {
+        record(request, request.getCurrentLevel(), FundApprovalDecision.RETURNED, amount(request), null, outcome.comment(), outcome.delegatedFrom());
         request.setStatus(FundRequestStatus.DRAFT);
         request.setCurrentLevel(0);
         request.setApprovedAmount(null);
-        request.setLastComment(comment);
+        request.setLastComment(outcome.comment());
         requestRepository.save(request);
-        notifier.toRequester(request, "Votre demande " + request.getNumber() + " vous est renvoyee pour correction : " + comment);
-        return view(request);
+        notifier.toRequester(request, "Votre demande " + request.getNumber() + " vous est renvoyee pour correction : " + outcome.comment());
+    }
+
+    void applyReturn(String number, com.sni.bokaticowork.features.approval.dto.ApprovalDtos.Outcome outcome) {
+        applyReturn(inApproval(number), outcome);
     }
 
     public FundDtos.Request cancel(String number, FundDtos.Decision decision) {
@@ -473,6 +549,7 @@ public class FundRequestService {
         request.setStatus(FundRequestStatus.CANCELLED);
         request.setCancelledAt(Instant.now());
         requestRepository.save(request);
+        approvals.cancelSubject(APPROVAL_CENTER, APPROVAL_TYPE, request.getNumber(), "Demande de fonds annulée par le demandeur");
         releaseBudget(request, false);
         return view(request);
     }
@@ -776,62 +853,35 @@ public class FundRequestService {
 
     // ------------------------------------------------------------------ delegations
 
+    /** Delegation d'un niveau de validation de la caisse, sur le modele commun (lot B15). */
     public FundDtos.DelegationView delegate(FundDtos.Delegation input) {
-        String actor = actor();
         if (!actors.hasAuthority(levelPermission(input.level()))) {
             throw new ForbiddenException("On ne delegue que le niveau de validation qu'on detient");
         }
-        if (CashActorResolver.samePerson(actor, input.delegate())) {
+        if (CashActorResolver.samePerson(actor(), input.delegate())) {
             throw new BadRequestException("On ne se delegue pas a soi-meme");
         }
-        FundApprovalDelegation delegation = delegationRepository.save(FundApprovalDelegation.builder().delegator(actor)
-                .delegate(input.delegate().trim()).level(input.level()).startsOn(input.startsOn()).endsOn(input.endsOn()).createdBy(actor).build());
-        return toView(delegation);
+        return toView(approvals.delegate(new com.sni.bokaticowork.features.approval.dto.ApprovalDtos.DelegationInput(input.delegate(),
+                APPROVAL_CENTER, input.level(), input.startsOn(), input.endsOn(), null)));
     }
 
     public void cancelDelegation(Long id) {
-        FundApprovalDelegation delegation = delegationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Delegation introuvable : " + id));
-        delegation.setCancelledAt(Instant.now());
-        delegationRepository.save(delegation);
+        approvals.cancelDelegation(id);
     }
 
     @Transactional(readOnly = true)
     public List<FundDtos.DelegationView> delegations() {
-        return delegationRepository.findByCancelledAtIsNullOrderByStartsOnAsc().stream().map(FundRequestService::toView).toList();
+        return approvals.delegations(APPROVAL_CENTER).stream().map(FundRequestService::toView).toList();
     }
 
-    private static FundDtos.DelegationView toView(FundApprovalDelegation delegation) {
-        return new FundDtos.DelegationView(delegation.getId(), delegation.getDelegator(), delegation.getDelegate(), delegation.getLevel(),
-                delegation.getStartsOn(), delegation.getEndsOn());
+    private static FundDtos.DelegationView toView(com.sni.bokaticowork.features.approval.dto.ApprovalDtos.DelegationView delegation) {
+        return new FundDtos.DelegationView(delegation.id(), delegation.delegator(), delegation.delegate(), delegation.level(),
+                delegation.startsOn(), delegation.endsOn());
     }
 
-    /** Le valideur du niveau courant (ou son delegue) ; renvoie le delegant le cas echeant. */
-    private String assertCanDecide(FundRequest request) {
-        String actor = actor();
-        if (CashActorResolver.samePerson(actor, request.getRequester()) || CashActorResolver.samePerson(actor, request.getBeneficiaryCode())) {
-            throw new ForbiddenException("On ne valide jamais sa propre demande, meme avec le niveau requis");
-        }
-        int level = request.getCurrentLevel();
-        if (request.getBudgetApproval() != null && level == request.getRequiredLevels()) {
-            String permission = "OVERRIDE".equals(request.getBudgetApproval()) ? "BUDGET:OVERRIDE" : "BUDGET:APPROVE_UNPLANNED";
-            if (!actors.hasAuthority(permission)) {
-                throw new ForbiddenException("La validation budgetaire demande le droit " + permission);
-            }
-            return null;
-        }
-        if (actors.hasAuthority(levelPermission(level))) {
-            return null;
-        }
-        LocalDate today = LocalDate.now(ZONE);
-        return delegationRepository.findByCancelledAtIsNullOrderByStartsOnAsc().stream()
-                .filter(delegation -> delegation.getLevel() == level && CashActorResolver.samePerson(delegation.getDelegate(), actor))
-                .filter(delegation -> !delegation.getStartsOn().isAfter(today) && !delegation.getEndsOn().isBefore(today))
-                .filter(delegation -> !CashActorResolver.samePerson(delegation.getDelegator(), request.getRequester()))
-                .map(FundApprovalDelegation::getDelegator)
-                .findFirst()
-                .orElseThrow(() -> new ForbiddenException("Ce niveau de validation demande le droit " + levelPermission(level)));
-    }
+    /** Centre et type de la demande d'approbation commune (lot B15). */
+    public static final String APPROVAL_CENTER = "CASH";
+    public static final String APPROVAL_TYPE = "FUND_REQUEST";
 
     static String levelPermission(int level) {
         return "FUND_REQUEST:APPROVE_L" + Math.max(1, Math.min(3, level));
@@ -857,26 +907,17 @@ public class FundRequestService {
         return requestRepository.findByRequesterOrBeneficiaryCodeOrderByCreatedAtDesc(actor, actor).stream().map(this::summary).toList();
     }
 
-    /** File de validation : demandes au niveau que l'utilisateur detient (ou par delegation). */
+    /**
+     * File de validation : demandes que l'utilisateur peut decider, a leur niveau courant ou en
+     * avance (droit du niveau, place dans la hierarchie, delegation), selon le moteur commun.
+     */
     @Transactional(readOnly = true)
     public List<FundDtos.Request> toApprove() {
         String actor = actor();
-        LocalDate today = LocalDate.now(ZONE);
-        Set<Integer> levels = new HashSet<>();
-        for (int level = 1; level <= 3; level++) {
-            if (actors.hasAuthority(levelPermission(level))) {
-                levels.add(level);
-            }
-        }
-        delegationRepository.findByCancelledAtIsNullOrderByStartsOnAsc().stream()
-                .filter(delegation -> CashActorResolver.samePerson(delegation.getDelegate(), actor))
-                .filter(delegation -> !delegation.getStartsOn().isAfter(today) && !delegation.getEndsOn().isBefore(today))
-                .forEach(delegation -> levels.add(delegation.getLevel()));
-        return requestRepository.findByStatusInOrderByCreatedAtAsc(EnumSet.of(FundRequestStatus.IN_APPROVAL)).stream()
-                .filter(request -> request.getBudgetApproval() != null && request.getCurrentLevel().equals(request.getRequiredLevels())
-                        ? actors.hasAuthority("OVERRIDE".equals(request.getBudgetApproval()) ? "BUDGET:OVERRIDE" : "BUDGET:APPROVE_UNPLANNED")
-                        : levels.contains(request.getCurrentLevel()))
-                .filter(request -> !CashActorResolver.samePerson(actor, request.getRequester()))
+        List<String> numbers = approvals.subjectsToApprove(APPROVAL_CENTER, APPROVAL_TYPE);
+        return numbers.stream().map(requestRepository::findByNumber).flatMap(Optional::stream)
+                .filter(request -> request.getStatus() == FundRequestStatus.IN_APPROVAL)
+                .filter(request -> !CashActorResolver.samePerson(actor, request.getBeneficiaryCode()))
                 .map(this::summary).toList();
     }
 
