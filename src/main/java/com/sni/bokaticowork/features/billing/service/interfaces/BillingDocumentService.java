@@ -32,6 +32,10 @@ public interface BillingDocumentService {
      */
     SimulateBillingDocumentResponse simulate(SimulateBillingDocumentRequest request);
 
+    /** Lot B8 : un total saisi (TTC ou HT) ventile sur les lignes au franc pres, sans rien creer. */
+    com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse allocateAmount(
+            com.sni.bokaticowork.features.billing.dto.request.AllocateAmountRequest request);
+
     /** Lot B13 : calcul d'une ligne en cours de saisie et des totaux du document, sans rien creer. */
     com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse simulateLine(
             com.sni.bokaticowork.features.billing.dto.request.SimulateBillingLineRequest request);

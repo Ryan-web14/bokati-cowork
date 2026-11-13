@@ -84,6 +84,13 @@ public class BillingDocumentController {
      * de sorte qu'il n'y ait plus a chercher un montant a la calculatrice ni a creer un brouillon
      * pour connaitre un total.
      */
+    /** Lot B8 : saisie d'un total (TTC ou HT) ventile par le systeme sur les lignes, au franc pres. */
+    @PostMapping("/documents/allocate-amount")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse> allocateAmount(
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.AllocateAmountRequest request) {
+        return ResponseEntity.ok(billingDocumentService.allocateAmount(request));
+    }
+
     /** Lot B13 : calcul d'une ligne a chaque saisie (quantite, prix, remise, taxe) et des totaux. */
     @PostMapping("/documents/simulate-line")
     public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse> simulateLine(

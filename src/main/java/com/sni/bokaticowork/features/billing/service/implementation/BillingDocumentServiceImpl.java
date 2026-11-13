@@ -271,6 +271,107 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 document.alerts().stream().filter(alert -> alert.lineIndex() != null && alert.lineIndex() == lineIndex).toList(), document);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse allocateAmount(
+            com.sni.bokaticowork.features.billing.dto.request.AllocateAmountRequest request) {
+        // Lot B8 : un total saisi, reparti au prorata des prix de reference, au franc pres ; la
+        // difference avec la reference devient une remise par ligne, que le plancher et la remise
+        // maximale controlent comme toute remise.
+        boolean ttc = request.taxIncluded() == null || request.taxIncluded();
+        List<CreateBillingDocumentLineRequest> input = request.lines();
+        if (StringUtils.hasText(request.customerType()) && StringUtils.hasText(request.customerCode())
+                && customerSnapshotResolver.organizationOf(request.customerType(), request.customerCode())
+                .map(organization -> organization.vatExempt()).orElse(false)) {
+            input = calculationService.exempted(input);
+        }
+        List<BillingDocumentLine> reference = calculationService.calculate(input, List.of()).lines();
+        java.util.Set<Integer> group = new java.util.TreeSet<>();
+        if (request.lineIndexes() == null || request.lineIndexes().isEmpty()) {
+            for (int i = 0; i < input.size(); i++) {
+                if (!Boolean.TRUE.equals(input.get(i).optional())) {
+                    group.add(i);
+                }
+            }
+        } else {
+            for (Integer index : request.lineIndexes()) {
+                if (index == null || index < 0 || index >= input.size()) {
+                    throw new BadRequestException("Rang de ligne inconnu : " + index);
+                }
+                group.add(index);
+            }
+        }
+        if (group.isEmpty()) {
+            throw new BadRequestException("Aucune ligne ne reçoit le montant saisi");
+        }
+        java.util.Map<Integer, BigDecimal> weights = new java.util.LinkedHashMap<>();
+        BigDecimal referenceTotal = BigDecimal.ZERO;
+        for (Integer index : group) {
+            BillingDocumentLine line = reference.get(index);
+            BigDecimal value = ttc ? line.getTotalAmount() : line.getTaxableAmount();
+            value = value == null ? BigDecimal.ZERO : value;
+            weights.put(index, value);
+            referenceTotal = referenceTotal.add(value);
+        }
+        if (referenceTotal.signum() == 0) {
+            // Lignes sans prix : repartition au prorata des quantites.
+            weights.replaceAll((index, value) -> reference.get(index).getQuantity() == null ? BigDecimal.ONE : reference.get(index).getQuantity());
+        }
+        BigDecimal weightTotal = weights.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal target = request.targetAmount().setScale(0, java.math.RoundingMode.HALF_UP);
+        java.util.Map<Integer, BigDecimal> targets = new java.util.LinkedHashMap<>();
+        BigDecimal assigned = BigDecimal.ZERO;
+        Integer last = ((java.util.TreeSet<Integer>) group).last();
+        for (Integer index : group) {
+            BigDecimal share = index.equals(last) ? target.subtract(assigned)
+                    : target.multiply(weights.get(index)).divide(weightTotal, 0, java.math.RoundingMode.HALF_UP);
+            targets.put(index, share);
+            assigned = assigned.add(share);
+        }
+        List<CreateBillingDocumentLineRequest> output = new ArrayList<>(input);
+        for (Integer index : group) {
+            output.set(index, allocatedLine(input.get(index), reference.get(index), targets.get(index), ttc));
+        }
+        SimulateBillingDocumentResponse simulation = simulate(new SimulateBillingDocumentRequest(request.documentType(), request.currency(), null,
+                output, null, request.customerType(), request.customerCode(), request.companyCustomerCode()));
+        return new com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse(target, ttc, referenceTotal,
+                referenceTotal.subtract(target), output, simulation);
+    }
+
+    /**
+     * Ligne dont le montant (TTC ou HT) vaut exactement {@code target} : prix de reference garde,
+     * l'ecart porte en remise ; au-dela de la reference, le prix unitaire monte.
+     */
+    private static CreateBillingDocumentLineRequest allocatedLine(CreateBillingDocumentLineRequest line, BillingDocumentLine reference,
+                                                                  BigDecimal target, boolean ttc) {
+        BigDecimal quantity = line.quantity() == null || line.quantity().signum() <= 0 ? BigDecimal.ONE : line.quantity();
+        boolean taxable = Boolean.TRUE.equals(reference.getTaxable());
+        BigDecimal factor = taxable ? BigDecimal.ONE.add(rate(reference.getVatRate()))
+                .add(rate(reference.getVatRate()).multiply(rate(reference.getAdditionalCentRate()))) : BigDecimal.ONE;
+        boolean wasTaxIncluded = taxable && Boolean.TRUE.equals(line.taxIncluded());
+        BigDecimal unitPrice = line.unitPrice() == null ? BigDecimal.ZERO : line.unitPrice();
+        BigDecimal unit;
+        if (ttc) {
+            unit = wasTaxIncluded ? unitPrice : unitPrice.multiply(factor).setScale(4, java.math.RoundingMode.HALF_UP);
+        } else {
+            unit = wasTaxIncluded ? unitPrice.divide(factor, 4, java.math.RoundingMode.HALF_UP) : unitPrice;
+        }
+        BigDecimal gross = quantity.multiply(unit).setScale(4, java.math.RoundingMode.HALF_UP);
+        BigDecimal discount = gross.subtract(target);
+        if (discount.signum() < 0) {
+            // Total saisi au-dessus de la reference : le prix unitaire monte, sans remise.
+            unit = target.divide(quantity, 4, java.math.RoundingMode.HALF_UP);
+            discount = BigDecimal.ZERO;
+        }
+        return new CreateBillingDocumentLineRequest(line.lineOrder(), line.lineType(), line.itemCode(), line.description(), line.detailedDescription(),
+                quantity, unit, BigDecimal.ZERO, discount, line.taxable(), ttc && taxable, line.vatRate(), line.additionalCentRate(),
+                line.sourceType(), line.sourceCode(), line.unit(), line.externalReference(), line.notes(), line.optional(), line.category());
+    }
+
+    private static BigDecimal rate(BigDecimal percent) {
+        return percent == null ? BigDecimal.ZERO : percent.divide(new BigDecimal("100"), 8, java.math.RoundingMode.HALF_UP);
+    }
+
     /** Rang de la ligne visee par une alerte de remise (article et libelle), ou vide. */
     private static Integer lineIndexOf(List<BillingDocumentLine> lines, BillingDiscountGuard.DiscountViolation violation) {
         for (int i = 0; i < lines.size(); i++) {
