@@ -79,12 +79,12 @@ Lecture ouverte aux droits de consultation du catalogue ; gestion réservée à 
 
 ## C6. Retenues à la source
 
-- Liste de référence `billing_withholding_type` (même gestion que C0) : code, libellé, taux par défaut, base (`TTC`, `HT`, `TVA`), compte comptable (CD5), active. Reprise : « Retenue de TVA » (100 % de la TVA) et « Précompte » (taux à confirmer).
-- À l'encaissement d'une facture : retenues saisies (type, montant proposé par le taux, modifiable, référence de l'attestation, fichier joint en GED). La facture est soldée quand paiements + retenues = total.
-- Une retenue sans attestation reste « attestation attendue » ; liste de suivi `GET /billing/withholdings?certificate=missing`.
-- Écriture : débit du compte de la retenue, crédit `411` du client.
-- Relevé client et balance âgée tiennent compte des retenues.
-- Tests : facture soldée par paiement et retenue, écriture, suivi des attestations, annulation de la retenue.
+- Liste des types de retenue (`billing_withholding_type`) : code, libellé, taux (facultatif), base (`TTC`, `HT`, `TVA` de la facture), compte de la créance sur l'État (CD5). Reprise : « Retenue de TVA » (100 % de la TVA, `4449`) et « Précompte » (montant saisi, base HT, `4492`).
+- À l'encaissement : `POST /billing/documents/{n}/withholdings` (type, montant ou calcul par le taux, date, référence de l'attestation). La retenue solde la facture à hauteur de son montant, comme un règlement ; elle ne dépasse pas le reste dû.
+- Attestation : `PATCH /billing/withholdings/{n}/certificate` (référence et fichier en GED) ; suivi `GET /billing/withholdings?certificate=missing`.
+- Annulation (erreur de saisie) : `PATCH /billing/withholdings/{n}/cancel`, la facture redevient due d'autant.
+- Écriture (règle `SALES_WITHHOLDING`, événement `WITHHOLDING_RECORDED`) : débit du compte de la retenue, crédit `411` du client lettré avec la facture ; contre-passation à l'annulation. Relevé et balance âgée suivent le reste dû de la facture.
+- Tests : facture soldée par la retenue de TVA, refus au-delà du reste dû, type sans taux, annulation, bases.
 
 ## C7. Dépôts de garantie
 

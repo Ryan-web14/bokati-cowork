@@ -94,6 +94,16 @@ Dev `V338__listes_reference_catalogue.sql`, prod `V332__listes_reference_catalog
 - Les rebonds tardifs ne sont pas remontés par Microsoft 365.
 - Tests : `BillingEmailStatusC5Test`.
 
+## C6. Retenues à la source
+
+- Tables `billing_withholding_type` et `billing_withholding`, numérotation `billing_withholding` (`RAS`), règle comptable `SALES_WITHHOLDING`.
+- Routes : `POST`, `GET /billing/documents/{n}/withholdings`, `GET /billing/withholdings` (`customerType`, `customerCode`, `certificate=missing`), `PATCH /billing/withholdings/{n}/certificate`, `PATCH .../cancel` ; types : `GET`, `POST /billing/withholding-types`, `PUT /{code}`, `PATCH .../activate`, `.../deactivate` (droit `BILLING:TAX_RULES` pour écrire).
+- Codes : `RETENUE_IMPOSSIBLE`, `RETENUE_MONTANT`, `RETENUE_ANNULEE`.
+- Comptabilité : alimentée par le traitement des ventes (`SalesAccountingService`), une fois la facture comptabilisée ; une retenue annulée avant d'être comptabilisée ne l'est jamais.
+- Point à confirmer par le comptable (CD5) : comptes `4449` et `4492`, et, en régime des encaissements, le sort de la TVA en attente sur la part retenue.
+- Migrations : dev `V342__retenues_a_la_source.sql`, prod `V336__retenues_a_la_source.sql`.
+- Tests : `WithholdingC6Test`.
+
 ### Hors lot, livré en même temps
 
 - **Procfile :** tas porté à 600 Mo. Le démarrage en production dépassait 90 secondes depuis la fusion de la facturation ; aussi sur `hotfix/demarrage-memoire`.

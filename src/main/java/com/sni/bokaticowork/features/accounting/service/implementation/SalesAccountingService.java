@@ -157,6 +157,20 @@ public class SalesAccountingService {
                     + "ORDER BY c.created_at LIMIT ?", String.class, batch)
                     .forEach(number -> counter.run(number, () -> feedReceivableTransfer(number)));
         }
+        if (settings.familyEnabled("SALES")) {
+            // Lot C6 : retenues a la source sur des factures deja comptabilisees ; une retenue annulee
+            // avant d'etre comptabilisee ne l'est jamais, une retenue comptabilisee puis annulee est contre-passee.
+            jdbc.queryForList("SELECT w.withholding_number FROM billing_withholding w WHERE w.status = 'RECORDED' "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_ISSUED' AND e.reference = w.document_number) "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'WITHHOLDING_RECORDED' AND e.reference = w.withholding_number) "
+                    + "ORDER BY w.created_at LIMIT ?", String.class, batch)
+                    .forEach(number -> counter.run(number, () -> feedWithholding(number)));
+            jdbc.queryForList("SELECT w.withholding_number FROM billing_withholding w WHERE w.status = 'CANCELLED' "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'WITHHOLDING_RECORDED' AND e.reference = w.withholding_number) "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'WITHHOLDING_CANCELLED' AND e.reference = w.withholding_number) "
+                    + "ORDER BY w.cancelled_at LIMIT ?", String.class, batch)
+                    .forEach(number -> counter.run(number, () -> feedWithholdingCancellation(number)));
+        }
         if (settings.familyEnabled("PAYMENT")) {
             Instant settled = Instant.now().minusSeconds(60L * Math.max(0, settings.paymentDelayMinutes()));
             jdbc.queryForList("SELECT t.transaction_number FROM payment_transaction t WHERE t.status IN ('SUCCEEDED', 'REFUNDED', 'REVERSED') "
@@ -213,6 +227,11 @@ public class SalesAccountingService {
         BigDecimal taxable = fx.apply(money(document.getTaxableAmount()));
         BigDecimal vat = fx.apply(money(document.getVatAmount()));
         BigDecimal extra = fx.apply(money(document.getTaxAmount()).subtract(money(document.getVatAmount())).max(BigDecimal.ZERO));
+        // Part hors taxe non taxable (ligne exoneree, organisation exoneree, caution) : elle reste en
+        // produit. Sans elle, la remise valait « brut moins base taxable » et comptait toute ligne
+        // non taxable comme une remise : l'ecriture n'etait plus equilibree.
+        BigDecimal nonTaxable = fx.apply(money(document.getTotalAmount()).subtract(money(document.getTaxableAmount()))
+                .subtract(money(document.getTaxAmount())).max(BigDecimal.ZERO));
         List<Map<String, Object>> lines = new ArrayList<>();
         BigDecimal gross = BigDecimal.ZERO;
         for (BillingDocumentLine line : documentLineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document)) {
@@ -229,11 +248,11 @@ public class SalesAccountingService {
         }
         data.put("lines", lines);
         // Remise : ecart entre le brut des lignes et la base taxable (remises de lignes et de document).
-        data.put("reduction", gross.subtract(taxable));
+        data.put("reduction", gross.subtract(taxable).subtract(nonTaxable));
         data.put("vatAmount", vat);
         data.put("extraTaxAmount", extra);
         // En devise, le total est la somme des parties converties : la piece reste equilibree.
-        data.put("totalAmount", fx.foreign() ? taxable.add(vat).add(extra) : money(document.getTotalAmount()));
+        data.put("totalAmount", fx.foreign() ? taxable.add(nonTaxable).add(vat).add(extra) : money(document.getTotalAmount()));
         if (fx.foreign()) {
             data.put("currency", fx.currency());
             data.put("exchangeRate", fx.rate());
@@ -302,6 +321,34 @@ public class SalesAccountingService {
         data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
         data.put("amount", fx.apply(money((BigDecimal) change.get("transferred_amount"))));
         engine.receive("RECEIVABLE_TRANSFER", newDocumentNumber, "SALES", date, json(data), replay(date));
+    }
+
+    /** Lot C6 : retenue a la source, D compte de la retenue / C 411 du client (lettre avec la facture). */
+    void feedWithholding(String withholdingNumber) {
+        Map<String, Object> row = jdbc.queryForMap("SELECT w.document_number, w.account, w.amount, w.withheld_on FROM billing_withholding w "
+                + "WHERE w.withholding_number = ?", withholdingNumber);
+        BillingDocument document = documentRepository.findByDocumentNumber((String) row.get("document_number")).orElseThrow();
+        LocalDate date = row.get("withheld_on") instanceof java.sql.Date day ? day.toLocalDate() : LocalDate.now();
+        Conversion fx = conversion(document.getCurrency(), document.getExchangeRate(), date);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("documentNumber", document.getDocumentNumber());
+        data.put("withholdingNumber", withholdingNumber);
+        data.put("customerCode", customerCode(document));
+        data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
+        data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
+        data.put("withholdingAccount", row.get("account"));
+        data.put("amount", fx.apply(money((BigDecimal) row.get("amount"))));
+        engine.receive("WITHHOLDING_RECORDED", withholdingNumber, "SALES", date, json(data), replay(date));
+    }
+
+    /** Lot C6 : retenue annulee apres comptabilisation, contre-passation. */
+    void feedWithholdingCancellation(String withholdingNumber) {
+        Map<String, Object> row = jdbc.queryForMap("SELECT w.cancelled_at FROM billing_withholding w WHERE w.withholding_number = ?", withholdingNumber);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("withholdingNumber", withholdingNumber);
+        data.put("_reverse", Map.of("eventType", "WITHHOLDING_RECORDED", "reference", withholdingNumber, "reason", "Retenue annulee"));
+        LocalDate date = date(row.get("cancelled_at") instanceof java.sql.Timestamp at ? at.toInstant() : Instant.now());
+        engine.receive("WITHHOLDING_CANCELLED", withholdingNumber, "SALES", date, json(data), replay(date));
     }
 
     void feedCancellation(String number) {
