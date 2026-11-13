@@ -2925,8 +2925,8 @@
       "PAID",
       "OVERDUE",
       "CANCELLED",
-      "VOIDED",
       "REFUNDED",
+      "APPLIED",
       "WRITTEN_OFF"
      ]
     },

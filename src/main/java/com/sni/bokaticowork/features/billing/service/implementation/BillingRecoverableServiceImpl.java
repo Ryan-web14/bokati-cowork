@@ -70,12 +70,15 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
     public BillingRecoverableResponse markRecovered(String documentNumber, String recoverableNumber, RecoverItemRequest request) {
         BillingDocumentRecoverable recoverable = findRecoverable(documentNumber, recoverableNumber);
         if ("RECOVERED".equals(recoverable.getStatus()) || "WRITTEN_OFF".equals(recoverable.getStatus())) {
-            throw new BadRequestException("Item is already " + recoverable.getStatus());
+            throw BadRequestException.coded("RECOVERABLE_CLOSED", "Cet objet est déjà " + recoverable.getStatus());
         }
         boolean partial = request != null && request.partialQuantity() != null
                 && request.partialQuantity().compareTo(recoverable.getQuantity()) < 0;
         recoverable.setStatus(partial ? "PARTIALLY_RECOVERED" : "RECOVERED");
         recoverable.setRecoveredAt(Instant.now());
+        // Lot B1 : l'auteur de la recuperation, pris dans le jeton (le champ restait vide).
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        recoverable.setRecoveredBy(authentication == null || !StringUtils.hasText(authentication.getName()) ? "SYSTEM" : authentication.getName());
         if (request != null && StringUtils.hasText(request.notes())) {
             recoverable.setNotes(request.notes().trim());
         }
@@ -86,7 +89,7 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
     public BillingRecoverableResponse writeOff(String documentNumber, String recoverableNumber, WriteOffRecoverableRequest request) {
         BillingDocumentRecoverable recoverable = findRecoverable(documentNumber, recoverableNumber);
         if ("WRITTEN_OFF".equals(recoverable.getStatus())) {
-            throw new BadRequestException("Item is already WRITTEN_OFF");
+            throw BadRequestException.coded("RECOVERABLE_CLOSED", "Cet objet est déjà passé en perte");
         }
         recoverable.setStatus("WRITTEN_OFF");
         if (request != null && StringUtils.hasText(request.notes())) {
@@ -109,7 +112,12 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
         BigDecimal tCurrent = BigDecimal.ZERO, t1_30 = BigDecimal.ZERO, t31_60 = BigDecimal.ZERO,
                 t61_90 = BigDecimal.ZERO, tOver90 = BigDecimal.ZERO;
 
+        String wanted = StringUtils.hasText(currency) ? currency.trim().toUpperCase() : "XAF";
         for (BillingDocument doc : documents) {
+            // Lot B9 (E11) : une devise par balance, jamais de cumul entre devises.
+            if (!wanted.equalsIgnoreCase(doc.getCurrency() == null ? "XAF" : doc.getCurrency())) {
+                continue;
+            }
             BigDecimal balanceDue = doc.getBalanceDue();
             LocalDate dueDate = doc.getDueDate();
             long daysOverdue = 0;
@@ -152,7 +160,7 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
 
         return new BillingAgingReportResponse(
                 Instant.now(),
-                currency != null ? currency.toUpperCase() : "XAF",
+                wanted,
                 new BillingAgingReportResponse.AgingSummary(
                         new BillingAgingReportResponse.AgingBucket(cCurrent, tCurrent),
                         new BillingAgingReportResponse.AgingBucket(c1_30, t1_30),
@@ -168,16 +176,16 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
     private BillingDocumentRecoverable findRecoverable(String documentNumber, String recoverableNumber) {
         BillingDocument document = findDocument(documentNumber);
         BillingDocumentRecoverable recoverable = recoverableRepository.findByRecoverableNumber(recoverableNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Recoverable not found: " + recoverableNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Objet à récupérer introuvable : " + recoverableNumber));
         if (!recoverable.getDocument().getId().equals(document.getId())) {
-            throw new BadRequestException("Recoverable does not belong to document " + documentNumber);
+            throw BadRequestException.coded("RECOVERABLE_OTHER_DOCUMENT", "Cet objet n'appartient pas au document " + documentNumber);
         }
         return recoverable;
     }
 
     private BillingDocument findDocument(String documentNumber) {
         return documentRepository.findByDocumentNumber(documentNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Billing document not found: " + documentNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable : " + documentNumber));
     }
 
     private BillingRecoverableResponse toResponse(BillingDocumentRecoverable r) {

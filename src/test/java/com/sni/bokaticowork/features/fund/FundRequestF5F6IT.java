@@ -59,7 +59,7 @@ import static org.mockito.Mockito.when;
  * la valident, la caissiere la decaisse ; une avance de 100 000 justifiee en 3 lignes pour 85 000 se
  * solde par un retour de 15 000.
  */
-@Import({FundRequestService.class, FundNeedService.class, CashActorResolver.class})
+@Import({FundRequestService.class, FundNeedService.class, CashActorResolver.class, com.sni.bokaticowork.features.approval.service.ApprovalEngine.class, com.sni.bokaticowork.features.approval.service.ApprovalHierarchy.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 class FundRequestF5F6IT extends PostgresIntegrationTestBase {
 
@@ -74,6 +74,7 @@ class FundRequestF5F6IT extends PostgresIntegrationTestBase {
     @MockitoBean private CashRegisterService cashRegisterService;
     @MockitoBean private AccountingEventPublisher accountingEvents;
     @MockitoBean private FundNotifier notifier;
+    @MockitoBean private com.sni.bokaticowork.features.approval.service.ApprovalNotifier approvalNotifier;
 
     private final List<CreateCashMovementRequest> cashMovements = new ArrayList<>();
     private String code;
@@ -172,6 +173,24 @@ class FundRequestF5F6IT extends PostgresIntegrationTestBase {
         assertThat(fromNeed.needStatementNumber()).isEqualTo(need.number());
         assertThat(fromNeed.totalAmount()).isEqualByComparingTo("24000");
         assertThat(needs.get(need.number()).status().name()).isEqualTo("TRANSFORMED");
+    }
+
+    @Test
+    @DisplayName("Lot B15 : le responsable financier valide au niveau 1 et approuve les deux niveaux, le niveau 1 note en avance")
+    void higherLevelApprovesEarly() {
+        as("agent3@elleaose.com", "FUND_REQUEST_CREATE");
+        FundDtos.Request draft = requests.create(new FundDtos.RequestInput(FundRequestType.DIRECT_EXPENSE, "Climatiseur", null, null, null,
+                null, null, null, null, null, null, null, null, null, null, false, null,
+                List.of(new FundDtos.RequestLine("ACHAT_FOURNITURES_BUREAU", "Climatiseur", new BigDecimal("300000"), null, null)), null, true));
+        assertThat(draft.requiredLevels()).isEqualTo(2);
+        as("daf@elleaose.com", "FUND_REQUEST_APPROVE_L2");
+        assertThat(requests.toApprove()).extracting(FundDtos.Request::number).contains(draft.number());
+
+        FundDtos.Request approved = requests.approve(draft.number(), new FundDtos.Decision("Panne, urgent", null));
+
+        assertThat(approved.status()).isEqualTo(FundRequestStatus.APPROVED);
+        assertThat(approved.timeline()).extracting(FundDtos.Approval::level).containsExactly(0, 1, 2);
+        assertThat(approved.timeline().get(1).comment()).contains("en avance");
     }
 
     private CashSession session() {

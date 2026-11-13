@@ -381,4 +381,53 @@ public class BillingDocument {
     public void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    // -- Lot B12 : auteur de la piece et de la version courante, repris du jeton ---------------
+    /** Identifiant de connexion de l'auteur, fige a la creation. */
+    @Column(name = "created_by", length = 180)
+    private String createdBy;
+
+    @Column(name = "created_by_name")
+    private String createdByName;
+
+    @Column(name = "created_by_title", length = 160)
+    private String createdByTitle;
+
+    /** Auteur de la version courante : « Etabli par » et visa de la piece imprimee. */
+    @Column(name = "version_author", length = 180)
+    private String versionAuthor;
+
+    @Column(name = "version_author_name")
+    private String versionAuthorName;
+
+    @Column(name = "version_author_title", length = 160)
+    private String versionAuthorTitle;
+
+    // -- Lot B2 : motif et origine de la version courante ---------------------------------------
+    @Column(name = "version_reason", length = 1000)
+    private String versionReason;
+
+    /** CLIENT_PROPOSAL (proposition du client), COUNTER_PROPOSAL (contre-proposition) ou INTERNAL. */
+    @Column(name = "version_origin", length = 30)
+    private String versionOrigin;
+
+    /** Lot B14 (D8) : rectificative qui remplace cette facture, presentee comme sa nouvelle version. */
+    @Column(name = "replaced_by_document_number", length = 60)
+    private String replacedByDocumentNumber;
+
+    /** Lot B3 : facture d'acompte, rattachee au devis ou a la facture dont elle est un acompte. */
+    @Column(name = "deposit_for_document_number", length = 60)
+    private String depositForDocumentNumber;
+
+    /** Lot B11 : affaire a laquelle la piece appartient. */
+    @Column(name = "deal_code", length = 40)
+    private String dealCode;
+
+    /** Lot B5 : devis issu de cette proforma. */
+    @Column(name = "converted_to_document_number", length = 60)
+    private String convertedToDocumentNumber;
+
+    /** Lot B4 (E15) : destinataire corrige apres scellement ; le PDF envoye devient un duplicata date. */
+    @Column(name = "recipient_corrected_at")
+    private java.time.Instant recipientCorrectedAt;
 }

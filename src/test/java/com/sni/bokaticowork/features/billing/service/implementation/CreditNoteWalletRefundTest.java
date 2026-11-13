@@ -80,7 +80,7 @@ class CreditNoteWalletRefundTest {
 
         service.refundCreditNoteToWallet("CRN-002", null);
 
-        assertThat(creditNote.getStatus()).isEqualTo(BillingDocumentStatus.ISSUED);
+        assertThat(creditNote.getStatus()).isEqualTo(BillingDocumentStatus.REFUNDED);
         verify(documentRepository).save(creditNote);
     }
 
@@ -102,17 +102,17 @@ class CreditNoteWalletRefundTest {
 
         assertThatThrownBy(() -> service.refundCreditNoteToWallet("CRN-003", null))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("doit etre valide");
+                .hasMessageContaining("doit être validé");
         verify(walletService, never()).credit(any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
     void shouldRefuseACreditNoteAlreadyConsumed() {
-        creditNoteExists(creditNote("CRN-004", "50000", true, BillingDocumentStatus.ISSUED));
+        creditNoteExists(creditNote("CRN-004", "50000", true, BillingDocumentStatus.REFUNDED));
 
         assertThatThrownBy(() -> service.refundCreditNoteToWallet("CRN-004", null))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("deja ete consomme");
+                .hasMessageContaining("déjà été consommé");
     }
 
     @Test

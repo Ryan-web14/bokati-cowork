@@ -153,6 +153,7 @@ accounting.revenue.deferral	ACCOUNTING	ENUM	LIVE	MONTHLY	Produits constates d'av
 accounting.revenue.deferred-account	ACCOUNTING	TEXT	LIVE	477	Compte des produits constates d'avance
 accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
 accounting.sales.client-account	ACCOUNTING	TEXT	LIVE	411	Compte collectif des clients
+accounting.sales.deposit-account	ACCOUNTING	TEXT	LIVE	4191	Compte des acomptes recus des clients (factures d'acompte, soldé par la facture finale)
 accounting.sales.discount-account	ACCOUNTING	TEXT	LIVE	709	Compte des remises accordees sur facture
 accounting.sales.extra-tax-account	ACCOUNTING	TEXT	LIVE	4431	Compte du centime additionnel facture
 accounting.sales.journal	ACCOUNTING	TEXT	LIVE	VT	Journal des factures et avoirs
@@ -274,6 +275,12 @@ app.security.registration.mx-check-enabled	SECURITY	BOOLEAN	LIVE	true	Vérificat
 app.security.token-hash.secret	SECURITY	SECRET	RESTART		Secret d'empreinte des jetons
 app.time-zone	LOCALE	TEXT	RESTART	Africa/Lagos	Fuseau horaire
 app.verify-base-url	ENVIRONMENT	TEXT	LIVE	https://api.elleaose.com	Adresse de vérification
+approval.escalation-hours	PAYMENT	INTEGER	LIVE	72	Heures d'attente d'un niveau avant escalade au supérieur du décideur
+approval.reminder-hours	PAYMENT	INTEGER	LIVE	24	Heures d'attente d'un niveau avant rappel aux décideurs (puis à chaque intervalle)
+approval.worker-cron	PAYMENT	CRON	LIVE	0 0 8-18 * * *	Planification des rappels et escalades des centres d'approbation
+billing.deal.auto-create	BILLING	BOOLEAN	LIVE	true	Affaires : le premier devis d'un client sans affaire ouverte en crée une (sinon il rejoint son unique affaire ouverte)
+billing.quote.revision-validity-days	BILLING	INTEGER	LIVE	30	Devis : jours de validité garantis après une révision (la date de validité est prolongée si besoin)
+billing.stock.issue-on	BILLING	ENUM	LIVE	INVOICE	Sortie de stock des articles vendus : INVOICE (a l'emission de la facture) ou NONE (aucune sortie automatique)
 bokati.billing.default-currency	BILLING	TEXT	LIVE	XAF	Devise par défaut
 bokati.billing.dunning.batch-size	BILLING	INTEGER	LIVE	200	Taille de lot des relances
 bokati.billing.dunning.cron	BILLING	CRON	LIVE	0 30 8 * * *	Planification des relances
@@ -286,6 +293,7 @@ bokati.billing.workers.overdue-delay-ms	BILLING	INTEGER	LIVE	3600000	Cadence du 
 bokati.billing.workers.payment-reminder-cooldown-days	BILLING	INTEGER	LIVE	7	Intervalle entre deux rappels (jours)
 bokati.billing.workers.payment-reminder-cron	BILLING	CRON	LIVE	0 0 8 * * *	Planification des rappels de paiement
 bokati.billing.workers.payment-reminder-max	BILLING	INTEGER	LIVE	3	Nombre maximum de rappels
+bokati.billing.workers.quote-expiry-delay-ms	BILLING	INTEGER	LIVE	3600000	Cadence du passage en expiré des devis échus (ms)
 bokati.billing.workers.schedule-overdue-delay-ms	BILLING	INTEGER	LIVE	3600000	Cadence du suivi des échéanciers (ms)
 bokati.booking.lifecycle.worker-delay-ms	BOOKING	INTEGER	LIVE	60000	Cadence du suivi des réservations (ms)
 bokati.booking.no-show.worker-delay-ms	BOOKING	INTEGER	LIVE	60000	Cadence du suivi des absences (ms)
@@ -449,10 +457,8 @@ bokati.websocket.stomp.use-tls	WEBSOCKET	BOOLEAN	RESTART	false	Relais chiffré
 bokati.websocket.stomp.virtual-host	WEBSOCKET	TEXT	RESTART	/	Hôte virtuel du relais
 bokati.websocket.use-stomp-relay	WEBSOCKET	BOOLEAN	RESTART	false	Relais de messages actif
 fund.advance.overdue-policy	PAYMENT	ENUM	LIVE	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
-fund.approval.escalation-days	PAYMENT	INTEGER	LIVE	3	Jours d'attente d'une validation avant escalade au responsable
 fund.approval.level1-max	PAYMENT	INTEGER	LIVE	50000	Montant maximal valide par le seul chef de service (XAF)
 fund.approval.level2-max	PAYMENT	INTEGER	LIVE	500000	Montant maximal valide sans la direction (XAF)
-fund.approval.reminder-hours	PAYMENT	INTEGER	LIVE	24	Heures avant rappel au valideur
 fund.budget.blocking-mode	PAYMENT	ENUM	LIVE	EXTRA_APPROVAL	Depassement d'une ligne bloquante : REFUSE (demande refusee) ou EXTRA_APPROVAL (validation budgetaire en plus)
 fund.budget.require-forecast-choice	PAYMENT	BOOLEAN	LIVE	true	Avec un budget actif, chaque demande cite sa prevision ou se declare non prevue
 fund.budget.unplanned-approval	PAYMENT	BOOLEAN	LIVE	false	Une depense non prevue demande une validation budgetaire en plus

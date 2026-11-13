@@ -66,7 +66,7 @@ import static org.mockito.Mockito.when;
  */
 @Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, AnalyticAllocator.class,
         AccountingLetteringService.class, EntryNumbering.class, CashActorResolver.class, PurchaseService.class, BudgetEngine.class,
-        BudgetService.class, FundRequestService.class, VoucherService.class, QrCodeRenderer.class, PurchaseF13IT.Templates.class})
+        BudgetService.class, FundRequestService.class, VoucherService.class, QrCodeRenderer.class, PurchaseF13IT.Templates.class, com.sni.bokaticowork.features.approval.service.ApprovalEngine.class, com.sni.bokaticowork.features.approval.service.ApprovalHierarchy.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 class PurchaseF13IT extends PostgresIntegrationTestBase {
 
@@ -105,6 +105,7 @@ class PurchaseF13IT extends PostgresIntegrationTestBase {
     @MockitoBean private CashRegisterService cashRegisterService;
     @MockitoBean private AccountingEventPublisher accountingEvents;
     @MockitoBean private FundNotifier fundNotifier;
+    @MockitoBean private com.sni.bokaticowork.features.approval.service.ApprovalNotifier approvalNotifier;
 
     private Long budgetId;
     private String code;

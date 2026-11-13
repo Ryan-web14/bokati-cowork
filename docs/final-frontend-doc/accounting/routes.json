@@ -18575,8 +18575,8 @@
       "PAID",
       "OVERDUE",
       "CANCELLED",
-      "VOIDED",
       "REFUNDED",
+      "APPLIED",
       "WRITTEN_OFF"
      ]
     },
@@ -18848,6 +18848,46 @@
      "format": "date-time"
     },
     "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdByName": {
+     "type": "string"
+    },
+    "createdByTitle": {
+     "type": "string"
+    },
+    "versionAuthor": {
+     "type": "string"
+    },
+    "versionAuthorName": {
+     "type": "string"
+    },
+    "versionAuthorTitle": {
+     "type": "string"
+    },
+    "versionReason": {
+     "type": "string"
+    },
+    "versionOrigin": {
+     "type": "string"
+    },
+    "replacedByDocumentNumber": {
+     "type": "string"
+    },
+    "depositForDocumentNumber": {
+     "type": "string"
+    },
+    "dealCode": {
+     "type": "string"
+    },
+    "convertedToDocumentNumber": {
+     "type": "string"
+    },
+    "recipientCorrectedAt": {
      "type": "string",
      "format": "date-time"
     }

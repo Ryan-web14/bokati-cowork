@@ -70,7 +70,7 @@ public class BillingEmailServiceImpl implements BillingEmailService {
         String documentNumber = document.documentNumber();
         String to = recipient(document);
         if (!StringUtils.hasText(to)) {
-            throw new BadRequestException("Billing document customer has no email");
+            throw BadRequestException.coded("CUSTOMER_NO_EMAIL", "Le client du document n'a pas d'adresse électronique");
         }
         byte[] pdf = billingDocumentPdfService.generatePdf(documentNumber);
         try {
@@ -83,7 +83,7 @@ public class BillingEmailServiceImpl implements BillingEmailService {
             ).join();
         } catch (CompletionException ex) {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-            throw new BadRequestException("Billing document email send failed: " + cause.getMessage(), cause);
+            throw new BadRequestException("Envoi du courriel impossible : " + cause.getMessage(), cause);
         }
     }
 
@@ -124,6 +124,10 @@ public class BillingEmailServiceImpl implements BillingEmailService {
     }
 
     private String renderBillingDocument(BillingDocumentResponse document) {
+        return renderBillingDocument(document, null);
+    }
+
+    private String renderBillingDocument(BillingDocumentResponse document, String personalMessage) {
         NoticeState state = stateOf(document);
         boolean overdue = state == NoticeState.OVERDUE;
         boolean settled = state == NoticeState.SETTLED;
@@ -147,7 +151,7 @@ public class BillingEmailServiceImpl implements BillingEmailService {
             case PARTIALLY_PAID -> "Un solde reste a regler";
             case ISSUED -> "Le recapitulatif est disponible en piece jointe";
         });
-        context.setVariable("message", switch (state) {
+        String standardMessage = switch (state) {
             case SETTLED -> "Nous accusons reception de votre reglement de " + paid + ". Votre "
                     + documentLabel + " est soldee, plus rien ne reste a regler. Vous en trouverez"
                     + " la version a jour en piece jointe.";
@@ -157,7 +161,9 @@ public class BillingEmailServiceImpl implements BillingEmailService {
                     + " a jour en piece jointe.";
             case ISSUED -> "Vous trouverez en piece jointe le detail de votre " + documentLabel
                     + ". Ce document reprend les informations utiles pour votre suivi.";
-        });
+        };
+        // Lot B4 : un mot de l'expediteur precede le message type.
+        context.setVariable("message", StringUtils.hasText(personalMessage) ? personalMessage.trim() + "\n\n" + standardMessage : standardMessage);
         context.setVariable("totalAmount", money(document.totalAmount(), document.currency()));
         context.setVariable("paidAmount", paid);
         context.setVariable("balanceDue", balance);
@@ -166,6 +172,29 @@ public class BillingEmailServiceImpl implements BillingEmailService {
         context.setVariable("overdue", overdue);
         context.setVariable("settled", settled);
         return templateEngine.process("billing-document", context);
+    }
+
+    /**
+     * Lot B4 : envoi aux destinataires choisis (principaux, copie, copie cachee), avec un message de
+     * l'expediteur ; rend l'objet du courriel.
+     */
+    @Override
+    public String sendDocumentTo(String documentNumber, java.util.List<String> to, java.util.List<String> cc, java.util.List<String> bcc,
+                                 String personalMessage) {
+        BillingDocumentResponse document = billingDocumentService.get(documentNumber);
+        if (to == null || to.stream().noneMatch(StringUtils::hasText)) {
+            throw new BadRequestException("Indiquez au moins un destinataire");
+        }
+        byte[] pdf = billingDocumentPdfService.generatePdf(documentNumber);
+        String subject = billingSubject(document);
+        try {
+            emailSender.sendHtmlEmailWithPdfAttachment(com.sni.bokaticowork.core.utils.validation.EmailRecipients.encode(to, cc, bcc),
+                    subject, renderBillingDocument(document, personalMessage), document.documentNumber() + ".pdf", pdf).join();
+        } catch (CompletionException ex) {
+            Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+            throw new BadRequestException("Envoi du courriel impossible : " + cause.getMessage(), cause);
+        }
+        return subject;
     }
 
     /** L'adresse du document, ou l'adresse de facturation choisie par le membre destinataire. */

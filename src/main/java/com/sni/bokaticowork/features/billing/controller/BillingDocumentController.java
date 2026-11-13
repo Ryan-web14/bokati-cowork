@@ -36,6 +36,7 @@ import com.sni.bokaticowork.features.payment.dto.response.PayInvoiceResponse;
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -60,6 +61,12 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class BillingDocumentController {
 
+    private final com.sni.bokaticowork.features.billing.service.implementation.InvoiceChangeService invoiceChangeService;
+    private final com.sni.bokaticowork.features.billing.service.implementation.DepositService depositService;
+    private final com.sni.bokaticowork.features.billing.service.implementation.BillingSendingService sendingService;
+    private final com.sni.bokaticowork.features.billing.service.implementation.CustomerChangeService customerChangeService;
+    private final com.sni.bokaticowork.features.billing.service.implementation.CustomerStatementService customerStatementService;
+
     private final BillingDocumentService billingDocumentService;
     private final BillingDocumentPdfService billingDocumentPdfService;
     private final BillingEmailService billingEmailService;
@@ -81,6 +88,27 @@ public class BillingDocumentController {
      * de sorte qu'il n'y ait plus a chercher un montant a la calculatrice ni a creer un brouillon
      * pour connaitre un total.
      */
+    /** Lot B7 : disponibilites et alertes des lignes (stock, article actif, prix, ressources). */
+    @PostMapping("/documents/check-availability")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse> checkAvailability(
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.CheckAvailabilityRequest request) {
+        return ResponseEntity.ok(billingDocumentService.checkAvailability(request));
+    }
+
+    /** Lot B8 : saisie d'un total (TTC ou HT) ventile par le systeme sur les lignes, au franc pres. */
+    @PostMapping("/documents/allocate-amount")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse> allocateAmount(
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.AllocateAmountRequest request) {
+        return ResponseEntity.ok(billingDocumentService.allocateAmount(request));
+    }
+
+    /** Lot B13 : calcul d'une ligne a chaque saisie (quantite, prix, remise, taxe) et des totaux. */
+    @PostMapping("/documents/simulate-line")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse> simulateLine(
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.SimulateBillingLineRequest request) {
+        return ResponseEntity.ok(billingDocumentService.simulateLine(request));
+    }
+
     @PostMapping("/documents/simulate")
     public ResponseEntity<SimulateBillingDocumentResponse> simulate(
             @Valid @RequestBody SimulateBillingDocumentRequest request) {
@@ -193,9 +221,160 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.validate(documentNumber));
     }
 
+    /**
+     * Lot B4 : envoi aux destinataires choisis (principaux, copie, copie cachee) par courriel (PDF
+     * joint) et/ou WhatsApp ; chaque envoi est trace, le statut de la piece ne change pas.
+     */
+    @PostMapping("/documents/{documentNumber}/send")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.BillingSendingResponse>> sendTo(
+            @PathVariable String documentNumber,
+            @jakarta.validation.Valid @RequestBody(required = false) com.sni.bokaticowork.features.billing.dto.request.SendDocumentRequest request) {
+        return ResponseEntity.ok(sendingService.send(documentNumber, request));
+    }
+
+    @GetMapping("/documents/{documentNumber}/sendings")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.BillingSendingResponse>> sendings(
+            @PathVariable String documentNumber) {
+        return ResponseEntity.ok(sendingService.sendings(documentNumber));
+    }
+
+    /** Lot B4 : destinataires habituels d'un client et adresses connues a proposer. */
+    @GetMapping("/customers/{customerType}/{customerCode}/billing-recipients")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.BillingRecipientsResponse> billingRecipients(
+            @PathVariable String customerType, @PathVariable String customerCode) {
+        return ResponseEntity.ok(sendingService.recipients(customerType, customerCode));
+    }
+
+    @PutMapping("/customers/{customerType}/{customerCode}/billing-recipients")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.BillingRecipientsResponse> saveBillingRecipients(
+            @PathVariable String customerType, @PathVariable String customerCode,
+            @RequestBody com.sni.bokaticowork.features.billing.dto.request.BillingRecipientPreferenceRequest request) {
+        return ResponseEntity.ok(sendingService.saveRecipients(customerType, customerCode, request));
+    }
+
     @PatchMapping("/documents/{documentNumber}/send")
     public ResponseEntity<BillingDocumentResponse> send(@PathVariable String documentNumber) {
         return ResponseEntity.ok(billingDocumentService.send(documentNumber));
+    }
+
+    /** Lot B5 : proforma creee directement (document sans valeur fiscale). */
+    @PostMapping("/proformas")
+    public ResponseEntity<BillingDocumentResponse> createProforma(
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest request) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(billingDocumentService.create(
+                new com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest(
+                        com.sni.bokaticowork.features.billing.enums.BillingDocumentType.PROFORMA_INVOICE, request.customerType(),
+                        request.customerCode(), request.customerName(), request.customerEmail(), request.customerPhone(),
+                        request.billingAddressJson(), request.sourceType(), request.sourceCode(), request.title(), request.description(),
+                        request.terms(), request.currency(), request.issueDate(), request.dueDate(), request.metadataJson(), request.lines(),
+                        request.discounts(), request.clauses(), request.paymentReference(), request.paymentInstructions(),
+                        request.bankDetailsJson(), null, request.customerReference(), request.poNumber(), request.projectCode(),
+                        request.salespersonCode(), request.deliveryAddressJson(), request.language(), request.exchangeRate(), null,
+                        request.companyCustomerCode())));
+    }
+
+    /** Lot B5 : proforma depuis un devis. */
+    @PostMapping("/quotes/{quoteNumber}/proforma")
+    public ResponseEntity<BillingDocumentResponse> proformaFromQuote(@PathVariable String quoteNumber) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(billingDocumentService.proformaFromQuote(quoteNumber));
+    }
+
+    /** Lot B5 : la proforma acceptee devient un devis accepte. */
+    @PostMapping("/proformas/{proformaNumber}/to-quote")
+    public ResponseEntity<BillingDocumentResponse> proformaToQuote(@PathVariable String proformaNumber) {
+        return ResponseEntity.ok(billingDocumentService.proformaToQuote(proformaNumber));
+    }
+
+    /** Lot B2 : revision d'un devis (prix, quantites, remises, lignes) avec motif et origine. */
+    @PutMapping("/quotes/{quoteNumber}")
+    public ResponseEntity<BillingDocumentResponse> reviseQuote(@PathVariable String quoteNumber,
+                                                               @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.ReviseQuoteRequest request) {
+        return ResponseEntity.ok(billingDocumentService.reviseQuote(quoteNumber, request));
+    }
+
+    /** Lot B2 : frise de negociation (versions, auteurs, motifs, ecarts de prix). */
+    @GetMapping("/quotes/{quoteNumber}/negotiation")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse> negotiation(@PathVariable String quoteNumber) {
+        return ResponseEntity.ok(billingDocumentService.negotiation(quoteNumber));
+    }
+
+    /** Decision D4 : reactivation d'un devis expire avec une nouvelle date de validite. */
+    @PatchMapping("/quotes/{quoteNumber}/revalidate")
+    public ResponseEntity<BillingDocumentResponse> revalidateQuote(@PathVariable String quoteNumber,
+                                                                   @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.RevalidateQuoteRequest request) {
+        return ResponseEntity.ok(billingDocumentService.revalidateQuote(quoteNumber, request));
+    }
+
+    /**
+     * Lot B14 : modification d'une facture non payee. Un brouillon change aussitot ; une facture
+     * emise attend l'approbation du centre de la facturation (decision par /approvals/...).
+     */
+    @PostMapping("/invoices/{invoiceNumber}/change-requests")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.InvoiceChangeResponse> requestInvoiceChange(
+            @PathVariable String invoiceNumber,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.RequestInvoiceChangeRequest request) {
+        return ResponseEntity.ok(invoiceChangeService.request(invoiceNumber, request));
+    }
+
+    @GetMapping("/invoices/{invoiceNumber}/change-requests")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.InvoiceChangeResponse>> invoiceChanges(
+            @PathVariable String invoiceNumber) {
+        return ResponseEntity.ok(invoiceChangeService.list(invoiceNumber));
+    }
+
+    @PatchMapping("/invoices/change-requests/{id}/cancel")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.InvoiceChangeResponse> cancelInvoiceChange(@PathVariable Long id) {
+        return ResponseEntity.ok(invoiceChangeService.cancel(id));
+    }
+
+    /** Lot B3 : un ou plusieurs acomptes (montant ou pourcentage, echeances) sur un devis. */
+    @PostMapping("/quotes/{quoteNumber}/deposits")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.DepositResponse>> planQuoteDeposits(
+            @PathVariable String quoteNumber,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest request) {
+        return ResponseEntity.ok(depositService.plan(quoteNumber, request));
+    }
+
+    /** Lot B3 : acomptes sur une facture en preparation (non pris sur le devis). */
+    @PostMapping("/invoices/{invoiceNumber}/deposits")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.DepositResponse>> planInvoiceDeposits(
+            @PathVariable String invoiceNumber,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest request) {
+        return ResponseEntity.ok(depositService.plan(invoiceNumber, request));
+    }
+
+    @GetMapping("/documents/{documentNumber}/deposits")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.DepositResponse>> deposits(@PathVariable String documentNumber) {
+        return ResponseEntity.ok(depositService.list(documentNumber));
+    }
+
+    @PatchMapping("/deposits/{id}/invoice")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.DepositResponse> invoiceDeposit(@PathVariable Long id) {
+        return ResponseEntity.ok(depositService.invoice(id));
+    }
+
+    @PatchMapping("/deposits/{id}/cancel")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.DepositResponse> cancelDeposit(@PathVariable Long id,
+                                                                                                         @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(depositService.cancel(id, reason));
+    }
+
+    /** Decision D4 : acompte encaisse d'un devis refuse ou expire, rembourse ou garde en avoir. */
+    @PatchMapping("/deposits/{id}/settle")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.DepositResponse> settleDeposit(@PathVariable Long id,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.DepositSettlementRequest request) {
+        return ResponseEntity.ok(depositService.settle(id, request));
+    }
+
+    /**
+     * Lot B6 : changement de client. Avant scellement, meme facture dans une nouvelle version ;
+     * sinon, avoirs au client d'origine et nouvelle facture, reglements gardes en avoir ou transferes.
+     */
+    @PostMapping("/invoices/{invoiceNumber}/change-customer")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.ChangeCustomerResponse> changeCustomer(
+            @PathVariable String invoiceNumber,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.ChangeCustomerRequest request) {
+        return ResponseEntity.ok(customerChangeService.change(invoiceNumber, request));
     }
 
     @PatchMapping("/quotes/{quoteNumber}/mark-viewed")
@@ -335,12 +514,39 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.customerStatement(customerType, customerCode, pageable));
     }
 
+    /** Lot B9 : releve PDF d'une organisation ou d'un membre, sur une periode. */
+    @GetMapping("/customers/{customerType}/{customerCode}/statement.pdf")
+    public ResponseEntity<byte[]> statementPdf(@PathVariable String customerType, @PathVariable String customerCode,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + customerStatementService.fileName(customerType, customerCode, from, to) + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(customerStatementService.pdf(customerType, customerCode, from, to));
+    }
+
+    /** Lot B9 : envoi du releve par courriel (destinataires, copie, copie cachee). */
+    @PostMapping("/customers/{customerType}/{customerCode}/statement/send")
+    public ResponseEntity<Boolean> sendStatement(@PathVariable String customerType, @PathVariable String customerCode,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.SendStatementRequest request) {
+        return ResponseEntity.ok(customerStatementService.send(customerType, customerCode, request));
+    }
+
     @GetMapping("/customers/{customerType}/{customerCode}/statement.csv")
     public ResponseEntity<String> statementCsv(
             @PathVariable String customerType,
             @PathVariable String customerCode,
             @PageableDefault(size = 500, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        CustomerStatementResponse statement = billingDocumentService.customerStatement(customerType, customerCode, pageable);
+        // Lot B9 (E13) : tout le releve, page apres page, plus seulement la premiere.
+        CustomerStatementResponse statement = billingDocumentService.customerStatement(customerType, customerCode,
+                PageRequest.of(0, 500, pageable.getSort()));
+        java.util.List<BillingDocumentResponse> all = new java.util.ArrayList<>(statement.documents());
+        for (int page = 1; page < statement.totalPages(); page++) {
+            all.addAll(billingDocumentService.customerStatement(customerType, customerCode, PageRequest.of(page, 500, pageable.getSort())).documents());
+        }
+        statement = new CustomerStatementResponse(statement.customerType(), statement.customerCode(), statement.totalInvoiced(), statement.totalPaid(),
+                statement.totalBalanceDue(), statement.totalCreditAvailable(), statement.netBalanceDue(), statement.totalDraft(), all, 0, all.size(),
+                all.size(), 1, statement.accountingBalance());
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"statement-" + customerType + "-" + customerCode + ".csv\"")
                 .contentType(MediaType.parseMediaType("text/csv"))

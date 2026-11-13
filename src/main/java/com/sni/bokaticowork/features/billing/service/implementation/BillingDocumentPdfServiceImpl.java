@@ -73,6 +73,16 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private final Locale appLocale;
     private final BrandLogo brandLogo;
     private final com.sni.bokaticowork.core.identity.OperatorIdentityService operatorIdentityService;
+    private final com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
+    private final com.sni.bokaticowork.features.billing.repository.BillingDepositRepository depositRepository;
+
+    /** Ligne « Acompte n° ... du ... » d'une facture finale (lot B3). */
+    public record DepositLine(String label, java.math.BigDecimal amount) {
+    }
+
+    /** Visa imprime (lot B12) : auteur de la version, sa fonction, la date et sa signature si elle existe. */
+    public record VisaView(String name, String title, java.time.LocalDate date, String signature) {
+    }
     private final com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer qrCodeRenderer;
 
     @Value("${app.verify-base-url:http://localhost:8080}")
@@ -93,6 +103,21 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         BillingDocumentResponse document = billingDocumentService.get(documentNumber);
 
         byte[] canonical = storedPdf(documentNumber);
+        java.time.Instant corrected = documentRepository.findByDocumentNumber(documentNumber)
+                .map(com.sni.bokaticowork.features.billing.model.BillingDocument::getRecipientCorrectedAt).orElse(null);
+        if (canonical != null && corrected != null && Boolean.TRUE.equals(document.locked())) {
+            // Lot B4 (E15) : destinataire corrige apres scellement. L'original scelle reste la
+            // reference (empreinte inchangee) ; on envoie un duplicata date, au destinataire corrige.
+            byte[] duplicate = com.sni.bokaticowork.core.utils.pdf.PdfCopies.stamp(render(document),
+                    "DUPLICATA DU " + java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy").format(java.time.LocalDate.now())
+                            + " (DESTINATAIRE CORRIGÉ)");
+            String duplicateWatermark = resolveWatermark(document.status(), document.locked());
+            try {
+                return duplicateWatermark == null ? duplicate : addWatermark(duplicate, duplicateWatermark);
+            } catch (Exception ex) {
+                throw new BadRequestException("Impossible d'apposer le filigrane sur le PDF", ex);
+            }
+        }
         if (canonical == null) {
             canonical = render(document);
             if (Boolean.TRUE.equals(document.locked())) {
@@ -110,7 +135,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         try {
             return addWatermark(canonical, watermark);
         } catch (Exception ex) {
-            throw new BadRequestException("Unable to watermark billing document PDF", ex);
+            throw new BadRequestException("Impossible d'apposer le filigrane sur le PDF", ex);
         }
     }
 
@@ -207,7 +232,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             // alors que ces octets-ci sont la version canonique et doivent rester stables.
             return pdf;
         } catch (Exception ex) {
-            throw new BadRequestException("Unable to generate billing document PDF", ex);
+            throw new BadRequestException("Impossible de produire le PDF du document", ex);
         }
     }
 
@@ -223,14 +248,14 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         if (status == null) return null;
         if (Boolean.TRUE.equals(locked)) {
             return switch (status) {
-                case CANCELLED, VOIDED -> "ANNULÉ";
+                case CANCELLED -> "ANNULÉ";
                 default -> null;
             };
         }
         return switch (status) {
             case DRAFT -> "BROUILLON";
             case OVERDUE -> "EN RETARD";
-            case CANCELLED, VOIDED -> "ANNULÉ";
+            case CANCELLED -> "ANNULÉ";
             default -> null;
         };
     }
@@ -313,6 +338,17 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             context.setVariable("customerIdentifiers", identifierLines(entity.getCustomerIdentifiersJson(), entity.getCustomerNiu()));
             context.setVariable("customerVatExemptionNote", entity.getCustomerVatExemptionNote());
             context.setVariable("usageAnnex", usageAnnex(entity.getUsageAnnexJson(), document.documentNumber()));
+            context.setVariable("visa", visaOf(entity));
+            // Lot B3 : facture d'acompte titree comme telle ; facture finale avec ses acomptes deduits.
+            context.setVariable("depositFor", entity.getDepositForDocumentNumber());
+            context.setVariable("deposits", depositRepository == null ? java.util.List.of()
+                    : depositRepository.findByFinalDocumentNumberOrderByRankAsc(entity.getDocumentNumber()).stream()
+                    .filter(deposit -> deposit.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingDepositStatus.DEDUCTED)
+                    .map(deposit -> new DepositLine("Acompte n° " + deposit.getRank() + " du "
+                            + java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy").format(java.time.LocalDate.ofInstant(
+                                    deposit.getCreatedAt(), java.time.ZoneId.of("Africa/Brazzaville")))
+                            + " (" + deposit.getDepositInvoiceNumber() + ")", deposit.getDeductedAmount()))
+                    .toList());
             // Organisation reliee des l'emission · imprimee en tete. Une facture reliee apres coup
             // (ATTACHED) ne change pas : son document emis ne portait pas l'organisation.
             if ("AT_ISSUE".equals(entity.getCompanyLinkSource()) && StringUtils.hasText(entity.getCompanyName())) {
@@ -321,6 +357,20 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             }
         });
         return templateEngine.process("billing/document", context);
+    }
+
+    /** Auteur de la version imprimee ; a defaut (pieces anterieures au lot B12), l'auteur de la piece. */
+    private VisaView visaOf(com.sni.bokaticowork.features.billing.model.BillingDocument entity) {
+        String login = StringUtils.hasText(entity.getVersionAuthor()) ? entity.getVersionAuthor() : entity.getCreatedBy();
+        String name = StringUtils.hasText(entity.getVersionAuthorName()) ? entity.getVersionAuthorName() : entity.getCreatedByName();
+        String title = StringUtils.hasText(entity.getVersionAuthorName()) ? entity.getVersionAuthorTitle() : entity.getCreatedByTitle();
+        if (!StringUtils.hasText(name) || "SYSTEM".equals(login)) {
+            return null;
+        }
+        java.time.LocalDate date = entity.getIssueDate() != null ? entity.getIssueDate()
+                : entity.getCreatedAt() != null ? java.time.LocalDate.ofInstant(entity.getCreatedAt(), java.time.ZoneId.systemDefault()) : null;
+        String signature = staffProfileService == null ? null : staffProfileService.signatureOf(login).orElse(null);
+        return new VisaView(name, title, date, signature);
     }
 
     /** Identite courante de l'exploitant · celle par defaut si le service manque (tests). */
@@ -673,6 +723,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
                 case PENDING -> "En attente de signature";
                 case SIGNED -> "Signé";
                 case EXPIRED -> "Expiré";
+                case CANCELLED -> "Annulée (devis modifié ou sorti du circuit)";
             };
         }
 

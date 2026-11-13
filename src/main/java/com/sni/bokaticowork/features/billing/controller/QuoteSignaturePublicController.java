@@ -42,7 +42,7 @@ public class QuoteSignaturePublicController {
     }
 
     @PostMapping("/{token}/confirm")
-    public ResponseEntity<BillingDocumentResponse> confirmSignature(@PathVariable String token,
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.PublicSignatureConfirmation> confirmSignature(@PathVariable String token,
                                                                     @Valid @RequestBody ConfirmSignatureRequest request,
                                                                     HttpServletRequest http) {
         ConfirmSignatureRequest enriched = new ConfirmSignatureRequest(

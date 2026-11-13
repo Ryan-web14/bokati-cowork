@@ -51,7 +51,7 @@ public class PaymentIntentLifecycleServiceImpl implements PaymentIntentLifecycle
     static final Duration MAX_WINDOW = Duration.ofDays(30);
 
     private static final Set<BillingDocumentStatus> CLOSED_DOCUMENTS = Set.of(
-            BillingDocumentStatus.CANCELLED, BillingDocumentStatus.VOIDED,
+            BillingDocumentStatus.CANCELLED,
             BillingDocumentStatus.REFUNDED, BillingDocumentStatus.WRITTEN_OFF);
 
     private final PaymentIntentRepository intentRepository;

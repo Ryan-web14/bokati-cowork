@@ -35,7 +35,7 @@ public interface BillingDocumentPdfService {
 
         /** Le document est annule · la copie servie porte un filigrane et ne peut pas correspondre. */
         public boolean watermarked() {
-            return status == BillingDocumentStatus.CANCELLED || status == BillingDocumentStatus.VOIDED;
+            return status == BillingDocumentStatus.CANCELLED;
         }
     }
 }

@@ -31,7 +31,34 @@ public interface BillingDocumentService {
      * l'interface puisse simuler puis envoyer la meme charge utile.
      */
     SimulateBillingDocumentResponse simulate(SimulateBillingDocumentRequest request);
+
+    /** Lot B7 : stock, article actif, prix plancher, ressources aux dates demandees ; rien n'est cree. */
+    com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse checkAvailability(
+            com.sni.bokaticowork.features.billing.dto.request.CheckAvailabilityRequest request);
+
+    /** Lot B8 : un total saisi (TTC ou HT) ventile sur les lignes au franc pres, sans rien creer. */
+    com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse allocateAmount(
+            com.sni.bokaticowork.features.billing.dto.request.AllocateAmountRequest request);
+
+    /** Lot B13 : calcul d'une ligne en cours de saisie et des totaux du document, sans rien creer. */
+    com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse simulateLine(
+            com.sni.bokaticowork.features.billing.dto.request.SimulateBillingLineRequest request);
     BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request);
+
+    /** Lot B2 : revision d'un devis en negociation, avec motif et origine ; une version par revision. */
+    BillingDocumentResponse reviseQuote(String quoteNumber, com.sni.bokaticowork.features.billing.dto.request.ReviseQuoteRequest request);
+
+    /** Lot B2 : frise des versions d'un devis et ecarts de prix entre elles. */
+    com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse negotiation(String quoteNumber);
+
+    /** Lot B5 : proforma etablie depuis un devis (memes lignes, lien garde). */
+    BillingDocumentResponse proformaFromQuote(String quoteNumber);
+
+    /** Lot B5 : la proforma acceptee devient un devis accepte ; elle passe en CONVERTED. */
+    BillingDocumentResponse proformaToQuote(String proformaNumber);
+
+    /** Decision D4 : un devis expire repart avec une nouvelle date de validite. */
+    BillingDocumentResponse revalidateQuote(String quoteNumber, com.sni.bokaticowork.features.billing.dto.request.RevalidateQuoteRequest request);
 
     /**
      * Corrige les coordonnees du destinataire imprimees sur le document sans changer le client
@@ -105,6 +132,9 @@ public interface BillingDocumentService {
     BillingDocumentResponse applyCreditNote(String creditNoteNumber);
     CustomerStatementResponse customerStatement(String customerType, String customerCode, Pageable pageable);
     int markOverdueDocuments();
+
+    /** Passe en EXPIRED les devis sans reponse dont la date de validite est passee (lot B1). */
+    int expireQuotes();
     BillingDocumentResponse get(String documentNumber);
     PaginatedResponse<BillingDocumentResponse> list(BillingDocumentType type,
                                                     BillingDocumentStatus status,

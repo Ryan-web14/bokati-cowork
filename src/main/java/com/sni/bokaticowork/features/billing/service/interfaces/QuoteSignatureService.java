@@ -12,5 +12,5 @@ public interface QuoteSignatureService {
     /** Résout le token et retourne les données nécessaires à la page publique. */
     BillingDocumentSignature resolveToken(String token);
     /** Valide la signature, met le devis en ACCEPTED et retourne le document mis à jour. */
-    BillingDocumentResponse confirmSignature(String token, ConfirmSignatureRequest request);
+    com.sni.bokaticowork.features.billing.dto.response.PublicSignatureConfirmation confirmSignature(String token, ConfirmSignatureRequest request);
 }

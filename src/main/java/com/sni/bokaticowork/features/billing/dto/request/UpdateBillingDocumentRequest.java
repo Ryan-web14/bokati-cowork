@@ -11,8 +11,8 @@ import java.util.List;
  */
 public record UpdateBillingDocumentRequest(
         String title,
-        String description,
-        String terms,
+        @jakarta.validation.constraints.Size(max = 4000) String description,
+        @jakarta.validation.constraints.Size(max = 4000) String terms,
         LocalDate issueDate,
         LocalDate dueDate,
         String customerReference,

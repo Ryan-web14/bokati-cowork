@@ -17,8 +17,8 @@ public record CreateBillingDocumentLineRequest(
          * de remise maximal et la reprise de la categorie et de l'unite.
          */
         @JsonAlias("catalogSourceCode") String itemCode,
-        @NotBlank String description,
-        String detailedDescription,
+        @NotBlank @jakarta.validation.constraints.Size(max = 4000) String description,
+        @jakarta.validation.constraints.Size(max = 4000) String detailedDescription,
         BigDecimal quantity,
         @NotNull BigDecimal unitPrice,
         BigDecimal discountRate,
@@ -32,7 +32,7 @@ public record CreateBillingDocumentLineRequest(
         String sourceCode,
         String unit,
         String externalReference,
-        String notes,
+        @jakarta.validation.constraints.Size(max = 4000) String notes,
         Boolean optional,
         /**
          * Categorie affichee sur le document. Laisser null pour reprendre automatiquement celle

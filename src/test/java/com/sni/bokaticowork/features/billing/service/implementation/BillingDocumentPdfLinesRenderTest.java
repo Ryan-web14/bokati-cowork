@@ -86,7 +86,7 @@ class BillingDocumentPdfLinesRenderTest {
                 null, null, null,
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT),
                 BillingReceivables.customerImpact(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT, total, total),
-                null, null, null);
+                null, null, null, null);
 
         Context context = new Context(Locale.FRANCE);
         context.setVariable("document", document);
@@ -106,6 +106,25 @@ class BillingDocumentPdfLinesRenderTest {
         String html = render(List.of(line(1, "Salle de réunion", "1", "25000", "21186.44", true)));
         assertThat(html).contains("Visa ELLE A OSE").contains("Cachet et signature").contains("visa-box");
         assertThat(html.indexOf("Visa ELLE A OSE")).isLessThan(html.indexOf("Engineered by SNI"));
+    }
+
+    @Test
+    @DisplayName("Lot B13 · une description de 2 000 caractères s'imprime entière, retours à la ligne gardés")
+    void aLongDescriptionIsPrintedEntirely() throws Exception {
+        StringBuilder text = new StringBuilder();
+        int paragraph = 0;
+        while (text.length() < 2000) {
+            text.append("Paragraphe ").append(++paragraph).append(" : aménagement du plateau, mobilier, câblage et signalétique compris.\n");
+        }
+        String description = text.substring(0, 2000).trim() + " FIN-DE-DESCRIPTION";
+        String html = render(List.of(line(1, description, "1", "25000", "21186.44", true)));
+
+        assertThat(html).contains("FIN-DE-DESCRIPTION").contains("white-space: pre-line");
+        byte[] pdf = com.sni.bokaticowork.core.utils.pdf.PdfRenderer.render(html);
+        try (org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.pdmodel.PDDocument.load(pdf)) {
+            String printed = new org.apache.pdfbox.text.PDFTextStripper().getText(document).replaceAll("\\s+", " ");
+            assertThat(printed).contains("Paragraphe 1 :").contains("Paragraphe " + (paragraph - 1) + " :").contains("FIN-DE-DESCRIPTION");
+        }
     }
 
     @Test

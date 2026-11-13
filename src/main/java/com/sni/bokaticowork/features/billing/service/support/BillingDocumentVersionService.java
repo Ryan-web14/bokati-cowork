@@ -156,6 +156,13 @@ public class BillingDocumentVersionService {
         snapshot.put("additionalCentAmount", asText(document.getAdditionalCentAmount()));
         snapshot.put("taxAmount", asText(document.getTaxAmount()));
         snapshot.put("totalAmount", asText(document.getTotalAmount()));
+        // Lot B12 : chaque version garde son auteur (celui qui l'a etablie).
+        snapshot.put("versionAuthor", document.getVersionAuthor());
+        snapshot.put("versionAuthorName", document.getVersionAuthorName());
+        snapshot.put("versionAuthorTitle", document.getVersionAuthorTitle());
+        // Lot B2 : motif et origine de la version (proposition du client, contre-proposition).
+        snapshot.put("versionReason", document.getVersionReason());
+        snapshot.put("versionOrigin", document.getVersionOrigin());
 
         List<Map<String, Object>> lineSnapshots = new ArrayList<>();
         if (lines != null) {
@@ -268,5 +275,30 @@ public class BillingDocumentVersionService {
         return authentication == null || !StringUtils.hasText(authentication.getName())
                 ? "SYSTEM"
                 : authentication.getName();
+    }
+
+    /**
+     * Toutes les versions d'un document dans l'ordre, la version courante en dernier (lot B2) :
+     * l'instantane de chacune, avec son numero, sa date et sa transmission au client.
+     */
+    public List<Map<String, Object>> rounds(BillingDocument document, List<BillingDocumentLine> currentLines) {
+        List<Map<String, Object>> rounds = new ArrayList<>();
+        for (BillingDocumentEditHistory entry : historyRepository.findAllByDocumentOrderByVersionNumberAsc(document)) {
+            if (entry.getVersionNumber() == null || !StringUtils.hasText(entry.getSnapshotJson())) {
+                continue;
+            }
+            Map<String, Object> snapshot = new LinkedHashMap<>(readJson(entry.getSnapshotJson()));
+            snapshot.put("_version", entry.getVersionNumber());
+            snapshot.put("_changedAt", entry.getChangedAt());
+            snapshot.put("_sentAt", entry.getSentToCustomerAt());
+            rounds.add(snapshot);
+        }
+        Map<String, Object> current = new LinkedHashMap<>(snapshotOf(document, currentLines));
+        current.put("_version", currentRevision(document));
+        current.put("_changedAt", document.getUpdatedAt());
+        current.put("_sentAt", document.getSentAt());
+        current.put("_current", Boolean.TRUE);
+        rounds.add(current);
+        return rounds;
     }
 }

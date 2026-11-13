@@ -107,6 +107,8 @@ public record BillingDocumentResponse(
         /** Imprime en tete du destinataire · vide pour une facture reliee apres coup. */
         String companyName,
         /** {@code AT_ISSUE} (emise ainsi) ou {@code ATTACHED} (ancienne facture reliee). */
-        String companyLinkSource
+        String companyLinkSource,
+        /** Lot B12 : auteur de la piece et de la version courante. */
+        BillingDocumentAuthorResponse author
 ) {
 }

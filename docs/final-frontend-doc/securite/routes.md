@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-54 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+59 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -58,5 +58,10 @@
 | GET | `/sni/api/v1/admin/users/{userId}/roles` | SYSTEM:USERS | [RoleAssignmentAdminController](routes/RoleAssignmentAdminController.md#r-get-sni-api-v1-admin-users-userid-roles) |
 | POST | `/sni/api/v1/admin/users/{userId}/roles` | SYSTEM:USERS | [RoleAssignmentAdminController](routes/RoleAssignmentAdminController.md#r-post-sni-api-v1-admin-users-userid-roles) |
 | DELETE | `/sni/api/v1/admin/users/{userId}/roles/{roleId}` | SYSTEM:USERS | [RoleAssignmentAdminController](routes/RoleAssignmentAdminController.md#r-delete-sni-api-v1-admin-users-userid-roles-roleid) |
+| GET | `/sni/api/v1/admin/users/{userCode}/staff-profile` | SYSTEM:USERS | [StaffProfileController](routes/StaffProfileController.md#r-get-sni-api-v1-admin-users-usercode-staff-profile) |
+| PUT | `/sni/api/v1/admin/users/{userCode}/staff-profile` | SYSTEM:USERS | [StaffProfileController](routes/StaffProfileController.md#r-put-sni-api-v1-admin-users-usercode-staff-profile) |
+| GET | `/sni/api/v1/staff/me/profile` | ADMIN:ACCESS | [StaffProfileController](routes/StaffProfileController.md#r-get-sni-api-v1-staff-me-profile) |
+| DELETE | `/sni/api/v1/staff/me/signature` | ADMIN:ACCESS | [StaffProfileController](routes/StaffProfileController.md#r-delete-sni-api-v1-staff-me-signature) |
+| PUT | `/sni/api/v1/staff/me/signature` | ADMIN:ACCESS | [StaffProfileController](routes/StaffProfileController.md#r-put-sni-api-v1-staff-me-signature) |
 | POST | `/sni/api/v1/admin/provisioning/bootstrap-admin` | public | [UserProvisioningController](routes/UserProvisioningController.md#r-post-sni-api-v1-admin-provisioning-bootstrap-admin) |
 | POST | `/sni/api/v1/admin/provisioning/staff` | SYSTEM:SETTINGS | [UserProvisioningController](routes/UserProvisioningController.md#r-post-sni-api-v1-admin-provisioning-staff) |

@@ -48,6 +48,9 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
     private final ResourcePricingRuleRepository pricingRuleRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final ObjectMapper objectMapper;
+    /** Lot B10 : historique des prix (facultatif pour les tests unitaires). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private CatalogPriceService catalogPrices;
 
     @Override
     @Transactional
@@ -100,6 +103,7 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
     @Transactional
     public ServiceCatalogItemResponse update(String itemCode, UpdateServiceCatalogItemRequest request) {
         ServiceCatalogItem item = findByCode(itemCode);
+        java.math.BigDecimal previousPrice = item.getUnitPrice();
         if (request.name() != null) item.setName(request.name());
         if (request.description() != null) item.setDescription(request.description());
         if (request.category() != null) item.setCategory(request.category());
@@ -135,6 +139,9 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
         validateBounds(item.getMinQuantity(), item.getMaxQuantity(),
                 item.getFloorPrice(), item.getUnitPrice());
         item.setUpdatedAt(Instant.now());
+        if (catalogPrices != null) {
+            catalogPrices.recordCatalogPriceChange(item, previousPrice);
+        }
         return toResponse(catalogItemRepository.save(item));
     }
 
@@ -299,7 +306,7 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
 
     private ServiceCatalogItem findByCode(String itemCode) {
         return catalogItemRepository.findByItemCode(itemCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Service catalog item not found: " + itemCode));
+                .orElseThrow(() -> new ResourceNotFoundException("Article du catalogue introuvable : " + itemCode));
     }
 
     private ServiceCatalogItemResponse toResponse(ServiceCatalogItem item) {

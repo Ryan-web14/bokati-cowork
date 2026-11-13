@@ -5167,8 +5167,8 @@
       "PAID",
       "OVERDUE",
       "CANCELLED",
-      "VOIDED",
       "REFUNDED",
+      "APPLIED",
       "WRITTEN_OFF"
      ]
     },
@@ -5250,8 +5250,8 @@
       "PAID",
       "OVERDUE",
       "CANCELLED",
-      "VOIDED",
       "REFUNDED",
+      "APPLIED",
       "WRITTEN_OFF"
      ]
     },
@@ -10745,8 +10745,8 @@
       "PAID",
       "OVERDUE",
       "CANCELLED",
-      "VOIDED",
       "REFUNDED",
+      "APPLIED",
       "WRITTEN_OFF"
      ]
     },
@@ -10994,6 +10994,9 @@
     },
     "companyLinkSource": {
      "type": "string"
+    },
+    "author": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.response.BillingDocumentAuthorResponse"
     }
    }
   },
@@ -11334,7 +11337,8 @@
      "enum": [
       "PENDING",
       "SIGNED",
-      "EXPIRED"
+      "EXPIRED",
+      "CANCELLED"
      ]
     },
     "signedAt": {
@@ -11389,6 +11393,29 @@
      "format": "date-time"
     }
    }
+  },
+  "BillingDocumentAuthorResponse": {
+   "type": "object",
+   "properties": {
+    "createdBy": {
+     "type": "string"
+    },
+    "createdByName": {
+     "type": "string"
+    },
+    "createdByTitle": {
+     "type": "string"
+    },
+    "versionAuthor": {
+     "type": "string"
+    },
+    "versionAuthorName": {
+     "type": "string"
+    },
+    "versionAuthorTitle": {
+     "type": "string"
+    }
+   }
   }
  },
  "enums": {
@@ -11409,8 +11436,8 @@
    "PAID",
    "OVERDUE",
    "CANCELLED",
-   "VOIDED",
    "REFUNDED",
+   "APPLIED",
    "WRITTEN_OFF"
   ],
   "BookingStatus": [
@@ -11642,6 +11669,7 @@
   "BillingDocumentAdvanceResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentAdvanceResponse",
   "EarlyPaymentDiscountResponse": "com.sni.bokaticowork.features.billing.dto.response.EarlyPaymentDiscountResponse",
   "BillingDocumentSignatureResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentSignatureResponse",
-  "BillingRecoverableResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingRecoverableResponse"
+  "BillingRecoverableResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingRecoverableResponse",
+  "BillingDocumentAuthorResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentAuthorResponse"
  }
 }

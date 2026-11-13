@@ -113,6 +113,8 @@
         .lines tbody td.col-amt { font-weight: 700; color: #1f1430; }
         .line-name { font-weight: 700; color: #1f1430; }
         .line-sub { font-size: 8.2px; color: #1f1430; margin-top: 2px; }
+        /* Lot B13 : descriptions longues imprimees entieres, retours a la ligne gardes. */
+        .line-name, .line-sub, .detail-block { white-space: pre-line; word-wrap: break-word; }
         .line-category {
             /* nowrap : le moteur PDF calcule mal la largeur shrink-to-fit d'un inline-block
                combinant text-transform et letter-spacing, et coupait "Espace de travail" en
@@ -170,6 +172,11 @@
         .visa-box th { background: #f3eef6; color: #1f1430; font-size: 8px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
                        text-align: center; padding: 4px 6px; border: 1.2px solid #1f1430; }
         .visa-box td.stamp { height: 4.5cm; border: 1.2px solid #1f1430; padding: 0; }
+        .visa-signer { text-align: center; padding: 6px 6px 0; }
+        .visa-signature { max-width: 4.2cm; max-height: 2.4cm; }
+        .visa-name { font-size: 8px; font-weight: 700; color: #1f1430; margin-top: 3px; }
+        .visa-title { font-size: 7.4px; color: #1f1430; }
+        .visa-date { font-size: 7.2px; color: #6f6478; }
         .visa-box td.legend { font-size: 7.2px; color: #6f6478; text-align: center; padding: 2px 6px; border: 1.2px solid #1f1430; }
         .doc-footer { margin-top: 8px; padding: 8px 0 9px; border-top: 1px solid #e6ddea; font-size: 7.8px; color: #1f1430; text-align: center; }
         .doc-footer .made-by { font-size: 7.4px; color: #1f1430; font-weight: 700; letter-spacing: 0.5px; margin-top: 3px; text-transform: uppercase; }
@@ -182,14 +189,15 @@
     <div class="doc-type-block" id="doc-aside">
                         <div class="doc-type" th:switch="${document.documentType().name()}">
                             <span th:case="'QUOTE'">DEVIS</span>
-                            <span th:case="'PROFORMA_INVOICE'">PROFORMA</span>
+                            <span th:case="'PROFORMA_INVOICE'" style="font-size:18px;">FACTURE PROFORMA</span>
                             <span th:case="'CREDIT_NOTE'">AVOIR</span>
                             <span th:case="'DEBIT_NOTE'">NOTE DE DÉBIT</span>
                             <span th:case="'CORRECTIVE_INVOICE'" style="font-size:18px;">FACTURE RECTIFICATIVE</span>
-                            <span th:case="*">FACTURE</span>
+                            <span th:case="*" th:text="${depositFor != null ? 'FACTURE D''ACOMPTE' : 'FACTURE'}" th:style="${depositFor != null ? 'font-size:18px;' : ''}">FACTURE</span>
                         </div>
                         <div class="doc-number"
                              th:text="${document.locked() != null and document.locked() and document.fiscalNumber() != null ? document.fiscalNumber() : document.documentNumber()}">INV-000001</div>
+                        <div th:if="${document.documentType().name() == 'PROFORMA_INVOICE'}" style="font-size:8px; font-weight:700; color:#1f1430; margin-top:2px;">Document sans valeur fiscale</div>
                         <div th:if="${document.locked() != null and document.locked()}"
                              style="font-size:7px; margin-top:3px; font-family:'Courier New',monospace; letter-spacing:0.8px;"
                              th:text="${document.documentNumber()}"></div>
@@ -255,6 +263,7 @@
                          mieux vaut ne pas imprimer la ligne. -->
                     <tr th:if="${document.dueDate() != null}"><td class="lbl" th:text="${document.documentType().name() == 'QUOTE' ? 'Valable jusqu''au' : 'Date d''échéance'}">Date d'échéance</td><td class="val" th:text="${fmt.date(document.dueDate())}"></td></tr>
                     <tr><td class="lbl">Devise</td><td class="val" th:text="${document.currency()}">XAF</td></tr>
+                    <tr th:if="${visa != null}"><td class="lbl">Établi par</td><td class="val" th:text="${visa.title() != null ? visa.name() + ', ' + visa.title() : visa.name()}">Awa Mbemba, Commerciale</td></tr>
                     <tr>
                         <td class="lbl" th:text="${document.locked() != null and document.locked() and document.fiscalNumber() != null ? 'N° de certification' : 'N° de document'}">N° de document</td>
                         <td class="val" style="font-family:'Courier New',monospace; color:#1f1430;"
@@ -442,7 +451,11 @@
                         </td>
                         <td class="val num" style="color:#1f1430;" th:text="${fmt.money(document.advance().computedAmount())}">0</td>
                     </tr>
-                    <tr><td class="lbl">Montant réglé</td><td class="val num" th:text="${fmt.money(document.paidAmount())}">0</td></tr>
+                    <tr th:each="dp : ${deposits}" th:if="${deposits != null}">
+                        <td class="lbl" th:text="${dp.label()}">Acompte n° 1</td>
+                        <td class="val num" th:text="|- ${fmt.money(dp.amount())}|">0</td>
+                    </tr>
+                    <tr><td class="lbl" th:text="${deposits != null and not #lists.isEmpty(deposits) ? 'Montant réglé (acomptes compris)' : 'Montant réglé'}">Montant réglé</td><td class="val num" th:text="${fmt.money(document.paidAmount())}">0</td></tr>
                     <tr th:if="${payments != null and not #lists.isEmpty(payments)}">
                         <td class="lbl">Mode de paiement</td>
                         <td class="val" style="font-size:9px; letter-spacing:0.3px;">
@@ -559,7 +572,14 @@
             <td class="holder">
                 <table class="visa-box">
                     <tr><th th:text="|Visa ${operator != null ? operator.name() : 'ELLE A OSE'}|">Visa ELLE A OSE</th></tr>
-                    <tr><td class="stamp"></td></tr>
+                    <tr><td class="stamp">
+                        <div th:if="${visa != null}" class="visa-signer">
+                            <img th:if="${visa.signature() != null}" class="visa-signature" th:src="${visa.signature()}" alt="Signature"/>
+                            <div class="visa-name" th:text="${visa.name()}">Awa Mbemba</div>
+                            <div class="visa-title" th:if="${visa.title() != null}" th:text="${visa.title()}">Commerciale</div>
+                            <div class="visa-date" th:if="${visa.date() != null}" th:text="|Le ${fmt.date(visa.date())}|">Le 13/11/2026</div>
+                        </div>
+                    </td></tr>
                     <tr><td class="legend">Cachet et signature</td></tr>
                 </table>
             </td>

@@ -259,6 +259,6 @@ class BillableItemInvoiceSupportTest {
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, status),
                 BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, balanceDue, balanceDue),
                 null, null, null
-        );
+        , null);
     }
 }

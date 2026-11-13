@@ -20,7 +20,7 @@ Lots du [plan finance](../../backend/plan-finance-comptabilite/README.md), déta
 | Demande de fonds | `DDF-AAAAMM-000001` | `fund_request`, `fund_request_line`, `fund_request_approval` (frise) |
 | Décaissement, complément, retour | numéro du mouvement de caisse | `fund_disbursement` |
 | Ligne de justification | `JUS-AAAAMM-000001` | `expense_justification_line` |
-| Délégation de validation | | `fund_approval_delegation` |
+| Délégation de validation | | `approval_delegation` (modèle commun, centre `CASH` ; les anciennes délégations y sont reprises) |
 
 ## État de besoin
 
@@ -50,10 +50,13 @@ APPROVED sans décaissement après fund.request.expiry-days (15) → EXPIRED
 | ≤ `fund.approval.level2-max` (500 000) | 2 | puis `APPROVE_L2` (responsable financier) |
 | au-delà | 3 | puis `APPROVE_L3` (direction) |
 
-- Chaque niveau : **approuver** (option **réduire le montant**, motif obligatoire), **rejeter** (motif), **renvoyer pour correction** (commentaire).
+- **Moteur commun** (lot B15, [approval](../approval/README.md)) : chaque soumission ouvre une demande d'approbation du centre de la caisse (`CASH`, type `FUND_REQUEST`), visible aussi dans `GET /sni/api/v1/approvals/CASH/...`.
+- Le **niveau 1** se décide par le **N+1 du demandeur** (fiche collaborateur) **ou** par un détenteur de `APPROVE_L1` ; un supérieur hiérarchique du N+1 le peut aussi. Les niveaux 2 et 3 restent aux droits `APPROVE_L2`, `APPROVE_L3` ; le niveau budgétaire au droit budgétaire.
+- **Validation en avance** (décision D11) : qui peut décider d'un niveau supérieur approuve d'un coup les niveaux d'avant (un responsable financier qui valide au niveau 1 approuve les deux niveaux) ; la frise note « Approuve en avance au niveau N » sur chaque niveau sauté.
+- Chaque niveau : **approuver** (option **réduire le montant**, motif obligatoire), **rejeter** (motif), **renvoyer pour correction** (commentaire). Jamais sa propre demande, ni une avance dont on est bénéficiaire.
 - Le demandeur et le bénéficiaire ne valident jamais leur demande.
-- **Délégation** : un détenteur d'un niveau le délègue à une personne pour une période (`POST /fund-requests/delegations`).
-- Rappel au valideur après `fund.approval.reminder-hours` (24) ; escalade au responsable après `fund.approval.escalation-days` (3).
+- **Délégation** : un détenteur d'un niveau le délègue à une personne pour une période (`POST /fund-requests/delegations`, enregistrée dans le modèle commun) ; les délégations de personne du centre d'approbation valent aussi.
+- Rappels et escalades par le moteur commun : rappel aux valideurs après `approval.reminder-hours` (24), escalade au supérieur du décideur attendu après `approval.escalation-hours` (72). Les anciens paramètres `fund.approval.reminder-hours` et `fund.approval.escalation-days` sont retirés.
 - Chaque décision est datée et nominative (frise `timeline`).
 - À la soumission : refus si le bénéficiaire a une avance en retard de justification (`fund.advance.overdue-policy = BLOCK`, ou `ALERT` pour un simple avertissement).
 
@@ -108,7 +111,7 @@ Rôles : `STAFF` crée ; `CASHIER` crée et décaisse ; `MANAGER` crée, lit, ni
 
 - **Nouvelle demande** : grandes tuiles par type, puis formulaire adapté (mission pour une avance de déplacement). Bénéficiaire « moi » par défaut. Encadré `insight` avant l'envoi : niveaux requis et leurs libellés, solde de la caisse et possibilité de couvrir, avances ouvertes du bénéficiaire, avertissement ou blocage. Total et montant en lettres (`totalInWords`). Boutons « Enregistrer » et « Envoyer » (`submit: true`), « Dupliquer ».
 - **Fiche** : frise des étapes (`timeline`), lignes, mouvements (`disbursements`), justification avec le reste en direct (`remainingToJustify`), actions selon le rôle.
-- **Ma file de validation** (`/to-approve`) : approuver, réduire, renvoyer, rejeter.
+- **Ma file de validation** (`/to-approve`) : les demandes que je peux décider à leur niveau courant ou en avance (droit, place dans la hiérarchie, délégation) ; approuver, réduire, renvoyer, rejeter.
 - **Caisse** : file `/to-disburse` triée par date souhaitée ; décaissement avec signature (tablette), puis impression de la pièce ; retour du reliquat et complément.
 - **Comptable** : file `/justifications-to-validate`, validation ligne par ligne ; état des avances (`/advances`) avec retard en jours.
 - **États de besoin** : saisie en grille, nature suggérée, validation, transformation (toutes les lignes ou une sélection).

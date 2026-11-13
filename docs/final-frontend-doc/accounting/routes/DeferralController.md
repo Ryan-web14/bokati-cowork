@@ -437,7 +437,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `id` | entier int64 ⚠ |  |  |
 | `documentNumber` | texte |  |  |
 | `documentType` | enum : `QUOTE`, `PROFORMA_INVOICE`, `INVOICE`, `CREDIT_NOTE`, `CORRECTIVE_INVOICE`, `DEBIT_NOTE` |  |  |
-| `status` | enum : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `VOIDED`, `REFUNDED`, `WRITTEN_OFF` |  |  |
+| `status` | enum : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `REFUNDED`, `APPLIED`, `WRITTEN_OFF` |  |  |
 | `customerType` | texte |  |  |
 | `customerCode` | texte |  |  |
 | `customerName` | texte |  |  |
@@ -522,3 +522,16 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `deleteReason` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
+| `createdBy` | texte |  |  |
+| `createdByName` | texte |  |  |
+| `createdByTitle` | texte |  |  |
+| `versionAuthor` | texte |  |  |
+| `versionAuthorName` | texte |  |  |
+| `versionAuthorTitle` | texte |  |  |
+| `versionReason` | texte |  |  |
+| `versionOrigin` | texte |  |  |
+| `replacedByDocumentNumber` | texte |  |  |
+| `depositForDocumentNumber` | texte |  |  |
+| `dealCode` | texte |  |  |
+| `convertedToDocumentNumber` | texte |  |  |
+| `recipientCorrectedAt` | date-heure ISO 8601 UTC |  |  |

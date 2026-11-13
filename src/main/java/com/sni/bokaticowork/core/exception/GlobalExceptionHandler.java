@@ -50,14 +50,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Object> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
-        return respond(errorResponse.build(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
-                ex.getMessage(), request, ex, null));
+        ApiError error = errorResponse.build(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, ex.getMessage(), request, ex, null);
+        error.setReason(ex.getReason());
+        return respond(error);
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Object> handleConflict(ConflictException ex, HttpServletRequest request) {
-        return respond(errorResponse.build(ErrorCode.CONFLICT, HttpStatus.CONFLICT,
-                ex.getMessage(), request, ex, null));
+        ApiError error = errorResponse.build(ErrorCode.CONFLICT, HttpStatus.CONFLICT, ex.getMessage(), request, ex, null);
+        error.setReason(ex.getReason());
+        return respond(error);
     }
 
     @ExceptionHandler(ValidationException.class)

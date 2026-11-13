@@ -44,6 +44,12 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
     private final BillingEventWriter eventWriter;
     private final BillingDocumentMapper mapper;
     private final DefaultEmailSender emailSender;
+    private final com.sni.bokaticowork.features.billing.service.support.BillingDocumentVersionService versionService;
+
+    /** Statuts d'un devis qui admettent encore une signature. */
+    private static final java.util.Set<BillingDocumentStatus> SIGNABLE = java.util.EnumSet.of(BillingDocumentStatus.DRAFT,
+            BillingDocumentStatus.ISSUED, BillingDocumentStatus.SENT, BillingDocumentStatus.VIEWED, BillingDocumentStatus.NEGOTIATION,
+            BillingDocumentStatus.ACCEPTED);
 
     @Value("${app.api-base-url:http://localhost:8080}")
     private String baseUrl;
@@ -67,10 +73,8 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
         if (quote.getDocumentType() != BillingDocumentType.QUOTE) {
             throw new BadRequestException("Signature électronique uniquement disponible pour les devis");
         }
-        if (quote.getStatus() == BillingDocumentStatus.CANCELLED
-                || quote.getStatus() == BillingDocumentStatus.CONVERTED
-                || quote.getStatus() == BillingDocumentStatus.REJECTED) {
-            throw new BadRequestException("Impossible de demander une signature sur un devis " + quote.getStatus());
+        if (!SIGNABLE.contains(quote.getStatus())) {
+            throw new BadRequestException("Impossible de demander une signature sur un devis au statut " + quote.getStatus());
         }
 
         String signerName  = StringUtils.hasText(request != null ? request.signerName() : null)  ? request.signerName()  : quote.getCustomerName();
@@ -88,6 +92,7 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
                 .signerEmail(signerEmail)
                 .signatureToken(token)
                 .customMessage(request != null ? request.customMessage() : null)
+                .documentRevision(versionService.currentRevision(quote))
                 .expiresAt(Instant.now().plus(TOKEN_VALIDITY_DAYS, ChronoUnit.DAYS))
                 .build());
 
@@ -116,8 +121,24 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
     }
 
     @Override
-    public BillingDocumentResponse confirmSignature(String token, ConfirmSignatureRequest request) {
+    public com.sni.bokaticowork.features.billing.dto.response.PublicSignatureConfirmation confirmSignature(String token,
+                                                                                                         ConfirmSignatureRequest request) {
         BillingDocumentSignature sig = resolveToken(token);
+        BillingDocument document = sig.getDocument();
+        // Le devis a pu sortir du circuit (annule, refuse, converti) ou etre revise depuis la demande :
+        // on ne signe que ce qui a ete presente.
+        if (!SIGNABLE.contains(document.getStatus())) {
+            sig.setStatus(BillingSignatureStatus.CANCELLED);
+            signatureRepository.save(sig);
+            throw new com.sni.bokaticowork.core.exception.customs.ConflictException("quote_signature",
+                    "Ce devis n'est plus signable : son statut est " + document.getStatus());
+        }
+        if (sig.getDocumentRevision() != null && sig.getDocumentRevision() != versionService.currentRevision(document)) {
+            sig.setStatus(BillingSignatureStatus.CANCELLED);
+            signatureRepository.save(sig);
+            throw new com.sni.bokaticowork.core.exception.customs.ConflictException("quote_signature",
+                    "Le devis a été modifié depuis la demande de signature : une nouvelle demande est nécessaire");
+        }
         sig.setSignerName(request.signerName());
         sig.setSignerEmail(request.signerEmail() != null ? request.signerEmail() : sig.getSignerEmail());
         sig.setSignatureImageBase64(request.signatureImageBase64());
@@ -130,11 +151,16 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
         BillingDocument quote = sig.getDocument();
         if (quote.getStatus() != BillingDocumentStatus.ACCEPTED) {
             quote.setStatus(BillingDocumentStatus.ACCEPTED);
+            if (billingDocumentService instanceof BillingDocumentServiceImpl impl) {
+                // Lot B7 : l'acceptation par signature reserve le stock, comme l'acceptation au guichet.
+                impl.reserveQuoteStock(quote);
+            }
             eventWriter.write(quote, "QUOTE_SIGNED_AND_ACCEPTED",
                     Map.of("signerName", request.signerName(), "signerEmail", sig.getSignerEmail()));
         }
 
-        return mapper.toResponse(quote);
+        return new com.sni.bokaticowork.features.billing.dto.response.PublicSignatureConfirmation(quote.getDocumentNumber(), quote.getIssueDate(),
+                quote.getTotalAmount(), quote.getCurrency(), sig.getStatus().name(), sig.getSignerName(), sig.getSignedAt(), sig.getDocumentRevision());
     }
 
     private void sendSignatureEmail(String to, String signerName, String quoteNumber, String token, String customMessage) {

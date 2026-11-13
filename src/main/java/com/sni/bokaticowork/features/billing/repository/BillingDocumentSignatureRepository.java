@@ -17,4 +17,6 @@ public interface BillingDocumentSignatureRepository extends JpaRepository<Billin
 
     Optional<BillingDocumentSignature> findBySignatureToken(String token);
     Optional<BillingDocumentSignature> findFirstByDocumentOrderByCreatedAtDesc(BillingDocument document);
+
+    java.util.List<BillingDocumentSignature> findAllByDocumentOrderByCreatedAtDesc(BillingDocument document);
 }

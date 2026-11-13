@@ -181,4 +181,12 @@ public class ServiceCatalogItem {
     public void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    /** Lot B10 : article d'inventaire vendu par cet article du catalogue (stock controle et sorti). */
+    @Column(name = "inventory_item_code", length = 80)
+    private String inventoryItemCode;
+
+    /** Lot B10 : compte de produit propre a l'article, prioritaire sur le compte par type de ligne. */
+    @Column(name = "revenue_account", length = 20)
+    private String revenueAccount;
 }

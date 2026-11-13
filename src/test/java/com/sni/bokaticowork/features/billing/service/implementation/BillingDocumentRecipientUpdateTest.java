@@ -141,8 +141,15 @@ class BillingDocumentRecipientUpdateTest {
     @Test
     void shouldRecordTheCorrectionInTheEditHistory() {
         document.setLocked(Boolean.FALSE);
-        service.updateRecipient("INV-001", new UpdateBillingRecipientRequest(
-                "Nouveau nom", null, null, null, null, null, null, null, "Erreur de saisie", "ryan"));
+        // Lot B1 : l'auteur vient du jeton, pas du corps de la requete (qui annonce « intrus »).
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("ryan", null, java.util.List.of()));
+        try {
+            service.updateRecipient("INV-001", new UpdateBillingRecipientRequest(
+                    "Nouveau nom", null, null, null, null, null, null, null, "Erreur de saisie", "intrus"));
+        } finally {
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
 
         ArgumentCaptor<BillingDocumentEditHistory> captor =
                 ArgumentCaptor.forClass(BillingDocumentEditHistory.class);

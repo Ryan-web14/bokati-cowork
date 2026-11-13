@@ -366,6 +366,15 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/fund-needs") || path.startsWith("/fund-requests")) {
             return fundPermission(path, method);
         }
+        // Centres d'approbation (lot B15) : la hierarchie et les circuits se gerent avec APPROVAL:MANAGE ;
+        // le reste (files, decisions, delegations) est ouvert au back-office, le moteur controlant
+        // qui peut decider de quoi.
+        if (path.startsWith("/approvals")) {
+            if ((path.equals("/approvals/hierarchy") || path.startsWith("/approvals/circuits")) && !HttpMethod.GET.matches(method)) {
+                return permission("APPROVAL", "MANAGE");
+            }
+            return permission("ADMIN", "ACCESS");
+        }
         if (path.startsWith("/cash-registers")) {
             return cashPermission(path, method);
         }

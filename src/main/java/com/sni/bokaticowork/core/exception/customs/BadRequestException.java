@@ -15,4 +15,9 @@ public class BadRequestException extends BaseException{
     public BadRequestException(String message, Throwable cause) {
         super(message, ERROR_CODE, cause);
     }
+
+    /** Refus avec un code stable (lot B10) : {@code BadRequestException.coded("QUOTE_NOT_ACCEPTED", "...")}. */
+    public static BadRequestException coded(String reason, String message) {
+        return new BadRequestException(message).withReason(reason);
+    }
 }

@@ -76,7 +76,7 @@ public class DunningPolicyService {
                 throw new BadRequestException("Chaque palier a un nombre de jours et une action");
             }
             if (step.daysAfterDue() < previousDay) {
-                throw new ConflictException("dunning", "les paliers se donnent dans l'ordre des jours");
+                throw ConflictException.coded("DUNNING", "les paliers se donnent dans l'ordre des jours");
             }
             previousDay = step.daysAfterDue();
             policy.getSteps().add(DunningStep.builder().policy(policy).stepOrder(order++).daysAfterDue(step.daysAfterDue())

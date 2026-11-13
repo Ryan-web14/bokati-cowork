@@ -131,11 +131,31 @@ public class SalesAccountingService {
                     + "WHERE e.event_type = CASE WHEN d.document_type = 'CREDIT_NOTE' THEN 'CREDIT_NOTE_ISSUED' ELSE 'INVOICE_ISSUED' END "
                     + "AND e.reference = d.document_number) ORDER BY d.issued_at LIMIT ?", String.class, batch)
                     .forEach(number -> counter.run(number, () -> feedDocument(number)));
+            // Une facture annulee par avoir est deja contre-passee par l'avoir : pas de seconde contre-passation.
             jdbc.queryForList("SELECT d.document_number FROM billing_document d WHERE d.status IN ('CANCELLED', 'VOIDED') AND d.document_number IS NOT NULL "
+                    + "AND NOT EXISTS (SELECT 1 FROM billing_document c WHERE c.document_type = 'CREDIT_NOTE' AND c.original_document_number = d.document_number "
+                    + "AND c.status NOT IN ('DRAFT', 'CANCELLED') AND c.deleted_at IS NULL) "
                     + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type IN ('INVOICE_ISSUED', 'CREDIT_NOTE_ISSUED') AND e.reference = d.document_number) "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_CANCELLED' AND e.reference = d.document_number) "
                     + "ORDER BY d.cancelled_at LIMIT ?", String.class, batch)
                     .forEach(number -> counter.run(number, () -> feedCancellation(number)));
+        }
+        if (settings.familyEnabled("SALES")) {
+            // Lot B3 : acomptes deduits d'une facture finale deja comptabilisee, une piece par acompte.
+            jdbc.queryForList("SELECT dp.deposit_invoice_number FROM billing_deposit dp WHERE dp.status = 'DEDUCTED' AND dp.deposit_invoice_number IS NOT NULL "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_ISSUED' AND e.reference = dp.deducted_on) "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'DEPOSIT_APPLIED' AND e.reference = dp.deposit_invoice_number) "
+                    + "ORDER BY dp.deducted_at LIMIT ?", String.class, batch)
+                    .forEach(number -> counter.run(number, () -> feedDepositApplied(number)));
+        }
+        if (settings.familyEnabled("SALES")) {
+            // Lot B6 : reglement transfere d'un client a l'autre lors d'un changement de client (D6).
+            jdbc.queryForList("SELECT c.new_document_number FROM billing_customer_change c WHERE c.payments_mode = 'TRANSFER' "
+                    + "AND c.transferred_amount > 0 AND c.paid_credit_note IS NOT NULL "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_ISSUED' AND e.reference = c.new_document_number) "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'RECEIVABLE_TRANSFER' AND e.reference = c.new_document_number) "
+                    + "ORDER BY c.created_at LIMIT ?", String.class, batch)
+                    .forEach(number -> counter.run(number, () -> feedReceivableTransfer(number)));
         }
         if (settings.familyEnabled("PAYMENT")) {
             Instant settled = Instant.now().minusSeconds(60L * Math.max(0, settings.paymentDelayMinutes()));
@@ -220,6 +240,9 @@ public class SalesAccountingService {
             data.put("foreignTotal", money(document.getTotalAmount()));
         }
         data.put("dueDate", document.getDueDate() == null ? null : document.getDueDate().toString());
+        // Lot B3 : facture d'acompte, au credit du 4191 (schema SALES_DEPOSIT_INVOICE).
+        data.put("depositFor", document.getDepositForDocumentNumber());
+        data.put("depositAccount", settings.text("accounting.sales.deposit-account", "4191"));
         data.put("letteringReference", creditNote && StringUtils.hasText(document.getOriginalDocumentNumber())
                 ? document.getOriginalDocumentNumber() : document.getDocumentNumber());
         data.put("originalDocumentNumber", document.getOriginalDocumentNumber());
@@ -238,6 +261,47 @@ public class SalesAccountingService {
             }
         }
         engine.receive(creditNote ? CREDIT_NOTE_ISSUED : INVOICE_ISSUED, number, "SALES", date, json(data), replay(date));
+    }
+
+    /** Acompte deduit de la facture finale : D 4191 / C 411, TVA en attente liberee au prorata (lot B3). */
+    void feedDepositApplied(String depositInvoiceNumber) {
+        Map<String, Object> deposit = jdbc.queryForMap("SELECT dp.deducted_on, dp.deducted_amount, dp.deducted_at FROM billing_deposit dp "
+                + "WHERE dp.deposit_invoice_number = ?", depositInvoiceNumber);
+        String finalNumber = (String) deposit.get("deducted_on");
+        BillingDocument document = documentRepository.findByDocumentNumber(finalNumber).orElseThrow();
+        LocalDate date = date(deposit.get("deducted_at") instanceof java.sql.Timestamp at ? at.toInstant() : Instant.now());
+        Conversion fx = conversion(document.getCurrency(), document.getExchangeRate(), date);
+        BigDecimal value = money((BigDecimal) deposit.get("deducted_amount"));
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("documentNumber", finalNumber);
+        data.put("depositInvoiceNumber", depositInvoiceNumber);
+        data.put("customerCode", customerCode(document));
+        data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
+        data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
+        data.put("depositAccount", settings.text("accounting.sales.deposit-account", "4191"));
+        data.put("amount", fx.apply(value));
+        data.put("vatTransfers", paymentRegime() ? vatTransfers(finalNumber, value, false) : List.of());
+        data.put("vatPendingAccount", settings.text("accounting.vat.pending-account", "4438"));
+        engine.receive("DEPOSIT_APPLIED", depositInvoiceNumber, "SALES", date, json(data), replay(date));
+    }
+
+    /** Lot B6 : reglement du client d'origine reporte sur la nouvelle facture, D 411 origine / C 411 nouveau client. */
+    void feedReceivableTransfer(String newDocumentNumber) {
+        Map<String, Object> change = jdbc.queryForMap("SELECT c.paid_credit_note, c.from_code, c.to_code, c.transferred_amount, c.created_at "
+                + "FROM billing_customer_change c WHERE c.new_document_number = ? ORDER BY c.created_at DESC LIMIT 1", newDocumentNumber);
+        BillingDocument document = documentRepository.findByDocumentNumber(newDocumentNumber).orElseThrow();
+        BillingDocument creditNote = documentRepository.findByDocumentNumber((String) change.get("paid_credit_note")).orElseThrow();
+        LocalDate date = date(change.get("created_at") instanceof java.sql.Timestamp at ? at.toInstant() : Instant.now());
+        Conversion fx = conversion(document.getCurrency(), document.getExchangeRate(), date);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("documentNumber", newDocumentNumber);
+        data.put("creditNoteNumber", creditNote.getDocumentNumber());
+        data.put("fromCustomer", customerCode(creditNote));
+        data.put("toCustomer", customerCode(document));
+        data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
+        data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
+        data.put("amount", fx.apply(money((BigDecimal) change.get("transferred_amount"))));
+        engine.receive("RECEIVABLE_TRANSFER", newDocumentNumber, "SALES", date, json(data), replay(date));
     }
 
     void feedCancellation(String number) {
@@ -425,7 +489,23 @@ public class SalesAccountingService {
     }
 
     /** Compte de produit d'une ligne : reglage par type de ligne. */
+    private com.sni.bokaticowork.features.billing.repository.ServiceCatalogItemRepository catalogItems;
+
+    /** Lot B10 : facultatif, pour ne pas changer le constructeur. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCatalogItems(com.sni.bokaticowork.features.billing.repository.ServiceCatalogItemRepository catalogItems) {
+        this.catalogItems = catalogItems;
+    }
+
     public String productAccount(BillingDocumentLine line) {
+        // Lot B10 : le compte de produit propre a l'article du catalogue passe avant celui du type de ligne.
+        if (catalogItems != null && StringUtils.hasText(line.getItemCode())) {
+            java.util.Optional<String> own = catalogItems.findByItemCode(line.getItemCode().trim())
+                    .map(com.sni.bokaticowork.features.billing.model.ServiceCatalogItem::getRevenueAccount).filter(StringUtils::hasText);
+            if (own.isPresent()) {
+                return own.get();
+            }
+        }
         String type = line.getLineType() == null ? "SERVICE" : line.getLineType().name();
         String fallback = switch (type) {
             case "PRODUCT" -> "701";

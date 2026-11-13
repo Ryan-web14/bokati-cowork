@@ -35,7 +35,7 @@ public class BillingCustomerSnapshotResolver {
                 .orElseGet(() -> firstText(request.customerEmail(), resolved.customerEmail()));
         String name = firstText(request.customerName(), resolved.customerName());
         if (!StringUtils.hasText(name)) {
-            throw new BadRequestException("Customer name is required when customer cannot be resolved");
+            throw BadRequestException.coded("CUSTOMER_NAME_REQUIRED", "Le nom du client est requis quand le client n'est pas connu");
         }
         String customerType = StringUtils.hasText(resolved.customerType())
                 ? resolved.customerType()
@@ -53,6 +53,19 @@ public class BillingCustomerSnapshotResolver {
                 firstText(request.billingAddressJson(), resolved.billingAddressJson()),
                 resolved.organization()
         );
+    }
+
+    /**
+     * Conditions de l'organisation d'un client deja facture (exoneration, encours), pour qu'un
+     * recalcul applique les memes regles que la creation. Vide si le client n'est plus trouve.
+     */
+    public java.util.Optional<com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms> organizationOf(String customerType,
+                                                                                                                                   String customerCode) {
+        try {
+            return java.util.Optional.ofNullable(resolveKnownCustomer(customerType, customerCode).organization());
+        } catch (RuntimeException exception) {
+            return java.util.Optional.empty();
+        }
     }
 
     private CustomerSnapshot resolveKnownCustomer(String customerType, String customerCode) {
@@ -79,10 +92,10 @@ public class BillingCustomerSnapshotResolver {
 
     private void validateCustomerReference(String customerType, String customerCode) {
         if (StringUtils.hasText(customerType) && !StringUtils.hasText(customerCode)) {
-            throw new BadRequestException("Customer code is required when customer type is provided");
+            throw BadRequestException.coded("CUSTOMER_CODE_REQUIRED", "Le code client est requis avec le type de client");
         }
         if (!StringUtils.hasText(customerType) && StringUtils.hasText(customerCode)) {
-            throw new BadRequestException("Customer type is required when customer code is provided");
+            throw BadRequestException.coded("CUSTOMER_TYPE_REQUIRED", "Le type de client est requis avec le code client");
         }
     }
 

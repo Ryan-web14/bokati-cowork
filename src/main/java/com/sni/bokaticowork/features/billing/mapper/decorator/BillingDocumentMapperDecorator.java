@@ -161,7 +161,10 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 document.getCompanyCustomerCode(),
                 document.getCompanyName(),
                 document.getCompanyLinkSource()
-        );
+        ,
+                new com.sni.bokaticowork.features.billing.dto.response.BillingDocumentAuthorResponse(document.getCreatedBy(),
+                        document.getCreatedByName(), document.getCreatedByTitle(), document.getVersionAuthor(),
+                        document.getVersionAuthorName(), document.getVersionAuthorTitle()));
     }
 
     @Override

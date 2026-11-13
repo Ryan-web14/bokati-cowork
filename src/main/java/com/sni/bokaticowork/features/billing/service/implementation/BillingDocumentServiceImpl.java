@@ -163,6 +163,19 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.billing.service.support.InvoiceAnnexProvider> annexProviders;
     /** Instantane vendeur · peut etre absent dans les tests qui construisent le service a la main. */
     private final com.sni.bokaticowork.features.billing.service.support.BillingSellerSnapshot sellerSnapshot;
+    private final com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
+    private final com.sni.bokaticowork.features.billing.service.support.BillingStockGuard stockGuard;
+    private final com.sni.bokaticowork.features.billing.repository.BillingDocumentSignatureRepository signatureRepository;
+    /** Lot B3 : acomptes (resolus a l'usage, le service des acomptes dependant de celui-ci). */
+    private final org.springframework.beans.factory.ObjectProvider<DepositService> depositServices;
+    /** Lot B11 : affaires. */
+    private final org.springframework.beans.factory.ObjectProvider<DealService> dealServices;
+    /** Lot B9 : echeanciers suivant les paiements. */
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.billing.service.interfaces.PaymentScheduleService> scheduleServices;
+    /** Lot B7 : reservation et sortie de stock. */
+    private final org.springframework.beans.factory.ObjectProvider<BillingStockService> stockServices;
+    /** Lot B7 : disponibilite des ressources. */
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.booking.service.interfaces.BookingAvailabilityService> bookingAvailability;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -170,8 +183,24 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     @Transactional(readOnly = true)
     public SimulateBillingDocumentResponse simulate(SimulateBillingDocumentRequest request) {
-        BillingCalculationService.CalculatedDocument calculation =
-                calculationService.calculate(request.lines(), request.resolvedDiscounts());
+        // Lot B13 : meme calcul que la creation. Les conditions du client (exoneration) s'appliquent,
+        // le blocage et le plafond d'encours sont annonces sans refuser.
+        BillingDocumentType type = request.resolvedDocumentType();
+        boolean claim = BillingReceivables.RECEIVABLE_TYPES.contains(type);
+        List<SimulateBillingDocumentResponse.Alert> alerts = new ArrayList<>();
+        var organization = StringUtils.hasText(request.customerType()) && StringUtils.hasText(request.customerCode())
+                ? customerSnapshotResolver.organizationOf(request.customerType(), request.customerCode()).orElse(null) : null;
+        var companyTerms = StringUtils.hasText(request.customerType()) && StringUtils.hasText(request.customerCode())
+                && billingCompanyResolver != null && organizationProfile != null
+                ? billingCompanyResolver.resolve(request.customerType(), request.customerCode(), request.companyCustomerCode())
+                .flatMap(organizationProfile::of).orElse(null) : null;
+        List<CreateBillingDocumentLineRequest> lineRequests = request.lines();
+        if (organization != null && organization.vatExempt()) {
+            lineRequests = calculationService.exempted(lineRequests);
+            alerts.add(new SimulateBillingDocumentResponse.Alert(null, "VAT_EXEMPT", "INFO",
+                    organization.customerName() + " est exonérée de TVA : les lignes sont calculées hors TVA"));
+        }
+        BillingCalculationService.CalculatedDocument calculation = calculationService.calculate(lineRequests, request.resolvedDiscounts());
 
         List<SimulateBillingDocumentResponse.SimulatedLine> lines = calculation.lines().stream()
                 .map(this::simulatedLine)
@@ -187,11 +216,31 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // La simulation constate mais ne refuse jamais · c'est l'emission qui bloque.
         List<BillingDiscountGuard.DiscountViolation> violations = discountGuard.evaluate(
                 calculation.lines(), calculation.subtotalAmount(), calculation.discountAmount());
-        boolean blocked = violations.stream()
-                .anyMatch(violation -> BillingDiscountGuard.Severity.BLOCK.name().equals(violation.severity()));
+        for (BillingDiscountGuard.DiscountViolation violation : violations) {
+            alerts.add(new SimulateBillingDocumentResponse.Alert(lineIndexOf(calculation.lines(), violation), violation.type(),
+                    violation.severity(), violation.message()));
+        }
+        if (stockGuard != null) {
+            for (com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.StockAlert stock
+                    : stockGuard.evaluate(type, stockLines(lineRequests))) {
+                alerts.add(new SimulateBillingDocumentResponse.Alert(stock.lineIndex(), "STOCK", stock.severity(), stock.message()));
+            }
+        }
+        for (var terms : java.util.Arrays.asList(organization, companyTerms)) {
+            if (terms == null || !claim) {
+                continue;
+            }
+            if (terms.blocked()) {
+                alerts.add(new SimulateBillingDocumentResponse.Alert(null, "ORGANIZATION_BLOCKED", "BLOCK",
+                        "L'organisation " + terms.customerName() + " est bloquée" + (terms.blockedReason() == null ? "" : " : " + terms.blockedReason())));
+            }
+            creditLimitExcess(terms, calculation.totalAmount()).ifPresent(message ->
+                    alerts.add(new SimulateBillingDocumentResponse.Alert(null, "CREDIT_LIMIT", isSuperAdmin() ? "WARN" : "BLOCK", message)));
+        }
+        boolean blocked = alerts.stream().anyMatch(alert -> "BLOCK".equals(alert.severity()));
 
         return new SimulateBillingDocumentResponse(
-                request.resolvedDocumentType(),
+                type,
                 request.resolvedCurrency(defaultCurrency()),
                 request.title(),
                 lines,
@@ -205,7 +254,250 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 calculation.taxAmount(),
                 calculation.totalAmount(),
                 violations,
-                blocked);
+                blocked,
+                alerts);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse simulateLine(
+            com.sni.bokaticowork.features.billing.dto.request.SimulateBillingLineRequest request) {
+        // Lot B13 : la ligne saisie prend sa place parmi les autres, puis tout le document est
+        // simule par le meme calcul ; la reponse isole la ligne et ses alertes.
+        List<CreateBillingDocumentLineRequest> all = new ArrayList<>(request.lines() == null ? List.of() : request.lines());
+        int index = request.lineIndex() == null || request.lineIndex() < 0 || request.lineIndex() >= all.size()
+                ? all.size() : request.lineIndex();
+        if (index < all.size()) {
+            all.set(index, request.line());
+        } else {
+            all.add(request.line());
+        }
+        SimulateBillingDocumentResponse document = simulate(new SimulateBillingDocumentRequest(request.documentType(), request.currency(), null,
+                all, request.discounts(), request.customerType(), request.customerCode(), request.companyCustomerCode()));
+        final int lineIndex = index;
+        return new com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse(lineIndex, document.lines().get(lineIndex),
+                document.alerts().stream().filter(alert -> alert.lineIndex() != null && alert.lineIndex() == lineIndex).toList(), document);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse allocateAmount(
+            com.sni.bokaticowork.features.billing.dto.request.AllocateAmountRequest request) {
+        // Lot B8 : un total saisi, reparti au prorata des prix de reference, au franc pres ; la
+        // difference avec la reference devient une remise par ligne, que le plancher et la remise
+        // maximale controlent comme toute remise.
+        boolean ttc = request.taxIncluded() == null || request.taxIncluded();
+        List<CreateBillingDocumentLineRequest> input = request.lines();
+        if (StringUtils.hasText(request.customerType()) && StringUtils.hasText(request.customerCode())
+                && customerSnapshotResolver.organizationOf(request.customerType(), request.customerCode())
+                .map(organization -> organization.vatExempt()).orElse(false)) {
+            input = calculationService.exempted(input);
+        }
+        List<BillingDocumentLine> reference = calculationService.calculate(input, List.of()).lines();
+        java.util.Set<Integer> group = new java.util.TreeSet<>();
+        if (request.lineIndexes() == null || request.lineIndexes().isEmpty()) {
+            for (int i = 0; i < input.size(); i++) {
+                if (!Boolean.TRUE.equals(input.get(i).optional())) {
+                    group.add(i);
+                }
+            }
+        } else {
+            for (Integer index : request.lineIndexes()) {
+                if (index == null || index < 0 || index >= input.size()) {
+                    throw new BadRequestException("Rang de ligne inconnu : " + index);
+                }
+                group.add(index);
+            }
+        }
+        if (group.isEmpty()) {
+            throw new BadRequestException("Aucune ligne ne reçoit le montant saisi");
+        }
+        java.util.Map<Integer, BigDecimal> weights = new java.util.LinkedHashMap<>();
+        BigDecimal referenceTotal = BigDecimal.ZERO;
+        for (Integer index : group) {
+            BillingDocumentLine line = reference.get(index);
+            BigDecimal value = ttc ? line.getTotalAmount() : line.getTaxableAmount();
+            value = value == null ? BigDecimal.ZERO : value;
+            weights.put(index, value);
+            referenceTotal = referenceTotal.add(value);
+        }
+        if (referenceTotal.signum() == 0) {
+            // Lignes sans prix : repartition au prorata des quantites.
+            weights.replaceAll((index, value) -> reference.get(index).getQuantity() == null ? BigDecimal.ONE : reference.get(index).getQuantity());
+        }
+        BigDecimal weightTotal = weights.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal target = request.targetAmount().setScale(0, java.math.RoundingMode.HALF_UP);
+        java.util.Map<Integer, BigDecimal> targets = new java.util.LinkedHashMap<>();
+        BigDecimal assigned = BigDecimal.ZERO;
+        Integer last = ((java.util.TreeSet<Integer>) group).last();
+        for (Integer index : group) {
+            BigDecimal share = index.equals(last) ? target.subtract(assigned)
+                    : target.multiply(weights.get(index)).divide(weightTotal, 0, java.math.RoundingMode.HALF_UP);
+            targets.put(index, share);
+            assigned = assigned.add(share);
+        }
+        List<CreateBillingDocumentLineRequest> output = new ArrayList<>(input);
+        for (Integer index : group) {
+            output.set(index, allocatedLine(input.get(index), reference.get(index), targets.get(index), ttc));
+        }
+        SimulateBillingDocumentResponse simulation = simulate(new SimulateBillingDocumentRequest(request.documentType(), request.currency(), null,
+                output, null, request.customerType(), request.customerCode(), request.companyCustomerCode()));
+        return new com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse(target, ttc, referenceTotal,
+                referenceTotal.subtract(target), output, simulation);
+    }
+
+    /**
+     * Ligne dont le montant (TTC ou HT) vaut exactement {@code target} : prix de reference garde,
+     * l'ecart porte en remise ; au-dela de la reference, le prix unitaire monte.
+     */
+    private static CreateBillingDocumentLineRequest allocatedLine(CreateBillingDocumentLineRequest line, BillingDocumentLine reference,
+                                                                  BigDecimal target, boolean ttc) {
+        BigDecimal quantity = line.quantity() == null || line.quantity().signum() <= 0 ? BigDecimal.ONE : line.quantity();
+        boolean taxable = Boolean.TRUE.equals(reference.getTaxable());
+        BigDecimal factor = taxable ? BigDecimal.ONE.add(rate(reference.getVatRate()))
+                .add(rate(reference.getVatRate()).multiply(rate(reference.getAdditionalCentRate()))) : BigDecimal.ONE;
+        boolean wasTaxIncluded = taxable && Boolean.TRUE.equals(line.taxIncluded());
+        BigDecimal unitPrice = line.unitPrice() == null ? BigDecimal.ZERO : line.unitPrice();
+        BigDecimal unit;
+        if (ttc) {
+            unit = wasTaxIncluded ? unitPrice : unitPrice.multiply(factor).setScale(4, java.math.RoundingMode.HALF_UP);
+        } else {
+            unit = wasTaxIncluded ? unitPrice.divide(factor, 4, java.math.RoundingMode.HALF_UP) : unitPrice;
+        }
+        BigDecimal gross = quantity.multiply(unit).setScale(4, java.math.RoundingMode.HALF_UP);
+        BigDecimal discount = gross.subtract(target);
+        if (discount.signum() < 0) {
+            // Total saisi au-dessus de la reference : le prix unitaire monte, sans remise.
+            unit = target.divide(quantity, 4, java.math.RoundingMode.HALF_UP);
+            discount = BigDecimal.ZERO;
+        }
+        return new CreateBillingDocumentLineRequest(line.lineOrder(), line.lineType(), line.itemCode(), line.description(), line.detailedDescription(),
+                quantity, unit, BigDecimal.ZERO, discount, line.taxable(), ttc && taxable, line.vatRate(), line.additionalCentRate(),
+                line.sourceType(), line.sourceCode(), line.unit(), line.externalReference(), line.notes(), line.optional(), line.category());
+    }
+
+    private static BigDecimal rate(BigDecimal percent) {
+        return percent == null ? BigDecimal.ZERO : percent.divide(new BigDecimal("100"), 8, java.math.RoundingMode.HALF_UP);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse checkAvailability(
+            com.sni.bokaticowork.features.billing.dto.request.CheckAvailabilityRequest request) {
+        // Lot B7 : stock, article actif, prix plancher et remise maximale, ressources aux dates demandees.
+        List<CreateBillingDocumentLineRequest> lines = request.lines() == null ? List.of() : request.lines();
+        BillingDocumentType type = request.documentType() == null ? BillingDocumentType.QUOTE : request.documentType();
+        List<SimulateBillingDocumentResponse.Alert> alerts = new ArrayList<>();
+        List<com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Stock> stockViews = new ArrayList<>();
+        if (!lines.isEmpty()) {
+            SimulateBillingDocumentResponse simulation = simulate(new SimulateBillingDocumentRequest(type, null, null, lines, null));
+            alerts.addAll(simulation.alerts());
+            if (stockGuard != null) {
+                List<com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line> stockLines = stockLines(lines);
+                for (com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line line : stockLines) {
+                    stockGuard.view(line).ifPresent(view -> {
+                        stockViews.add(new com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Stock(line.index(),
+                                view.itemCode(), view.itemName(), view.active(), view.requested(), view.available(), view.missing(),
+                                view.negativeStockAllowed()));
+                        if (!view.active()) {
+                            alerts.add(new SimulateBillingDocumentResponse.Alert(line.index(), "INACTIVE_ITEM", "BLOCK",
+                                    "L'article " + view.itemName() + " n'est plus actif"));
+                        }
+                    });
+                }
+            }
+        }
+        List<com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Resource> resources = new ArrayList<>();
+        var availability = bookingAvailability == null ? null : bookingAvailability.getIfAvailable();
+        if (request.resources() != null && availability != null) {
+            for (var resource : request.resources()) {
+                try {
+                    var checked = availability.check(new com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest(
+                            resource.resourceCode(), null, null, null, null, null, null, null, null, null, null, resource.startAt(),
+                            resource.endAt(), resource.quantity() == null ? 1 : resource.quantity(), null));
+                    resources.add(new com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Resource(resource.lineIndex(),
+                            checked.resourceCode(), checked.resourceName(), checked.available(), checked.remainingCapacity(), checked.message()));
+                    if (!checked.available()) {
+                        alerts.add(new SimulateBillingDocumentResponse.Alert(resource.lineIndex(), "RESOURCE_UNAVAILABLE", "WARN",
+                                (checked.resourceName() == null ? resource.resourceCode() : checked.resourceName()) + " n'est pas disponible du "
+                                        + resource.startAt() + " au " + resource.endAt() + (checked.message() == null ? "" : " : " + checked.message())));
+                    }
+                } catch (RuntimeException exception) {
+                    resources.add(new com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Resource(resource.lineIndex(),
+                            resource.resourceCode(), null, false, null, exception.getMessage()));
+                    alerts.add(new SimulateBillingDocumentResponse.Alert(resource.lineIndex(), "RESOURCE_UNAVAILABLE", "WARN", exception.getMessage()));
+                }
+            }
+        }
+        return new com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse(
+                alerts.stream().anyMatch(alert -> "BLOCK".equals(alert.severity())), alerts, stockViews, resources);
+    }
+
+    /** Lot B7 : reserve le stock d'un devis accepte (sans bloquer l'acceptation). */
+    void reserveQuoteStock(BillingDocument quote) {
+        BillingStockService stockService = stockServices == null ? null : stockServices.getIfAvailable();
+        if (stockService == null) {
+            return;
+        }
+        BigDecimal missing = stockService.reserveForQuote(quote);
+        if (missing.signum() > 0) {
+            eventWriter.write(quote, "QUOTE_STOCK_SHORTAGE", java.util.Map.of("missing", missing.stripTrailingZeros().toPlainString()));
+        }
+    }
+
+    /** Lot B7 : libere les reservations d'un devis. */
+    void releaseQuoteStock(String quoteNumber) {
+        BillingStockService stockService = stockServices == null ? null : stockServices.getIfAvailable();
+        if (stockService != null) {
+            stockService.releaseForQuote(quoteNumber);
+        }
+    }
+
+    /** Rang de la ligne visee par une alerte de remise (article et libelle), ou vide. */
+    private static Integer lineIndexOf(List<BillingDocumentLine> lines, BillingDiscountGuard.DiscountViolation violation) {
+        for (int i = 0; i < lines.size(); i++) {
+            BillingDocumentLine line = lines.get(i);
+            boolean sameItem = violation.itemCode() != null && violation.itemCode().equals(line.getItemCode());
+            boolean sameLabel = violation.lineDescription() != null && violation.lineDescription().equals(line.getDescription());
+            if ((violation.itemCode() == null || sameItem) && (violation.lineDescription() == null || sameLabel)
+                    && (violation.itemCode() != null || violation.lineDescription() != null)) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    private static List<com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line> stockLines(
+            List<CreateBillingDocumentLineRequest> lines) {
+        List<com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line> result = new ArrayList<>();
+        for (int i = 0; i < lines.size(); i++) {
+            CreateBillingDocumentLineRequest line = lines.get(i);
+            result.add(new com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line(i,
+                    StringUtils.hasText(line.itemCode()) ? line.itemCode() : line.sourceCode(), line.sourceType(), line.lineType(),
+                    line.description(), line.quantity() == null ? BigDecimal.ONE : line.quantity()));
+        }
+        return result;
+    }
+
+    /** Depassement du plafond d'encours, sans refuser : le message, ou vide. */
+    private java.util.Optional<String> creditLimitExcess(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization,
+                                                         BigDecimal amount) {
+        if (organization.creditLimit() == null) {
+            return java.util.Optional.empty();
+        }
+        java.util.Set<BillingDocumentStatus> excluded = java.util.EnumSet.noneOf(BillingDocumentStatus.class);
+        excluded.addAll(BillingReceivables.NOT_ISSUED);
+        excluded.addAll(BillingReceivables.SETTLED);
+        BigDecimal outstanding = documentRepository.sumCompanyOutstanding(organization.customerCode(),
+                BillingReceivables.RECEIVABLE_TYPES, excluded);
+        BigDecimal after = (outstanding == null ? BigDecimal.ZERO : outstanding).add(amount == null ? BigDecimal.ZERO : amount);
+        if (after.compareTo(organization.creditLimit()) <= 0) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of("Plafond d'encours dépassé pour " + organization.customerName()
+                + " : encours " + (outstanding == null ? "0" : outstanding.stripTrailingZeros().toPlainString())
+                + ", plafond " + organization.creditLimit().stripTrailingZeros().toPlainString()
+                + ". Un super-administrateur peut émettre la facture malgré tout.");
     }
 
     /**
@@ -225,22 +517,13 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     private void ensureWithinCreditLimit(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization,
                                          BigDecimal amount) {
-        if (organization.creditLimit() == null || isSuperAdmin()) {
+        if (isSuperAdmin()) {
             return;
         }
-        java.util.Set<BillingDocumentStatus> excluded = java.util.EnumSet.noneOf(BillingDocumentStatus.class);
-        excluded.addAll(BillingReceivables.NOT_ISSUED);
-        excluded.addAll(BillingReceivables.SETTLED);
-        // L'encours de l'organisation compte aussi les factures de ses membres qui lui sont reliees.
-        BigDecimal outstanding = documentRepository.sumCompanyOutstanding(organization.customerCode(),
-                BillingReceivables.RECEIVABLE_TYPES, excluded);
-        BigDecimal after = outstanding.add(amount == null ? BigDecimal.ZERO : amount);
-        if (after.compareTo(organization.creditLimit()) > 0) {
-            throw new BadRequestException("Plafond d'encours dépassé pour " + organization.customerName()
-                    + " : encours " + outstanding.stripTrailingZeros().toPlainString()
-                    + ", plafond " + organization.creditLimit().stripTrailingZeros().toPlainString()
-                    + ". Un super-administrateur peut émettre la facture malgré tout.");
-        }
+        // Meme calcul que la simulation (lot B13).
+        creditLimitExcess(organization, amount).ifPresent(message -> {
+            throw new BadRequestException(message);
+        });
     }
 
     private boolean isSuperAdmin() {
@@ -251,6 +534,28 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     }
 
     /** Auteur d'une derogation · le nom du principal, ou SYSTEM hors contexte authentifie. */
+    /**
+     * Auteur repris du jeton (lot B12) : nom et fonction de l'utilisateur connecte, sans saisie.
+     * A la creation, il est aussi l'auteur de la piece ; ensuite, seulement de la version.
+     */
+    private void stampAuthor(BillingDocument document, boolean creation) {
+        if (staffProfileService == null) {
+            return;
+        }
+        var author = staffProfileService.currentAuthor();
+        if (author == null) {
+            return;
+        }
+        if (creation) {
+            document.setCreatedBy(author.login());
+            document.setCreatedByName(author.name());
+            document.setCreatedByTitle(author.title());
+        }
+        document.setVersionAuthor(author.login());
+        document.setVersionAuthorName(author.name());
+        document.setVersionAuthorTitle(author.title());
+    }
+
     private String currentUserName() {
         var authentication = org.springframework.security.core.context.SecurityContextHolder
                 .getContext().getAuthentication();
@@ -312,6 +617,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             ensureWithinCreditLimit(companyTerms, calculation.totalAmount());
         }
         BillingDocument document = buildDocument(request, customer, calculation);
+        stampAuthor(document, true);
         if (billingCompany != null) {
             // L'organisation est imprimee en tete du destinataire, figee comme le reste.
             document.setCompanyCustomerId(billingCompany.getId());
@@ -324,6 +630,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
         BillingDocument saved = documentWriter.save(document, calculation, request.discounts(), request.clauses(), request.advance());
         documentWriter.saveEarlyPaymentDiscount(saved, request.earlyPaymentDiscount());
+        DealService dealService = dealServices == null ? null : dealServices.getIfAvailable();
+        if (dealService != null) {
+            // Lot B11 : la piece rejoint l'affaire de la piece dont elle derive, ou celle du client.
+            dealService.onDocumentCreated(saved);
+        }
         eventWriter.write(saved, "BILLING_DOCUMENT_CREATED", null);
         return mapper.toResponse(saved);
     }
@@ -332,12 +643,22 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request) {
         BillingDocument document = serviceByNumber(documentNumber);
         lifecycleSupport.ensureNotLocked(document);
+        if (document.getDocumentType() == BillingDocumentType.PROFORMA_INVOICE && document.getStatus() != BillingDocumentStatus.DRAFT) {
+            return editProforma(document, request);
+        }
+        if (document.getDocumentType() == BillingDocumentType.QUOTE && document.getStatus() != BillingDocumentStatus.DRAFT
+                && NEGOTIABLE_QUOTE.contains(document.getStatus())) {
+            // Lot B2 (ecart E9) : un devis envoye, vu, en negociation ou accepte se modifie en entier,
+            // comme une revision interne.
+            return reviseQuote(documentNumber, new com.sni.bokaticowork.features.billing.dto.request.ReviseQuoteRequest(
+                    "Modification du devis", "INTERNAL", null, request));
+        }
         boolean isDraft = document.getStatus() == BillingDocumentStatus.DRAFT;
         boolean isRestrictedEdit = document.getStatus() == BillingDocumentStatus.ISSUED
                 || document.getStatus() == BillingDocumentStatus.SENT;
 
         if (!isDraft && !isRestrictedEdit) {
-            throw new BadRequestException("Document in status " + document.getStatus() + " cannot be modified");
+            throw BadRequestException.coded("BILLING_DOCUMENT_NOT_EDITABLE", "Un document au statut " + document.getStatus() + " ne se modifie plus");
         }
 
         // L'etat precedent est archive AVANT toute modification · c'est lui qui permet de
@@ -345,6 +666,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         versionService.archive(document,
                 lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document),
                 isDraft ? "FULL_EDIT" : "RESTRICTED_EDIT");
+        // La nouvelle version est celle de l'utilisateur connecte (lot B12).
+        stampAuthor(document, false);
 
         // Internal notes and restricted fields are always editable when status allows modification
         if (StringUtils.hasText(request.internalNotes())) {
@@ -363,62 +686,581 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
 
         if (isDraft) {
-            if (StringUtils.hasText(request.title())) document.setTitle(request.title().trim());
-            if (StringUtils.hasText(request.description())) document.setDescription(request.description().trim());
-            if (request.issueDate() != null) document.setIssueDate(request.issueDate());
-            if (StringUtils.hasText(request.customerReference())) document.setCustomerReference(request.customerReference().trim());
-            if (StringUtils.hasText(request.poNumber())) document.setPoNumber(request.poNumber().trim());
-            if (StringUtils.hasText(request.projectCode())) document.setProjectCode(request.projectCode().trim());
-            if (StringUtils.hasText(request.salespersonCode())) document.setSalespersonCode(request.salespersonCode().trim());
-            if (StringUtils.hasText(request.deliveryAddressJson())) document.setDeliveryAddressJson(request.deliveryAddressJson().trim());
-            if (StringUtils.hasText(request.language())) document.setLanguage(request.language().trim());
-            if (request.exchangeRate() != null) document.setExchangeRate(request.exchangeRate());
-            if (StringUtils.hasText(request.paymentReference())) document.setPaymentReference(request.paymentReference().trim());
-            if (StringUtils.hasText(request.bankDetailsJson())) document.setBankDetailsJson(request.bankDetailsJson().trim());
-
-            applyLineUpdates(document, request.lines());
-
-            if (request.discounts() != null) {
-                discountRepository.deleteAllByDocument(document);
-            }
-            if (request.clauses() != null) {
-                clauseRepository.deleteAllByDocument(document);
-            }
-
-            // Recalculate totals from remaining lines
-            List<BillingDocumentLine> remainingLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document);
-            if (!remainingLines.isEmpty()) {
-                List<CreateBillingDocumentLineRequest> lineRequests = remainingLines.stream()
-                        .map(this::toCreateLineRequest).toList();
-                // Sans remises dans la demande, celles en base restent · le recalcul les compte,
-                // sinon le total ignorait des remises toujours affichees sur le document.
-                List<CreateBillingDocumentDiscountRequest> effectiveDiscounts = request.discounts() != null
-                        ? request.discounts()
-                        : discountRepository.findAllByDocumentOrderByIdAsc(document).stream()
-                                .map(d -> new CreateBillingDocumentDiscountRequest(d.getDiscountCode(), d.getDescription(),
-                                        d.getDiscountType(), d.getValue(), d.getSourceType(), d.getSourceCode()))
-                                .toList();
-                BillingCalculationService.CalculatedDocument recalc = calculationService.calculate(
-                        lineRequests,
-                        effectiveDiscounts
-                );
-                document.setSubtotalAmount(recalc.subtotalAmount());
-                document.setDiscountAmount(recalc.discountAmount());
-                document.setTaxableAmount(recalc.taxableAmount());
-                document.setVatAmount(recalc.vatAmount());
-                document.setAdditionalCentAmount(recalc.additionalCentAmount());
-                document.setTaxAmount(recalc.taxAmount());
-                document.setTotalAmount(recalc.totalAmount());
-                document.setBalanceDue(recalc.totalAmount().subtract(document.getPaidAmount()));
-
-                // Remises, taxes et clauses reecrites sans toucher aux lignes, deja en base
-                documentWriter.rewriteDetails(document, recalc, request.discounts(), request.clauses());
-            }
+            applyFullEdit(document, request);
         }
 
         BillingDocument saved = documentRepository.save(document);
         eventWriter.write(saved, "BILLING_DOCUMENT_UPDATED", null);
         return mapper.toResponse(saved);
+    }
+
+
+    /**
+     * Modification complete : en-tete, lignes, remises, clauses, et recalcul par le meme calcul que
+     * la creation. Brouillon, et devis en negociation (lot B2).
+     */
+    private void applyFullEdit(BillingDocument document, UpdateBillingDocumentRequest request) {
+        if (StringUtils.hasText(request.title())) document.setTitle(request.title().trim());
+        if (StringUtils.hasText(request.description())) document.setDescription(request.description().trim());
+        if (request.issueDate() != null) document.setIssueDate(request.issueDate());
+        if (StringUtils.hasText(request.customerReference())) document.setCustomerReference(request.customerReference().trim());
+        if (StringUtils.hasText(request.poNumber())) document.setPoNumber(request.poNumber().trim());
+        if (StringUtils.hasText(request.projectCode())) document.setProjectCode(request.projectCode().trim());
+        if (StringUtils.hasText(request.salespersonCode())) document.setSalespersonCode(request.salespersonCode().trim());
+        if (StringUtils.hasText(request.deliveryAddressJson())) document.setDeliveryAddressJson(request.deliveryAddressJson().trim());
+        if (StringUtils.hasText(request.language())) document.setLanguage(request.language().trim());
+        if (request.exchangeRate() != null) document.setExchangeRate(request.exchangeRate());
+        if (StringUtils.hasText(request.paymentReference())) document.setPaymentReference(request.paymentReference().trim());
+        if (StringUtils.hasText(request.bankDetailsJson())) document.setBankDetailsJson(request.bankDetailsJson().trim());
+
+        applyLineUpdates(document, request.lines());
+
+        if (request.discounts() != null) {
+            discountRepository.deleteAllByDocument(document);
+        }
+        if (request.clauses() != null) {
+            clauseRepository.deleteAllByDocument(document);
+        }
+
+        // Recalculate totals from remaining lines
+        List<BillingDocumentLine> remainingLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document);
+        if (!remainingLines.isEmpty()) {
+            List<CreateBillingDocumentLineRequest> lineRequests = remainingLines.stream()
+                    .map(this::toCreateLineRequest).toList();
+            // Memes conditions qu'a la creation : une organisation exoneree reste facturee hors TVA,
+            // y compris sur les lignes ajoutees par cette mise a jour.
+            if (customerSnapshotResolver.organizationOf(document.getCustomerType(), document.getCustomerCode())
+                    .map(organization -> organization.vatExempt()).orElse(false)) {
+                lineRequests = calculationService.exempted(lineRequests);
+            }
+            // Sans remises dans la demande, celles en base restent · le recalcul les compte,
+            // sinon le total ignorait des remises toujours affichees sur le document.
+            List<CreateBillingDocumentDiscountRequest> effectiveDiscounts = request.discounts() != null
+                    ? request.discounts()
+                    : discountRepository.findAllByDocumentOrderByIdAsc(document).stream()
+                            .map(d -> new CreateBillingDocumentDiscountRequest(d.getDiscountCode(), d.getDescription(),
+                                    d.getDiscountType(), d.getValue(), d.getSourceType(), d.getSourceCode()))
+                            .toList();
+            BillingCalculationService.CalculatedDocument recalc = calculationService.calculate(
+                    lineRequests,
+                    effectiveDiscounts
+            );
+            document.setSubtotalAmount(recalc.subtotalAmount());
+            document.setDiscountAmount(recalc.discountAmount());
+            document.setTaxableAmount(recalc.taxableAmount());
+            document.setVatAmount(recalc.vatAmount());
+            document.setAdditionalCentAmount(recalc.additionalCentAmount());
+            document.setTaxAmount(recalc.taxAmount());
+            document.setTotalAmount(recalc.totalAmount());
+            document.setBalanceDue(recalc.totalAmount().subtract(document.getPaidAmount()));
+
+            // Remises, taxes et clauses reecrites sans toucher aux lignes, deja en base
+            documentWriter.rewriteDetails(document, recalc, request.discounts(), request.clauses());
+        }
+    }
+
+    /** Statuts d'un devis qui admettent une revision (lot B2) ; ACCEPTED repasse en negociation (D1). */
+    private static final java.util.Set<BillingDocumentStatus> NEGOTIABLE_QUOTE = java.util.EnumSet.of(BillingDocumentStatus.DRAFT,
+            BillingDocumentStatus.ISSUED, BillingDocumentStatus.SENT, BillingDocumentStatus.VIEWED, BillingDocumentStatus.NEGOTIATION,
+            BillingDocumentStatus.ACCEPTED);
+    static final String QUOTE_REVISION_VALIDITY_DAYS_KEY = "billing.quote.revision-validity-days";
+
+    @Override
+    public BillingDocumentResponse reviseQuote(String quoteNumber, com.sni.bokaticowork.features.billing.dto.request.ReviseQuoteRequest request) {
+        BillingDocument quote = quote(quoteNumber);
+        lifecycleSupport.ensureNotLocked(quote);
+        BillingDocumentStatus before = quote.getStatus();
+        if (!NEGOTIABLE_QUOTE.contains(before)) {
+            throw new BadRequestException(before == BillingDocumentStatus.EXPIRED
+                    ? "Ce devis a expiré : réactivez-le avec une nouvelle date de validité avant de le modifier"
+                    : "Un devis au statut " + before + " ne se modifie plus");
+        }
+        // L'etat presente au client est archive avant toute modification.
+        versionService.archive(quote, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote), "QUOTE_REVISION");
+        stampAuthor(quote, false);
+        quote.setVersionReason(request.reason().trim());
+        quote.setVersionOrigin(StringUtils.hasText(request.origin()) ? request.origin() : "INTERNAL");
+
+        UpdateBillingDocumentRequest changes = request.changes();
+        if (changes.internalNotes() != null) {
+            quote.setInternalNotes(StringUtils.hasText(changes.internalNotes()) ? changes.internalNotes().trim() : null);
+        }
+        if (changes.dueDate() != null) {
+            quote.setDueDate(changes.dueDate());
+        }
+        if (StringUtils.hasText(changes.terms())) {
+            quote.setTerms(changes.terms().trim());
+        }
+        if (StringUtils.hasText(changes.paymentInstructions())) {
+            quote.setPaymentInstructions(changes.paymentInstructions().trim());
+        }
+        applyFullEdit(quote, changes);
+
+        if (before != BillingDocumentStatus.DRAFT) {
+            // Chaque version proposee au client respecte le plancher et la remise maximale du
+            // catalogue ; au-dela, derogation motivee avec le droit adequat.
+            String override = discountGuard.enforce(discountGuard.evaluate(lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote),
+                    quote.getSubtotalAmount(), quote.getDiscountAmount()), request.discountOverrideReason());
+            if (override != null) {
+                quote.setDiscountOverrideReason(override);
+                quote.setDiscountOverrideBy(currentUserName());
+                quote.setDiscountOverrideAt(Instant.now());
+                fiscalAuditService.log("DISCOUNT_OVERRIDE", "BILLING_DOCUMENT", quote.getDocumentNumber(), null, "reason=" + override);
+            }
+            // La validite se prolonge a la revision.
+            LocalDate minimum = LocalDate.now().plusDays(revisionValidityDays());
+            if (quote.getDueDate() == null || quote.getDueDate().isBefore(minimum)) {
+                quote.setDueDate(minimum);
+            }
+            if (before == BillingDocumentStatus.ACCEPTED) {
+                // D1 : le devis accepte revise repasse en negociation ; l'acceptation et la signature
+                // tombent, le client accepte de nouveau la nouvelle version.
+                cancelQuoteSignatures(quote);
+                releaseQuoteStock(quote.getDocumentNumber());
+            }
+            quote.setStatus(BillingDocumentStatus.NEGOTIATION);
+        }
+        BillingDocument saved = documentRepository.save(quote);
+        eventWriter.write(saved, "QUOTE_REVISED", java.util.Map.of("reason", saved.getVersionReason(), "origin", saved.getVersionOrigin(),
+                "previousStatus", before.name(), "revision", versionService.currentRevision(saved)));
+        return mapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse negotiation(String quoteNumber) {
+        BillingDocument quote = quote(quoteNumber);
+        List<java.util.Map<String, Object>> snapshots = versionService.rounds(quote, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote));
+        List<com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.Round> rounds = new ArrayList<>();
+        java.util.Map<String, Object> previous = null;
+        for (java.util.Map<String, Object> snapshot : snapshots) {
+            BigDecimal total = decimal(snapshot.get("totalAmount"));
+            BigDecimal previousTotal = previous == null ? null : decimal(previous.get("totalAmount"));
+            rounds.add(new com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.Round(
+                    ((Number) snapshot.get("_version")).intValue(), Boolean.TRUE.equals(snapshot.get("_current")),
+                    (String) snapshot.get("versionAuthorName"), (String) snapshot.get("versionReason"), (String) snapshot.get("versionOrigin"),
+                    (String) snapshot.get("status"), instant(snapshot.get("_changedAt")), instant(snapshot.get("_sentAt")),
+                    decimal(snapshot.get("subtotalAmount")), decimal(snapshot.get("discountAmount")), total,
+                    previousTotal == null || total == null ? null : total.subtract(previousTotal),
+                    previous == null ? List.of() : lineChanges(previous, snapshot)));
+            previous = snapshot;
+        }
+        return new com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse(quote.getDocumentNumber(), quote.getStatus().name(),
+                versionService.currentRevision(quote), rounds);
+    }
+
+    @Override
+    public BillingDocumentResponse revalidateQuote(String quoteNumber, com.sni.bokaticowork.features.billing.dto.request.RevalidateQuoteRequest request) {
+        BillingDocument quote = quote(quoteNumber);
+        if (quote.getStatus() != BillingDocumentStatus.EXPIRED) {
+            throw new BadRequestException("Seul un devis expiré se réactive");
+        }
+        if (!request.validUntil().isAfter(LocalDate.now())) {
+            throw new BadRequestException("La nouvelle date de validité est postérieure à aujourd'hui");
+        }
+        versionService.archive(quote, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote), "QUOTE_REVALIDATION");
+        stampAuthor(quote, false);
+        quote.setVersionReason(request.reason().trim());
+        quote.setVersionOrigin("INTERNAL");
+        quote.setDueDate(request.validUntil());
+        quote.setStatus(BillingDocumentStatus.SENT);
+        BillingDocument saved = documentRepository.save(quote);
+        eventWriter.write(saved, "QUOTE_REVALIDATED", java.util.Map.of("validUntil", request.validUntil().toString(), "reason", request.reason().trim()));
+        return mapper.toResponse(saved);
+    }
+
+    // ------------------------------------------------------------------ lot B14 : facture modifiee apres approbation
+
+    /** Lignes telles qu'elles seraient apres les modifications (ajouts, changements, retraits par rang). */
+    List<CreateBillingDocumentLineRequest> projectedLines(BillingDocument document, List<UpdateBillingDocumentLineRequest> updates) {
+        java.util.Map<Integer, CreateBillingDocumentLineRequest> byOrder = new java.util.LinkedHashMap<>();
+        for (BillingDocumentLine line : lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document)) {
+            byOrder.put(line.getLineOrder(), toCreateLineRequest(line));
+        }
+        if (updates != null) {
+            for (UpdateBillingDocumentLineRequest update : updates) {
+                if ("REMOVE".equalsIgnoreCase(update.action())) {
+                    byOrder.remove(update.lineOrder());
+                } else {
+                    byOrder.put(update.lineOrder(), toUpdateLineAsCreate(update));
+                }
+            }
+        }
+        return new ArrayList<>(byOrder.values());
+    }
+
+    /** Total TTC apres les modifications, par le meme calcul que la creation. */
+    BigDecimal projectedTotal(BillingDocument document, UpdateBillingDocumentRequest changes) {
+        List<CreateBillingDocumentLineRequest> lines = projectedLines(document, changes.lines());
+        if (lines.isEmpty()) {
+            throw new BadRequestException("Une facture garde au moins une ligne");
+        }
+        if (customerSnapshotResolver.organizationOf(document.getCustomerType(), document.getCustomerCode())
+                .map(organization -> organization.vatExempt()).orElse(false)) {
+            lines = calculationService.exempted(lines);
+        }
+        return calculationService.calculate(lines, effectiveDiscounts(document, changes.discounts())).totalAmount();
+    }
+
+    private List<CreateBillingDocumentDiscountRequest> effectiveDiscounts(BillingDocument document,
+                                                                          List<CreateBillingDocumentDiscountRequest> requested) {
+        return requested != null ? requested : discountRepository.findAllByDocumentOrderByIdAsc(document).stream()
+                .map(d -> new CreateBillingDocumentDiscountRequest(d.getDiscountCode(), d.getDescription(), d.getDiscountType(), d.getValue(),
+                        d.getSourceType(), d.getSourceCode()))
+                .toList();
+    }
+
+    int currentRevision(BillingDocument document) {
+        return versionService.currentRevision(document);
+    }
+
+    /** Nouvelle version de la meme piece (facture ni scellee ni comptabilisee) ; l'ancienne reste archivee. */
+    BillingDocument applyInvoiceVersion(BillingDocument invoice, UpdateBillingDocumentRequest changes, String reason, String overrideReason,
+                                        com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService.Author author) {
+        lifecycleSupport.ensureNotLocked(invoice);
+        versionService.archive(invoice, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(invoice), "INVOICE_CHANGE");
+        if (author != null) {
+            invoice.setVersionAuthor(author.login());
+            invoice.setVersionAuthorName(author.name());
+            invoice.setVersionAuthorTitle(author.title());
+        }
+        invoice.setVersionReason(reason);
+        invoice.setVersionOrigin("INTERNAL");
+        if (changes.dueDate() != null) {
+            invoice.setDueDate(changes.dueDate());
+        }
+        if (StringUtils.hasText(changes.terms())) {
+            invoice.setTerms(changes.terms().trim());
+        }
+        if (StringUtils.hasText(changes.paymentInstructions())) {
+            invoice.setPaymentInstructions(changes.paymentInstructions().trim());
+        }
+        if (changes.internalNotes() != null) {
+            invoice.setInternalNotes(StringUtils.hasText(changes.internalNotes()) ? changes.internalNotes().trim() : null);
+        }
+        applyFullEdit(invoice, changes);
+        String override = discountGuard.enforce(discountGuard.evaluate(lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(invoice),
+                invoice.getSubtotalAmount(), invoice.getDiscountAmount()), overrideReason);
+        if (override != null) {
+            invoice.setDiscountOverrideReason(override);
+            invoice.setDiscountOverrideBy(author == null ? currentUserName() : author.login());
+            invoice.setDiscountOverrideAt(Instant.now());
+        }
+        BillingDocument saved = documentRepository.save(invoice);
+        eventWriter.write(saved, "INVOICE_REVISED", java.util.Map.of("reason", reason, "revision", versionService.currentRevision(saved)));
+        return saved;
+    }
+
+    /**
+     * Facture scellee ou deja comptabilisee (D8) : la piece ne change pas. Une rectificative reprend la
+     * facture modifiee et devient sa nouvelle version ; la facture est annulee (avoir si elle est
+     * scellee), ce qui corrige les ecritures par contre-passation et nouvelle piece.
+     */
+    BillingDocument replaceWithCorrective(BillingDocument original, UpdateBillingDocumentRequest changes, String reason, String overrideReason,
+                                          com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService.Author author) {
+        List<CreateBillingDocumentLineRequest> lines = projectedLines(original, changes.lines());
+        List<CreateBillingDocumentClauseRequest> clauses = changes.clauses() != null ? changes.clauses()
+                : clauseRepository.findAllByDocumentOrderByDisplayOrderAscIdAsc(original).stream()
+                .map(clause -> new CreateBillingDocumentClauseRequest(clause.getClauseCode(), clause.getTitle(), clause.getBody(), clause.getDisplayOrder()))
+                .toList();
+        BillingDocumentResponse created = create(new CreateBillingDocumentRequest(BillingDocumentType.CORRECTIVE_INVOICE,
+                original.getCustomerType(), original.getCustomerCode(), original.getCustomerName(), original.getCustomerEmail(),
+                original.getCustomerPhone(), original.getBillingAddressJson(), "INVOICE", original.getDocumentNumber(),
+                StringUtils.hasText(changes.title()) ? changes.title().trim() : original.getTitle(),
+                StringUtils.hasText(changes.description()) ? changes.description().trim() : original.getDescription(),
+                StringUtils.hasText(changes.terms()) ? changes.terms().trim() : original.getTerms(),
+                original.getCurrency(), LocalDate.now(), changes.dueDate() != null ? changes.dueDate() : original.getDueDate(),
+                original.getMetadataJson(), lines, effectiveDiscounts(original, changes.discounts()), clauses,
+                original.getPaymentReference(),
+                StringUtils.hasText(changes.paymentInstructions()) ? changes.paymentInstructions().trim() : original.getPaymentInstructions(),
+                original.getBankDetailsJson(), null, original.getCustomerReference(), original.getPoNumber(), original.getProjectCode(),
+                original.getSalespersonCode(), original.getDeliveryAddressJson(), original.getLanguage(), original.getExchangeRate(), null,
+                original.getCompanyCustomerCode() == null ? CreateBillingDocumentRequest.NO_COMPANY : original.getCompanyCustomerCode()));
+        BillingDocument corrective = serviceByNumber(created.documentNumber());
+        corrective.setOriginalDocumentNumber(original.getDocumentNumber());
+        corrective.setOriginalDocumentType(original.getDocumentType().name());
+        corrective.setCreditNoteReason(reason);
+        corrective.setVersionReason(reason);
+        corrective.setVersionOrigin("INTERNAL");
+        if (author != null) {
+            corrective.setCreatedBy(author.login());
+            corrective.setCreatedByName(author.name());
+            corrective.setCreatedByTitle(author.title());
+            corrective.setVersionAuthor(author.login());
+            corrective.setVersionAuthorName(author.name());
+            corrective.setVersionAuthorTitle(author.title());
+        }
+        documentRepository.save(corrective);
+        fiscalAuditService.log(FiscalAuditService.CORRECTIVE_INVOICE_CREATED, "BILLING_DOCUMENT", corrective.getDocumentNumber(),
+                original.getDocumentNumber(), "reason=" + reason);
+        issue(corrective.getDocumentNumber(), overrideReason);
+        if (Boolean.TRUE.equals(original.getLocked())) {
+            validate(corrective.getDocumentNumber());
+        }
+        BillingDocument cancelled = cancelAndArchive(original.getDocumentNumber(),
+                "Remplacée par la facture rectificative " + corrective.getDocumentNumber() + " : " + reason);
+        cancelled.setReplacedByDocumentNumber(corrective.getDocumentNumber());
+        documentRepository.save(cancelled);
+        BillingDocument result = serviceByNumber(corrective.getDocumentNumber());
+        eventWriter.write(result, "INVOICE_REPLACED_BY_CORRECTIVE", java.util.Map.of("originalDocumentNumber", original.getDocumentNumber(),
+                "reason", reason));
+        return result;
+    }
+
+    // ------------------------------------------------------------------ lot B5 : proforma
+
+    /** D9 : une proforma se modifie quel que soit son statut, par versions, sans effet sur le devis issu d'elle. */
+    private BillingDocumentResponse editProforma(BillingDocument proforma, UpdateBillingDocumentRequest request) {
+        versionService.archive(proforma, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(proforma), "PROFORMA_EDIT");
+        stampAuthor(proforma, false);
+        if (request.dueDate() != null) {
+            proforma.setDueDate(request.dueDate());
+        }
+        if (StringUtils.hasText(request.terms())) {
+            proforma.setTerms(request.terms().trim());
+        }
+        if (StringUtils.hasText(request.paymentInstructions())) {
+            proforma.setPaymentInstructions(request.paymentInstructions().trim());
+        }
+        if (request.internalNotes() != null) {
+            proforma.setInternalNotes(StringUtils.hasText(request.internalNotes()) ? request.internalNotes().trim() : null);
+        }
+        applyFullEdit(proforma, request);
+        if (proforma.getStatus() == BillingDocumentStatus.EXPIRED && proforma.getDueDate() != null
+                && !proforma.getDueDate().isBefore(LocalDate.now())) {
+            proforma.setStatus(BillingDocumentStatus.SENT);
+        }
+        BillingDocument saved = documentRepository.save(proforma);
+        eventWriter.write(saved, "PROFORMA_UPDATED", java.util.Map.of("revision", versionService.currentRevision(saved)));
+        return mapper.toResponse(saved);
+    }
+
+    @Override
+    public BillingDocumentResponse proformaFromQuote(String quoteNumber) {
+        BillingDocument quote = quote(quoteNumber);
+        BillingDocumentResponse proforma = create(copyRequest(quote, BillingDocumentType.PROFORMA_INVOICE, "QUOTE"));
+        eventWriter.write(quote, "QUOTE_PROFORMA_CREATED", java.util.Map.of("proformaNumber", proforma.documentNumber()));
+        return proforma;
+    }
+
+    /**
+     * A l'accord du client (ou a son paiement) : la proforma devient un devis accepte, memes lignes,
+     * lien garde ; la proforma passe en CONVERTED et reste modifiable sans effet sur le devis.
+     */
+    @Override
+    public BillingDocumentResponse proformaToQuote(String proformaNumber) {
+        BillingDocument proforma = serviceByNumber(proformaNumber);
+        if (proforma.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+            throw new BadRequestException("Le document " + proformaNumber + " n'est pas une proforma");
+        }
+        if (StringUtils.hasText(proforma.getConvertedToDocumentNumber())) {
+            throw new BadRequestException("Cette proforma est déjà transformée en devis " + proforma.getConvertedToDocumentNumber());
+        }
+        BillingDocumentResponse created = create(copyRequest(proforma, BillingDocumentType.QUOTE, "PROFORMA"));
+        issue(created.documentNumber(), null);
+        BillingDocumentResponse quote = acceptQuote(created.documentNumber());
+        proforma.setConvertedToDocumentNumber(quote.documentNumber());
+        proforma.setStatus(BillingDocumentStatus.CONVERTED);
+        documentRepository.save(proforma);
+        eventWriter.write(proforma, "PROFORMA_CONVERTED_TO_QUOTE", java.util.Map.of("quoteNumber", quote.documentNumber()));
+        return get(quote.documentNumber());
+    }
+
+    /**
+     * D2 : un paiement recu sur une proforma devient un acompte du devis issu d'elle (cree et accepte
+     * au besoin). Le paiement s'impute sur la facture d'acompte, qui est rendue a l'appelant.
+     */
+    private BillingDocument proformaPayment(BillingDocument proforma, BigDecimal amount) {
+        String quoteNumber = StringUtils.hasText(proforma.getConvertedToDocumentNumber()) ? proforma.getConvertedToDocumentNumber()
+                : proformaToQuote(proforma.getDocumentNumber()).documentNumber();
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService == null) {
+            throw new BadRequestException("Une proforma ne s'encaisse pas directement");
+        }
+        List<com.sni.bokaticowork.features.billing.dto.response.DepositResponse> planned = depositService.plan(quoteNumber,
+                new com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest(List.of(
+                        new com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest.Deposit("Paiement reçu sur la proforma "
+                                + proforma.getDocumentNumber(), com.sni.bokaticowork.features.billing.enums.BillingDepositMode.AMOUNT,
+                                amount, null, LocalDate.now(), true))));
+        return applyPayment(planned.get(0).depositInvoiceNumber(), amount);
+    }
+
+    /** Copie d'une piece commerciale (devis, proforma) en une autre, lien garde par la provenance. */
+    private CreateBillingDocumentRequest copyRequest(BillingDocument source, BillingDocumentType type, String sourceType) {
+        BillingDocumentResponse view = mapper.toResponse(source);
+        return new CreateBillingDocumentRequest(type, source.getCustomerType(), source.getCustomerCode(), source.getCustomerName(),
+                source.getCustomerEmail(), source.getCustomerPhone(), source.getBillingAddressJson(), sourceType, source.getDocumentNumber(),
+                source.getTitle(), source.getDescription(), source.getTerms(), source.getCurrency(), LocalDate.now(), source.getDueDate(),
+                source.getMetadataJson(), view.lines().stream().map(this::toCreateLineRequest).toList(),
+                view.discounts().stream().map(this::toCreateDiscountRequest).toList(),
+                view.clauses().stream().map(this::toCreateClauseRequest).toList(), source.getPaymentReference(), source.getPaymentInstructions(),
+                source.getBankDetailsJson(), null, source.getCustomerReference(), source.getPoNumber(), source.getProjectCode(),
+                source.getSalespersonCode(), source.getDeliveryAddressJson(), source.getLanguage(), source.getExchangeRate(), null,
+                source.getCompanyCustomerCode() == null ? CreateBillingDocumentRequest.NO_COMPANY : source.getCompanyCustomerCode());
+    }
+
+    // ------------------------------------------------------------------ lot B6 : changement de client
+
+    /** Meme facture, nouveau client : fiche, conditions, exoneration reprises, recalcul, nouvelle version. */
+    void changeCustomerInPlace(BillingDocument invoice, String customerType, String customerCode, String reason) {
+        BillingCustomerSnapshotResolver.CustomerSnapshot customer = customerSnapshotResolver.resolve(new CreateBillingDocumentRequest(
+                invoice.getDocumentType(), customerType, customerCode, null, null, null, null, null, null, null, null, null,
+                invoice.getCurrency(), null, null, null, List.of(), List.of(), List.of(), null, null, null, null, null, null, null, null,
+                null, null, null, null));
+        var organization = customer.organization();
+        ensureNotBlocked(organization, true);
+        versionService.archive(invoice, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(invoice), "CUSTOMER_CHANGE");
+        stampAuthor(invoice, false);
+        invoice.setVersionReason("Changement de client : " + reason);
+        invoice.setVersionOrigin("INTERNAL");
+        invoice.setCustomerType(customer.customerType());
+        invoice.setCustomerCode(customer.customerCode());
+        invoice.setCustomerName(customer.customerName());
+        invoice.setCustomerEmail(customer.customerEmail());
+        invoice.setCustomerPhone(customer.customerPhone());
+        invoice.setBillingAddressJson(customer.billingAddressJson());
+        invoice.setCustomerNiu(organization == null ? null : organization.niu());
+        invoice.setCustomerIdentifiersJson(organization == null ? null : organization.identifiersJson());
+        invoice.setCustomerVatExemptionNote(organization == null ? null : organization.vatExemptionNote());
+        invoice.setCompanyCustomerId(null);
+        invoice.setCompanyCustomerCode(null);
+        invoice.setCompanyName(null);
+        invoice.setCompanyIdentifiersJson(null);
+        invoice.setCompanyLinkSource(null);
+        // Recalcul par le meme calcul que la creation, avec l'exoneration du nouveau client.
+        applyFullEdit(invoice, new UpdateBillingDocumentRequest(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null));
+        if (organization != null) {
+            ensureWithinCreditLimit(organization, invoice.getTotalAmount());
+        }
+        BillingDocument saved = documentRepository.save(invoice);
+        eventWriter.write(saved, "INVOICE_CUSTOMER_CHANGED", java.util.Map.of("reason", reason, "customerCode", customerCode,
+                "revision", versionService.currentRevision(saved)));
+    }
+
+    /** Copie d'une facture pour un autre client (memes lignes, remises, clauses), liee a l'originale. */
+    CreateBillingDocumentRequest reissueRequest(BillingDocument original, String customerType, String customerCode) {
+        BillingDocumentResponse view = mapper.toResponse(original);
+        return new CreateBillingDocumentRequest(BillingDocumentType.INVOICE, customerType, customerCode, null, null, null, null, "INVOICE",
+                original.getDocumentNumber(), original.getTitle(), original.getDescription(), original.getTerms(), original.getCurrency(),
+                LocalDate.now(), null, original.getMetadataJson(), view.lines().stream().map(this::toCreateLineRequest).toList(),
+                view.discounts().stream().map(this::toCreateDiscountRequest).toList(),
+                view.clauses().stream().map(this::toCreateClauseRequest).toList(), original.getPaymentReference(),
+                original.getPaymentInstructions(), original.getBankDetailsJson(), null, original.getCustomerReference(), original.getPoNumber(),
+                original.getProjectCode(), original.getSalespersonCode(), original.getDeliveryAddressJson(), original.getLanguage(),
+                original.getExchangeRate(), null, null);
+    }
+
+    /**
+     * D6 : les reglements du client d'origine, portes par son avoir, passent sur la nouvelle facture.
+     * L'avoir est consomme (APPLIED) ; le transfert est trace pour la comptabilite (411 de l'un a l'autre).
+     */
+    BigDecimal transferCreditNote(String creditNoteNumber, String targetInvoiceNumber, String payerCode) {
+        BillingDocument creditNote = lockedByNumber(creditNoteNumber);
+        BillingDocument target = serviceByNumber(targetInvoiceNumber);
+        BigDecimal amount = creditNote.getTotalAmount().min(target.getBalanceDue() == null ? creditNote.getTotalAmount() : target.getBalanceDue());
+        if (amount.signum() > 0) {
+            applyPayment(targetInvoiceNumber, amount);
+        }
+        creditNote.setStatus(BillingDocumentStatus.APPLIED);
+        BillingDocument saved = documentRepository.save(creditNote);
+        fiscalAuditService.log(FiscalAuditService.CREDIT_NOTE_APPLIED, "BILLING_DOCUMENT", creditNoteNumber, creditNote.getOriginalDocumentNumber(),
+                "transferred_to=" + targetInvoiceNumber + "|payer=" + payerCode + "|amount=" + amount.toPlainString());
+        eventWriter.write(saved, "CREDIT_NOTE_TRANSFERRED", java.util.Map.of("targetInvoiceNumber", targetInvoiceNumber, "payer", String.valueOf(payerCode),
+                "amount", amount.toPlainString()));
+        return amount;
+    }
+
+    /** Facture d'origine annulee et remplacee (ses avoirs portent la contre-passation). */
+    void cancelReplacedInvoice(String invoiceNumber, String replacementNumber) {
+        BillingDocument cancelled = markCancelledAndArchived(invoiceNumber);
+        cancelled.setReplacedByDocumentNumber(replacementNumber);
+        BillingDocument saved = documentRepository.save(cancelled);
+        eventWriter.write(saved, "BILLING_DOCUMENT_CANCELLED_VIA_CREDIT_NOTE", java.util.Map.of("replacedBy", replacementNumber));
+    }
+
+    private long revisionValidityDays() {
+        return platformSettings == null ? 30 : platformSettings.number(QUOTE_REVISION_VALIDITY_DAYS_KEY, 30);
+    }
+
+    /** Signatures en attente ou obtenues sur la version precedente : caduques (D1). */
+    private void cancelQuoteSignatures(BillingDocument quote) {
+        if (signatureRepository == null) {
+            return;
+        }
+        signatureRepository.findAllByDocumentOrderByCreatedAtDesc(quote).stream()
+                .filter(signature -> signature.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingSignatureStatus.PENDING
+                        || signature.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingSignatureStatus.SIGNED)
+                .forEach(signature -> {
+                    signature.setStatus(com.sni.bokaticowork.features.billing.enums.BillingSignatureStatus.CANCELLED);
+                    signatureRepository.save(signature);
+                });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange> lineChanges(
+            java.util.Map<String, Object> before, java.util.Map<String, Object> after) {
+        List<java.util.Map<String, Object>> oldLines = (List<java.util.Map<String, Object>>) before.getOrDefault("lines", List.of());
+        List<java.util.Map<String, Object>> newLines = (List<java.util.Map<String, Object>>) after.getOrDefault("lines", List.of());
+        List<com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange> changes = new ArrayList<>();
+        java.util.Map<String, java.util.Map<String, Object>> oldByKey = new java.util.LinkedHashMap<>();
+        oldLines.forEach(line -> oldByKey.put(lineKey(line), line));
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (java.util.Map<String, Object> line : newLines) {
+            String key = lineKey(line);
+            seen.add(key);
+            java.util.Map<String, Object> old = oldByKey.get(key);
+            if (old == null) {
+                changes.add(lineChange("ADDED", null, line));
+            } else if (!java.util.Objects.equals(old.get("quantity"), line.get("quantity"))
+                    || !java.util.Objects.equals(old.get("unitPrice"), line.get("unitPrice"))
+                    || !java.util.Objects.equals(old.get("discountAmount"), line.get("discountAmount"))
+                    || !java.util.Objects.equals(old.get("totalAmount"), line.get("totalAmount"))) {
+                changes.add(lineChange("CHANGED", old, line));
+            }
+        }
+        oldByKey.forEach((key, line) -> {
+            if (!seen.contains(key)) {
+                changes.add(lineChange("REMOVED", line, null));
+            }
+        });
+        return changes;
+    }
+
+    /** Une ligne se reconnait d'une version a l'autre par son article, a defaut par son libelle. */
+    private static String lineKey(java.util.Map<String, Object> line) {
+        Object item = line.get("itemCode");
+        return item != null ? "item:" + item : "label:" + line.get("description");
+    }
+
+    private static com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange lineChange(String change,
+            java.util.Map<String, Object> before, java.util.Map<String, Object> after) {
+        java.util.Map<String, Object> label = after != null ? after : before;
+        return new com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange(change, (String) label.get("description"),
+                text(before, "quantity"), text(after, "quantity"), text(before, "unitPrice"), text(after, "unitPrice"),
+                text(before, "discountAmount"), text(after, "discountAmount"), text(before, "totalAmount"), text(after, "totalAmount"));
+    }
+
+    private static String text(java.util.Map<String, Object> line, String field) {
+        return line == null || line.get(field) == null ? null : String.valueOf(line.get(field));
+    }
+
+    private static BigDecimal decimal(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return new BigDecimal(String.valueOf(value));
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private static Instant instant(Object value) {
+        if (value instanceof Instant at) {
+            return at;
+        }
+        return value == null ? null : Instant.parse(String.valueOf(value));
     }
 
     @Override
@@ -464,10 +1306,16 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         auditPayload.put("before", before);
         auditPayload.put("after", recipientSnapshot(saved));
         auditPayload.put("reason", request.reason());
+        if (Boolean.TRUE.equals(saved.getLocked())) {
+            // Lot B4 (E15) : la piece scellee ne change pas ; les envois suivants partent en duplicata date.
+            saved.setRecipientCorrectedAt(Instant.now());
+            saved = documentRepository.save(saved);
+        }
         editHistoryRepository.save(BillingDocumentEditHistory.builder()
                 .document(saved)
                 .editType("RECIPIENT_UPDATED")
-                .changedBy(StringUtils.hasText(request.changedBy()) ? request.changedBy().trim() : "SYSTEM")
+                // Lot B1 : l'auteur vient du jeton, jamais du corps de la requete.
+                .changedBy(currentUserName())
                 .changedAt(Instant.now())
                 .snapshotJson(writeJson(auditPayload))
                 .build());
@@ -960,7 +1808,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         BillingDocument source = serviceByNumber(documentNumber);
         List<BillingDocumentLine> sourceLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(source);
         if (sourceLines.isEmpty()) {
-            throw new BadRequestException("Cannot duplicate a document with no lines");
+            throw BadRequestException.coded("BILLING_DOCUMENT_NO_LINES", "Impossible de dupliquer un document sans ligne");
         }
         List<CreateBillingDocumentLineRequest> lines = sourceLines.stream()
                 .map(this::toCreateLineRequest)
@@ -1026,6 +1874,24 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse issue(String documentNumber, String discountOverrideReason) {
         BillingDocument document = serviceByNumber(documentNumber);
         lifecycleSupport.ensureCanIssue(document);
+        if (stockGuard != null) {
+            // Lot B13 (D5) : une facture ne sort pas une marchandise absente du stock, sauf article
+            // en stock negatif autorise. Sur un devis ou une proforma, ce n'est qu'une alerte.
+            List<BillingDocumentLine> issuedLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document);
+            List<com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line> toCheck = new ArrayList<>();
+            for (int i = 0; i < issuedLines.size(); i++) {
+                BillingDocumentLine line = issuedLines.get(i);
+                if (!Boolean.TRUE.equals(line.getOptional())) {
+                    toCheck.add(new com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line(i, line.getItemCode(),
+                            line.getSourceType(), line.getLineType(), line.getDescription(), line.getQuantity()));
+                }
+            }
+            List<String> shortages = stockGuard.evaluate(document.getDocumentType(), toCheck).stream()
+                    .filter(alert -> "BLOCK".equals(alert.severity())).map(alert -> alert.message()).toList();
+            if (!shortages.isEmpty()) {
+                throw new BadRequestException(String.join(" ; ", shortages));
+            }
+        }
 
         // Les limites de remise ne bloquent qu'ici, jamais au brouillon : le commercial
         // construit son offre librement, on l'arrete avant qu'elle n'engage.
@@ -1043,12 +1909,25 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                     null, "reason=" + override);
         }
 
-        document.setStatus(document.getDocumentType() == BillingDocumentType.QUOTE ? BillingDocumentStatus.SENT : BillingDocumentStatus.ISSUED);
+        document.setStatus(document.getDocumentType() == BillingDocumentType.QUOTE || document.getDocumentType() == BillingDocumentType.PROFORMA_INVOICE
+                ? BillingDocumentStatus.SENT : BillingDocumentStatus.ISSUED);
         document.setIssuedAt(Instant.now());
         // Identite du vendeur figee a l'emission · la reimpression reste identique meme si la
         // fiche exploitant change ensuite.
         freezeSeller(document);
         BillingDocument saved = documentRepository.save(document);
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService != null && saved.getDocumentType() == BillingDocumentType.INVOICE
+                && !StringUtils.hasText(saved.getDepositForDocumentNumber())) {
+            // Lot B3 : la facture finale deduit chaque acompte encaisse et ne reclame que le reste.
+            depositService.deductOnFinalInvoice(saved);
+            saved = serviceByNumber(saved.getDocumentNumber());
+        }
+        BillingStockService stockService = stockServices == null ? null : stockServices.getIfAvailable();
+        if (stockService != null && saved.getDocumentType() == BillingDocumentType.INVOICE) {
+            // Lot B7 : la facture sort le stock (reservations du devis consommees, reste sorti).
+            stockService.issueForInvoice(saved);
+        }
         eventWriter.write(saved, "BILLING_DOCUMENT_ISSUED", null);
         memberInAppNotifier.notify("BILLING_DOCUMENT_ISSUED", "BILLING_DOCUMENT", saved.getDocumentNumber(),
                 saved.getCustomerEmail(), saved.getCustomerName(), saved.getCustomerCode(),
@@ -1069,7 +1948,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse send(String documentNumber) {
         BillingDocument document = serviceByNumber(documentNumber);
         lifecycleSupport.ensureCanSend(document);
-        document.setStatus(document.getDocumentType() == BillingDocumentType.QUOTE ? BillingDocumentStatus.SENT : BillingDocumentStatus.SENT);
+        // Lot B1 : l'envoi se trace (date, version transmise) sans ecraser le statut ; une facture
+        // payee envoyee reste PAID. Seul un devis emis passe a SENT.
+        if ((document.getDocumentType() == BillingDocumentType.QUOTE || document.getDocumentType() == BillingDocumentType.PROFORMA_INVOICE)
+                && document.getStatus() == BillingDocumentStatus.ISSUED) {
+            document.setStatus(BillingDocumentStatus.SENT);
+        }
         document.setSentAt(Instant.now());
         BillingDocument saved = documentRepository.save(document);
         // Sans horodatage de transmission, rien ne distingue un brouillon retouche d'une
@@ -1083,7 +1967,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse selectQuoteOptions(String quoteNumber, SelectQuoteOptionsRequest request) {
         BillingDocument quote = quote(quoteNumber);
         if (quote.getStatus() == BillingDocumentStatus.CONVERTED || quote.getStatus() == BillingDocumentStatus.CANCELLED) {
-            throw new BadRequestException("Cannot modify options on a converted or cancelled quote");
+            throw BadRequestException.coded("QUOTE_CLOSED", "Les options d'un devis converti ou annulé ne se modifient plus");
         }
         Set<Integer> selected = request.selectedLineOrders() == null ? Set.of() : Set.copyOf(request.selectedLineOrders());
         List<BillingDocumentLine> allLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote);
@@ -1150,7 +2034,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (quote.getStatus() != BillingDocumentStatus.SENT
                 && quote.getStatus() != BillingDocumentStatus.VIEWED
                 && quote.getStatus() != BillingDocumentStatus.ACCEPTED) {
-            throw new BadRequestException("Cannot start negotiation in status " + quote.getStatus());
+            throw BadRequestException.coded("QUOTE_NOT_NEGOTIABLE", "Négociation impossible sur un devis au statut " + quote.getStatus());
         }
         quote.setStatus(BillingDocumentStatus.NEGOTIATION);
         BillingDocument saved = documentRepository.save(quote);
@@ -1162,7 +2046,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse requestDeposit(String quoteNumber) {
         BillingDocument quote = quote(quoteNumber);
         if (quote.getStatus() != BillingDocumentStatus.ACCEPTED) {
-            throw new BadRequestException("Deposit can only be requested on an accepted quote");
+            throw BadRequestException.coded("QUOTE_NOT_ACCEPTED", "Un acompte se demande sur un devis accepté");
         }
         quote.setStatus(BillingDocumentStatus.DEPOSIT_REQUESTED);
         BillingDocument saved = documentRepository.save(quote);
@@ -1174,7 +2058,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse markDepositPaid(String quoteNumber) {
         BillingDocument quote = quote(quoteNumber);
         if (quote.getStatus() != BillingDocumentStatus.DEPOSIT_REQUESTED) {
-            throw new BadRequestException("Quote must be in DEPOSIT_REQUESTED status to mark deposit as paid");
+            throw BadRequestException.coded("QUOTE_NO_DEPOSIT_REQUESTED", "Le devis n'a pas d'acompte demandé à marquer comme payé");
         }
         quote.setStatus(BillingDocumentStatus.DEPOSIT_PAID);
         BillingDocument saved = documentRepository.save(quote);
@@ -1233,9 +2117,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (quote.getStatus() != BillingDocumentStatus.DRAFT && quote.getStatus() != BillingDocumentStatus.SENT
                 && quote.getStatus() != BillingDocumentStatus.VIEWED
                 && quote.getStatus() != BillingDocumentStatus.NEGOTIATION) {
-            throw new BadRequestException("Only draft, sent, viewed or negotiation quotes can be accepted");
+            throw BadRequestException.coded("QUOTE_NOT_ACCEPTABLE", "Seul un devis en brouillon, envoyé, vu ou en négociation s'accepte");
         }
         quote.setStatus(BillingDocumentStatus.ACCEPTED);
+        reserveQuoteStock(quote);
         BillingDocument saved = documentRepository.save(quote);
         eventWriter.write(saved, "QUOTE_ACCEPTED", null);
         return mapper.toResponse(saved);
@@ -1245,10 +2130,16 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse rejectQuote(String quoteNumber) {
         BillingDocument quote = quote(quoteNumber);
         if (quote.getStatus() == BillingDocumentStatus.CONVERTED) {
-            throw new BadRequestException("Converted quote cannot be rejected");
+            throw BadRequestException.coded("QUOTE_CONVERTED", "Un devis converti ne se refuse plus");
         }
         quote.setStatus(BillingDocumentStatus.REJECTED);
         quote.setBalanceDue(BigDecimal.ZERO);
+        cancelPendingAdvance(quote);
+        releaseQuoteStock(quote.getDocumentNumber());
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService != null) {
+            depositService.dropUnpaidQuoteDeposits(quote, "Devis refusé");
+        }
         BillingDocument saved = documentRepository.save(quote);
         eventWriter.write(saved, "QUOTE_REJECTED", null);
         return mapper.toResponse(saved);
@@ -1305,6 +2196,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         );
 
         BillingDocumentResponse invoice = create(request);
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService != null) {
+            // Lot B3 : les acomptes du devis seront deduits a l'emission de la facture.
+            depositService.transferQuoteDeposits(quote, invoice.documentNumber());
+        }
 
         // Apply deposit as pre-payment on the invoice
         if (depositPaid) {
@@ -1356,10 +2252,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocumentResponse createCreditNote(String invoiceNumber, CreateCreditNoteRequest request) {
         BillingDocument invoice = serviceByNumber(invoiceNumber);
-        lifecycleSupport.ensureCanPay(invoice);
+        lifecycleSupport.ensureCanCredit(invoice);
         BigDecimal amount = request.amount() == null ? invoice.getBalanceDue() : request.amount();
         if (amount.signum() <= 0 || amount.compareTo(invoice.getTotalAmount()) > 0) {
-            throw new BadRequestException("Invalid credit note amount");
+            throw BadRequestException.coded("CREDIT_NOTE_AMOUNT", "Montant d'avoir invalide : positif et au plus le total de la facture");
         }
         List<CreateBillingDocumentLineRequest> lines = request.lines() == null || request.lines().isEmpty()
                 ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null, null))
@@ -1400,6 +2296,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
         // Validation SEFC immédiate si demandée (doit précéder applyImmediately)
         if (Boolean.TRUE.equals(request.validateImmediately())) {
+            issue(creditDoc.getDocumentNumber(), null);
             validate(creditDoc.getDocumentNumber());
         }
         if (Boolean.TRUE.equals(request.applyImmediately())) {
@@ -1433,11 +2330,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
         if (!Boolean.TRUE.equals(creditNote.getLocked())) {
             throw new BadRequestException(
-                    "L'avoir " + creditNoteNumber + " doit etre valide (SEFC) avant d'etre reverse · "
-                            + "un avoir non scelle n'a pas de valeur");
+                    "L'avoir " + creditNoteNumber + " doit être validé avant d'être reversé · "
+                            + "un avoir non validé n'a pas de valeur");
         }
-        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
-            throw new BadRequestException("L'avoir " + creditNoteNumber + " a deja ete consomme");
+        if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
+            throw new BadRequestException("L'avoir " + creditNoteNumber + " a déjà été consommé");
         }
         BigDecimal amount = creditNote.getTotalAmount();
         if (amount == null || amount.signum() <= 0) {
@@ -1458,7 +2355,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         walletService.credit(wallet, amount, WalletEntryType.REFUND, "CREDIT_NOTE", creditNoteNumber,
                 motive, currentUserName(), "CREDIT_NOTE_REFUND:" + creditNoteNumber);
 
-        creditNote.setStatus(BillingDocumentStatus.ISSUED);
+        creditNote.setStatus(BillingDocumentStatus.REFUNDED);
         BillingDocument saved = documentRepository.save(creditNote);
 
         fiscalAuditService.log("CREDIT_NOTE_REFUNDED_TO_WALLET", "BILLING_DOCUMENT", creditNoteNumber,
@@ -1488,18 +2385,18 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // et reglaient deux fois la facture.
         BillingDocument creditNote = lockedByNumber(creditNoteNumber);
         if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE || !"INVOICE".equalsIgnoreCase(creditNote.getSourceType())) {
-            throw new BadRequestException("Credit note is not linked to an invoice");
+            throw BadRequestException.coded("CREDIT_NOTE_NOT_LINKED", "L'avoir n'est rattaché à aucune facture");
         }
         if (requireSealed && !Boolean.TRUE.equals(creditNote.getLocked())) {
             throw new ConflictException("credit_note",
-                    "l'avoir " + creditNoteNumber + " doit etre valide (SEFC) avant d'etre impute");
+                    "l'avoir " + creditNoteNumber + " doit être validé avant d'être imputé");
         }
-        // Un avoir consomme (ISSUED) ne s'impute plus
-        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
-            throw new ConflictException("credit_note", "l'avoir " + creditNoteNumber + " a deja ete consomme");
+        // Un avoir consomme (APPLIED, REFUNDED) ne s'impute plus
+        if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
+            throw ConflictException.coded("CREDIT_NOTE", "l'avoir " + creditNoteNumber + " a déjà été consommé");
         }
         BillingDocument invoice = applyPayment(creditNote.getSourceCode(), creditNote.getTotalAmount());
-        creditNote.setStatus(BillingDocumentStatus.ISSUED);
+        creditNote.setStatus(BillingDocumentStatus.APPLIED);
         BillingDocument saved = documentRepository.save(creditNote);
         eventWriter.write(saved, "CREDIT_NOTE_APPLIED", java.util.Map.of("invoiceNumber", invoice.getDocumentNumber()));
         return mapper.toResponse(saved);
@@ -1508,9 +2405,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     @Transactional(readOnly = true)
     public CustomerStatementResponse customerStatement(String customerType, String customerCode, Pageable pageable) {
+        // Lot B9 (E13) : tri demande respecte (champs autorises), pagination complete.
         Pageable unsortedPageable = pageable.isPaged()
-                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
-                : pageable;
+                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), statementSort(pageable.getSort()))
+                : PageRequest.of(0, Integer.MAX_VALUE, statementSort(pageable.getSort()));
         String normalizedCustomerCode = requiredCustomerCode(customerCode);
         String normalizedCustomerType = normalizeCustomerType(customerType, normalizedCustomerCode);
         var documents = documentRepository.statementDocuments(normalizedCustomerType, normalizedCustomerCode, unsortedPageable).map(mapper::toResponse);
@@ -1525,7 +2423,28 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // debiteur pour autant, il garde un credit. Le net s'arrete donc a zero.
         BigDecimal net = balance.subtract(creditAvailable).max(BigDecimal.ZERO);
         return new CustomerStatementResponse(normalizedCustomerType, normalizedCustomerCode,
-                totalInvoiced, totalPaid, balance, creditAvailable, net, draft, documents.getContent());
+                totalInvoiced, totalPaid, balance, creditAvailable, net, draft, documents.getContent(),
+                documents.getNumber(), documents.getSize(), documents.getTotalElements(), documents.getTotalPages(),
+                accountingBalance(normalizedCustomerCode));
+    }
+
+    /** Champs de tri du releve ; date de creation decroissante par defaut. */
+    private static org.springframework.data.domain.Sort statementSort(org.springframework.data.domain.Sort requested) {
+        java.util.Set<String> allowed = java.util.Set.of("createdAt", "issueDate", "dueDate", "totalAmount", "balanceDue", "paidAmount",
+                "documentNumber", "status", "documentType");
+        List<org.springframework.data.domain.Sort.Order> orders = requested == null ? List.of()
+                : requested.stream().filter(order -> allowed.contains(order.getProperty())).toList();
+        return orders.isEmpty() ? org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")
+                : org.springframework.data.domain.Sort.by(orders);
+    }
+
+    /** Lot B9 (E13) : solde du compte client (411) quand la comptabilite en porte des pieces ; vide sinon. */
+    private BigDecimal accountingBalance(String customerCode) {
+        try {
+            return documentRepository.accountingBalance(customerCode);
+        } catch (RuntimeException exception) {
+            return null;
+        }
     }
 
     private static BigDecimal asBigDecimal(Object value) {
@@ -1537,6 +2456,35 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public int markOverdueDocuments() {
         return documentRepository.markOverdueDocuments();
+    }
+
+    @Override
+    public int expireQuotes() {
+        // Lot B1 : un devis dont la date de validite est passee sans reponse expire ; l'acompte
+        // encore attendu est abandonne. Un devis accepte ou dont l'acompte est encaisse n'expire pas.
+        documentRepository.cancelPendingAdvancesOfExpiringQuotes();
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService != null) {
+            // Lot B3 : les acomptes non encaisses tombent avec le devis ; un devis dont un acompte est
+            // encaisse n'expire pas (remboursement, avoir ou reactivation, D4).
+            documentRepository.findExpiringQuoteNumbers().forEach(number -> documentRepository.findByDocumentNumber(number)
+                    .ifPresent(quote -> depositService.dropUnpaidQuoteDeposits(quote, "Devis expiré")));
+        }
+        if (stockServices != null && stockServices.getIfAvailable() != null) {
+            documentRepository.findExpiringQuoteNumbers().forEach(this::releaseQuoteStock);
+        }
+        documentRepository.expireProformas();
+        return documentRepository.expireQuotes();
+    }
+
+    /** Acompte demande et rien encaisse : abandonne avec le devis (lot B1). */
+    private void cancelPendingAdvance(BillingDocument quote) {
+        advanceRepository.findByDocument(quote)
+                .filter(advance -> advance.getStatus() == BillingAdvanceStatus.PENDING)
+                .ifPresent(advance -> {
+                    advance.setStatus(BillingAdvanceStatus.CANCELLED);
+                    advanceRepository.save(advance);
+                });
     }
 
     @Override
@@ -1602,10 +2550,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Transactional(readOnly = true)
     public BillingDocument serviceByNumber(String documentNumber) {
         if (!StringUtils.hasText(documentNumber)) {
-            throw new BadRequestException("Billing document number is required");
+            throw BadRequestException.coded("BILLING_DOCUMENT_NUMBER_REQUIRED", "Le numéro du document est requis");
         }
         return documentRepository.findByDocumentNumber(documentNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Billing document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
     }
 
     /**
@@ -1619,11 +2567,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
      */
     private BillingDocument lockedByNumber(String documentNumber) {
         if (!StringUtils.hasText(documentNumber)) {
-            throw new BadRequestException("Billing document number is required");
+            throw BadRequestException.coded("BILLING_DOCUMENT_NUMBER_REQUIRED", "Le numéro du document est requis");
         }
         entityManager.flush();
         BillingDocument document = documentRepository.lockByDocumentNumber(documentNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Billing document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         entityManager.refresh(document, LockModeType.PESSIMISTIC_WRITE);
         return document;
     }
@@ -1631,7 +2579,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocument applyPayment(String documentNumber, BigDecimal amount) {
         if (amount == null || amount.signum() <= 0) {
-            throw new BadRequestException("Payment amount must be positive");
+            throw BadRequestException.coded("PAYMENT_AMOUNT", "Le montant du paiement doit être positif");
+        }
+        BillingDocument target = serviceByNumber(documentNumber);
+        if (target.getDocumentType() == BillingDocumentType.PROFORMA_INVOICE) {
+            return proformaPayment(target, amount);
         }
         BillingDocument document = lockedByNumber(documentNumber);
         lifecycleSupport.ensureCanPay(document);
@@ -1645,7 +2597,21 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             document.setStatus(BillingDocumentStatus.PARTIALLY_PAID);
         }
         syncAdvance(document);
-        return documentRepository.save(document);
+        BillingDocument saved = documentRepository.save(document);
+        depositHook(saved);
+        return saved;
+    }
+
+    /** Lot B3 : une facture d'acompte encaissee fait avancer son acompte et son devis ; lot B9 : l'echeancier suit. */
+    private void depositHook(BillingDocument document) {
+        var schedules = scheduleServices == null ? null : scheduleServices.getIfAvailable();
+        if (schedules != null) {
+            schedules.syncWithInvoice(document);
+        }
+        DepositService deposits = depositServices == null ? null : depositServices.getIfAvailable();
+        if (deposits != null && StringUtils.hasText(document.getDepositForDocumentNumber())) {
+            deposits.onDepositInvoicePayment(document);
+        }
     }
 
     /**
@@ -1681,7 +2647,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocument reversePayment(String documentNumber, BigDecimal amount) {
         if (amount == null || amount.signum() <= 0) {
-            throw new BadRequestException("Reversal amount must be positive");
+            throw BadRequestException.coded("REVERSAL_AMOUNT", "Le montant à annuler doit être positif");
         }
         BillingDocument document = lockedByNumber(documentNumber);
         BigDecimal paid = document.getPaidAmount().subtract(amount);
@@ -1691,13 +2657,15 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         document.setPaidAmount(paid);
         document.setBalanceDue(document.getTotalAmount().subtract(paid));
         if (paid.signum() == 0) {
-            document.setStatus(BillingDocumentStatus.ISSUED);
+            document.setStatus(Boolean.TRUE.equals(document.getLocked()) ? BillingDocumentStatus.VALIDATED : BillingDocumentStatus.ISSUED);
             document.setPaidAt(null);
         } else if (document.getBalanceDue().signum() > 0) {
             document.setStatus(BillingDocumentStatus.PARTIALLY_PAID);
         }
         syncAdvance(document);
-        return documentRepository.save(document);
+        BillingDocument saved = documentRepository.save(document);
+        depositHook(saved);
+        return saved;
     }
 
     @Override
@@ -1708,6 +2676,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocument cancelAndArchive(String documentNumber, String reason) {
         BillingDocument document = serviceByNumber(documentNumber);
+        if (document.getDocumentType() == BillingDocumentType.QUOTE) {
+            releaseQuoteStock(documentNumber);
+        }
 
         if (document.getDocumentType() == BillingDocumentType.CREDIT_NOTE) {
             // Un avoir ne s'annule jamais par un avoir · il faut d'abord defaire son imputation.
@@ -1754,7 +2725,6 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             return false;
         }
         if (document.getDocumentType() != BillingDocumentType.INVOICE
-                && document.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE
                 && document.getDocumentType() != BillingDocumentType.CORRECTIVE_INVOICE) {
             return false;
         }
@@ -1770,7 +2740,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
      * en place, donc un document annulé qui continue de peser sur un solde.
      */
     private void releaseCreditNoteBeforeCancellation(BillingDocument creditNote) {
-        if (creditNote.getStatus() != BillingDocumentStatus.ISSUED) {
+        if (!BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
             // Avoir non consommé · rien à défaire.
             return;
         }
@@ -1791,8 +2761,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         String target = creditNote.getSourceCode();
         if (StringUtils.hasText(target) && "INVOICE".equalsIgnoreCase(creditNote.getSourceType())) {
             documentRepository.findByDocumentNumber(target)
-                    .filter(invoice -> invoice.getStatus() != BillingDocumentStatus.CANCELLED
-                            && invoice.getStatus() != BillingDocumentStatus.VOIDED)
+                    .filter(invoice -> invoice.getStatus() != BillingDocumentStatus.CANCELLED)
                     .ifPresent(invoice -> reversePayment(target, creditNote.getTotalAmount()));
         }
     }
@@ -1822,7 +2791,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
         // L'avoir est appliqué via applyPayment, qui solde la facture et la laisse donc en PAID.
         // Une facture annulee ressortait ainsi comme encaissee : elle restait comptee dans le
-        // chiffre d'affaires, puisque les agregats comptables excluent CANCELLED et VOIDED mais
+        // chiffre d'affaires, puisque les agregats comptables excluent CANCELLED mais
         // pas PAID. Le statut est donc repositionne apres l'application de l'avoir.
         BillingDocument cancelled = markCancelledAndArchived(document.getDocumentNumber());
         eventWriter.write(cancelled, "BILLING_DOCUMENT_CANCELLED_VIA_CREDIT_NOTE",
@@ -1862,20 +2831,19 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (!Boolean.TRUE.equals(creditNote.getLocked())) {
             throw new BadRequestException("L'avoir doit être validé (SEFC) avant d'être appliqué à une autre facture");
         }
-        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
+        if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
             throw new BadRequestException("L'avoir " + creditNoteNumber + " a déjà été consommé");
         }
         if (!creditNote.getCustomerCode().equals(targetInvoice.getCustomerCode())) {
             throw new BadRequestException("L'avoir et la facture cible doivent appartenir au même client");
         }
-        if (targetInvoice.getDocumentType() != BillingDocumentType.INVOICE
-                && targetInvoice.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
-            throw new BadRequestException("La cible doit être une facture ou une facture proforma");
+        if (targetInvoice.getDocumentType() != BillingDocumentType.INVOICE) {
+            throw new BadRequestException("La cible doit être une facture");
         }
 
         applyPayment(targetInvoiceNumber, creditNote.getTotalAmount());
 
-        creditNote.setStatus(BillingDocumentStatus.ISSUED);
+        creditNote.setStatus(BillingDocumentStatus.APPLIED);
         BillingDocument savedCreditNote = documentRepository.save(creditNote);
 
         fiscalAuditService.log(FiscalAuditService.CREDIT_NOTE_APPLIED,
@@ -1894,8 +2862,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                                                            CreateManualBillingDocumentRequest request) {
         BillingDocument original = serviceByNumber(originalInvoiceNumber);
 
-        if (original.getDocumentType() != BillingDocumentType.INVOICE
-                && original.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+        if (original.getDocumentType() != BillingDocumentType.INVOICE) {
             throw new BadRequestException("Seules les factures peuvent faire l'objet d'une facture rectificative");
         }
         if (!Boolean.TRUE.equals(original.getLocked())) {
@@ -2182,7 +3149,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private BillingDocument quote(String quoteNumber) {
         BillingDocument quote = serviceByNumber(quoteNumber);
         if (quote.getDocumentType() != BillingDocumentType.QUOTE) {
-            throw new BadRequestException("Billing document is not a quote");
+            throw BadRequestException.coded("NOT_A_QUOTE", "Ce document n'est pas un devis");
         }
         return quote;
     }
@@ -2289,7 +3256,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private String normalizeCustomerType(String customerType, String customerCode) {
         String normalized = trim(customerType);
         if (normalized == null) {
-            throw new BadRequestException("Customer type is required");
+            throw BadRequestException.coded("CUSTOMER_TYPE_REQUIRED", "Le type de client est requis");
         }
         normalized = normalized.toUpperCase(Locale.ROOT);
         if (normalized.equals("CLIENT") || normalized.equals("CUSTOMER")) {
@@ -2309,7 +3276,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private String requiredCustomerCode(String customerCode) {
         String normalized = trim(customerCode);
         if (normalized == null) {
-            throw new BadRequestException("Customer code is required");
+            throw BadRequestException.coded("CUSTOMER_CODE_REQUIRED", "Le code client est requis");
         }
         return normalized;
     }
@@ -2397,7 +3364,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         document.setSignedAt(Instant.now());
         document.setLocked(true);
         document.setValidatedAt(Instant.now());
-        document.setStatus(BillingDocumentStatus.VALIDATED);
+        // Le scellement ne defait ni un encaissement ni une imputation : une facture payee reste PAID.
+        if (document.getStatus() == BillingDocumentStatus.ISSUED || document.getStatus() == BillingDocumentStatus.SENT) {
+            document.setStatus(BillingDocumentStatus.VALIDATED);
+        }
 
         // 8 · persistance (une seule écriture atomique)
         BillingDocument saved = documentRepository.save(document);

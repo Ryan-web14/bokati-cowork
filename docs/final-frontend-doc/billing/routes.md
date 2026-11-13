@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-70 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+111 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -10,14 +10,25 @@
 | PATCH | `/sni/api/v1/billing/credit-notes/{creditNoteNumber}/apply` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-credit-notes-creditnotenumber-apply) |
 | PATCH | `/sni/api/v1/billing/credit-notes/{creditNoteNumber}/apply-to/{targetInvoiceNumber}` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-credit-notes-creditnotenumber-apply-to-targetinvoicenumber) |
 | POST | `/sni/api/v1/billing/credit-notes/{creditNoteNumber}/refund-to-wallet` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-credit-notes-creditnotenumber-refund-to-wallet) |
+| GET | `/sni/api/v1/billing/customers/{customerType}/{customerCode}/billing-recipients` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-customers-customertype-customercode-billing-recipients) |
+| PUT | `/sni/api/v1/billing/customers/{customerType}/{customerCode}/billing-recipients` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-put-sni-api-v1-billing-customers-customertype-customercode-billing-recipients) |
 | GET | `/sni/api/v1/billing/customers/{customerType}/{customerCode}/statement` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-customers-customertype-customercode-statement) |
 | GET | `/sni/api/v1/billing/customers/{customerType}/{customerCode}/statement.csv` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-customers-customertype-customercode-statement-csv) |
+| GET | `/sni/api/v1/billing/customers/{customerType}/{customerCode}/statement.pdf` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-customers-customertype-customercode-statement-pdf) |
+| POST | `/sni/api/v1/billing/customers/{customerType}/{customerCode}/statement/send` | BILLING:SEND | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-customers-customertype-customercode-statement-send) |
+| PATCH | `/sni/api/v1/billing/deposits/{id}/cancel` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-deposits-id-cancel) |
+| PATCH | `/sni/api/v1/billing/deposits/{id}/invoice` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-deposits-id-invoice) |
+| PATCH | `/sni/api/v1/billing/deposits/{id}/settle` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-deposits-id-settle) |
 | GET | `/sni/api/v1/billing/documents` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents) |
 | POST | `/sni/api/v1/billing/documents` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-documents) |
+| POST | `/sni/api/v1/billing/documents/allocate-amount` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-documents-allocate-amount) |
+| POST | `/sni/api/v1/billing/documents/check-availability` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-documents-check-availability) |
 | POST | `/sni/api/v1/billing/documents/simulate` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-documents-simulate) |
+| POST | `/sni/api/v1/billing/documents/simulate-line` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-documents-simulate-line) |
 | DELETE | `/sni/api/v1/billing/documents/{documentNumber}` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-delete-sni-api-v1-billing-documents-documentnumber) |
 | GET | `/sni/api/v1/billing/documents/{documentNumber}` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber) |
 | PUT | `/sni/api/v1/billing/documents/{documentNumber}` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-put-sni-api-v1-billing-documents-documentnumber) |
+| GET | `/sni/api/v1/billing/documents/{documentNumber}/deposits` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber-deposits) |
 | POST | `/sni/api/v1/billing/documents/{documentNumber}/duplicate` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-documents-documentnumber-duplicate) |
 | PATCH | `/sni/api/v1/billing/documents/{documentNumber}/issue` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-documents-documentnumber-issue) |
 | GET | `/sni/api/v1/billing/documents/{documentNumber}/pdf` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber-pdf) |
@@ -27,31 +38,54 @@
 | PATCH | `/sni/api/v1/billing/documents/{documentNumber}/recoverables/{recoverableNumber}/recover` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-documents-documentnumber-recoverables-recoverablenumber-recover) |
 | PATCH | `/sni/api/v1/billing/documents/{documentNumber}/recoverables/{recoverableNumber}/write-off` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-documents-documentnumber-recoverables-recoverablenumber-write-off) |
 | PATCH | `/sni/api/v1/billing/documents/{documentNumber}/send` | BILLING:SEND | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-documents-documentnumber-send) |
+| POST | `/sni/api/v1/billing/documents/{documentNumber}/send` | BILLING:SEND | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-documents-documentnumber-send) |
 | POST | `/sni/api/v1/billing/documents/{documentNumber}/send-email` | BILLING:SEND | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-documents-documentnumber-send-email) |
+| GET | `/sni/api/v1/billing/documents/{documentNumber}/sendings` | BILLING:SEND | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber-sendings) |
 | PATCH | `/sni/api/v1/billing/documents/{documentNumber}/validate` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-documents-documentnumber-validate) |
 | GET | `/sni/api/v1/billing/documents/{documentNumber}/versions` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber-versions) |
 | GET | `/sni/api/v1/billing/documents/{documentNumber}/versions/{from}/diff/{to}` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber-versions-from-diff-to) |
 | GET | `/sni/api/v1/billing/documents/{documentNumber}/versions/{versionNumber}` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber-versions-versionnumber) |
+| PATCH | `/sni/api/v1/billing/invoices/change-requests/{id}/cancel` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-invoices-change-requests-id-cancel) |
 | POST | `/sni/api/v1/billing/invoices/from-billable-items` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-from-billable-items) |
 | POST | `/sni/api/v1/billing/invoices/from-reservation` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-from-reservation) |
 | POST | `/sni/api/v1/billing/invoices/manual` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-manual) |
 | POST | `/sni/api/v1/billing/invoices/{documentNumber}/pay` | PAYMENT:PROCESS | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-documentnumber-pay) |
+| POST | `/sni/api/v1/billing/invoices/{invoiceNumber}/change-customer` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-invoicenumber-change-customer) |
+| GET | `/sni/api/v1/billing/invoices/{invoiceNumber}/change-requests` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-invoices-invoicenumber-change-requests) |
+| POST | `/sni/api/v1/billing/invoices/{invoiceNumber}/change-requests` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-invoicenumber-change-requests) |
 | POST | `/sni/api/v1/billing/invoices/{invoiceNumber}/corrective` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-invoicenumber-corrective) |
 | POST | `/sni/api/v1/billing/invoices/{invoiceNumber}/credit-note` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-invoicenumber-credit-note) |
+| POST | `/sni/api/v1/billing/invoices/{invoiceNumber}/deposits` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-invoicenumber-deposits) |
+| POST | `/sni/api/v1/billing/proformas` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-proformas) |
+| POST | `/sni/api/v1/billing/proformas/{proformaNumber}/to-quote` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-proformas-proformanumber-to-quote) |
 | POST | `/sni/api/v1/billing/quotations/manual` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-quotations-manual) |
 | PATCH | `/sni/api/v1/billing/quotations/{quotationNumber}/accept` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotations-quotationnumber-accept) |
 | POST | `/sni/api/v1/billing/quotations/{quotationNumber}/convert-to-invoice` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-quotations-quotationnumber-convert-to-invoice) |
 | PATCH | `/sni/api/v1/billing/quotations/{quotationNumber}/reject` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotations-quotationnumber-reject) |
 | POST | `/sni/api/v1/billing/quotes/manual` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-quotes-manual) |
+| PUT | `/sni/api/v1/billing/quotes/{quoteNumber}` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-put-sni-api-v1-billing-quotes-quotenumber) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/accept` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-accept) |
 | POST | `/sni/api/v1/billing/quotes/{quoteNumber}/convert-to-invoice` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-quotes-quotenumber-convert-to-invoice) |
+| POST | `/sni/api/v1/billing/quotes/{quoteNumber}/deposits` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-quotes-quotenumber-deposits) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/mark-deposit-paid` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-mark-deposit-paid) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/mark-viewed` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-mark-viewed) |
+| GET | `/sni/api/v1/billing/quotes/{quoteNumber}/negotiation` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-quotes-quotenumber-negotiation) |
+| POST | `/sni/api/v1/billing/quotes/{quoteNumber}/proforma` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-quotes-quotenumber-proforma) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/reject` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-reject) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/request-deposit` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-request-deposit) |
 | POST | `/sni/api/v1/billing/quotes/{quoteNumber}/request-signature` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-quotes-quotenumber-request-signature) |
+| PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/revalidate` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-revalidate) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/select-options` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-select-options) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/start-negotiation` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-start-negotiation) |
+| GET | `/sni/api/v1/billing/deals` | BILLING:READ | [DealController](routes/DealController.md#r-get-sni-api-v1-billing-deals) |
+| POST | `/sni/api/v1/billing/deals` | BILLING:CREATE | [DealController](routes/DealController.md#r-post-sni-api-v1-billing-deals) |
+| GET | `/sni/api/v1/billing/deals/export` | BILLING:READ | [DealController](routes/DealController.md#r-get-sni-api-v1-billing-deals-export) |
+| POST | `/sni/api/v1/billing/deals/from-opportunity/{opportunityNumber}` | BILLING:CREATE | [DealController](routes/DealController.md#r-post-sni-api-v1-billing-deals-from-opportunity-opportunitynumber) |
+| GET | `/sni/api/v1/billing/deals/{code}` | BILLING:READ | [DealController](routes/DealController.md#r-get-sni-api-v1-billing-deals-code) |
+| PUT | `/sni/api/v1/billing/deals/{code}` | BILLING:UPDATE | [DealController](routes/DealController.md#r-put-sni-api-v1-billing-deals-code) |
+| DELETE | `/sni/api/v1/billing/deals/{code}/documents/{documentNumber}` | BILLING:CANCEL | [DealController](routes/DealController.md#r-delete-sni-api-v1-billing-deals-code-documents-documentnumber) |
+| PATCH | `/sni/api/v1/billing/deals/{code}/documents/{documentNumber}` | BILLING:UPDATE | [DealController](routes/DealController.md#r-patch-sni-api-v1-billing-deals-code-documents-documentnumber) |
+| PATCH | `/sni/api/v1/billing/deals/{code}/stage` | BILLING:UPDATE | [DealController](routes/DealController.md#r-patch-sni-api-v1-billing-deals-code-stage) |
 | GET | `/sni/api/v1/billing/dunning/notices` | BILLING:READ | [DunningController](routes/DunningController.md#r-get-sni-api-v1-billing-dunning-notices) |
 | GET | `/sni/api/v1/billing/dunning/notices/customers/{customerType}/{customerCode}` | BILLING:READ | [DunningController](routes/DunningController.md#r-get-sni-api-v1-billing-dunning-notices-customers-customertype-customercode) |
 | GET | `/sni/api/v1/billing/dunning/notices/documents/{documentNumber}` | BILLING:READ | [DunningController](routes/DunningController.md#r-get-sni-api-v1-billing-dunning-notices-documents-documentnumber) |
@@ -71,8 +105,15 @@
 | POST | `/public/quotes/sign/{token}/confirm` | public | [QuoteSignaturePublicController](routes/QuoteSignaturePublicController.md#r-post-public-quotes-sign-token-confirm) |
 | GET | `/sni/api/v1/billing/catalog` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog) |
 | POST | `/sni/api/v1/billing/catalog` | BILLING:CREATE | [ServiceCatalogController](routes/ServiceCatalogController.md#r-post-sni-api-v1-billing-catalog) |
+| GET | `/sni/api/v1/billing/catalog/export` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog-export) |
+| POST | `/sni/api/v1/billing/catalog/import` | BILLING:CREATE | [ServiceCatalogController](routes/ServiceCatalogController.md#r-post-sni-api-v1-billing-catalog-import) |
 | GET | `/sni/api/v1/billing/catalog/lookup` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog-lookup) |
+| GET | `/sni/api/v1/billing/catalog/margins` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog-margins) |
 | DELETE | `/sni/api/v1/billing/catalog/{itemCode}` | BILLING:CANCEL | [ServiceCatalogController](routes/ServiceCatalogController.md#r-delete-sni-api-v1-billing-catalog-itemcode) |
 | PUT | `/sni/api/v1/billing/catalog/{itemCode}` | BILLING:UPDATE | [ServiceCatalogController](routes/ServiceCatalogController.md#r-put-sni-api-v1-billing-catalog-itemcode) |
 | PATCH | `/sni/api/v1/billing/catalog/{itemCode}/activate` | BILLING:UPDATE | [ServiceCatalogController](routes/ServiceCatalogController.md#r-patch-sni-api-v1-billing-catalog-itemcode-activate) |
 | PATCH | `/sni/api/v1/billing/catalog/{itemCode}/deactivate` | BILLING:UPDATE | [ServiceCatalogController](routes/ServiceCatalogController.md#r-patch-sni-api-v1-billing-catalog-itemcode-deactivate) |
+| PUT | `/sni/api/v1/billing/catalog/{itemCode}/links` | BILLING:UPDATE | [ServiceCatalogController](routes/ServiceCatalogController.md#r-put-sni-api-v1-billing-catalog-itemcode-links) |
+| GET | `/sni/api/v1/billing/catalog/{itemCode}/price` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog-itemcode-price) |
+| GET | `/sni/api/v1/billing/catalog/{itemCode}/prices` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog-itemcode-prices) |
+| POST | `/sni/api/v1/billing/catalog/{itemCode}/prices` | BILLING:CREATE | [ServiceCatalogController](routes/ServiceCatalogController.md#r-post-sni-api-v1-billing-catalog-itemcode-prices) |

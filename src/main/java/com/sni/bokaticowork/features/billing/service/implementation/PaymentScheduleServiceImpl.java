@@ -44,11 +44,21 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
     @Override
     public PaymentScheduleResponse createSchedule(String documentNumber, CreatePaymentScheduleRequest request) {
         BillingDocument document = billingDocumentService.serviceByNumber(documentNumber);
+        // Lot B9 (E12) : seulement une facture, rectificative ou note de debit emise, non soldee.
+        if (document.getDocumentType() != com.sni.bokaticowork.features.billing.enums.BillingDocumentType.INVOICE
+                && document.getDocumentType() != com.sni.bokaticowork.features.billing.enums.BillingDocumentType.CORRECTIVE_INVOICE
+                && document.getDocumentType() != com.sni.bokaticowork.features.billing.enums.BillingDocumentType.DEBIT_NOTE) {
+            throw new BadRequestException("Un échéancier se fait sur une facture, une rectificative ou une note de débit");
+        }
+        if (document.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus.DRAFT
+                || document.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus.CANCELLED) {
+            throw new BadRequestException("Un échéancier se fait sur une pièce émise");
+        }
         if (document.getBalanceDue().signum() <= 0) {
             throw new BadRequestException("Cette facture n'a pas de solde restant à échelonner");
         }
         scheduleRepository.findActiveByDocumentNumber(documentNumber).ifPresent(s -> {
-            throw new ConflictException("payment_schedule", "Un échéancier actif existe déjà pour cette facture");
+            throw ConflictException.coded("PAYMENT_SCHEDULE", "Un échéancier actif existe déjà pour cette facture");
         });
 
         BigDecimal totalInstallments = request.installments().stream()
@@ -65,6 +75,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
                 .status(PaymentScheduleStatus.ACTIVE)
                 .totalAmount(totalInstallments)
                 .paidAmount(BigDecimal.ZERO)
+                .paidBefore(document.getPaidAmount() == null ? BigDecimal.ZERO : document.getPaidAmount())
                 .currency(document.getCurrency())
                 .notes(trim(request.notes()))
                 .build());
@@ -131,23 +142,8 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
                 request.metadataJson()
         ));
 
-        BigDecimal newInstallmentPaid = installment.getPaidAmount().add(amountToPay);
-        installment.setPaidAmount(newInstallmentPaid);
-        if (newInstallmentPaid.compareTo(installment.getAmount()) >= 0) {
-            installment.setStatus(PaymentScheduleInstallmentStatus.PAID);
-            installment.setPaidAt(Instant.now());
-        } else {
-            installment.setStatus(PaymentScheduleInstallmentStatus.PARTIALLY_PAID);
-        }
-        installmentRepository.save(installment);
-
-        BigDecimal newSchedulePaid = schedule.getPaidAmount().add(amountToPay);
-        schedule.setPaidAmount(newSchedulePaid);
-        if (newSchedulePaid.compareTo(schedule.getTotalAmount()) >= 0) {
-            schedule.setStatus(PaymentScheduleStatus.COMPLETED);
-        }
-        scheduleRepository.save(schedule);
-
+        // Lot B9 (E12) : le paiement s'impute sur la facture, qui repartit sur les echeances dans l'ordre.
+        syncWithInvoice(billingDocumentService.serviceByNumber(schedule.getBillingDocumentNumber()));
         return getSchedule(schedule.getScheduleNumber());
     }
 
@@ -208,5 +204,43 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
 
     private String trim(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    /**
+     * Lot B9 (E12) : tout paiement sur la facture (direct, par echeance, avoir) se repartit sur les
+     * echeances dans l'ordre ; une annulation de paiement les rouvre. Ce qui etait paye avant
+     * l'echeancier n'y compte pas.
+     */
+    @Override
+    public void syncWithInvoice(BillingDocument document) {
+        scheduleRepository.findActiveByDocumentNumber(document.getDocumentNumber()).ifPresent(schedule -> {
+            BigDecimal before = schedule.getPaidBefore() == null ? BigDecimal.ZERO : schedule.getPaidBefore();
+            BigDecimal paid = document.getPaidAmount() == null ? BigDecimal.ZERO : document.getPaidAmount();
+            BigDecimal covered = paid.subtract(before).max(BigDecimal.ZERO).min(schedule.getTotalAmount());
+            BigDecimal left = covered;
+            for (PaymentScheduleInstallment installment : installmentRepository.findByScheduleIdOrdered(schedule.getId())) {
+                if (installment.getStatus() == PaymentScheduleInstallmentStatus.CANCELLED) {
+                    continue;
+                }
+                BigDecimal share = left.min(installment.getAmount());
+                left = left.subtract(share);
+                installment.setPaidAmount(share);
+                if (share.compareTo(installment.getAmount()) >= 0) {
+                    if (installment.getStatus() != PaymentScheduleInstallmentStatus.PAID) {
+                        installment.setPaidAt(Instant.now());
+                    }
+                    installment.setStatus(PaymentScheduleInstallmentStatus.PAID);
+                } else {
+                    installment.setPaidAt(null);
+                    installment.setStatus(share.signum() > 0 ? PaymentScheduleInstallmentStatus.PARTIALLY_PAID
+                            : installment.getDueDate() != null && installment.getDueDate().isBefore(java.time.LocalDate.now())
+                            ? PaymentScheduleInstallmentStatus.OVERDUE : PaymentScheduleInstallmentStatus.PENDING);
+                }
+                installmentRepository.save(installment);
+            }
+            schedule.setPaidAmount(covered);
+            schedule.setStatus(covered.compareTo(schedule.getTotalAmount()) >= 0 ? PaymentScheduleStatus.COMPLETED : PaymentScheduleStatus.ACTIVE);
+            scheduleRepository.save(schedule);
+        });
     }
 }

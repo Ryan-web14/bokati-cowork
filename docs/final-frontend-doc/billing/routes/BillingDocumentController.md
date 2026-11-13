@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [billing](../README.md) · 46 route(s).
+Module [billing](../README.md) · 71 route(s).
 
 ## Routes
 
@@ -58,6 +58,33 @@ Module [billing](../README.md) · 46 route(s).
 | `creditNoteNumber` | chemin | `String` | oui |  |
 | `reason` | requête | `String` |  |  |
 
+<a id="r-get-sni-api-v1-billing-customers-customertype-customercode-billing-recipients"></a>
+### GET /sni/api/v1/billing/customers/{customerType}/{customerCode}/billing-recipients
+
+- Accès : back-office : rôle d'administration et droit `BILLING:READ`
+- Réponse : `BillingRecipientsResponse`
+- Modèles : [BillingRecipientsResponse](#m-BillingRecipientsResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `billingRecipients`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `customerType` | chemin | `String` | oui |  |
+| `customerCode` | chemin | `String` | oui |  |
+
+<a id="r-put-sni-api-v1-billing-customers-customertype-customercode-billing-recipients"></a>
+### PUT /sni/api/v1/billing/customers/{customerType}/{customerCode}/billing-recipients
+
+- Accès : back-office : rôle d'administration et droit `BILLING:UPDATE`
+- Corps JSON (obligatoire) : `BillingRecipientPreferenceRequest`
+- Réponse : `BillingRecipientsResponse`
+- Modèles : [BillingRecipientsResponse](#m-BillingRecipientsResponse), [BillingRecipientPreferenceRequest](#m-BillingRecipientPreferenceRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `saveBillingRecipients`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `customerType` | chemin | `String` | oui |  |
+| `customerCode` | chemin | `String` | oui |  |
+
 <a id="r-get-sni-api-v1-billing-customers-customertype-customercode-statement"></a>
 ### GET /sni/api/v1/billing/customers/{customerType}/{customerCode}/statement
 
@@ -84,6 +111,72 @@ Module [billing](../README.md) · 46 route(s).
 | `customerType` | chemin | `String` | oui |  |
 | `customerCode` | chemin | `String` | oui |  |
 | `page, size, sort` | requête (pagination) | `Pageable` |  | size=500, sort=createdAt,DESC |
+
+<a id="r-get-sni-api-v1-billing-customers-customertype-customercode-statement-pdf"></a>
+### GET /sni/api/v1/billing/customers/{customerType}/{customerCode}/statement.pdf
+
+- Accès : back-office : rôle d'administration et droit `BILLING:READ`
+- Réponse : `fichier (octets)`
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `statementPdf`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `customerType` | chemin | `String` | oui |  |
+| `customerCode` | chemin | `String` | oui |  |
+| `from` | requête | `LocalDate` |  |  |
+| `to` | requête | `LocalDate` |  |  |
+
+<a id="r-post-sni-api-v1-billing-customers-customertype-customercode-statement-send"></a>
+### POST /sni/api/v1/billing/customers/{customerType}/{customerCode}/statement/send
+
+- Accès : back-office : rôle d'administration et droit `BILLING:SEND`
+- Corps JSON (obligatoire) : `SendStatementRequest`
+- Réponse : `Boolean`
+- Modèles : [SendStatementRequest](#m-SendStatementRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `sendStatement`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `customerType` | chemin | `String` | oui |  |
+| `customerCode` | chemin | `String` | oui |  |
+
+<a id="r-patch-sni-api-v1-billing-deposits-id-cancel"></a>
+### PATCH /sni/api/v1/billing/deposits/{id}/cancel
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CANCEL`
+- Réponse : `DepositResponse`
+- Modèles : [DepositResponse](#m-DepositResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `cancelDeposit`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` | oui |  |
+| `reason` | requête | `String` |  |  |
+
+<a id="r-patch-sni-api-v1-billing-deposits-id-invoice"></a>
+### PATCH /sni/api/v1/billing/deposits/{id}/invoice
+
+- Accès : back-office : rôle d'administration et droit `BILLING:UPDATE`
+- Réponse : `DepositResponse`
+- Modèles : [DepositResponse](#m-DepositResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `invoiceDeposit`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` | oui |  |
+
+<a id="r-patch-sni-api-v1-billing-deposits-id-settle"></a>
+### PATCH /sni/api/v1/billing/deposits/{id}/settle
+
+- Accès : back-office : rôle d'administration et droit `BILLING:UPDATE`
+- Corps JSON (obligatoire) : `DepositSettlementRequest`
+- Réponse : `DepositResponse`
+- Modèles : [DepositResponse](#m-DepositResponse), [DepositSettlementRequest](#m-DepositSettlementRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `settleDeposit`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` | oui |  |
 
 <a id="r-get-sni-api-v1-billing-documents"></a>
 ### GET /sni/api/v1/billing/documents
@@ -115,6 +208,24 @@ Module [billing](../README.md) · 46 route(s).
 - Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse), [CreateBillingDocumentRequest](#m-CreateBillingDocumentRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `create`
 
+<a id="r-post-sni-api-v1-billing-documents-allocate-amount"></a>
+### POST /sni/api/v1/billing/documents/allocate-amount
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Corps JSON (obligatoire) : `AllocateAmountRequest`
+- Réponse : `AllocateAmountResponse`
+- Modèles : [AllocateAmountResponse](#m-AllocateAmountResponse), [AllocateAmountRequest](#m-AllocateAmountRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `allocateAmount`
+
+<a id="r-post-sni-api-v1-billing-documents-check-availability"></a>
+### POST /sni/api/v1/billing/documents/check-availability
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Corps JSON (obligatoire) : `CheckAvailabilityRequest`
+- Réponse : `CheckAvailabilityResponse`
+- Modèles : [CheckAvailabilityResponse](#m-CheckAvailabilityResponse), [CheckAvailabilityRequest](#m-CheckAvailabilityRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `checkAvailability`
+
 <a id="r-post-sni-api-v1-billing-documents-simulate"></a>
 ### POST /sni/api/v1/billing/documents/simulate
 
@@ -123,6 +234,15 @@ Module [billing](../README.md) · 46 route(s).
 - Réponse : `SimulateBillingDocumentResponse`
 - Modèles : [SimulateBillingDocumentResponse](#m-SimulateBillingDocumentResponse), [SimulateBillingDocumentRequest](#m-SimulateBillingDocumentRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `simulate`
+
+<a id="r-post-sni-api-v1-billing-documents-simulate-line"></a>
+### POST /sni/api/v1/billing/documents/simulate-line
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Corps JSON (obligatoire) : `SimulateBillingLineRequest`
+- Réponse : `SimulateBillingLineResponse`
+- Modèles : [SimulateBillingLineResponse](#m-SimulateBillingLineResponse), [SimulateBillingLineRequest](#m-SimulateBillingLineRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `simulateLine`
 
 <a id="r-delete-sni-api-v1-billing-documents-documentnumber"></a>
 ### DELETE /sni/api/v1/billing/documents/{documentNumber}
@@ -157,6 +277,18 @@ Module [billing](../README.md) · 46 route(s).
 - Réponse : `BillingDocumentResponse`
 - Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse), [UpdateBillingDocumentRequest](#m-UpdateBillingDocumentRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `update`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `documentNumber` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-billing-documents-documentnumber-deposits"></a>
+### GET /sni/api/v1/billing/documents/{documentNumber}/deposits
+
+- Accès : back-office : rôle d'administration et droit `BILLING:READ`
+- Réponse : `List<DepositResponse>`
+- Modèles : [DepositResponse](#m-DepositResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `deposits`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -277,12 +409,37 @@ Module [billing](../README.md) · 46 route(s).
 | --- | --- | --- | --- | --- |
 | `documentNumber` | chemin | `String` | oui |  |
 
+<a id="r-post-sni-api-v1-billing-documents-documentnumber-send"></a>
+### POST /sni/api/v1/billing/documents/{documentNumber}/send
+
+- Accès : back-office : rôle d'administration et droit `BILLING:SEND`
+- Corps JSON (facultatif) : `SendDocumentRequest`
+- Réponse : `List<BillingSendingResponse>`
+- Modèles : [BillingSendingResponse](#m-BillingSendingResponse), [SendDocumentRequest](#m-SendDocumentRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `sendTo`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `documentNumber` | chemin | `String` | oui |  |
+
 <a id="r-post-sni-api-v1-billing-documents-documentnumber-send-email"></a>
 ### POST /sni/api/v1/billing/documents/{documentNumber}/send-email
 
 - Accès : back-office : rôle d'administration et droit `BILLING:SEND`
 - Réponse : `Boolean`
 - Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `sendEmail`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `documentNumber` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-billing-documents-documentnumber-sendings"></a>
+### GET /sni/api/v1/billing/documents/{documentNumber}/sendings
+
+- Accès : back-office : rôle d'administration et droit `BILLING:SEND`
+- Réponse : `List<BillingSendingResponse>`
+- Modèles : [BillingSendingResponse](#m-BillingSendingResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `sendings`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -339,6 +496,18 @@ Module [billing](../README.md) · 46 route(s).
 | `documentNumber` | chemin | `String` | oui |  |
 | `versionNumber` | chemin | `Integer` | oui |  |
 
+<a id="r-patch-sni-api-v1-billing-invoices-change-requests-id-cancel"></a>
+### PATCH /sni/api/v1/billing/invoices/change-requests/{id}/cancel
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CANCEL`
+- Réponse : `InvoiceChangeResponse`
+- Modèles : [InvoiceChangeResponse](#m-InvoiceChangeResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `cancelInvoiceChange`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` | oui |  |
+
 <a id="r-post-sni-api-v1-billing-invoices-from-billable-items"></a>
 ### POST /sni/api/v1/billing/invoices/from-billable-items
 
@@ -379,6 +548,44 @@ Module [billing](../README.md) · 46 route(s).
 | --- | --- | --- | --- | --- |
 | `documentNumber` | chemin | `String` | oui |  |
 
+<a id="r-post-sni-api-v1-billing-invoices-invoicenumber-change-customer"></a>
+### POST /sni/api/v1/billing/invoices/{invoiceNumber}/change-customer
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Corps JSON (obligatoire) : `ChangeCustomerRequest`
+- Réponse : `ChangeCustomerResponse`
+- Modèles : [ChangeCustomerResponse](#m-ChangeCustomerResponse), [ChangeCustomerRequest](#m-ChangeCustomerRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `changeCustomer`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `invoiceNumber` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-billing-invoices-invoicenumber-change-requests"></a>
+### GET /sni/api/v1/billing/invoices/{invoiceNumber}/change-requests
+
+- Accès : back-office : rôle d'administration et droit `BILLING:READ`
+- Réponse : `List<InvoiceChangeResponse>`
+- Modèles : [InvoiceChangeResponse](#m-InvoiceChangeResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `invoiceChanges`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `invoiceNumber` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-billing-invoices-invoicenumber-change-requests"></a>
+### POST /sni/api/v1/billing/invoices/{invoiceNumber}/change-requests
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Corps JSON (obligatoire) : `RequestInvoiceChangeRequest`
+- Réponse : `InvoiceChangeResponse`
+- Modèles : [InvoiceChangeResponse](#m-InvoiceChangeResponse), [RequestInvoiceChangeRequest](#m-RequestInvoiceChangeRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `requestInvoiceChange`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `invoiceNumber` | chemin | `String` | oui |  |
+
 <a id="r-post-sni-api-v1-billing-invoices-invoicenumber-corrective"></a>
 ### POST /sni/api/v1/billing/invoices/{invoiceNumber}/corrective
 
@@ -404,6 +611,40 @@ Module [billing](../README.md) · 46 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `invoiceNumber` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-billing-invoices-invoicenumber-deposits"></a>
+### POST /sni/api/v1/billing/invoices/{invoiceNumber}/deposits
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Corps JSON (obligatoire) : `DepositPlanRequest`
+- Réponse : `List<DepositResponse>`
+- Modèles : [DepositResponse](#m-DepositResponse), [DepositPlanRequest](#m-DepositPlanRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `planInvoiceDeposits`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `invoiceNumber` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-billing-proformas"></a>
+### POST /sni/api/v1/billing/proformas
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Corps JSON (obligatoire) : `CreateBillingDocumentRequest`
+- Réponse : `BillingDocumentResponse`
+- Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse), [CreateBillingDocumentRequest](#m-CreateBillingDocumentRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `createProforma`
+
+<a id="r-post-sni-api-v1-billing-proformas-proformanumber-to-quote"></a>
+### POST /sni/api/v1/billing/proformas/{proformaNumber}/to-quote
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Réponse : `BillingDocumentResponse`
+- Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `proformaToQuote`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `proformaNumber` | chemin | `String` | oui |  |
 
 <a id="r-post-sni-api-v1-billing-quotations-manual"></a>
 ### POST /sni/api/v1/billing/quotations/manual
@@ -459,6 +700,19 @@ Module [billing](../README.md) · 46 route(s).
 - Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse), [CreateManualBillingDocumentRequest](#m-CreateManualBillingDocumentRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `createManualQuote`
 
+<a id="r-put-sni-api-v1-billing-quotes-quotenumber"></a>
+### PUT /sni/api/v1/billing/quotes/{quoteNumber}
+
+- Accès : back-office : rôle d'administration et droit `BILLING:UPDATE`
+- Corps JSON (obligatoire) : `ReviseQuoteRequest`
+- Réponse : `BillingDocumentResponse`
+- Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse), [ReviseQuoteRequest](#m-ReviseQuoteRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `reviseQuote`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `quoteNumber` | chemin | `String` | oui |  |
+
 <a id="r-patch-sni-api-v1-billing-quotes-quotenumber-accept"></a>
 ### PATCH /sni/api/v1/billing/quotes/{quoteNumber}/accept
 
@@ -483,6 +737,19 @@ Module [billing](../README.md) · 46 route(s).
 | --- | --- | --- | --- | --- |
 | `quoteNumber` | chemin | `String` | oui |  |
 
+<a id="r-post-sni-api-v1-billing-quotes-quotenumber-deposits"></a>
+### POST /sni/api/v1/billing/quotes/{quoteNumber}/deposits
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Corps JSON (obligatoire) : `DepositPlanRequest`
+- Réponse : `List<DepositResponse>`
+- Modèles : [DepositResponse](#m-DepositResponse), [DepositPlanRequest](#m-DepositPlanRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `planQuoteDeposits`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `quoteNumber` | chemin | `String` | oui |  |
+
 <a id="r-patch-sni-api-v1-billing-quotes-quotenumber-mark-deposit-paid"></a>
 ### PATCH /sni/api/v1/billing/quotes/{quoteNumber}/mark-deposit-paid
 
@@ -502,6 +769,30 @@ Module [billing](../README.md) · 46 route(s).
 - Réponse : `BillingDocumentResponse`
 - Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `markViewed`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `quoteNumber` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-billing-quotes-quotenumber-negotiation"></a>
+### GET /sni/api/v1/billing/quotes/{quoteNumber}/negotiation
+
+- Accès : back-office : rôle d'administration et droit `BILLING:READ`
+- Réponse : `QuoteNegotiationResponse`
+- Modèles : [QuoteNegotiationResponse](#m-QuoteNegotiationResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `negotiation`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `quoteNumber` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-billing-quotes-quotenumber-proforma"></a>
+### POST /sni/api/v1/billing/quotes/{quoteNumber}/proforma
+
+- Accès : back-office : rôle d'administration et droit `BILLING:CREATE`
+- Réponse : `BillingDocumentResponse`
+- Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `proformaFromQuote`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -539,6 +830,19 @@ Module [billing](../README.md) · 46 route(s).
 - Réponse : `BillingDocumentSignatureResponse`
 - Modèles : [BillingDocumentSignatureResponse](#m-BillingDocumentSignatureResponse), [RequestSignatureRequest](#m-RequestSignatureRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `requestSignature`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `quoteNumber` | chemin | `String` | oui |  |
+
+<a id="r-patch-sni-api-v1-billing-quotes-quotenumber-revalidate"></a>
+### PATCH /sni/api/v1/billing/quotes/{quoteNumber}/revalidate
+
+- Accès : back-office : rôle d'administration et droit `BILLING:UPDATE`
+- Corps JSON (obligatoire) : `RevalidateQuoteRequest`
+- Réponse : `BillingDocumentResponse`
+- Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse), [RevalidateQuoteRequest](#m-RevalidateQuoteRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `revalidateQuote`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -590,7 +894,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `documentNumber` | texte |  |  |
 | `documentType` | enum : `QUOTE`, `PROFORMA_INVOICE`, `INVOICE`, `CREDIT_NOTE`, `CORRECTIVE_INVOICE`, `DEBIT_NOTE` |  |  |
-| `status` | enum : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `VOIDED`, `REFUNDED`, `WRITTEN_OFF` |  |  |
+| `status` | enum : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `REFUNDED`, `APPLIED`, `WRITTEN_OFF` |  |  |
 | `customerType` | texte |  |  |
 | `customerCode` | texte |  |  |
 | `customerName` | texte |  |  |
@@ -665,6 +969,33 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `companyCustomerCode` | texte |  |  |
 | `companyName` | texte |  |  |
 | `companyLinkSource` | texte |  |  |
+| `author` | [BillingDocumentAuthorResponse](#m-BillingDocumentAuthorResponse) |  |  |
+
+<a id="m-BillingRecipientsResponse"></a>
+#### BillingRecipientsResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `customerType` | texte |  |  |
+| `customerCode` | texte |  |  |
+| `to` | texte[] |  |  |
+| `cc` | texte[] |  |  |
+| `bcc` | texte[] |  |  |
+| `whatsappNumbers` | texte[] |  |  |
+| `channels` | texte[] |  |  |
+| `suggestedEmails` | texte[] |  |  |
+| `suggestedPhones` | texte[] |  |  |
+
+<a id="m-BillingRecipientPreferenceRequest"></a>
+#### BillingRecipientPreferenceRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `to` | texte[] |  |  |
+| `cc` | texte[] |  |  |
+| `bcc` | texte[] |  |  |
+| `whatsappNumbers` | texte[] |  |  |
+| `channels` | texte[] |  |  |
 
 <a id="m-CustomerStatementResponse"></a>
 #### CustomerStatementResponse
@@ -680,6 +1011,56 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `netBalanceDue` | nombre décimal |  |  |
 | `totalDraft` | nombre décimal |  |  |
 | `documents` | [BillingDocumentResponse](#m-BillingDocumentResponse)[] |  |  |
+| `page` | entier |  |  |
+| `size` | entier |  |  |
+| `totalElements` | entier int64 ⚠ |  |  |
+| `totalPages` | entier |  |  |
+| `accountingBalance` | nombre décimal |  |  |
+
+<a id="m-SendStatementRequest"></a>
+#### SendStatementRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `to` | texte[] | oui | éléments min `1` |
+| `cc` | texte[] |  |  |
+| `bcc` | texte[] |  |  |
+| `from` | date AAAA-MM-JJ |  |  |
+| `until` | date AAAA-MM-JJ |  |  |
+| `message` | texte |  | longueur min `0`, longueur max `2000` |
+
+<a id="m-DepositResponse"></a>
+#### DepositResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `id` | entier int64 ⚠ |  |  |
+| `documentNumber` | texte |  |  |
+| `finalDocumentNumber` | texte |  |  |
+| `rank` | entier |  |  |
+| `label` | texte |  |  |
+| `mode` | texte |  |  |
+| `value` | nombre décimal |  |  |
+| `baseLineOrders` | texte |  |  |
+| `amount` | nombre décimal |  |  |
+| `dueDate` | date AAAA-MM-JJ |  |  |
+| `status` | texte |  |  |
+| `depositInvoiceNumber` | texte |  |  |
+| `paidAmount` | nombre décimal |  |  |
+| `deductedAmount` | nombre décimal |  |  |
+| `deductedOn` | texte |  |  |
+| `deductedAt` | date-heure ISO 8601 UTC |  |  |
+| `settlementDocument` | texte |  |  |
+| `cancelReason` | texte |  |  |
+| `createdAt` | date-heure ISO 8601 UTC |  |  |
+
+<a id="m-DepositSettlementRequest"></a>
+#### DepositSettlementRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `mode` | texte | oui | longueur min `1`, motif `REFUND|CREDIT` |
+| `reason` | texte | oui | longueur min `0`, longueur max `1000` |
 
 <a id="m-BillingDocumentType"></a>
 #### BillingDocumentType
@@ -689,7 +1070,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 <a id="m-BillingDocumentStatus"></a>
 #### BillingDocumentStatus
 
-Énumération : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `VOIDED`, `REFUNDED`, `WRITTEN_OFF`
+Énumération : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `REFUNDED`, `APPLIED`, `WRITTEN_OFF`
 
 <a id="m-CreateBillingDocumentRequest"></a>
 #### CreateBillingDocumentRequest
@@ -706,8 +1087,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
 | `title` | texte |  |  |
-| `description` | texte |  |  |
-| `terms` | texte |  |  |
+| `description` | texte |  | longueur min `0`, longueur max `4000` |
+| `terms` | texte |  | longueur min `0`, longueur max `4000` |
 | `currency` | texte | oui | longueur min `1` |
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |
@@ -729,6 +1110,52 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `earlyPaymentDiscount` | [CreateEarlyPaymentDiscountRequest](#m-CreateEarlyPaymentDiscountRequest) |  |  |
 | `companyCustomerCode` | texte |  |  |
 
+<a id="m-AllocateAmountResponse"></a>
+#### AllocateAmountResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `targetAmount` | nombre décimal |  |  |
+| `taxIncluded` | booléen |  |  |
+| `referenceAmount` | nombre décimal |  |  |
+| `implicitDiscount` | nombre décimal |  |  |
+| `lines` | [CreateBillingDocumentLineRequest](#m-CreateBillingDocumentLineRequest)[] |  |  |
+| `simulation` | [SimulateBillingDocumentResponse](#m-SimulateBillingDocumentResponse) |  |  |
+
+<a id="m-AllocateAmountRequest"></a>
+#### AllocateAmountRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `lines` | [CreateBillingDocumentLineRequest](#m-CreateBillingDocumentLineRequest)[] | oui | éléments min `1` |
+| `targetAmount` | nombre décimal | oui |  |
+| `taxIncluded` | booléen |  |  |
+| `lineIndexes` | entier[] |  |  |
+| `documentType` | enum : `QUOTE`, `PROFORMA_INVOICE`, `INVOICE`, `CREDIT_NOTE`, `CORRECTIVE_INVOICE`, `DEBIT_NOTE` |  |  |
+| `currency` | texte |  |  |
+| `customerType` | texte |  |  |
+| `customerCode` | texte |  |  |
+| `companyCustomerCode` | texte |  |  |
+
+<a id="m-CheckAvailabilityResponse"></a>
+#### CheckAvailabilityResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `blocked` | booléen |  |  |
+| `alerts` | [SimulateBillingDocumentResponse.Alert](#m-SimulateBillingDocumentResponse-Alert)[] |  |  |
+| `stock` | [CheckAvailabilityResponse.Stock](#m-CheckAvailabilityResponse-Stock)[] |  |  |
+| `resources` | [CheckAvailabilityResponse.Resource](#m-CheckAvailabilityResponse-Resource)[] |  |  |
+
+<a id="m-CheckAvailabilityRequest"></a>
+#### CheckAvailabilityRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `documentType` | enum : `QUOTE`, `PROFORMA_INVOICE`, `INVOICE`, `CREDIT_NOTE`, `CORRECTIVE_INVOICE`, `DEBIT_NOTE` |  |  |
+| `lines` | [CreateBillingDocumentLineRequest](#m-CreateBillingDocumentLineRequest)[] |  |  |
+| `resources` | [CheckAvailabilityRequest.Resource](#m-CheckAvailabilityRequest-Resource)[] |  |  |
+
 <a id="m-SimulateBillingDocumentResponse"></a>
 #### SimulateBillingDocumentResponse
 
@@ -749,6 +1176,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `totalAmount` | nombre décimal |  |  |
 | `violations` | [BillingDiscountGuard.DiscountViolation](#m-BillingDiscountGuard-DiscountViolation)[] |  |  |
 | `blocked` | booléen |  |  |
+| `alerts` | [SimulateBillingDocumentResponse.Alert](#m-SimulateBillingDocumentResponse-Alert)[] |  |  |
 
 <a id="m-SimulateBillingDocumentRequest"></a>
 #### SimulateBillingDocumentRequest
@@ -760,6 +1188,34 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `title` | texte |  |  |
 | `lines` | [CreateBillingDocumentLineRequest](#m-CreateBillingDocumentLineRequest)[] | oui | éléments min `1` |
 | `discounts` | [CreateBillingDocumentDiscountRequest](#m-CreateBillingDocumentDiscountRequest)[] |  |  |
+| `customerType` | texte |  |  |
+| `customerCode` | texte |  |  |
+| `companyCustomerCode` | texte |  |  |
+
+<a id="m-SimulateBillingLineResponse"></a>
+#### SimulateBillingLineResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `lineIndex` | entier |  |  |
+| `line` | [SimulateBillingDocumentResponse.SimulatedLine](#m-SimulateBillingDocumentResponse-SimulatedLine) |  |  |
+| `alerts` | [SimulateBillingDocumentResponse.Alert](#m-SimulateBillingDocumentResponse-Alert)[] |  |  |
+| `document` | [SimulateBillingDocumentResponse](#m-SimulateBillingDocumentResponse) |  |  |
+
+<a id="m-SimulateBillingLineRequest"></a>
+#### SimulateBillingLineRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `lineIndex` | entier |  |  |
+| `line` | [CreateBillingDocumentLineRequest](#m-CreateBillingDocumentLineRequest) | oui |  |
+| `documentType` | enum : `QUOTE`, `PROFORMA_INVOICE`, `INVOICE`, `CREDIT_NOTE`, `CORRECTIVE_INVOICE`, `DEBIT_NOTE` |  |  |
+| `currency` | texte |  |  |
+| `lines` | [CreateBillingDocumentLineRequest](#m-CreateBillingDocumentLineRequest)[] |  |  |
+| `discounts` | [CreateBillingDocumentDiscountRequest](#m-CreateBillingDocumentDiscountRequest)[] |  |  |
+| `customerType` | texte |  |  |
+| `customerCode` | texte |  |  |
+| `companyCustomerCode` | texte |  |  |
 
 <a id="m-UpdateBillingDocumentRequest"></a>
 #### UpdateBillingDocumentRequest
@@ -767,8 +1223,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `title` | texte |  |  |
-| `description` | texte |  |  |
-| `terms` | texte |  |  |
+| `description` | texte |  | longueur min `0`, longueur max `4000` |
+| `terms` | texte |  | longueur min `0`, longueur max `4000` |
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |
 | `customerReference` | texte |  |  |
@@ -842,6 +1298,41 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `notes` | texte |  |  |
 
+<a id="m-BillingSendingResponse"></a>
+#### BillingSendingResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `id` | entier int64 ⚠ |  |  |
+| `documentNumber` | texte |  |  |
+| `channel` | texte |  |  |
+| `to` | texte[] |  |  |
+| `cc` | texte[] |  |  |
+| `bcc` | texte[] |  |  |
+| `subject` | texte |  |  |
+| `message` | texte |  |  |
+| `duplicate` | booléen |  |  |
+| `status` | texte |  |  |
+| `providerReference` | texte |  |  |
+| `error` | texte |  |  |
+| `sentBy` | texte |  |  |
+| `sentByName` | texte |  |  |
+| `sentAt` | date-heure ISO 8601 UTC |  |  |
+| `deliveredAt` | date-heure ISO 8601 UTC |  |  |
+| `seenAt` | date-heure ISO 8601 UTC |  |  |
+
+<a id="m-SendDocumentRequest"></a>
+#### SendDocumentRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `to` | texte[] |  |  |
+| `cc` | texte[] |  |  |
+| `bcc` | texte[] |  |  |
+| `channels` | texte[] |  |  |
+| `whatsappNumbers` | texte[] |  |  |
+| `message` | texte |  | longueur min `0`, longueur max `2000` |
+
 <a id="m-BillingDocumentVersionResponse"></a>
 #### BillingDocumentVersionResponse
 
@@ -863,6 +1354,28 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `fromVersion` | entier |  |  |
 | `toVersion` | entier |  |  |
 | `changes` | [BillingDocumentVersionResponse.Diff.FieldChange](#m-BillingDocumentVersionResponse-Diff-FieldChange)[] |  |  |
+
+<a id="m-InvoiceChangeResponse"></a>
+#### InvoiceChangeResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `id` | entier int64 ⚠ |  |  |
+| `invoiceNumber` | texte |  |  |
+| `status` | texte |  |  |
+| `reason` | texte |  |  |
+| `requestedBy` | texte |  |  |
+| `requestedByName` | texte |  |  |
+| `requestedAt` | date-heure ISO 8601 UTC |  |  |
+| `totalBefore` | nombre décimal |  |  |
+| `totalAfter` | nombre décimal |  |  |
+| `approvalNumber` | texte |  |  |
+| `decidedAt` | date-heure ISO 8601 UTC |  |  |
+| `decidedBy` | texte |  |  |
+| `decisionComment` | texte |  |  |
+| `result` | texte |  |  |
+| `resultDocumentNumber` | texte |  |  |
+| `versionNumber` | entier |  |  |
 
 <a id="m-CreateInvoiceFromBillableItemsRequest"></a>
 #### CreateInvoiceFromBillableItemsRequest
@@ -959,6 +1472,38 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `payerPhone` | texte |  |  |
 | `mobileMoneyOperator` | enum : `MTN_MOMO`, `AIRTEL_MONEY` |  |  |
 
+<a id="m-ChangeCustomerResponse"></a>
+#### ChangeCustomerResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `mode` | texte |  |  |
+| `originalInvoice` | texte |  |  |
+| `newInvoice` | texte |  |  |
+| `unpaidCreditNote` | texte |  |  |
+| `paidCreditNote` | texte |  |  |
+| `paymentsMode` | texte |  |  |
+| `transferredAmount` | nombre décimal |  |  |
+
+<a id="m-ChangeCustomerRequest"></a>
+#### ChangeCustomerRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `customerType` | texte | oui | longueur min `1` |
+| `customerCode` | texte | oui | longueur min `1` |
+| `reason` | texte | oui | longueur min `0`, longueur max `1000` |
+| `payments` | texte |  | motif `KEEP_AS_CREDIT|TRANSFER` |
+
+<a id="m-RequestInvoiceChangeRequest"></a>
+#### RequestInvoiceChangeRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `reason` | texte | oui | longueur min `0`, longueur max `1000` |
+| `discountOverrideReason` | texte |  | longueur min `0`, longueur max `1000` |
+| `changes` | [UpdateBillingDocumentRequest](#m-UpdateBillingDocumentRequest) | oui |  |
+
 <a id="m-CreateCreditNoteRequest"></a>
 #### CreateCreditNoteRequest
 
@@ -970,6 +1515,33 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validateImmediately` | booléen |  |  |
 | `lines` | [CreateBillingDocumentLineRequest](#m-CreateBillingDocumentLineRequest)[] |  |  |
 
+<a id="m-DepositPlanRequest"></a>
+#### DepositPlanRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `deposits` | [DepositPlanRequest.Deposit](#m-DepositPlanRequest-Deposit)[] | oui | éléments min `1` |
+
+<a id="m-ReviseQuoteRequest"></a>
+#### ReviseQuoteRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `reason` | texte | oui | longueur min `0`, longueur max `1000` |
+| `origin` | texte |  | motif `CLIENT_PROPOSAL|COUNTER_PROPOSAL|INTERNAL` |
+| `discountOverrideReason` | texte |  | longueur min `0`, longueur max `1000` |
+| `changes` | [UpdateBillingDocumentRequest](#m-UpdateBillingDocumentRequest) | oui |  |
+
+<a id="m-QuoteNegotiationResponse"></a>
+#### QuoteNegotiationResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `quoteNumber` | texte |  |  |
+| `status` | texte |  |  |
+| `currentRevision` | entier |  |  |
+| `rounds` | [QuoteNegotiationResponse.Round](#m-QuoteNegotiationResponse-Round)[] |  |  |
+
 <a id="m-BillingDocumentSignatureResponse"></a>
 #### BillingDocumentSignatureResponse
 
@@ -977,7 +1549,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `signerName` | texte |  |  |
 | `signerEmail` | texte |  |  |
-| `status` | enum : `PENDING`, `SIGNED`, `EXPIRED` |  |  |
+| `status` | enum : `PENDING`, `SIGNED`, `EXPIRED`, `CANCELLED` |  |  |
 | `signedAt` | date-heure ISO 8601 UTC |  |  |
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -989,6 +1561,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `signerName` | texte |  |  |
 | `signerEmail` | texte |  |  |
 | `customMessage` | texte |  |  |
+
+<a id="m-RevalidateQuoteRequest"></a>
+#### RevalidateQuoteRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `validUntil` | date AAAA-MM-JJ | oui |  |
+| `reason` | texte | oui | longueur min `0`, longueur max `1000` |
 
 <a id="m-SelectQuoteOptionsRequest"></a>
 #### SelectQuoteOptionsRequest
@@ -1121,6 +1701,18 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `computedAmount` | nombre décimal |  |  |
 | `label` | texte |  |  |
 
+<a id="m-BillingDocumentAuthorResponse"></a>
+#### BillingDocumentAuthorResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `createdBy` | texte |  |  |
+| `createdByName` | texte |  |  |
+| `createdByTitle` | texte |  |  |
+| `versionAuthor` | texte |  |  |
+| `versionAuthorName` | texte |  |  |
+| `versionAuthorTitle` | texte |  |  |
+
 <a id="m-CreateBillingDocumentLineRequest"></a>
 #### CreateBillingDocumentLineRequest
 
@@ -1129,8 +1721,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `lineOrder` | entier |  |  |
 | `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT` |  |  |
 | `itemCode` | texte |  |  |
-| `description` | texte | oui | longueur min `1` |
-| `detailedDescription` | texte |  |  |
+| `description` | texte | oui | longueur min `0`, longueur max `4000` |
+| `detailedDescription` | texte |  | longueur min `0`, longueur max `4000` |
 | `quantity` | nombre décimal |  |  |
 | `unitPrice` | nombre décimal | oui |  |
 | `discountRate` | nombre décimal |  |  |
@@ -1143,7 +1735,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `sourceCode` | texte |  |  |
 | `unit` | texte |  |  |
 | `externalReference` | texte |  |  |
-| `notes` | texte |  |  |
+| `notes` | texte |  | longueur min `0`, longueur max `4000` |
 | `optional` | booléen |  |  |
 | `category` | texte |  |  |
 
@@ -1192,6 +1784,53 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `ifPaidBefore` | date AAAA-MM-JJ | oui |  |
 | `label` | texte |  |  |
 
+<a id="m-SimulateBillingDocumentResponse-Alert"></a>
+#### SimulateBillingDocumentResponse.Alert
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `lineIndex` | entier |  |  |
+| `code` | texte |  |  |
+| `severity` | texte |  |  |
+| `message` | texte |  |  |
+
+<a id="m-CheckAvailabilityResponse-Stock"></a>
+#### CheckAvailabilityResponse.Stock
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `lineIndex` | entier |  |  |
+| `itemCode` | texte |  |  |
+| `itemName` | texte |  |  |
+| `active` | booléen |  |  |
+| `requested` | nombre décimal |  |  |
+| `available` | nombre décimal |  |  |
+| `missing` | nombre décimal |  |  |
+| `negativeStockAllowed` | booléen |  |  |
+
+<a id="m-CheckAvailabilityResponse-Resource"></a>
+#### CheckAvailabilityResponse.Resource
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `lineIndex` | entier |  |  |
+| `resourceCode` | texte |  |  |
+| `resourceName` | texte |  |  |
+| `available` | booléen |  |  |
+| `remainingCapacity` | entier |  |  |
+| `message` | texte |  |  |
+
+<a id="m-CheckAvailabilityRequest-Resource"></a>
+#### CheckAvailabilityRequest.Resource
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `lineIndex` | entier |  |  |
+| `resourceCode` | texte | oui | longueur min `1` |
+| `startAt` | date-heure locale sans fuseau | oui |  |
+| `endAt` | date-heure locale sans fuseau | oui |  |
+| `quantity` | entier |  |  |
+
 <a id="m-SimulateBillingDocumentResponse-SimulatedLine"></a>
 #### SimulateBillingDocumentResponse.SimulatedLine
 
@@ -1235,8 +1874,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `lineOrder` | entier | oui |  |
 | `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT` |  |  |
 | `itemCode` | texte |  |  |
-| `description` | texte | oui | longueur min `1` |
-| `detailedDescription` | texte |  |  |
+| `description` | texte | oui | longueur min `0`, longueur max `4000` |
+| `detailedDescription` | texte |  | longueur min `0`, longueur max `4000` |
 | `quantity` | nombre décimal |  |  |
 | `unitPrice` | nombre décimal |  |  |
 | `discountRate` | nombre décimal |  |  |
@@ -1249,7 +1888,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
 | `externalReference` | texte |  |  |
-| `notes` | texte |  |  |
+| `notes` | texte |  | longueur min `0`, longueur max `4000` |
 | `optional` | booléen |  |  |
 | `category` | texte |  |  |
 
@@ -1316,6 +1955,37 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `payerName` | texte |  |  |
 | `payerPhone` | texte |  |  |
 
+<a id="m-DepositPlanRequest-Deposit"></a>
+#### DepositPlanRequest.Deposit
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `label` | texte |  | longueur min `0`, longueur max `255` |
+| `mode` | enum : `AMOUNT`, `PERCENTAGE` | oui |  |
+| `value` | nombre décimal | oui |  |
+| `lineOrders` | entier[] |  |  |
+| `dueDate` | date AAAA-MM-JJ |  |  |
+| `invoiceNow` | booléen |  |  |
+
+<a id="m-QuoteNegotiationResponse-Round"></a>
+#### QuoteNegotiationResponse.Round
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `version` | entier |  |  |
+| `current` | booléen |  |  |
+| `authorName` | texte |  |  |
+| `reason` | texte |  |  |
+| `origin` | texte |  |  |
+| `status` | texte |  |  |
+| `changedAt` | date-heure ISO 8601 UTC |  |  |
+| `sentToCustomerAt` | date-heure ISO 8601 UTC |  |  |
+| `subtotalAmount` | nombre décimal |  |  |
+| `discountAmount` | nombre décimal |  |  |
+| `totalAmount` | nombre décimal |  |  |
+| `totalDelta` | nombre décimal |  |  |
+| `lineChanges` | [QuoteNegotiationResponse.LineChange](#m-QuoteNegotiationResponse-LineChange)[] |  |  |
+
 <a id="m-billing-dto-response-BillingAgingReportResponse-AgingBucket"></a>
 #### billing.dto.response.BillingAgingReportResponse.AgingBucket
 
@@ -1323,3 +1993,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `count` | entier |  |  |
 | `totalDue` | nombre décimal |  |  |
+
+<a id="m-QuoteNegotiationResponse-LineChange"></a>
+#### QuoteNegotiationResponse.LineChange
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `change` | texte |  |  |
+| `description` | texte |  |  |
+| `quantityBefore` | texte |  |  |
+| `quantityAfter` | texte |  |  |
+| `unitPriceBefore` | texte |  |  |
+| `unitPriceAfter` | texte |  |  |
+| `discountBefore` | texte |  |  |
+| `discountAfter` | texte |  |  |
+| `totalBefore` | texte |  |  |
+| `totalAfter` | texte |  |  |

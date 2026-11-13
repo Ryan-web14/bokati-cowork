@@ -56,7 +56,7 @@ class BillingReceivablesTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = BillingDocumentStatus.class, names = {"CANCELLED", "VOIDED", "REJECTED", "EXPIRED", "CONVERTED"})
+    @EnumSource(value = BillingDocumentStatus.class, names = {"CANCELLED", "REJECTED", "EXPIRED", "CONVERTED"})
     @DisplayName("Un document abandonne ne compte ni comme facture, ni comme dette")
     void anAbandonedDocumentCountsForNothing(BillingDocumentStatus status) {
         assertThat(BillingReceivables.issued(BillingDocumentType.INVOICE, status)).isFalse();
@@ -95,9 +95,9 @@ class BillingReceivablesTest {
     }
 
     @Test
-    @DisplayName("Une proforma emise reste une creance · c'est le comportement en place")
-    void aProformaStaysAReceivable() {
-        assertThat(BillingReceivables.receivable(BillingDocumentType.PROFORMA_INVOICE, BillingDocumentStatus.SENT)).isTrue();
+    @DisplayName("Lot B5 · une proforma n'est pas une creance : document sans valeur fiscale, son paiement devient un acompte du devis")
+    void aProformaIsNotAReceivable() {
+        assertThat(BillingReceivables.receivable(BillingDocumentType.PROFORMA_INVOICE, BillingDocumentStatus.SENT)).isFalse();
     }
 
     @Test

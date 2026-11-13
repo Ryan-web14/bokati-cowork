@@ -143,4 +143,8 @@ public interface StockLevelRepository extends JpaRepository<StockLevel, Long> {
             SELECT COUNT(*) FROM movement_pairs
             """, nativeQuery = true)
     long countReconciliationPairs();
+
+    /** Quantite disponible d'un article, tous emplacements (lot B13 : controle de stock a la facturation). */
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(l.quantityAvailable), 0) FROM StockLevel l WHERE l.item.id = :itemId")
+    java.math.BigDecimal sumAvailable(@org.springframework.data.repository.query.Param("itemId") Long itemId);
 }

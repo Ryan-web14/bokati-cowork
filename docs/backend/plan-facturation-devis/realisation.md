@@ -8,11 +8,16 @@ Au 13/11/2026. Je corrige d'abord les 13 écarts encore ouverts du module de fac
 | --- | --- | --- |
 | D1 | Devis accepté | Révision admise : retour en négociation, nouvelle version, signature annulée, nouvelle acceptation |
 | D2 | Paiement d'une proforma | La proforma passe en devis, puis en facture (détail ci-dessous) |
-| D3 | TVA des acomptes | Paramètre : à l'encaissement de l'acompte (par défaut) ou à la facture finale ; à valider par l'expert-comptable |
+| D3 | TVA des acomptes | Validé le 13/11/2026 : TVA portée par la facture finale ; en régime des encaissements, exigible au fur et à mesure que les acomptes sont déduits de la facture finale, pas à leur encaissement |
 | D4 | Acompte d'un devis expiré | Au choix : rembourser, garder en avoir, ou remettre le devis en validité en changeant sa date de validité |
 | D5 | Stock insuffisant | Alerte sur le devis, blocage à la facture ; la facture s'émet quand même si l'article autorise le stock négatif |
 | D6 | Changer le client d'une facture payée | Le système propose les deux : paiements gardés en avoir au client d'origine, ou transférés sur la facture du nouveau client |
 | D7 | Statut VOIDED | Retiré : CANCELLED suffit |
+| D8 | Facture scellée non payée modifiée | À confirmer : facture rectificative, montrée comme nouvelle version (une pièce scellée ne change pas) |
+| D9 | Proforma | Modifiable quel que soit son statut, avec versions |
+| D10 | Facture non payée | Modifiable avec versions, sans suppression, après approbation d'un responsable ou d'un administrateur |
+| D11 | Validation par un N+ | Un niveau supérieur qui valide en avance approuve la demande, le niveau sauté est tracé |
+| D12 | Centres d'approbation | Distincts par module (facturation, caisse), sur un même modèle de données et un même moteur |
 
 **D2 expliqué.** Une proforma est un document commercial sans valeur fiscale : le client s'en sert pour faire valider un budget ou préparer son paiement. Elle ne doit donc ni se sceller ni s'encaisser comme une facture, ce que le code permet aujourd'hui.
 
@@ -27,21 +32,26 @@ Avantage : un seul chemin pour tout le monde (devis, acompte, facture), et les c
 
 ## 2. Ordre de réalisation
 
-Onze lots, livrés un par un sur `feature/facturation-devis` ; chacun est utilisable dès sa livraison.
+Seize lots, livrés un par un sur `feature/facturation-devis` ; chacun est utilisable dès sa livraison.
 
 | Étape | Lot | Pourquoi à ce rang | S'appuie sur |
 | --- | --- | --- | --- |
 | 1 | B0 Sécurité et intégrité | Un défaut de sécurité (signature publique) et deux défauts de calcul | |
 | 2 | B1 Cycle de vie | Toutes les fonctions suivantes s'appuient sur une table des transitions fiable | B0 |
-| 3 | B2 Négociation des devis | Cœur du devis : versions, prix, lignes | B1 |
-| 4 | B3 Acomptes | Plusieurs acomptes, du devis à la facture, `4191` | B1, B2 |
-| 5 | B8 Montant ventilé | Même calcul pour création, mise à jour et simulation | B1 |
-| 6 | B5 Proforma | Circuit proforma, devis, facture | B2, B3 |
-| 7 | B4 Envois | Destinataires, copies, WhatsApp, journal | B1 |
-| 8 | B6 Changement de client | Avoir et nouvelle facture, choix pour les paiements | B1, B3 |
-| 9 | B7 Devis et inventaire | Stock, réservation, ressources | B2 |
-| 10 | B9 États clients | Relevé, balance âgée, échéanciers | B1 |
-| 11 | B10 Catalogue, routes, messages | Catalogue complet, routes uniques, messages français | Tous |
+| 3 | B12 Auteur et visa | L'utilisateur connecté signe chaque pièce et chaque version | B1 |
+| 4 | B15 Centres d'approbation | Modèle commun, hiérarchie et circuits, dont dépendent les modifications approuvées ; centre de la caisse branché dessus | B12 |
+| 5 | B13 Simulation interactive | Un seul calcul, ligne par ligne, descriptions longues | B1 |
+| 6 | B2 Négociation des devis | Cœur du devis : versions, prix, lignes | B1, B13 |
+| 7 | B14 Facture modifiable avant paiement | Versions sans suppression, approbation | B2, B15 |
+| 8 | B3 Acomptes | Acomptes en montant ou en pourcentage, plan d'acomptes, sur devis et sur facture, `4191` | B2, B14 |
+| 9 | B8 Montant ventilé | Saisie d'un total, ventilation des taxes et des lignes | B13 |
+| 10 | B11 Affaires | Regroupe devis, proformas, acomptes, factures et paiements | B2, B3 |
+| 11 | B5 Proforma | Modifiable à tout statut, circuit proforma, devis, facture | B2, B3 |
+| 12 | B4 Envois | Destinataires, copies, WhatsApp, journal | B1 |
+| 13 | B6 Changement de client | Avoir et nouvelle facture, choix pour les paiements | B3, B14 |
+| 14 | B7 Devis et inventaire | Stock, réservation, ressources | B2 |
+| 15 | B9 États clients | Relevé, balance âgée, échéanciers | B1 |
+| 16 | B10 Catalogue, routes, messages | Catalogue complet, routes uniques, messages français | Tous |
 
 ## 3. B0 et B1 : sécurité et cycle de vie
 
@@ -78,11 +88,11 @@ Un devis se modifie tant qu'il n'est pas converti : prix, quantités, remises, l
 
 Un devis peut porter plusieurs acomptes ; ce qui n'a pas été pris sur le devis se demande sur la facture ; la facture finale déduit tout.
 
-- **Côté devis** : plusieurs acomptes (par exemple 30 % à la commande, 20 % à mi-parcours), chacun en **facture d'acompte** numérotée, envoyée et encaissable par tous les moyens (caisse, mobile money, virement, portefeuille).
-- **Côté facture** : un acompte non pris sur le devis se demande sur la facture finale (facture d'acompte rattachée).
+- **Côté devis** : un acompte se demande à tout moment sur un devis déjà créé, **en montant ou en pourcentage** ; un **plan d'acomptes** en règle plusieurs d'un coup (par exemple 30 % à la commande, 20 % à mi-parcours, avec leurs échéances). Chacun donne une **facture d'acompte** numérotée, envoyée et encaissable par tous les moyens (caisse, mobile money, virement, portefeuille).
+- **Côté facture** : exactement les mêmes possibilités (un ou plusieurs acomptes, montant ou pourcentage, plan d'acomptes) ; un acompte non pris sur le devis se demande ainsi sur la facture.
 - **Facture finale** : une ligne « Acompte n° … du … » par acompte facturé ; seul le reste est réclamé.
 - **Devis expiré avec acompte encaissé (D4)** : au choix, remboursement, avoir gardé pour le client, ou devis remis en validité avec une nouvelle date de validité.
-- **TVA (D3)** : paramètre, à l'encaissement de l'acompte par défaut, ou à la facture finale.
+- **TVA (D3)** : TVA portée par la facture finale ; en régime des encaissements, exigible au fur et à mesure que les acomptes sont déduits de la facture finale, pas à leur encaissement (validé le 13/11/2026).
 - **Comptabilité** : l'acompte au crédit du `4191` (clients, avances et acomptes reçus) ; la facture finale solde le `4191` contre le `411`.
 - **Routes** : `POST /quotes/{n}/deposits`, `POST /invoices/{n}/deposits`, `GET /documents/{n}/deposits`, `PATCH /deposits/{id}/cancel`, `PATCH /quotes/{n}/revalidate`.
 
@@ -106,6 +116,7 @@ L'envoi choisit ses destinataires et son canal, et chaque envoi est tracé ; il 
 Une proforma devient un document sans valeur fiscale, qui suit le circuit proforma, devis, facture (D2).
 
 - Ni scellement, ni écriture comptable, ni encaissement direct.
+- **Modifiable quel que soit son statut**, avec une version à chaque modification (D9).
 - Création directe, ou depuis un devis ; date de validité ; statuts : brouillon, envoyée, acceptée, expirée, transformée.
 - À l'accord ou au paiement : transformation en **devis accepté** (mêmes lignes, lien conservé) ; un paiement reçu devient **acompte du devis**.
 - PDF : mention « Facture proforma, document sans valeur fiscale ».
@@ -163,7 +174,67 @@ L'utilisateur saisit un total, et le système calcule les taxes et répartit le 
 - **Routes** : une seule famille `/quotes/...` ; les routes `/quotations/...` restent six mois, dépréciées.
 - **Messages** : en français accentué, avec un code d'erreur stable pour le frontend.
 
-## 12. Livraison
+## 13. B11 : gestion des affaires
+
+Une affaire regroupe tout ce qui concerne une vente à un client, du premier devis au dernier paiement.
+
+- **Fiche** : client, intitulé, responsable, montant prévu, probabilité, étape (prospection, proposition, négociation, gagnée, perdue avec motif).
+- **Création** : à la main, depuis une opportunité du CRM, ou au premier devis d'un client.
+- **Tableau** : devisé, accepté, facturé, encaissé, reste à facturer et à encaisser, acomptes, marge prévue et réalisée.
+- **Liens** : chaque document porte son affaire, gardée à la conversion du devis en facture.
+- **Routes** : `GET`, `POST`, `PUT /billing/deals`, `GET /billing/deals/{code}`, `PATCH /billing/deals/{code}/stage`.
+
+**Test** : une affaire avec un devis refusé, un devis accepté, un acompte et une facture payée en partie affiche les bons totaux.
+
+## 14. B12 : auteur de la pièce et visa
+
+L'utilisateur connecté signe chaque pièce sans rien saisir.
+
+- Son nom et sa fonction, repris du jeton, remplissent « Établi par ».
+- Le **visa** de la facture affiche le même nom, la fonction et la date, et sa signature enregistrée si elle existe.
+- Chaque version garde son auteur ; le PDF montre l'auteur de la version imprimée.
+
+**Test** : une facture créée par un commercial porte son nom dans « Établi par » et dans le visa.
+
+## 15. B13 : simulation interactive et descriptions
+
+Chaque saisie sur une ligne renvoie aussitôt son calcul et celui du document.
+
+- **Ligne par ligne** : HT, remises, TVA, centimes additionnels, TTC, et les alertes (prix plancher, remise maximale, stock, plafond d'encours), sans rien créer.
+- **Un seul calcul** pour la simulation, la création et la mise à jour.
+- **Descriptions longues** : description et description détaillée jusqu'à 4 000 caractères, retours à la ligne gardés à l'impression ; notes et conditions aussi.
+- **Routes** : `POST /billing/documents/simulate-line`, `POST /billing/documents/simulate`.
+
+**Test** : changer une quantité met à jour la ligne et les totaux en moins d'une seconde ; 2 000 caractères de description s'impriment entiers.
+
+## 16. B14 : facture modifiable avant paiement
+
+Une facture se modifie tant qu'elle n'est pas payée, par versions, sans rien supprimer, après approbation.
+
+- **Tant qu'aucun paiement n'est imputé** ; ensuite, avoir ou rectificative.
+- **Versions** : chaque modification en crée une, les précédentes restent consultables et comparables (auteur, motif, date).
+- **Approbation** : la modification d'une facture émise attend l'accord d'un responsable ou d'un administrateur dans le centre d'approbation ; la version en vigueur ne change qu'à l'accord.
+- **Facture scellée** : la pièce scellée ne change pas ; la modification approuvée produit une rectificative, montrée comme nouvelle version (D8, à confirmer).
+- **Comptabilité** : contre-passation de l'ancienne écriture et nouvelle écriture.
+
+**Test** : une facture émise non payée est modifiée ; la demande attend ; une fois approuvée, la version 2 est en vigueur, la version 1 reste visible, rien n'est supprimé.
+
+## 17. B15 : centres d'approbation et hiérarchie
+
+Des centres distincts (facturation, caisse) sur un même modèle de données et un même moteur, avec une hiérarchie N+1, N+2, et la validation en avance par un niveau supérieur (D12).
+
+- **Hiérarchie** : chaque utilisateur a son responsable direct ; organigramme, intérims et délégations datées.
+- **Circuits** : un par type de demande (modification de facture, dérogation de prix ou de remise, demande de fonds…), niveaux selon le montant ou l'objet.
+- **Validation en avance** : si le N+2 approuve avant le N+1, la demande passe à « approuvée », le niveau sauté est noté « approuvé par le N+2 » (D11).
+- **Suivi** : mes demandes (où, qui doit agir, depuis quand), à approuver (moi ou par délégation), notifications, relances, escalade.
+- **Historique** : toutes les demandes et décisions passées, filtrables, avec la frise complète de chaque demande.
+- **Modèle commun** : demande d'approbation, étapes, décisions, hiérarchie et circuits dans les mêmes tables ; chaque centre a son écran, ses droits et sa file. Un nouveau centre se branche sans nouvelle table.
+- **Demandes de fonds de la caisse** : elles ont déjà file, frise, délégations et escalade, mais leurs niveaux viennent du montant et un N+ ne peut pas valider en avance. Elles passent sur le modèle commun ; le centre de la caisse garde son écran et ses routes.
+- **Routes** : communes `/approvals/hierarchy`, `/approvals/circuits` ; par centre `/approvals/{center}/mine`, `/to-approve`, `/history` ; `PATCH /approvals/{id}/approve`, `/reject`, `/send-back`.
+
+**Test** : une demande à deux niveaux approuvée d'abord par le N+2 passe à « approuvée » ; la frise montre le niveau 1 approuvé par le N+2 ; elle figure dans l'historique des deux.
+
+## 18. Livraison
 
 - **Branche** : `feature/facturation-devis`, poussée après chaque lot ; vous fusionnez et déployez vous-même.
 - **Migrations** : dans les deux dossiers (`db/migration` et `db/migration-prod`), numérotées au-dessus de la plus haute (dev V324, prod V318 pour la première).
