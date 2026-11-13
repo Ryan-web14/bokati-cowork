@@ -54,6 +54,12 @@ public class VoucherService {
     private PlatformSettings platformSettings;
     private OperatorIdentityService operatorIdentityService;
     private BrandLogo brandLogo;
+    private com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter templatePrinter;
+
+    @Autowired(required = false)
+    void setTemplatePrinter(com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter templatePrinter) {
+        this.templatePrinter = templatePrinter;
+    }
 
     /** Facultatifs · injectes par mutateur pour ne pas toucher au constructeur des appelants. */
     @Autowired(required = false)
@@ -166,6 +172,9 @@ public class VoucherService {
         }
 
         public Section pair(String label, Object value) {
+            if (value instanceof java.time.LocalDate day) {
+                value = day.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            }
             if (value != null && !value.toString().isBlank()) {
                 pairs.add(new String[]{label, value.toString()});
             }
@@ -223,21 +232,58 @@ public class VoucherService {
                        String verifyUrl, String qrDataUri) {
     }
 
+    /** Modele de document de chaque type de piece (chantier des modeles de documents). */
+    public static final Map<String, String> TEMPLATE_BY_TYPE = Map.of(
+            "EDB", "NEED_STATEMENT", "DDF", "FUND_REQUEST", "BDF", "DISBURSEMENT_VOUCHER", "JUS", "JUSTIFICATION_SHEET",
+            "BC", "PURCHASE_ORDER", "DTV", "VAT_RETURN", "RAP", "BANK_RECONCILIATION", "EMP", "LOAN_SCHEDULE");
+
+    /**
+     * Rend la piece : avec la version publiee de son modele s'il en existe une, sinon (ou si ce
+     * rendu echoue) avec le gabarit d'origine {@code fund/voucher}.
+     */
     public byte[] render(String title, Issued issued, List<Section> sections, BigDecimal amount, String commitment, List<Signature> signatures) {
-        // Seule une piece enregistree (acc_voucher) se verifie · un brouillon ou un tableau d'emprunt
-        // porte un pseudo-numero que /verify/voucher ne connait pas : son QR menait a une erreur 404.
-        String verifyUrl = isRegistered(issued) ? verifyBaseUrl().replaceAll("/+$", "") + "/verify/voucher/" + issued.number() : null;
-        View view = new View(title, issued.number(), issuerName(), issuerDetails(), issued.printCount() > 0,
-                STAMP.format(Instant.now()), issued.cancelledBy(), sections,
-                amount == null ? null : money(amount) + " XAF",
-                amount == null ? null : FrenchAmountWords.withCurrency(amount, "XAF"), commitment, signatures,
-                issued.issuedAt() == null ? "" : STAMP.format(issued.issuedAt()), issued.issuedBy(), STAMP.format(Instant.now()),
-                UUID.randomUUID().toString().substring(0, 8), verifyUrl, verifyUrl == null ? null : qrCodeRenderer.toDataUri(verifyUrl, 160));
+        View view = view(title, issued, sections, amount, commitment, signatures);
+        String templateCode = issued == null ? null : TEMPLATE_BY_TYPE.get(issued.type());
+        if (templatePrinter != null && templateCode != null) {
+            Optional<byte[]> printed = templatePrinter.tryRender(templateCode,
+                    com.sni.bokaticowork.features.document.template.render.DocumentData.fromVoucher(templateCode, view, amount));
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         Context context = new Context(Locale.FRENCH);
         context.setVariable("v", view);
         context.setVariable("operator", operatorIdentityService == null ? null : operatorIdentityService.current());
         context.setVariable("logo", brandLogo == null ? null : brandLogo.base64());
         return pdf(templateEngine.process("fund/voucher", context));
+    }
+
+    /** Vue de la piece, sans rendu : sert au gabarit d'origine, aux modeles et a leur apercu. */
+    public View view(String title, Issued issued, List<Section> sections, BigDecimal amount, String commitment, List<Signature> signatures) {
+        // Seule une piece enregistree (acc_voucher) se verifie · un brouillon ou un tableau d'emprunt
+        // porte un pseudo-numero que /verify/voucher ne connait pas : son QR menait a une erreur 404.
+        String verifyUrl = isRegistered(issued) ? verifyBaseUrl().replaceAll("/+$", "") + "/verify/voucher/" + issued.number() : null;
+        return new View(title, issued.number(), issuerName(), issuerDetails(), issued.printCount() > 0,
+                STAMP.format(Instant.now()), issued.cancelledBy(), sections,
+                amount == null ? null : money(amount) + " XAF",
+                amount == null ? null : FrenchAmountWords.withCurrency(amount, "XAF"), commitment, signatures,
+                issued.issuedAt() == null ? "" : STAMP.format(issued.issuedAt()), issued.issuedBy(), STAMP.format(Instant.now()),
+                UUID.randomUUID().toString().substring(0, 8), verifyUrl, verifyUrl == null ? null : qrCodeRenderer.toDataUri(verifyUrl, 160));
+    }
+
+    /**
+     * Piece deja enregistree pour ce fait, ou piece provisoire « APERÇU » : rien n'est ecrit, ni
+     * numero ni impression (apercu d'un modele avec une piece reelle).
+     */
+    public Issued peek(String type, String sourceCode, BigDecimal amount, String label, String actor) {
+        List<Map<String, Object>> existing = new JdbcTemplate(dataSource)
+                .queryForList("SELECT * FROM acc_voucher WHERE voucher_type = ? AND source_code = ?", type, sourceCode);
+        if (!existing.isEmpty()) {
+            Issued issued = toIssued(existing.get(0));
+            return new Issued(issued.number(), issued.type(), issued.sourceCode(), issued.amount(), issued.label(), issued.issuedBy(),
+                    issued.issuedAt(), 0, issued.lastPrintedAt(), issued.cancelledBy());
+        }
+        return new Issued("APERÇU", type, sourceCode, amount, label, actor, Instant.now(), 0, null, null);
     }
 
     /** Vrai si le numero figure au registre des pieces, donc si /verify/voucher le connait. */

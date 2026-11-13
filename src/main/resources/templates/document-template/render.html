@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<!--
+  Rendu des modeles de documents en blocs (chantier des modeles de documents, lot D2).
+  Gabarit fixe : il n'imprime que des textes deja resolus par TemplateRenderer, toujours avec
+  th:text (aucun HTML fourni par l'utilisateur). Mise en page en tableaux : OpenHtmlToPDF ne
+  connait ni flexbox ni grid.
+
+  Variables : t (TemplateRenderer.View), operator (OperatorIdentity), logo (base64 ou null).
+-->
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${t.data().number()}">Pièce</title>
+    <style th:inline="text">
+        @page { size: [[${t.pageFormat() == 'A6' ? 'A6' : 'A4'}]]; margin: [[${t.pageFormat() == 'A4' ? '26px 34px 30px 34px' : '0'}]]; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Helvetica, Arial, sans-serif; color: #1f1430; font-size: 9.5px; line-height: 1.35; }
+        table { border-collapse: collapse; }
+        .copy { width: 100%; }
+        .copy.two-up { height: 561px; padding: 22px 40px 14px; overflow: hidden; }
+        .copy.two-up.second { border-top: 1.5px dashed #1f1430; }
+        .copy.a6 { padding: 14px 16px; }
+        .page-break { page-break-before: always; }
+        .cut { text-align: center; font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase; margin-top: -9px; }
+        .cut span { background: #ffffff; padding: 0 8px; }
+        .block { margin-bottom: 8px; }
+        .head { width: 100%; }
+        .head td { vertical-align: top; padding: 0; }
+        .op-name { font-size: 17px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+        .op-sub { font-size: 7.5px; letter-spacing: 1.6px; text-transform: uppercase; margin-top: 2px; }
+        .op-line { font-size: 7.5px; margin-top: 2px; }
+        .logo { height: 34px; width: auto; }
+        .rule { height: 2px; font-size: 0; line-height: 0; margin: 6px 0 8px; }
+        .doc-title { white-space: nowrap; font-size: 19px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-align: right; }
+        .doc-number { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; font-family: "Courier New", monospace; text-align: right; margin-top: 3px; }
+        .copy-label { white-space: nowrap; font-size: 8px; font-weight: 700; padding: 3px 7px; border: 1.2px solid #1f1430; }
+        .copy-label.alt { background: #f3eef6; }
+        .stamp { border: 2px solid #b3261e; color: #b3261e; font-weight: 700; text-align: center; padding: 3px; letter-spacing: 2px; margin-bottom: 6px; }
+        .stamp.dup { border-color: #9a7000; color: #9a7000; }
+        .qr { width: 58px; height: 58px; }
+        .section { font-size: 7.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+        .fields { width: 100%; table-layout: fixed; }
+        .fields td { vertical-align: top; padding: 0 12px 6px 0; }
+        .f-label { font-size: 7.5px; letter-spacing: 1px; text-transform: uppercase; }
+        .f-value { font-weight: 700; font-size: 9.5px; }
+        .lines { width: 100%; }
+        .lines th { font-size: 7.8px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; background: #f3eef6; border-top: 1.2px solid #1f1430;
+            border-bottom: 1.2px solid #1f1430; padding: 5px 6px; text-align: left; }
+        .lines td { padding: 5px 6px; border-bottom: 1px solid #e6ddea; vertical-align: top; }
+        .lines tr.last td { border-bottom: 2px solid #1f1430; }
+        .num { text-align: right; }
+        .totals { width: 100%; border: 1.5px solid #1f1430; }
+        .totals td { padding: 8px 12px; vertical-align: middle; }
+        .totals .words { background: #f3eef6; }
+        .totals .w-label, .totals .a-label { font-size: 7.5px; letter-spacing: 1.2px; text-transform: uppercase; }
+        .totals .w-value { font-size: 12px; font-weight: 700; margin-top: 2px; }
+        .totals .amount { width: 190px; border-left: 1.5px solid #1f1430; text-align: right; }
+        .totals .a-value { font-size: 18px; font-weight: 700; font-family: "Courier New", monospace; margin-top: 2px; }
+        .text { font-size: 9.5px; }
+        .text.boxed { border: 1.2px solid #1f1430; padding: 7px 10px; }
+        .sigs { margin: 0 auto; }
+        .sigs td.gap { width: 8px; }
+        .sig { border: 1.2px solid #1f1430; vertical-align: top; padding: 0; }
+        .sig-head { font-size: 8px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; text-align: center; padding: 4px; background: #f3eef6;
+            border-bottom: 1.2px solid #1f1430; }
+        .sig-foot { font-size: 7.5px; padding: 3px 6px; border-top: 1px solid #e6ddea; }
+        .foot { width: 100%; border-top: 1px solid #e6ddea; margin-top: 6px; }
+        .foot td { font-size: 7.3px; padding-top: 4px; vertical-align: top; }
+        .foot .sni { font-weight: 700; letter-spacing: 0.5px; text-align: right; white-space: nowrap; }
+    </style>
+</head>
+<body>
+<th:block th:each="copy, copyIter : ${t.copies()}">
+<div class="copy"
+     th:classappend="${(t.pageFormat() == 'A5_TWO_UP' ? 'two-up' : '') + (t.pageFormat() == 'A5_TWO_UP' and copyIter.index % 2 == 1 ? ' second' : '')
+        + (t.pageFormat() == 'A6' ? ' a6' : '') + (copy.pageBreak() ? ' page-break' : '')}">
+    <div class="cut" th:if="${t.pageFormat() == 'A5_TWO_UP' and copyIter.index % 2 == 1}"><span>Découper ici</span></div>
+
+    <th:block th:each="b : ${t.blocks()}">
+
+        <!-- En-tete : identite de l'exploitant, titre a droite si un bloc TITLE suit, QR. -->
+        <div class="block" th:if="${b.type() == 'HEADER'}">
+            <table class="head">
+                <tr>
+                    <td>
+                        <img th:if="${logo != null}" class="logo" th:src="@{'data:image/png;base64,' + ${logo}}" alt="Logo"/>
+                        <div class="op-name" th:if="${logo == null}" th:text="${operator != null ? operator.name() : 'ELLE A OSE'}">ELLE A OSE</div>
+                        <div class="op-sub">Espace de coworking</div>
+                        <div class="op-line" th:if="${operator != null and operator.address() != null}" th:text="${operator.address()}">Adresse</div>
+                        <div class="op-line" th:if="${operator != null and operator.registrationLine() != null}" th:text="${operator.registrationLine()}">RCCM</div>
+                        <div class="op-line" th:if="${operator != null and operator.contactLine() != null}" th:text="${operator.contactLine()}">Contact</div>
+                    </td>
+                    <td style="text-align: right;" th:with="title=${#lists.isEmpty(t.blocks().?[type() == 'TITLE']) ? null : t.blocks().^[type() == 'TITLE']}">
+                        <th:block th:if="${title != null}">
+                            <div class="doc-title" th:text="${title.title()}">Titre</div>
+                            <div class="doc-number" th:text="${t.data().number()}">N°</div>
+                            <table th:if="${title.flag() and copy.label() != ''}" style="margin-left: auto; margin-top: 4px;">
+                                <tr><td class="copy-label" th:classappend="${copyIter.index > 0 ? 'alt' : ''}" th:text="${copy.label()}">ORIGINAL</td></tr>
+                            </table>
+                        </th:block>
+                    </td>
+                    <td th:if="${b.flag()}" style="width: 66px; text-align: right;">
+                        <img class="qr" th:src="${t.data().qrDataUri()}" alt="QR de vérification"/>
+                    </td>
+                </tr>
+            </table>
+            <div class="rule" th:style="'background:' + ${t.accent()}"></div>
+            <div class="stamp" th:if="${t.data().cancelledBy() != null}" th:text="'ANNULÉ PAR ' + ${t.data().cancelledBy()}">ANNULÉ</div>
+            <div class="stamp dup" th:if="${t.data().duplicate()}" th:text="${t.data().duplicateLabel()}">DUPLICATA</div>
+        </div>
+
+        <div class="block" th:if="${b.type() == 'FIELDS'}">
+            <div class="section" th:if="${b.title() != null and b.title() != ''}" th:text="${b.title()}">Section</div>
+            <table class="fields">
+                <tr th:each="row : ${b.rows()}">
+                    <td th:each="cell : ${row}">
+                        <div class="f-label" th:text="${cell.label()}">Libellé</div>
+                        <div class="f-value" th:text="${cell.value()}">Valeur</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="block" th:if="${b.type() == 'LINES' and !#lists.isEmpty(b.cols())}">
+            <div class="section" th:if="${b.title() != null and b.title() != ''}" th:text="${b.title()}">Lignes</div>
+            <table class="lines">
+                <tr>
+                    <th th:each="col : ${b.cols()}" th:classappend="${col.numeric() ? 'num' : ''}"
+                        th:style="${col.width() != null ? 'width:' + col.width() : ''}" th:text="${col.label()}">Colonne</th>
+                </tr>
+                <tr th:each="line, lineIter : ${b.lines()}" th:classappend="${lineIter.last ? 'last' : ''}">
+                    <td th:each="cell, cellIter : ${line}" th:classappend="${b.cols()[cellIter.index].numeric() ? 'num' : ''}" th:text="${cell}">valeur</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="block" th:if="${b.type() == 'TOTALS' and b.amount() != null}">
+            <table class="totals">
+                <tr>
+                    <td class="words" th:if="${b.flag()}">
+                        <div class="w-label" th:text="${b.wordsLabel()}">Montant en lettres</div>
+                        <div class="w-value" th:text="${b.words()}">cent mille francs CFA</div>
+                    </td>
+                    <td class="amount">
+                        <div class="a-label" th:text="${b.label()}">Montant</div>
+                        <div class="a-value" th:text="${b.amount()}">100 000 XAF</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="block text" th:if="${b.type() == 'TEXT' and b.text() != ''}" th:classappend="${b.flag() ? 'boxed' : ''}">
+            <span class="f-label" th:if="${b.title() != null and b.title() != ''}" th:text="${b.title() + ' : '}">Titre : </span><span th:text="${b.text()}">Texte</span>
+        </div>
+
+        <div class="block" th:if="${b.type() == 'SIGNATURES' and !#lists.isEmpty(b.boxes())}">
+            <table class="sigs" th:each="boxRow, rowIter : ${b.boxes()}" th:style="${rowIter.index > 0 ? 'margin-top:8px' : ''}">
+                <tr>
+                    <th:block th:each="box, boxIter : ${boxRow}">
+                        <td class="gap" th:if="${boxIter.index > 0}"></td>
+                        <td class="sig" th:style="'width:' + ${b.width()} + 'px;height:' + ${b.height()} + 'px'">
+                            <div class="sig-head" th:text="${box.label()}">Rôle</div>
+                            <div th:style="'height:' + ${b.height() - 44} + 'px'"></div>
+                            <div class="sig-foot" th:if="${!box.stamp()}" th:text="${box.name() != null ? box.name() : (box.note() != null ? box.note() : 'Nom, date et signature')}">Nom</div>
+                        </td>
+                    </th:block>
+                </tr>
+            </table>
+        </div>
+
+        <table class="foot block" th:if="${b.type() == 'FOOTER'}">
+            <tr>
+                <td>
+                    <span th:text="'Pièce n° ' + ${t.data().number()}">Pièce</span>
+                    <span th:if="${t.data().verifyUrl() != null}" th:text="' · vérifiable sur ' + ${t.data().verifyUrl()}"></span>
+                    <span th:if="${b.text() != null and b.text() != ''}" th:text="' · ' + ${b.text()}"></span>
+                    <div th:if="${operator != null}" th:text="${operator.footerLine()}">Identité</div>
+                    <div th:text="'Généré le ' + ${t.generatedAt()}">Généré le</div>
+                </td>
+                <td class="sni">ENGINEERED BY SNI</td>
+            </tr>
+        </table>
+    </th:block>
+</div>
+</th:block>
+</body>
+</html>

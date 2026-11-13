@@ -471,6 +471,10 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/notifications")) {
             return permission("ADMIN", "ACCESS");
         }
+        // Modeles de documents (lot D2) : lecture, brouillon, apercu et publication sous un seul droit.
+        if (path.startsWith("/document-templates")) {
+            return permission("SYSTEM", "DOCUMENT_TEMPLATES");
+        }
         if (path.startsWith("/businesses") || path.startsWith("/document-types")
                 || path.startsWith("/document-requirements") || path.startsWith("/document-retention-policies")) {
             return permission("SYSTEM", "SETTINGS");
