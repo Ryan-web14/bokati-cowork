@@ -472,4 +472,10 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
             LIMIT :limit
             """)
     List<BillingDocument> findOverdueWithBalance(@Param("limit") int limit);
+
+    /** Lot B14 : la facture est-elle deja comptabilisee (piece de vente passee) ? */
+    @Query(nativeQuery = true, value = """
+            SELECT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.reference = :number AND e.event_type = 'INVOICE_ISSUED')
+            """)
+    boolean salePosted(@Param("number") String number);
 }

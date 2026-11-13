@@ -60,6 +60,8 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class BillingDocumentController {
 
+    private final com.sni.bokaticowork.features.billing.service.implementation.InvoiceChangeService invoiceChangeService;
+
     private final BillingDocumentService billingDocumentService;
     private final BillingDocumentPdfService billingDocumentPdfService;
     private final BillingEmailService billingEmailService;
@@ -223,6 +225,28 @@ public class BillingDocumentController {
     public ResponseEntity<BillingDocumentResponse> revalidateQuote(@PathVariable String quoteNumber,
                                                                    @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.RevalidateQuoteRequest request) {
         return ResponseEntity.ok(billingDocumentService.revalidateQuote(quoteNumber, request));
+    }
+
+    /**
+     * Lot B14 : modification d'une facture non payee. Un brouillon change aussitot ; une facture
+     * emise attend l'approbation du centre de la facturation (decision par /approvals/...).
+     */
+    @PostMapping("/invoices/{invoiceNumber}/change-requests")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.InvoiceChangeResponse> requestInvoiceChange(
+            @PathVariable String invoiceNumber,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.RequestInvoiceChangeRequest request) {
+        return ResponseEntity.ok(invoiceChangeService.request(invoiceNumber, request));
+    }
+
+    @GetMapping("/invoices/{invoiceNumber}/change-requests")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.InvoiceChangeResponse>> invoiceChanges(
+            @PathVariable String invoiceNumber) {
+        return ResponseEntity.ok(invoiceChangeService.list(invoiceNumber));
+    }
+
+    @PatchMapping("/invoices/change-requests/{id}/cancel")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.InvoiceChangeResponse> cancelInvoiceChange(@PathVariable Long id) {
+        return ResponseEntity.ok(invoiceChangeService.cancel(id));
     }
 
     @PatchMapping("/quotes/{quoteNumber}/mark-viewed")

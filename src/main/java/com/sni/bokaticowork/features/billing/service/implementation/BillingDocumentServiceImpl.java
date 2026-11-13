@@ -676,6 +676,144 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         return mapper.toResponse(saved);
     }
 
+    // ------------------------------------------------------------------ lot B14 : facture modifiee apres approbation
+
+    /** Lignes telles qu'elles seraient apres les modifications (ajouts, changements, retraits par rang). */
+    List<CreateBillingDocumentLineRequest> projectedLines(BillingDocument document, List<UpdateBillingDocumentLineRequest> updates) {
+        java.util.Map<Integer, CreateBillingDocumentLineRequest> byOrder = new java.util.LinkedHashMap<>();
+        for (BillingDocumentLine line : lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document)) {
+            byOrder.put(line.getLineOrder(), toCreateLineRequest(line));
+        }
+        if (updates != null) {
+            for (UpdateBillingDocumentLineRequest update : updates) {
+                if ("REMOVE".equalsIgnoreCase(update.action())) {
+                    byOrder.remove(update.lineOrder());
+                } else {
+                    byOrder.put(update.lineOrder(), toUpdateLineAsCreate(update));
+                }
+            }
+        }
+        return new ArrayList<>(byOrder.values());
+    }
+
+    /** Total TTC apres les modifications, par le meme calcul que la creation. */
+    BigDecimal projectedTotal(BillingDocument document, UpdateBillingDocumentRequest changes) {
+        List<CreateBillingDocumentLineRequest> lines = projectedLines(document, changes.lines());
+        if (lines.isEmpty()) {
+            throw new BadRequestException("Une facture garde au moins une ligne");
+        }
+        if (customerSnapshotResolver.organizationOf(document.getCustomerType(), document.getCustomerCode())
+                .map(organization -> organization.vatExempt()).orElse(false)) {
+            lines = calculationService.exempted(lines);
+        }
+        return calculationService.calculate(lines, effectiveDiscounts(document, changes.discounts())).totalAmount();
+    }
+
+    private List<CreateBillingDocumentDiscountRequest> effectiveDiscounts(BillingDocument document,
+                                                                          List<CreateBillingDocumentDiscountRequest> requested) {
+        return requested != null ? requested : discountRepository.findAllByDocumentOrderByIdAsc(document).stream()
+                .map(d -> new CreateBillingDocumentDiscountRequest(d.getDiscountCode(), d.getDescription(), d.getDiscountType(), d.getValue(),
+                        d.getSourceType(), d.getSourceCode()))
+                .toList();
+    }
+
+    int currentRevision(BillingDocument document) {
+        return versionService.currentRevision(document);
+    }
+
+    /** Nouvelle version de la meme piece (facture ni scellee ni comptabilisee) ; l'ancienne reste archivee. */
+    BillingDocument applyInvoiceVersion(BillingDocument invoice, UpdateBillingDocumentRequest changes, String reason, String overrideReason,
+                                        com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService.Author author) {
+        lifecycleSupport.ensureNotLocked(invoice);
+        versionService.archive(invoice, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(invoice), "INVOICE_CHANGE");
+        if (author != null) {
+            invoice.setVersionAuthor(author.login());
+            invoice.setVersionAuthorName(author.name());
+            invoice.setVersionAuthorTitle(author.title());
+        }
+        invoice.setVersionReason(reason);
+        invoice.setVersionOrigin("INTERNAL");
+        if (changes.dueDate() != null) {
+            invoice.setDueDate(changes.dueDate());
+        }
+        if (StringUtils.hasText(changes.terms())) {
+            invoice.setTerms(changes.terms().trim());
+        }
+        if (StringUtils.hasText(changes.paymentInstructions())) {
+            invoice.setPaymentInstructions(changes.paymentInstructions().trim());
+        }
+        if (changes.internalNotes() != null) {
+            invoice.setInternalNotes(StringUtils.hasText(changes.internalNotes()) ? changes.internalNotes().trim() : null);
+        }
+        applyFullEdit(invoice, changes);
+        String override = discountGuard.enforce(discountGuard.evaluate(lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(invoice),
+                invoice.getSubtotalAmount(), invoice.getDiscountAmount()), overrideReason);
+        if (override != null) {
+            invoice.setDiscountOverrideReason(override);
+            invoice.setDiscountOverrideBy(author == null ? currentUserName() : author.login());
+            invoice.setDiscountOverrideAt(Instant.now());
+        }
+        BillingDocument saved = documentRepository.save(invoice);
+        eventWriter.write(saved, "INVOICE_REVISED", java.util.Map.of("reason", reason, "revision", versionService.currentRevision(saved)));
+        return saved;
+    }
+
+    /**
+     * Facture scellee ou deja comptabilisee (D8) : la piece ne change pas. Une rectificative reprend la
+     * facture modifiee et devient sa nouvelle version ; la facture est annulee (avoir si elle est
+     * scellee), ce qui corrige les ecritures par contre-passation et nouvelle piece.
+     */
+    BillingDocument replaceWithCorrective(BillingDocument original, UpdateBillingDocumentRequest changes, String reason, String overrideReason,
+                                          com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService.Author author) {
+        List<CreateBillingDocumentLineRequest> lines = projectedLines(original, changes.lines());
+        List<CreateBillingDocumentClauseRequest> clauses = changes.clauses() != null ? changes.clauses()
+                : clauseRepository.findAllByDocumentOrderByDisplayOrderAscIdAsc(original).stream()
+                .map(clause -> new CreateBillingDocumentClauseRequest(clause.getClauseCode(), clause.getTitle(), clause.getBody(), clause.getDisplayOrder()))
+                .toList();
+        BillingDocumentResponse created = create(new CreateBillingDocumentRequest(BillingDocumentType.CORRECTIVE_INVOICE,
+                original.getCustomerType(), original.getCustomerCode(), original.getCustomerName(), original.getCustomerEmail(),
+                original.getCustomerPhone(), original.getBillingAddressJson(), "INVOICE", original.getDocumentNumber(),
+                StringUtils.hasText(changes.title()) ? changes.title().trim() : original.getTitle(),
+                StringUtils.hasText(changes.description()) ? changes.description().trim() : original.getDescription(),
+                StringUtils.hasText(changes.terms()) ? changes.terms().trim() : original.getTerms(),
+                original.getCurrency(), LocalDate.now(), changes.dueDate() != null ? changes.dueDate() : original.getDueDate(),
+                original.getMetadataJson(), lines, effectiveDiscounts(original, changes.discounts()), clauses,
+                original.getPaymentReference(),
+                StringUtils.hasText(changes.paymentInstructions()) ? changes.paymentInstructions().trim() : original.getPaymentInstructions(),
+                original.getBankDetailsJson(), null, original.getCustomerReference(), original.getPoNumber(), original.getProjectCode(),
+                original.getSalespersonCode(), original.getDeliveryAddressJson(), original.getLanguage(), original.getExchangeRate(), null,
+                original.getCompanyCustomerCode() == null ? CreateBillingDocumentRequest.NO_COMPANY : original.getCompanyCustomerCode()));
+        BillingDocument corrective = serviceByNumber(created.documentNumber());
+        corrective.setOriginalDocumentNumber(original.getDocumentNumber());
+        corrective.setOriginalDocumentType(original.getDocumentType().name());
+        corrective.setCreditNoteReason(reason);
+        corrective.setVersionReason(reason);
+        corrective.setVersionOrigin("INTERNAL");
+        if (author != null) {
+            corrective.setCreatedBy(author.login());
+            corrective.setCreatedByName(author.name());
+            corrective.setCreatedByTitle(author.title());
+            corrective.setVersionAuthor(author.login());
+            corrective.setVersionAuthorName(author.name());
+            corrective.setVersionAuthorTitle(author.title());
+        }
+        documentRepository.save(corrective);
+        fiscalAuditService.log(FiscalAuditService.CORRECTIVE_INVOICE_CREATED, "BILLING_DOCUMENT", corrective.getDocumentNumber(),
+                original.getDocumentNumber(), "reason=" + reason);
+        issue(corrective.getDocumentNumber(), overrideReason);
+        if (Boolean.TRUE.equals(original.getLocked())) {
+            validate(corrective.getDocumentNumber());
+        }
+        BillingDocument cancelled = cancelAndArchive(original.getDocumentNumber(),
+                "Remplacée par la facture rectificative " + corrective.getDocumentNumber() + " : " + reason);
+        cancelled.setReplacedByDocumentNumber(corrective.getDocumentNumber());
+        documentRepository.save(cancelled);
+        BillingDocument result = serviceByNumber(corrective.getDocumentNumber());
+        eventWriter.write(result, "INVOICE_REPLACED_BY_CORRECTIVE", java.util.Map.of("originalDocumentNumber", original.getDocumentNumber(),
+                "reason", reason));
+        return result;
+    }
+
     private long revisionValidityDays() {
         return platformSettings == null ? 30 : platformSettings.number(QUOTE_REVISION_VALIDITY_DAYS_KEY, 30);
     }

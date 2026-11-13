@@ -410,4 +410,8 @@ public class BillingDocument {
     /** CLIENT_PROPOSAL (proposition du client), COUNTER_PROPOSAL (contre-proposition) ou INTERNAL. */
     @Column(name = "version_origin", length = 30)
     private String versionOrigin;
+
+    /** Lot B14 (D8) : rectificative qui remplace cette facture, presentee comme sa nouvelle version. */
+    @Column(name = "replaced_by_document_number", length = 60)
+    private String replacedByDocumentNumber;
 }
