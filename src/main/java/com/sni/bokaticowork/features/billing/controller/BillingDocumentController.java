@@ -36,6 +36,7 @@ import com.sni.bokaticowork.features.payment.dto.response.PayInvoiceResponse;
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -64,6 +65,7 @@ public class BillingDocumentController {
     private final com.sni.bokaticowork.features.billing.service.implementation.DepositService depositService;
     private final com.sni.bokaticowork.features.billing.service.implementation.BillingSendingService sendingService;
     private final com.sni.bokaticowork.features.billing.service.implementation.CustomerChangeService customerChangeService;
+    private final com.sni.bokaticowork.features.billing.service.implementation.CustomerStatementService customerStatementService;
 
     private final BillingDocumentService billingDocumentService;
     private final BillingDocumentPdfService billingDocumentPdfService;
@@ -512,12 +514,39 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.customerStatement(customerType, customerCode, pageable));
     }
 
+    /** Lot B9 : releve PDF d'une organisation ou d'un membre, sur une periode. */
+    @GetMapping("/customers/{customerType}/{customerCode}/statement.pdf")
+    public ResponseEntity<byte[]> statementPdf(@PathVariable String customerType, @PathVariable String customerCode,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + customerStatementService.fileName(customerType, customerCode, from, to) + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(customerStatementService.pdf(customerType, customerCode, from, to));
+    }
+
+    /** Lot B9 : envoi du releve par courriel (destinataires, copie, copie cachee). */
+    @PostMapping("/customers/{customerType}/{customerCode}/statement/send")
+    public ResponseEntity<Boolean> sendStatement(@PathVariable String customerType, @PathVariable String customerCode,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.SendStatementRequest request) {
+        return ResponseEntity.ok(customerStatementService.send(customerType, customerCode, request));
+    }
+
     @GetMapping("/customers/{customerType}/{customerCode}/statement.csv")
     public ResponseEntity<String> statementCsv(
             @PathVariable String customerType,
             @PathVariable String customerCode,
             @PageableDefault(size = 500, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        CustomerStatementResponse statement = billingDocumentService.customerStatement(customerType, customerCode, pageable);
+        // Lot B9 (E13) : tout le releve, page apres page, plus seulement la premiere.
+        CustomerStatementResponse statement = billingDocumentService.customerStatement(customerType, customerCode,
+                PageRequest.of(0, 500, pageable.getSort()));
+        java.util.List<BillingDocumentResponse> all = new java.util.ArrayList<>(statement.documents());
+        for (int page = 1; page < statement.totalPages(); page++) {
+            all.addAll(billingDocumentService.customerStatement(customerType, customerCode, PageRequest.of(page, 500, pageable.getSort())).documents());
+        }
+        statement = new CustomerStatementResponse(statement.customerType(), statement.customerCode(), statement.totalInvoiced(), statement.totalPaid(),
+                statement.totalBalanceDue(), statement.totalCreditAvailable(), statement.netBalanceDue(), statement.totalDraft(), all, 0, all.size(),
+                all.size(), 1, statement.accountingBalance());
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"statement-" + customerType + "-" + customerCode + ".csv\"")
                 .contentType(MediaType.parseMediaType("text/csv"))

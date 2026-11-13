@@ -112,7 +112,12 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
         BigDecimal tCurrent = BigDecimal.ZERO, t1_30 = BigDecimal.ZERO, t31_60 = BigDecimal.ZERO,
                 t61_90 = BigDecimal.ZERO, tOver90 = BigDecimal.ZERO;
 
+        String wanted = StringUtils.hasText(currency) ? currency.trim().toUpperCase() : "XAF";
         for (BillingDocument doc : documents) {
+            // Lot B9 (E11) : une devise par balance, jamais de cumul entre devises.
+            if (!wanted.equalsIgnoreCase(doc.getCurrency() == null ? "XAF" : doc.getCurrency())) {
+                continue;
+            }
             BigDecimal balanceDue = doc.getBalanceDue();
             LocalDate dueDate = doc.getDueDate();
             long daysOverdue = 0;
@@ -155,7 +160,7 @@ public class BillingRecoverableServiceImpl implements BillingRecoverableService 
 
         return new BillingAgingReportResponse(
                 Instant.now(),
-                currency != null ? currency.toUpperCase() : "XAF",
+                wanted,
                 new BillingAgingReportResponse.AgingSummary(
                         new BillingAgingReportResponse.AgingBucket(cCurrent, tCurrent),
                         new BillingAgingReportResponse.AgingBucket(c1_30, t1_30),

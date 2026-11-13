@@ -26,6 +26,13 @@ public record CustomerStatementResponse(
         BigDecimal netBalanceDue,
         /** Les factures en preparation · pour information, hors de tout solde. */
         BigDecimal totalDraft,
-        List<BillingDocumentResponse> documents
+        List<BillingDocumentResponse> documents,
+        /** Lot B9 (E13) : pagination du releve. */
+        int page,
+        int size,
+        long totalElements,
+        int totalPages,
+        /** Lot B9 : solde du compte client (411) en comptabilite ; vide tant qu'aucune piece ne le porte. */
+        BigDecimal accountingBalance
 ) {
 }

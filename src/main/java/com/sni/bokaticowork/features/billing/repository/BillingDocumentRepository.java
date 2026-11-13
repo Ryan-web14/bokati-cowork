@@ -239,20 +239,12 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                                  @Param("searchText") String searchText,
                                  Pageable pageable);
 
-    @Query(nativeQuery = true,
-            value = """
-                    SELECT *
-                    FROM billing_document
-                    WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
-                      AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
-                    ORDER BY created_at DESC
-                    """,
-            countQuery = """
-                    SELECT COUNT(*)
-                    FROM billing_document
-                    WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
-                      AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
-                    """)
+    /** Lot B9 (E13) : le tri vient de la demande (Pageable), plus d'ordre fige. */
+    @Query("""
+            SELECT d FROM BillingDocument d
+            WHERE upper(trim(d.customerType)) = upper(trim(:customerType))
+              AND upper(trim(d.customerCode)) = upper(trim(:customerCode))
+            """)
     Page<BillingDocument> statementDocuments(@Param("customerType") String customerType,
                                              @Param("customerCode") String customerCode,
                                              Pageable pageable);
@@ -503,4 +495,11 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
             """)
     @org.springframework.data.jpa.repository.Modifying
     int expireProformas();
+
+    /** Lot B9 : solde debiteur du client au 411 (pieces validees) ; vide sans piece. */
+    @Query(nativeQuery = true, value = """
+            SELECT SUM(l.debit - l.credit) FROM acc_entry_line l JOIN acc_entry e ON e.id = l.entry_id
+            WHERE l.account_number LIKE '411%' AND l.third_party_code = :customerCode AND e.status IN ('VALIDATED', 'REVERSED')
+            """)
+    java.math.BigDecimal accountingBalance(@Param("customerCode") String customerCode);
 }

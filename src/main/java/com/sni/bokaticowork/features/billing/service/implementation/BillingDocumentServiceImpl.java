@@ -170,6 +170,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final org.springframework.beans.factory.ObjectProvider<DepositService> depositServices;
     /** Lot B11 : affaires. */
     private final org.springframework.beans.factory.ObjectProvider<DealService> dealServices;
+    /** Lot B9 : echeanciers suivant les paiements. */
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.billing.service.interfaces.PaymentScheduleService> scheduleServices;
     /** Lot B7 : reservation et sortie de stock. */
     private final org.springframework.beans.factory.ObjectProvider<BillingStockService> stockServices;
     /** Lot B7 : disponibilite des ressources. */
@@ -2403,9 +2405,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     @Transactional(readOnly = true)
     public CustomerStatementResponse customerStatement(String customerType, String customerCode, Pageable pageable) {
+        // Lot B9 (E13) : tri demande respecte (champs autorises), pagination complete.
         Pageable unsortedPageable = pageable.isPaged()
-                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
-                : pageable;
+                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), statementSort(pageable.getSort()))
+                : PageRequest.of(0, Integer.MAX_VALUE, statementSort(pageable.getSort()));
         String normalizedCustomerCode = requiredCustomerCode(customerCode);
         String normalizedCustomerType = normalizeCustomerType(customerType, normalizedCustomerCode);
         var documents = documentRepository.statementDocuments(normalizedCustomerType, normalizedCustomerCode, unsortedPageable).map(mapper::toResponse);
@@ -2420,7 +2423,28 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // debiteur pour autant, il garde un credit. Le net s'arrete donc a zero.
         BigDecimal net = balance.subtract(creditAvailable).max(BigDecimal.ZERO);
         return new CustomerStatementResponse(normalizedCustomerType, normalizedCustomerCode,
-                totalInvoiced, totalPaid, balance, creditAvailable, net, draft, documents.getContent());
+                totalInvoiced, totalPaid, balance, creditAvailable, net, draft, documents.getContent(),
+                documents.getNumber(), documents.getSize(), documents.getTotalElements(), documents.getTotalPages(),
+                accountingBalance(normalizedCustomerCode));
+    }
+
+    /** Champs de tri du releve ; date de creation decroissante par defaut. */
+    private static org.springframework.data.domain.Sort statementSort(org.springframework.data.domain.Sort requested) {
+        java.util.Set<String> allowed = java.util.Set.of("createdAt", "issueDate", "dueDate", "totalAmount", "balanceDue", "paidAmount",
+                "documentNumber", "status", "documentType");
+        List<org.springframework.data.domain.Sort.Order> orders = requested == null ? List.of()
+                : requested.stream().filter(order -> allowed.contains(order.getProperty())).toList();
+        return orders.isEmpty() ? org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")
+                : org.springframework.data.domain.Sort.by(orders);
+    }
+
+    /** Lot B9 (E13) : solde du compte client (411) quand la comptabilite en porte des pieces ; vide sinon. */
+    private BigDecimal accountingBalance(String customerCode) {
+        try {
+            return documentRepository.accountingBalance(customerCode);
+        } catch (RuntimeException exception) {
+            return null;
+        }
     }
 
     private static BigDecimal asBigDecimal(Object value) {
@@ -2578,8 +2602,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         return saved;
     }
 
-    /** Lot B3 : une facture d'acompte encaissee fait avancer son acompte et son devis. */
+    /** Lot B3 : une facture d'acompte encaissee fait avancer son acompte et son devis ; lot B9 : l'echeancier suit. */
     private void depositHook(BillingDocument document) {
+        var schedules = scheduleServices == null ? null : scheduleServices.getIfAvailable();
+        if (schedules != null) {
+            schedules.syncWithInvoice(document);
+        }
         DepositService deposits = depositServices == null ? null : depositServices.getIfAvailable();
         if (deposits != null && StringUtils.hasText(document.getDepositForDocumentNumber())) {
             deposits.onDepositInvoicePayment(document);

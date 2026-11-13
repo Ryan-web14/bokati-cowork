@@ -76,4 +76,8 @@ public class PaymentSchedule {
     void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    /** Lot B9 : deja paye sur la facture a la creation de l'echeancier (hors echeances). */
+    @Column(name = "paid_before", precision = 19, scale = 4)
+    private BigDecimal paidBefore;
 }

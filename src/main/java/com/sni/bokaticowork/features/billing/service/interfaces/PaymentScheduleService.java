@@ -11,4 +11,7 @@ public interface PaymentScheduleService {
     PaymentScheduleResponse payInstallment(String installmentNumber, PayInvoiceRequest request);
     PaymentScheduleResponse cancelSchedule(String scheduleNumber);
     int markOverdueInstallments();
+
+    /** Lot B9 (E12) : repartit ce qui est paye sur la facture sur les echeances, dans l'ordre. */
+    void syncWithInvoice(com.sni.bokaticowork.features.billing.model.BillingDocument document);
 }
