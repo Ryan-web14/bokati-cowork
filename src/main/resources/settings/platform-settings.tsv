@@ -79,10 +79,17 @@ accounting.fixed-asset.supplier-account	ACCOUNTING	TEXT	LIVE	481	Immobilisations
 accounting.fixed-asset.vat-regularization-account	ACCOUNTING	TEXT	LIVE	658	Immobilisations : compte de charge des regularisations de TVA
 accounting.fixed-asset.vat-regularization-years	ACCOUNTING	INTEGER	LIVE	5	Immobilisations : periode de regularisation de la TVA deduite (annees)
 accounting.fixed-asset.warranty-alert-days	ACCOUNTING	INTEGER	LIVE	30	Immobilisations : jours d'alerte avant la fin d'une garantie ou d'un contrat
+accounting.forecast.history-months	ACCOUNTING	INTEGER	LIVE	3	Previsionnel de tresorerie : mois d'historique pour la moyenne du personnel et des charges courantes
+accounting.forecast.payment-term-days	ACCOUNTING	INTEGER	LIVE	30	Previsionnel de tresorerie : delai de reglement d'une piece sans echeance (jours)
 accounting.lettering.auto-delay-ms	ACCOUNTING	INTEGER	LIVE	600000	Intervalle du lettrage automatique des comptes clients (millisecondes)
 accounting.lettering.difference-threshold	ACCOUNTING	INTEGER	LIVE	500	Ecart de reglement maximal au lettrage (XAF)
 accounting.lettering.gain-account	ACCOUNTING	TEXT	LIVE	758	Compte des ecarts de reglement favorables
 accounting.lettering.loss-account	ACCOUNTING	TEXT	LIVE	658	Compte des ecarts de reglement defavorables
+accounting.liasse.accountant	ACCOUNTING	TEXT	LIVE		Liasse : expert-comptable
+accounting.liasse.activity	ACCOUNTING	TEXT	LIVE	Location d'espaces de travail partages et services associes	Liasse : activite principale
+accounting.liasse.auditor	ACCOUNTING	TEXT	LIVE		Liasse : commissaire aux comptes
+accounting.liasse.tax-office	ACCOUNTING	TEXT	LIVE		Liasse : centre des impots de rattachement
+accounting.liasse.tax-regime	ACCOUNTING	TEXT	LIVE	Reel normal	Liasse : regime fiscal
 accounting.loan.accrual-journal	ACCOUNTING	TEXT	LIVE	OD	Journal des interets courus des emprunts
 accounting.loan.alert-days	ACCOUNTING	INTEGER	LIVE	7	Alerte des comptables avant une echeance d'emprunt (jours)
 accounting.manual-entry.second-validation-threshold	ACCOUNTING	INTEGER	LIVE	0	Montant au-dela duquel une piece manuelle est validee par un autre comptable (0 : jamais)
@@ -148,6 +155,12 @@ accounting.sales.payment-delay-minutes	ACCOUNTING	INTEGER	LIVE	5	Delai avant com
 accounting.sales.unallocated-account	ACCOUNTING	TEXT	LIVE	4719	Compte de liaison des encaissements non imputes et du portefeuille
 accounting.sales.vat-account	ACCOUNTING	TEXT	LIVE	4431	Compte de TVA facturee
 accounting.start-date	ACCOUNTING	TEXT	LIVE	2026-01-01	Date de bascule : les faits anterieurs ne sont comptabilises que par la reprise
+accounting.tax.corporate-rate	ACCOUNTING	DECIMAL	LIVE	28	Taux de l'impot sur le resultat (en %) ; a valider par l'expert-comptable
+accounting.tax.expense-account	ACCOUNTING	TEXT	LIVE	891	Compte de charge de l'impot sur le resultat
+accounting.tax.journal	ACCOUNTING	TEXT	LIVE	OD	Journal de l'ecriture d'impot sur le resultat
+accounting.tax.minimum-rate	ACCOUNTING	DECIMAL	LIVE	1	Minimum de perception sur le chiffre d'affaires (en %) ; a valider par l'expert-comptable
+accounting.tax.opening-loss	ACCOUNTING	DECIMAL	LIVE	0	Deficits reportables a l'ouverture du premier exercice suivi
+accounting.tax.payable-account	ACCOUNTING	TEXT	LIVE	441	Compte de dette de l'impot sur le resultat
 accounting.unbalanced-entry.blocks-period-close	ACCOUNTING	BOOLEAN	LIVE	true	Un ecart non regularise bloque le verrouillage de la periode
 accounting.unbalanced-entry.policy	ACCOUNTING	ENUM	LIVE	HOLD	Piece desequilibree : HOLD (attente), SUSPENSE_ACCOUNT (compte d'attente) ou ACCEPT
 accounting.unbalanced-entry.suspense-account	ACCOUNTING	TEXT	LIVE	4718	Compte d'attente d'equilibrage

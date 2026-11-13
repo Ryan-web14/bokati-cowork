@@ -327,7 +327,9 @@ class ProvisionF19IT extends PostgresIntegrationTestBase {
                 .amount(new BigDecimal(amount)).currency("XAF").status(PaymentIntentStatus.SUCCEEDED).build());
         return transactions.save(PaymentTransaction.builder().transactionNumber(number).paymentIntent(intent).paymentMethod(PaymentMethod.CASH)
                 .amount(new BigDecimal(amount)).currency("XAF").status(PaymentTransactionStatus.SUCCEEDED)
-                .paidAt(paidOn.atTime(10, 0).atZone(ZONE).toInstant()).cashSessionNumber(session).build());
+                // Un paiement du jour est date d'une minute avant maintenant : a 10 h il serait futur la nuit, et la comptabilite l'ignorerait.
+                .paidAt(paidOn.equals(LocalDate.now(ZONE)) ? Instant.now().minusSeconds(60) : paidOn.atTime(10, 0).atZone(ZONE).toInstant())
+                .cashSessionNumber(session).build());
     }
 
     private static void as(String user, String... rights) {
