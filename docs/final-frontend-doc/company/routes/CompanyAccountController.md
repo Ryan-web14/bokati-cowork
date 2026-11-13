@@ -168,7 +168,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `blockedBy` | texte |  |  |
 | `blockedAt` | date-heure ISO 8601 UTC |  |  |
 | `businessCode` | texte |  |  |
-| `currencyCode` | texte |  | devise de facturation de l'organisation (code ISO à 3 lettres) |
+| `currencyCode` | texte |  |  |
 | `membersCount` | entier int64 ⚠ |  |  |
 | `activeSubscriptions` | entier |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
@@ -188,7 +188,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `vatRegime` | enum : `SUBJECT`, `EXEMPT` |  |  |
 | `vatExemptionNote` | texte |  | longueur min `0`, longueur max `500` |
 | `email` | string (email) |  |  |
-| `billingEmail` | string (email) |  |  |
+| `billingEmail` | texte |  |  |
 | `phone` | texte | oui | longueur min `1` |
 | `website` | texte |  |  |
 | `address` | [AddressRequest](#m-AddressRequest) |  |  |
@@ -202,12 +202,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `billingEmail` | string (email) |  |  |
+| `billingEmail` | texte |  |  |
 | `billingAddress` | [AddressRequest](#m-AddressRequest) |  |  |
 | `paymentTermsDays` | entier |  |  |
 | `creditLimit` | nombre décimal |  |  |
 | `removeCreditLimit` | booléen |  |  |
-| `currencyCode` | texte |  | longueur `3` ; code ISO d'une devise connue (`XAF`, `EUR`, `USD`...) ; absent : devise inchangée ; inconnue : `400` « Devise inconnue » |
+| `currencyCode` | texte |  | longueur min `3`, longueur max `3` |
 
 <a id="m-CompanyDtos-BlockRequest"></a>
 #### CompanyDtos.BlockRequest

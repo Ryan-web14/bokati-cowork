@@ -549,7 +549,8 @@
      "enum": [
       "EMAIL",
       "IN_APP",
-      "WEBHOOK"
+      "WEBHOOK",
+      "WHATSAPP"
      ]
     },
     "recipientType": {
@@ -655,7 +656,8 @@
      "enum": [
       "EMAIL",
       "IN_APP",
-      "WEBHOOK"
+      "WEBHOOK",
+      "WHATSAPP"
      ]
     },
     "recipientType": {
@@ -738,7 +740,8 @@
      "enum": [
       "EMAIL",
       "IN_APP",
-      "WEBHOOK"
+      "WEBHOOK",
+      "WHATSAPP"
      ]
     },
     "subject": {
@@ -782,7 +785,8 @@
      "enum": [
       "EMAIL",
       "IN_APP",
-      "WEBHOOK"
+      "WEBHOOK",
+      "WHATSAPP"
      ]
     },
     "subject": {
@@ -1050,7 +1054,8 @@
   "NotificationChannel": [
    "EMAIL",
    "IN_APP",
-   "WEBHOOK"
+   "WEBHOOK",
+   "WHATSAPP"
   ]
  },
  "names": {

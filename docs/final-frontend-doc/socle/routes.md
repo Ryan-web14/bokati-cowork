@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-38 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+48 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -44,3 +44,13 @@
 | GET | `/sni/api/v1/admin/maintenance/members/purge-candidates` | ADMIN:ACCESS | [MemberPurgeController](routes/MemberPurgeController.md#r-get-sni-api-v1-admin-maintenance-members-purge-candidates) |
 | DELETE | `/sni/api/v1/admin/maintenance/members/{memberCode}` | SYSTEM:SETTINGS | [MemberPurgeController](routes/MemberPurgeController.md#r-delete-sni-api-v1-admin-maintenance-members-membercode) |
 | GET | `/sni/api/v1/admin/maintenance/members/{memberCode}/purge-preview` | ADMIN:ACCESS | [MemberPurgeController](routes/MemberPurgeController.md#r-get-sni-api-v1-admin-maintenance-members-membercode-purge-preview) |
+| GET | `/sni/api/v1/admin/whatsapp/messages` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-get-sni-api-v1-admin-whatsapp-messages) |
+| POST | `/sni/api/v1/admin/whatsapp/messages/refresh` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-post-sni-api-v1-admin-whatsapp-messages-refresh) |
+| GET | `/sni/api/v1/admin/whatsapp/subscription` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-get-sni-api-v1-admin-whatsapp-subscription) |
+| POST | `/sni/api/v1/admin/whatsapp/subscription` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-post-sni-api-v1-admin-whatsapp-subscription) |
+| GET | `/sni/api/v1/admin/whatsapp/templates` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-get-sni-api-v1-admin-whatsapp-templates) |
+| POST | `/sni/api/v1/admin/whatsapp/templates` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-post-sni-api-v1-admin-whatsapp-templates) |
+| POST | `/sni/api/v1/admin/whatsapp/templates/defaults` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-post-sni-api-v1-admin-whatsapp-templates-defaults) |
+| POST | `/sni/api/v1/admin/whatsapp/templates/sync` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-post-sni-api-v1-admin-whatsapp-templates-sync) |
+| POST | `/sni/api/v1/admin/whatsapp/test` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-post-sni-api-v1-admin-whatsapp-test) |
+| POST | `/sni/api/v1/public/webhooks/infobip/whatsapp` | public | [WhatsAppWebhookController](routes/WhatsAppWebhookController.md#r-post-sni-api-v1-public-webhooks-infobip-whatsapp) |

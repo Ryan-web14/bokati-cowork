@@ -3474,6 +3474,78 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/client/settings",
+   "package": "features.portal.profile.controller",
+   "controller": "ClientSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/profile/controller/ClientSettingsController.java",
+   "handler": "get",
+   "declaredIn": "ClientSettingsController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.settings.userSettings.dto.response.MemberSettingsResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/client/settings",
+   "package": "features.portal.profile.controller",
+   "controller": "ClientSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/profile/controller/ClientSettingsController.java",
+   "handler": "update",
+   "declaredIn": "ClientSettingsController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateMemberSettingsRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.settings.userSettings.dto.response.MemberSettingsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/settings/notifications",
+   "package": "features.portal.profile.controller",
+   "controller": "ClientSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/profile/controller/ClientSettingsController.java",
+   "handler": "notifications",
+   "declaredIn": "ClientSettingsController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.settings.userSettings.dto.response.NotificationPreferenceResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/client/settings/notifications",
+   "package": "features.portal.profile.controller",
+   "controller": "ClientSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/profile/controller/ClientSettingsController.java",
+   "handler": "updateNotification",
+   "declaredIn": "ClientSettingsController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateNotificationPreferenceRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.settings.userSettings.dto.response.NotificationPreferenceResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/client/subscriptions",
    "package": "features.portal.subscription.controller",
    "controller": "ClientSubscriptionController",
@@ -8315,6 +8387,120 @@
     }
    }
   },
+  "MemberSettingsResponse": {
+   "type": "object",
+   "properties": {
+    "langage": {
+     "type": "string"
+    },
+    "timeZone": {
+     "type": "string"
+    },
+    "showNameOnDisplay": {
+     "type": "boolean"
+    },
+    "showEmail": {
+     "type": "boolean"
+    },
+    "showPhone": {
+     "type": "boolean"
+    },
+    "billingPref": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.response.BillingPreferencesResponse"
+    },
+    "walletPref": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.response.WalletPreferencesResponse"
+    },
+    "notificationPref": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.response.NotificationPreferenceResponse"
+     }
+    }
+   }
+  },
+  "UpdateMemberSettingsRequest": {
+   "type": "object",
+   "properties": {
+    "langage": {
+     "type": "string"
+    },
+    "timeZone": {
+     "type": "string"
+    },
+    "showNameOnDisplay": {
+     "type": "boolean"
+    },
+    "showEmail": {
+     "type": "boolean"
+    },
+    "showPhone": {
+     "type": "boolean"
+    },
+    "billingPref": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.request.BillingPreferences"
+    },
+    "walletPref": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.request.WalletPreferencesRequest"
+    },
+    "notificationPref": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateNotificationPreferenceRequest"
+     }
+    }
+   }
+  },
+  "NotificationPreferenceResponse": {
+   "type": "object",
+   "properties": {
+    "preferenceName": {
+     "type": "string"
+    },
+    "preferenceDescription": {
+     "type": "string"
+    },
+    "eventType": {
+     "type": "string"
+    },
+    "channel": {
+     "type": "string"
+    },
+    "enabled": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateNotificationPreferenceRequest": {
+   "type": "object",
+   "properties": {
+    "eventType": {
+     "type": "string",
+     "enum": [
+      "BOOKING_CONFIRMED",
+      "BOOKING_CANCELLED",
+      "BOOKING_REMINDER",
+      "BOOKING_FAILED",
+      "INVOICE_ISSUED",
+      "PAYMENT_RECEIVED",
+      "PAYMENT_FAILED"
+     ]
+    },
+    "channel": {
+     "type": "string",
+     "enum": [
+      "SMS",
+      "WHATSAPP",
+      "IN_APP",
+      "PUSH",
+      "EMAIL"
+     ]
+    },
+    "enabled": {
+     "type": "boolean"
+    }
+   }
+  },
   "ClientCancelSubscriptionRequest": {
    "type": "object",
    "properties": {
@@ -9563,6 +9749,17 @@
     },
     "optional": {
      "type": "boolean"
+    },
+    "serviceStart": {
+     "type": "string",
+     "format": "date"
+    },
+    "serviceEnd": {
+     "type": "string",
+     "format": "date"
+    },
+    "servicePeriod": {
+     "type": "string"
     }
    }
   },
@@ -10397,6 +10594,118 @@
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Window"
      }
+    }
+   }
+  },
+  "BillingPreferencesResponse": {
+   "type": "object",
+   "properties": {
+    "billingEntityType": {
+     "type": "string"
+    },
+    "billingCompanyName": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "billingEmail": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "billlingAddress": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "WalletPreferencesResponse": {
+   "type": "object",
+   "properties": {
+    "autoTopupEnabled": {
+     "type": "boolean"
+    },
+    "autoTopupThreshold": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "autoTopupAmount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "spendingDailyLimit": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "spendingWeeklyLimit": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "receiptPreference": {
+     "type": "string"
+    }
+   }
+  },
+  "BillingPreferences": {
+   "type": "object",
+   "properties": {
+    "billingEntityType": {
+     "type": "string",
+     "enum": [
+      "COMPANY",
+      "PERSONAL"
+     ]
+    },
+    "billingCompanyName": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "billingEmail": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "billlingAddress": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "WalletPreferencesRequest": {
+   "type": "object",
+   "properties": {
+    "autoTopupEnabled": {
+     "type": "boolean"
+    },
+    "autoTopupThreshold": {
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    },
+    "autoTopupAmount": {
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    },
+    "spendingDailyLimit": {
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    },
+    "spendingWeeklyLimit": {
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    },
+    "receiptPreference": {
+     "type": "string",
+     "enum": [
+      "EVERY_TRANSACTION",
+      "INVOICE_ONLY"
+     ]
     }
    }
   },
@@ -11252,6 +11561,10 @@
   "ResourceAvailabilityWindowResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse",
   "ResourceTypeResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse",
   "ClientSessionResponse": "com.sni.bokaticowork.features.portal.session.dto.response.ClientSessionResponse",
+  "MemberSettingsResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.MemberSettingsResponse",
+  "UpdateMemberSettingsRequest": "com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateMemberSettingsRequest",
+  "NotificationPreferenceResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.NotificationPreferenceResponse",
+  "UpdateNotificationPreferenceRequest": "com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateNotificationPreferenceRequest",
   "SubscriptionStatus": "com.sni.bokaticowork.features.subscription.subscription.enums.SubscriptionStatus",
   "ClientCancelSubscriptionRequest": "com.sni.bokaticowork.features.portal.subscription.dto.request.ClientCancelSubscriptionRequest",
   "BillingScheduleResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.BillingScheduleResponse",
@@ -11311,6 +11624,10 @@
   "AmenityResponse": "com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse",
   "ResourcePricingRuleResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse",
   "PublicResourceCalendarResponse.Day": "com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Day",
+  "BillingPreferencesResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.BillingPreferencesResponse",
+  "WalletPreferencesResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.WalletPreferencesResponse",
+  "BillingPreferences": "com.sni.bokaticowork.core.settings.userSettings.dto.request.BillingPreferences",
+  "WalletPreferencesRequest": "com.sni.bokaticowork.core.settings.userSettings.dto.request.WalletPreferencesRequest",
   "BillingDocumentResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse",
   "WalletLimitService.LimitSnapshot": "com.sni.bokaticowork.features.payment.limit.service.WalletLimitService.LimitSnapshot",
   "MobileMoneyDepositResponse.AccountDetailsResponse": "com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse.AccountDetailsResponse",

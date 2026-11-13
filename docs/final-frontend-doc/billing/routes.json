@@ -3875,6 +3875,17 @@
     },
     "optional": {
      "type": "boolean"
+    },
+    "serviceStart": {
+     "type": "string",
+     "format": "date"
+    },
+    "serviceEnd": {
+     "type": "string",
+     "format": "date"
+    },
+    "servicePeriod": {
+     "type": "string"
     }
    }
   },

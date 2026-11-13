@@ -137,7 +137,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `eventType` | texte |  |  |
 | `aggregateType` | texte |  |  |
 | `aggregateId` | texte |  |  |
-| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK` |  |  |
+| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK`, `WHATSAPP` |  |  |
 | `recipientType` | enum : `MEMBER`, `CUSTOMER`, `BUSINESS`, `ADMIN`, `GUEST`, `SYSTEM` |  |  |
 | `recipientCode` | texte |  |  |
 | `recipientEmail` | texte |  |  |
@@ -162,7 +162,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 <a id="m-NotificationChannel"></a>
 #### NotificationChannel
 
-Énumération : `EMAIL`, `IN_APP`, `WEBHOOK`
+Énumération : `EMAIL`, `IN_APP`, `WEBHOOK`, `WHATSAPP`
 
 <a id="m-NotificationDispatchResponse"></a>
 #### NotificationDispatchResponse
@@ -180,7 +180,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `eventType` | texte | oui | longueur min `1` |
 | `aggregateType` | texte |  |  |
 | `aggregateId` | texte |  |  |
-| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK` | oui |  |
+| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK`, `WHATSAPP` | oui |  |
 | `recipientType` | enum : `MEMBER`, `CUSTOMER`, `BUSINESS`, `ADMIN`, `GUEST`, `SYSTEM` |  |  |
 | `recipientCode` | texte |  |  |
 | `recipientEmail` | texte |  |  |
@@ -207,7 +207,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `templateCode` | texte |  |  |
-| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK` |  |  |
+| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK`, `WHATSAPP` |  |  |
 | `subject` | texte |  |  |
 | `templateName` | texte |  |  |
 | `bodyTemplate` | texte |  |  |
@@ -222,7 +222,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `templateCode` | texte | oui | longueur min `1` |
-| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK` | oui |  |
+| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK`, `WHATSAPP` | oui |  |
 | `subject` | texte |  |  |
 | `templateName` | texte |  |  |
 | `bodyTemplate` | texte |  |  |

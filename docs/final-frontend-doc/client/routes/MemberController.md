@@ -306,7 +306,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `whatsappPhone` | texte |  | longueur min `0`, longueur max `30` |
 | `password` | texte |  | longueur min `0`, longueur max `45` |
 | `companyName` | texte |  |  |
-| `billingEmail` | string (email) |  | longueur min `0`, longueur max `250` |
+| `billingEmail` | texte |  | longueur min `0`, longueur max `500` |
 | `address` | [AddressRequest](#m-AddressRequest) |  |  |
 | `birthDate` | date AAAA-MM-JJ |  |  |
 | `gender` | texte |  | longueur min `0`, longueur max `20` |

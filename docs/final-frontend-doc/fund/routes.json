@@ -1,0 +1,2349 @@
+{
+ "module": "fund",
+ "routes": [
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-needs",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "createNeed",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.NeedRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Need>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-needs/mine",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "myNeeds",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.fund.dto.FundDtos.Need>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-needs/submitted",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "submittedNeeds",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.fund.dto.FundDtos.Need>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "need",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Need>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "updateNeed",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.NeedRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Need>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}/reject",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "rejectNeed",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:APPROVE_L1"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.Decision",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Need>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}/submit",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "submitNeed",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Need>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}/supplier-suggestions",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "needSupplierSuggestions",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "type": "Integer"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.LineSuggestion>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}/transform",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "transform",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.TransformNeed",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}/validate",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "validateNeed",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:APPROVE_L1"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.Decision",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Need>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "all",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.fund.enums.FundRequestStatus"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-requests",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "create",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.RequestInput",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/advances",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "advances",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.fund.dto.FundDtos.AdvanceRow>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/delegations",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "delegations",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.fund.dto.FundDtos.DelegationView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-requests/delegations",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "delegate",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.Delegation",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.DelegationView>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/fund-requests/delegations/{id}",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "cancelDelegation",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-requests/import-legacy",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "importLegacy",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/justifications-to-validate",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "justificationsToValidate",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_JUSTIFICATION:VALIDATE"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/mine",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "mine",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/to-approve",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "toApprove",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/to-disburse",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "toDisburse",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:DISBURSE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "registerCode",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "get",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "update",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.RequestInput",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/approve",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "approve",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.Decision",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/cancel",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "cancel",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.Decision",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/complement",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "complement",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:DISBURSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.CashBack",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/disburse",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "disburse",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:DISBURSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.Disburse",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/duplicate",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "duplicate",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/expenses",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "addExpense",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.ExpenseInput",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/expenses/{line}",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "deleteExpense",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "line",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/expenses/{line}/reject",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "rejectExpense",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_JUSTIFICATION:VALIDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.Reject",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "line",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/expenses/{line}/validate",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "validateExpense",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_JUSTIFICATION:VALIDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "line",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/insight",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "insight",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Insight>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/reject",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "reject",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.Decision",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/return",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "returnRemainder",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:DISBURSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.CashBack",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/send-back",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "sendBack",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.Decision",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/submit",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "submit",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/supplier-suggestions",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "requestSupplierSuggestions",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "type": "Integer"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.LineSuggestion>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/transfer",
+   "package": "features.fund.controller",
+   "controller": "FundController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/controller/FundController.java",
+   "handler": "linkTransfer",
+   "declaredIn": "FundController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:DISBURSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.fund.dto.FundDtos.LinkTransfer",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.dto.FundDtos.Request>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}/pdf",
+   "package": "features.fund.voucher",
+   "controller": "VoucherController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/voucher/VoucherController.java",
+   "handler": "need",
+   "declaredIn": "VoucherController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/disbursements/{movementNumber}/pdf",
+   "package": "features.fund.voucher",
+   "controller": "VoucherController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/voucher/VoucherController.java",
+   "handler": "disbursement",
+   "declaredIn": "VoucherController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "movementNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/justification/pdf",
+   "package": "features.fund.voucher",
+   "controller": "VoucherController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/voucher/VoucherController.java",
+   "handler": "justification",
+   "declaredIn": "VoucherController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/pdf",
+   "package": "features.fund.voucher",
+   "controller": "VoucherController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/voucher/VoucherController.java",
+   "handler": "request",
+   "declaredIn": "VoucherController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/verify/voucher/{number}",
+   "package": "features.fund.voucher",
+   "controller": "VoucherController",
+   "source": "src/main/java/com/sni/bokaticowork/features/fund/voucher/VoucherController.java",
+   "handler": "verify",
+   "declaredIn": "VoucherController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.fund.voucher.VoucherController.Verification>"
+  }
+ ],
+ "schemas": {
+  "FundDtos.Need": {
+   "type": "object",
+   "properties": {
+    "number": {
+     "type": "string"
+    },
+    "requester": {
+     "type": "string"
+    },
+    "department": {
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "costCenter": {
+     "type": "string"
+    },
+    "subject": {
+     "type": "string"
+    },
+    "urgency": {
+     "type": "string",
+     "enum": [
+      "NORMAL",
+      "URGENT",
+      "CRITICAL"
+     ]
+    },
+    "wantedDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "SUBMITTED",
+      "VALIDATED",
+      "REJECTED",
+      "PARTIALLY_TRANSFORMED",
+      "TRANSFORMED"
+     ]
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "totalInWords": {
+     "type": "string"
+    },
+    "submittedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "decidedBy": {
+     "type": "string"
+    },
+    "decidedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "decisionNote": {
+     "type": "string"
+    },
+    "attachments": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.fund.dto.FundDtos.NeedLine"
+     }
+    }
+   }
+  },
+  "FundDtos.NeedRequest": {
+   "required": [
+    "lines",
+    "subject"
+   ],
+   "type": "object",
+   "properties": {
+    "subject": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "department": {
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "costCenter": {
+     "type": "string"
+    },
+    "urgency": {
+     "type": "string",
+     "enum": [
+      "NORMAL",
+      "URGENT",
+      "CRITICAL"
+     ]
+    },
+    "wantedDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "lines": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.fund.dto.FundDtos.NeedLineRequest"
+     }
+    },
+    "attachments": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.Decision": {
+   "type": "object",
+   "properties": {
+    "comment": {
+     "type": "string"
+    },
+    "reducedAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "SupplierSuggestionDtos.LineSuggestion": {
+   "type": "object",
+   "properties": {
+    "lineNo": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "designation": {
+     "type": "string"
+    },
+    "natureCode": {
+     "type": "string"
+    },
+    "supplierCode": {
+     "type": "string"
+    },
+    "supplier": {
+     "type": "string"
+    },
+    "result": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SuggestionResult"
+    }
+   }
+  },
+  "FundDtos.Request": {
+   "type": "object",
+   "properties": {
+    "number": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string",
+     "enum": [
+      "DIRECT_EXPENSE",
+      "ADVANCE",
+      "EXPENSE_REFUND",
+      "SUPPLIER_PAYMENT",
+      "STAFF_ADVANCE",
+      "CASH_SUPPLY",
+      "FUND_REMITTANCE"
+     ]
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "SUBMITTED",
+      "IN_APPROVAL",
+      "APPROVED",
+      "PARTIALLY_DISBURSED",
+      "DISBURSED",
+      "TO_JUSTIFY",
+      "PARTIALLY_JUSTIFIED",
+      "JUSTIFIED",
+      "SETTLED",
+      "REJECTED",
+      "CANCELLED",
+      "EXPIRED"
+     ]
+    },
+    "requester": {
+     "type": "string"
+    },
+    "requesterDepartment": {
+     "type": "string"
+    },
+    "requesterPhone": {
+     "type": "string"
+    },
+    "beneficiaryType": {
+     "type": "string",
+     "enum": [
+      "SELF",
+      "EMPLOYEE",
+      "THIRD_PARTY"
+     ]
+    },
+    "beneficiaryCode": {
+     "type": "string"
+    },
+    "beneficiaryName": {
+     "type": "string"
+    },
+    "beneficiaryIdNumber": {
+     "type": "string"
+    },
+    "beneficiaryPhone": {
+     "type": "string"
+    },
+    "registerCode": {
+     "type": "string"
+    },
+    "subject": {
+     "type": "string"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "totalInWords": {
+     "type": "string"
+    },
+    "approvedAmount": {
+     "type": "number"
+    },
+    "disbursedAmount": {
+     "type": "number"
+    },
+    "justifiedAmount": {
+     "type": "number"
+    },
+    "returnedAmount": {
+     "type": "number"
+    },
+    "complementAmount": {
+     "type": "number"
+    },
+    "remainingToJustify": {
+     "type": "number"
+    },
+    "remainingToDisburse": {
+     "type": "number"
+    },
+    "deliveryMode": {
+     "type": "string",
+     "enum": [
+      "CASH",
+      "MOBILE_MONEY",
+      "TRANSFER"
+     ]
+    },
+    "wantedDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "missionDestination": {
+     "type": "string"
+    },
+    "missionStart": {
+     "type": "string",
+     "format": "date"
+    },
+    "missionEnd": {
+     "type": "string",
+     "format": "date"
+    },
+    "unplanned": {
+     "type": "boolean"
+    },
+    "unplannedReason": {
+     "type": "string"
+    },
+    "needStatementNumber": {
+     "type": "string"
+    },
+    "transferOrderNumber": {
+     "type": "string"
+    },
+    "requiredLevels": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "currentLevel": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "lastComment": {
+     "type": "string"
+    },
+    "submittedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "approvedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "disbursedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "justificationDueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "settledAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "legacyRequestNumber": {
+     "type": "string"
+    },
+    "attachments": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.fund.dto.FundDtos.RequestLine"
+     }
+    },
+    "timeline": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.fund.dto.FundDtos.Approval"
+     }
+    },
+    "disbursements": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.fund.dto.FundDtos.Disbursement"
+     }
+    },
+    "justification": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.fund.dto.FundDtos.ExpenseLine"
+     }
+    },
+    "insight": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.fund.dto.FundDtos.Insight"
+    }
+   }
+  },
+  "FundDtos.TransformNeed": {
+   "required": [
+    "type"
+   ],
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "DIRECT_EXPENSE",
+      "ADVANCE",
+      "EXPENSE_REFUND",
+      "SUPPLIER_PAYMENT",
+      "STAFF_ADVANCE",
+      "CASH_SUPPLY",
+      "FUND_REMITTANCE"
+     ]
+    },
+    "lineNos": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "registerCode": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.RequestInput": {
+   "required": [
+    "lines",
+    "subject",
+    "type"
+   ],
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "DIRECT_EXPENSE",
+      "ADVANCE",
+      "EXPENSE_REFUND",
+      "SUPPLIER_PAYMENT",
+      "STAFF_ADVANCE",
+      "CASH_SUPPLY",
+      "FUND_REMITTANCE"
+     ]
+    },
+    "subject": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "requesterDepartment": {
+     "type": "string"
+    },
+    "requesterPhone": {
+     "type": "string"
+    },
+    "beneficiaryType": {
+     "type": "string",
+     "enum": [
+      "SELF",
+      "EMPLOYEE",
+      "THIRD_PARTY"
+     ]
+    },
+    "beneficiaryCode": {
+     "type": "string"
+    },
+    "beneficiaryName": {
+     "type": "string"
+    },
+    "beneficiaryIdNumber": {
+     "type": "string"
+    },
+    "beneficiaryPhone": {
+     "type": "string"
+    },
+    "registerCode": {
+     "type": "string"
+    },
+    "deliveryMode": {
+     "type": "string",
+     "enum": [
+      "CASH",
+      "MOBILE_MONEY",
+      "TRANSFER"
+     ]
+    },
+    "wantedDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "missionDestination": {
+     "type": "string"
+    },
+    "missionStart": {
+     "type": "string",
+     "format": "date"
+    },
+    "missionEnd": {
+     "type": "string",
+     "format": "date"
+    },
+    "unplanned": {
+     "type": "boolean"
+    },
+    "unplannedReason": {
+     "type": "string"
+    },
+    "lines": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.fund.dto.FundDtos.RequestLine"
+     }
+    },
+    "attachments": {
+     "type": "string"
+    },
+    "submit": {
+     "type": "boolean"
+    },
+    "forecastNumber": {
+     "type": "string"
+    },
+    "unplannedCode": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.AdvanceRow": {
+   "type": "object",
+   "properties": {
+    "number": {
+     "type": "string"
+    },
+    "beneficiaryCode": {
+     "type": "string"
+    },
+    "beneficiaryName": {
+     "type": "string"
+    },
+    "disbursed": {
+     "type": "number"
+    },
+    "justified": {
+     "type": "number"
+    },
+    "returned": {
+     "type": "number"
+    },
+    "remaining": {
+     "type": "number"
+    },
+    "dueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "daysOverdue": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "SUBMITTED",
+      "IN_APPROVAL",
+      "APPROVED",
+      "PARTIALLY_DISBURSED",
+      "DISBURSED",
+      "TO_JUSTIFY",
+      "PARTIALLY_JUSTIFIED",
+      "JUSTIFIED",
+      "SETTLED",
+      "REJECTED",
+      "CANCELLED",
+      "EXPIRED"
+     ]
+    }
+   }
+  },
+  "FundDtos.DelegationView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "delegator": {
+     "type": "string"
+    },
+    "delegate": {
+     "type": "string"
+    },
+    "level": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "startsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "endsOn": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "FundDtos.Delegation": {
+   "required": [
+    "delegate",
+    "endsOn",
+    "level",
+    "startsOn"
+   ],
+   "type": "object",
+   "properties": {
+    "delegate": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "level": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "startsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "endsOn": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "FundDtos.CashBack": {
+   "required": [
+    "sessionNumber"
+   ],
+   "type": "object",
+   "properties": {
+    "sessionNumber": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "signedByName": {
+     "type": "string"
+    },
+    "signature": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.Disburse": {
+   "required": [
+    "sessionNumber"
+   ],
+   "type": "object",
+   "properties": {
+    "sessionNumber": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "signedByName": {
+     "type": "string"
+    },
+    "signature": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.ExpenseInput": {
+   "required": [
+    "amount",
+    "designation",
+    "expenseDate",
+    "natureCode"
+   ],
+   "type": "object",
+   "properties": {
+    "expenseDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "natureCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "supplier": {
+     "type": "string"
+    },
+    "designation": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "vatAmount": {
+     "type": "number"
+    },
+    "section": {
+     "type": "string"
+    },
+    "documentReference": {
+     "type": "string"
+    },
+    "honourStatement": {
+     "type": "boolean"
+    },
+    "requestLineNo": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "supplierCode": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.Reject": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.Insight": {
+   "type": "object",
+   "properties": {
+    "requiredLevels": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "levelLabels": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "registerBalance": {
+     "type": "number"
+    },
+    "registerCanCover": {
+     "type": "boolean"
+    },
+    "openAdvances": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "blockedByOverdueAdvance": {
+     "type": "boolean"
+    },
+    "warning": {
+     "type": "string"
+    },
+    "budget": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.accounting.BudgetControl.Impact"
+    },
+    "budgetApproval": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.LinkTransfer": {
+   "required": [
+    "transferOrderNumber"
+   ],
+   "type": "object",
+   "properties": {
+    "transferOrderNumber": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "VoucherController.Verification": {
+   "type": "object",
+   "properties": {
+    "number": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "issuedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "printCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "status": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.NeedLine": {
+   "type": "object",
+   "properties": {
+    "lineNo": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "designation": {
+     "type": "string"
+    },
+    "quantity": {
+     "type": "number"
+    },
+    "unit": {
+     "type": "string"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "natureCode": {
+     "type": "string"
+    },
+    "supplier": {
+     "type": "string"
+    },
+    "transformedRequestNumber": {
+     "type": "string"
+    },
+    "supplierCode": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.NeedLineRequest": {
+   "required": [
+    "designation"
+   ],
+   "type": "object",
+   "properties": {
+    "designation": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "quantity": {
+     "type": "number"
+    },
+    "unit": {
+     "type": "string"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "natureCode": {
+     "type": "string"
+    },
+    "supplier": {
+     "type": "string"
+    },
+    "supplierCode": {
+     "type": "string"
+    }
+   }
+  },
+  "SupplierSuggestionDtos.SuggestionResult": {
+   "type": "object",
+   "properties": {
+    "natureCode": {
+     "type": "string"
+    },
+    "natureLabel": {
+     "type": "string"
+    },
+    "natureGuessed": {
+     "type": "boolean"
+    },
+    "inventoryCategoryCode": {
+     "type": "string"
+    },
+    "supplierCategoryCode": {
+     "type": "string"
+    },
+    "itemCode": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "limit": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "suggestions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.Suggestion"
+     }
+    }
+   }
+  },
+  "FundDtos.RequestLine": {
+   "required": [
+    "amount",
+    "designation"
+   ],
+   "type": "object",
+   "properties": {
+    "natureCode": {
+     "type": "string"
+    },
+    "designation": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "supplier": {
+     "type": "string"
+    },
+    "section": {
+     "type": "string"
+    },
+    "supplierCode": {
+     "type": "string"
+    }
+   }
+  },
+  "FundDtos.Approval": {
+   "type": "object",
+   "properties": {
+    "level": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "approver": {
+     "type": "string"
+    },
+    "decision": {
+     "type": "string",
+     "enum": [
+      "SUBMITTED",
+      "APPROVED",
+      "REJECTED",
+      "RETURNED",
+      "REDUCED",
+      "CANCELLED",
+      "EXPIRED"
+     ]
+    },
+    "amountBefore": {
+     "type": "number"
+    },
+    "amountAfter": {
+     "type": "number"
+    },
+    "comment": {
+     "type": "string"
+    },
+    "delegatedFrom": {
+     "type": "string"
+    },
+    "decidedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "FundDtos.Disbursement": {
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "enum": [
+      "DISBURSEMENT",
+      "COMPLEMENT",
+      "RETURN"
+     ]
+    },
+    "movementNumber": {
+     "type": "string"
+    },
+    "sessionNumber": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "signedByName": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "FundDtos.ExpenseLine": {
+   "type": "object",
+   "properties": {
+    "number": {
+     "type": "string"
+    },
+    "lineNo": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "expenseDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "natureCode": {
+     "type": "string"
+    },
+    "supplier": {
+     "type": "string"
+    },
+    "designation": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "vatAmount": {
+     "type": "number"
+    },
+    "section": {
+     "type": "string"
+    },
+    "documentReference": {
+     "type": "string"
+    },
+    "honourStatement": {
+     "type": "boolean"
+    },
+    "requestLineNo": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "VALIDATED",
+      "REJECTED"
+     ]
+    },
+    "rejectReason": {
+     "type": "string"
+    },
+    "enteredBy": {
+     "type": "string"
+    },
+    "validatedBy": {
+     "type": "string"
+    },
+    "validatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "supplierCode": {
+     "type": "string"
+    }
+   }
+  },
+  "BudgetControl.Impact": {
+   "type": "object",
+   "properties": {
+    "budgetActive": {
+     "type": "boolean"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.accounting.BudgetControl.LineImpact"
+     }
+    },
+    "blocked": {
+     "type": "boolean"
+    },
+    "unbudgeted": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "messages": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "SupplierSuggestionDtos.Suggestion": {
+   "type": "object",
+   "properties": {
+    "rank": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "supplierCode": {
+     "type": "string"
+    },
+    "supplierName": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "score": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "reasons": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "declared": {
+     "type": "boolean"
+    },
+    "historyCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "contractUnitPrice": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "leadTimeDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "categories": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView"
+     }
+    }
+   }
+  },
+  "BudgetControl.LineImpact": {
+   "type": "object",
+   "properties": {
+    "lineId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "itemCode": {
+     "type": "string"
+    },
+    "itemLabel": {
+     "type": "string"
+    },
+    "sectionCode": {
+     "type": "string"
+    },
+    "controlLevel": {
+     "type": "string"
+    },
+    "budgeted": {
+     "type": "number"
+    },
+    "committed": {
+     "type": "number"
+    },
+    "realized": {
+     "type": "number"
+    },
+    "available": {
+     "type": "number"
+    },
+    "requested": {
+     "type": "number"
+    },
+    "availableAfter": {
+     "type": "number"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "GREEN",
+      "ORANGE",
+      "RED"
+     ]
+    },
+    "openForecasts": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "SupplierSuggestionDtos.SupplierCategoryView": {
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "enum": [
+      "NATURE",
+      "INVENTORY_CATEGORY",
+      "SUPPLIER_CATEGORY"
+     ]
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  }
+ },
+ "enums": {
+  "FundRequestStatus": [
+   "DRAFT",
+   "SUBMITTED",
+   "IN_APPROVAL",
+   "APPROVED",
+   "PARTIALLY_DISBURSED",
+   "DISBURSED",
+   "TO_JUSTIFY",
+   "PARTIALLY_JUSTIFIED",
+   "JUSTIFIED",
+   "SETTLED",
+   "REJECTED",
+   "CANCELLED",
+   "EXPIRED"
+  ]
+ },
+ "names": {
+  "FundDtos.Need": "com.sni.bokaticowork.features.fund.dto.FundDtos.Need",
+  "FundDtos.NeedRequest": "com.sni.bokaticowork.features.fund.dto.FundDtos.NeedRequest",
+  "FundDtos.Decision": "com.sni.bokaticowork.features.fund.dto.FundDtos.Decision",
+  "SupplierSuggestionDtos.LineSuggestion": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.LineSuggestion",
+  "FundDtos.Request": "com.sni.bokaticowork.features.fund.dto.FundDtos.Request",
+  "FundDtos.TransformNeed": "com.sni.bokaticowork.features.fund.dto.FundDtos.TransformNeed",
+  "FundRequestStatus": "com.sni.bokaticowork.features.fund.enums.FundRequestStatus",
+  "FundDtos.RequestInput": "com.sni.bokaticowork.features.fund.dto.FundDtos.RequestInput",
+  "FundDtos.AdvanceRow": "com.sni.bokaticowork.features.fund.dto.FundDtos.AdvanceRow",
+  "FundDtos.DelegationView": "com.sni.bokaticowork.features.fund.dto.FundDtos.DelegationView",
+  "FundDtos.Delegation": "com.sni.bokaticowork.features.fund.dto.FundDtos.Delegation",
+  "FundDtos.CashBack": "com.sni.bokaticowork.features.fund.dto.FundDtos.CashBack",
+  "FundDtos.Disburse": "com.sni.bokaticowork.features.fund.dto.FundDtos.Disburse",
+  "FundDtos.ExpenseInput": "com.sni.bokaticowork.features.fund.dto.FundDtos.ExpenseInput",
+  "FundDtos.Reject": "com.sni.bokaticowork.features.fund.dto.FundDtos.Reject",
+  "FundDtos.Insight": "com.sni.bokaticowork.features.fund.dto.FundDtos.Insight",
+  "FundDtos.LinkTransfer": "com.sni.bokaticowork.features.fund.dto.FundDtos.LinkTransfer",
+  "VoucherController.Verification": "com.sni.bokaticowork.features.fund.voucher.VoucherController.Verification",
+  "FundDtos.NeedLine": "com.sni.bokaticowork.features.fund.dto.FundDtos.NeedLine",
+  "FundDtos.NeedLineRequest": "com.sni.bokaticowork.features.fund.dto.FundDtos.NeedLineRequest",
+  "SupplierSuggestionDtos.SuggestionResult": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SuggestionResult",
+  "FundDtos.RequestLine": "com.sni.bokaticowork.features.fund.dto.FundDtos.RequestLine",
+  "FundDtos.Approval": "com.sni.bokaticowork.features.fund.dto.FundDtos.Approval",
+  "FundDtos.Disbursement": "com.sni.bokaticowork.features.fund.dto.FundDtos.Disbursement",
+  "FundDtos.ExpenseLine": "com.sni.bokaticowork.features.fund.dto.FundDtos.ExpenseLine",
+  "BudgetControl.Impact": "com.sni.bokaticowork.core.accounting.BudgetControl.Impact",
+  "SupplierSuggestionDtos.Suggestion": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.Suggestion",
+  "BudgetControl.LineImpact": "com.sni.bokaticowork.core.accounting.BudgetControl.LineImpact",
+  "SupplierSuggestionDtos.SupplierCategoryView": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView"
+ }
+}

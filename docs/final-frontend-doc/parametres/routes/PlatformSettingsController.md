@@ -75,7 +75,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `key` | texte |  |  |
 | `label` | texte |  |  |
-| `domain` | enum : `BOOKING`, `RESOURCES`, `SUBSCRIPTIONS`, `PASSES`, `MARKETPLACE`, `PROMOTIONS`, `DOMICILIATION`, `CONTRACTS`, `SUPPORT`, `TASKS`, `CRM`, `EVENTS`, `PORTAL`, `COMPANIES`, `WALLET`, `PAYMENT`, `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT` |  |  |
+| `domain` | enum : `BOOKING`, `RESOURCES`, `SUBSCRIPTIONS`, `PASSES`, `MARKETPLACE`, `PROMOTIONS`, `DOMICILIATION`, `CONTRACTS`, `SUPPORT`, `TASKS`, `CRM`, `EVENTS`, `PORTAL`, `COMPANIES`, `WALLET`, `PAYMENT`, `ACCOUNTING`, `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT` |  |  |
 | `type` | enum : `TEXT`, `EMAIL`, `INTEGER`, `DECIMAL`, `BOOLEAN`, `CRON`, `TIME`, `TIME_RANGE`, `ENUM`, `SECRET` |  |  |
 | `effect` | enum : `LIVE`, `RESTART` |  |  |
 | `value` | texte |  |  |
@@ -87,20 +87,20 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `updatedBy` | texte |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 | `options` | texte[] |  |  |
-| `sensitive` | booléen |  | un changement prend effet aussitôt et alerte les super-administrateurs |
-| `risk` | texte |  | ce que risque un changement, à montrer avant d'enregistrer ; `null` si non sensible |
+| `sensitive` | booléen |  |  |
+| `risk` | texte |  |  |
 
 <a id="m-SettingDomain"></a>
 #### SettingDomain
 
-Énumération : `BOOKING`, `RESOURCES`, `SUBSCRIPTIONS`, `PASSES`, `MARKETPLACE`, `PROMOTIONS`, `DOMICILIATION`, `CONTRACTS`, `SUPPORT`, `TASKS`, `CRM`, `EVENTS`, `PORTAL`, `COMPANIES`, `WALLET`, `PAYMENT`, `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT`
+Énumération : `BOOKING`, `RESOURCES`, `SUBSCRIPTIONS`, `PASSES`, `MARKETPLACE`, `PROMOTIONS`, `DOMICILIATION`, `CONTRACTS`, `SUPPORT`, `TASKS`, `CRM`, `EVENTS`, `PORTAL`, `COMPANIES`, `WALLET`, `PAYMENT`, `ACCOUNTING`, `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT`
 
 <a id="m-PlatformSettingsAdminService-DomainView"></a>
 #### PlatformSettingsAdminService.DomainView
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `domain` | enum : `BOOKING`, `RESOURCES`, `SUBSCRIPTIONS`, `PASSES`, `MARKETPLACE`, `PROMOTIONS`, `DOMICILIATION`, `CONTRACTS`, `SUPPORT`, `TASKS`, `CRM`, `EVENTS`, `PORTAL`, `COMPANIES`, `WALLET`, `PAYMENT`, `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT` |  |  |
+| `domain` | enum : `BOOKING`, `RESOURCES`, `SUBSCRIPTIONS`, `PASSES`, `MARKETPLACE`, `PROMOTIONS`, `DOMICILIATION`, `CONTRACTS`, `SUPPORT`, `TASKS`, `CRM`, `EVENTS`, `PORTAL`, `COMPANIES`, `WALLET`, `PAYMENT`, `ACCOUNTING`, `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT` |  |  |
 | `label` | texte |  |  |
 | `adminEditable` | booléen |  |  |
 | `settings` | entier |  |  |

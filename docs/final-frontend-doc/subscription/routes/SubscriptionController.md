@@ -232,6 +232,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `metadataJson` | texte |  |  |
 | `autoActivate` | booléen |  |  |
 | `couponCodes` | texte[] |  |  |
+| `existingInvoiceNumber` | texte |  |  |
+| `existingPaymentNumber` | texte |  |  |
 
 <a id="m-SubscriptionStatusChangeRequest"></a>
 #### SubscriptionStatusChangeRequest

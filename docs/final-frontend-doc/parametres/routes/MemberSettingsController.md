@@ -90,7 +90,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `showPhone` | booléen |  |  |
 | `billingPref` | [BillingPreferences](#m-BillingPreferences) |  |  |
 | `walletPref` | [WalletPreferencesRequest](#m-WalletPreferencesRequest) |  |  |
-| `notificationPref` | [UpdateNotificationPreferenceRequest](#m-UpdateNotificationPreferenceRequest)[] |  | facultatif ; chaque entrée exige `eventType`, `channel`, `enabled` |
+| `notificationPref` | [UpdateNotificationPreferenceRequest](#m-UpdateNotificationPreferenceRequest)[] |  |  |
 
 <a id="m-NotificationPreferenceResponse"></a>
 #### NotificationPreferenceResponse
@@ -119,7 +119,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `billingEntityType` | texte |  |  |
 | `billingCompanyName` | texte |  | longueur min `0`, longueur max `255` |
-| `billingEmail` | texte |  | longueur min `0`, longueur max `255` |
+| `billingEmail` | texte |  | longueur min `0`, longueur max `500` |
 | `billlingAddress` | texte |  | longueur min `0`, longueur max `255` |
 
 <a id="m-WalletPreferencesResponse"></a>
@@ -132,7 +132,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `autoTopupAmount` | entier |  |  |
 | `spendingDailyLimit` | entier |  |  |
 | `spendingWeeklyLimit` | entier |  |  |
-| `receiptPreference` | enum : `EVERY_TRANSACTION`, `INVOICE_ONLY` |  |  |
+| `receiptPreference` | texte |  |  |
 
 <a id="m-BillingPreferences"></a>
 #### BillingPreferences
@@ -140,8 +140,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `billingEntityType` | enum : `COMPANY`, `PERSONAL` |  |  |
-| `billingCompanyName` | texte |  | longueur min `0`, longueur max `255` |
-| `billingEmail` | texte |  | longueur min `0`, longueur max `255` |
+| `billingCompanyName` | texte |  | longueur min `0`, longueur max `150` |
+| `billingEmail` | texte |  | longueur min `0`, longueur max `500` |
 | `billlingAddress` | texte |  | longueur min `0`, longueur max `255` |
 
 <a id="m-WalletPreferencesRequest"></a>
@@ -153,237 +153,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `autoTopupThreshold` | entier |  | min `0` |
 | `autoTopupAmount` | entier |  | min `0` |
 | `spendingDailyLimit` | entier |  | min `0` |
-| `spendingWeeklyLimit` | entier |  | min `0` ; `0` retire le plafond |
+| `spendingWeeklyLimit` | entier |  | min `0` |
 | `receiptPreference` | enum : `EVERY_TRANSACTION`, `INVOICE_ONLY` |  |  |
-
-<a id="m-NotificationPreferences"></a>
-#### NotificationPreferences
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `member` | [Member](#m-Member) |  |  |
-| `eventType` | enum : `BOOKING_CONFIRMED`, `BOOKING_CANCELLED`, `BOOKING_REMINDER`, `BOOKING_FAILED`, `INVOICE_ISSUED`, `PAYMENT_RECEIVED`, `PAYMENT_FAILED` |  |  |
-| `notificationChannel` | enum : `SMS`, `WHATSAPP`, `IN_APP`, `PUSH`, `EMAIL` |  |  |
-| `enabled` | booléen |  |  |
-| `preferenceName` | texte |  |  |
-| `preferenceDescription` | texte |  |  |
-
-<a id="m-Member"></a>
-#### Member
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `memberId` | texte |  |  |
-| `customer` | [Customer](#m-Customer) |  |  |
-| `user` | [Users](#m-Users) |  |  |
-| `firstname` | texte |  |  |
-| `lastname` | texte |  |  |
-| `email` | texte |  |  |
-| `phone` | texte |  |  |
-| `whatsappPhone` | texte |  |  |
-| `status` | enum : `ACTIVE`, `PENDING`, `UNDER_REVIEW`, `PENDING_CORRECTION`, `REJECTED`, `INACTIVE`, `SUSPENDED`, `ARCHIVED` |  |  |
-| `portalAccess` | booléen |  |  |
-| `portalActivatedAt` | date-heure ISO 8601 UTC |  |  |
-| `kycGracePeriodEndAt` | date-heure ISO 8601 UTC |  |  |
-| `avatarUrl` | texte |  |  |
-| `createByAdmin` | booléen |  |  |
-| `createdAt` | date-heure ISO 8601 UTC |  |  |
-| `updatedAt` | date-heure ISO 8601 UTC |  |  |
-| `deleted` | booléen |  |  |
-| `displayName` | texte |  |  |
-
-<a id="m-Customer"></a>
-#### Customer
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `customerId` | texte |  |  |
-| `type` | enum : `PERSON`, `COMPANY` |  |  |
-| `firstname` | texte |  |  |
-| `lastname` | texte |  |  |
-| `companyName` | texte |  |  |
-| `email` | texte |  |  |
-| `billingEmail` | texte |  |  |
-| `phone` | texte |  |  |
-| `whatsappPhone` | texte |  |  |
-| `address` | [Address](#m-Address) |  |  |
-| `status` | enum : `ACTIVE`, `PENDING`, `INACTIVE`, `SUSPENDED`, `ARCHIVED` |  |  |
-| `businessEntity` | [BusinessEntity](#m-BusinessEntity) |  |  |
-| `paymentTermsDays` | entier |  |  |
-| `creditLimit` | nombre décimal |  |  |
-| `billingAddress` | [Address](#m-Address) |  |  |
-| `website` | texte |  |  |
-| `defaultInvoiceLinkMode` | enum : `AUTOMATIC`, `ON_CHOICE` |  |  |
-| `blockedReason` | texte |  |  |
-| `blockedBy` | texte |  |  |
-| `blockedAt` | date-heure ISO 8601 UTC |  |  |
-| `createdAt` | date-heure ISO 8601 UTC |  |  |
-| `updatedAt` | date-heure ISO 8601 UTC |  |  |
-| `deleted` | booléen |  |  |
-| `member` | booléen |  |  |
-
-<a id="m-Users"></a>
-#### Users
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `userId` | texte |  |  |
-| `email` | texte |  |  |
-| `firstname` | texte |  |  |
-| `lastname` | texte |  |  |
-| `passwordHash` | texte |  |  |
-| `lastLogin` | date-heure locale sans fuseau |  |  |
-| `createdAt` | date-heure locale sans fuseau |  |  |
-| `updatedAt` | date-heure locale sans fuseau |  |  |
-| `deleted` | booléen |  |  |
-| `isAccountExpired` | booléen |  |  |
-| `isAccountLocked` | booléen |  |  |
-| `isAccountEnabled` | booléen |  |  |
-| `failedLoginAttempts` | entier |  |  |
-| `pendingEmail` | texte |  |  |
-| `emailVerifiedAt` | date-heure ISO 8601 UTC |  |  |
-| `emailVerifiedBy` | texte |  |  |
-| `roleUsers` | [RoleUser](#m-RoleUser)[] |  |  |
-
-<a id="m-Address"></a>
-#### Address
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `streetNumber` | texte |  |  |
-| `streetName` | texte |  |  |
-| `district` | texte |  |  |
-| `city` | texte |  |  |
-| `country` | [Country](#m-Country) |  |  |
-| `createdAt` | date-heure locale sans fuseau |  |  |
-| `updatedAt` | date-heure locale sans fuseau |  |  |
-
-<a id="m-BusinessEntity"></a>
-#### BusinessEntity
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `code` | texte |  |  |
-| `name` | texte |  |  |
-| `legalForm` | texte | oui | longueur min `1` |
-| `niuNumber` | texte |  | longueur min `0`, longueur max `18` |
-| `rccmNumber` | texte |  |  |
-| `organizationType` | enum : `SOCIETE`, `ETABLISSEMENT`, `ENTREPRENEUR_INDIVIDUEL`, `PROFESSION_LIBERALE`, `ASSOCIATION`, `ONG`, `INSTITUTION_PUBLIQUE` |  |  |
-| `legalRepresentativeName` | texte |  |  |
-| `legalRepresentativeTitle` | texte |  |  |
-| `vatRegime` | enum : `SUBJECT`, `EXEMPT` |  |  |
-| `vatExemptionNote` | texte |  |  |
-| `taxId` | texte |  |  |
-| `activity` | texte |  |  |
-| `address` | [Address](#m-Address) |  |  |
-| `phone` | texte |  |  |
-| `email` | string (email) |  |  |
-| `baseCurrency` | [Currency](#m-Currency) |  |  |
-| `status` | enum : `ACTIVE`, `INACTIVE`, `DELETED`, `BLOCKED` |  |  |
-| `deleted` | booléen |  |  |
-| `operator` | booléen |  |  |
-| `created_by` | texte |  |  |
-| `updated_by` | texte |  |  |
-| `createdAt` | date-heure locale sans fuseau |  |  |
-| `updatedAt` | date-heure locale sans fuseau |  |  |
-
-<a id="m-RoleUser"></a>
-#### RoleUser
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | [RoleUserId](#m-RoleUserId) |  |  |
-| `role` | [Role](#m-Role) |  |  |
-| `users` | [Users](#m-Users) |  |  |
-| `assignedBy` | texte |  |  |
-| `assignedAt` | date-heure locale sans fuseau |  |  |
-| `updatedAt` | date-heure locale sans fuseau |  |  |
-
-<a id="m-Country"></a>
-#### Country
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `name` | texte |  |  |
-| `countryCode` | texte |  | longueur min `2`, longueur max `3` |
-| `defaultCurrency` | [Currency](#m-Currency) |  |  |
-| `phoneCode` | texte |  |  |
-| `isOhadaMember` | booléen |  |  |
-| `deleted` | booléen |  |  |
-| `createdAt` | date-heure locale sans fuseau |  |  |
-| `updatedAt` | date-heure locale sans fuseau |  |  |
-
-<a id="m-Currency"></a>
-#### Currency
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `currencyCode` | texte |  | longueur min `3`, longueur max `3` |
-| `currencyName` | texte |  |  |
-| `createdAt` | date-heure locale sans fuseau |  |  |
-| `updatedAt` | date-heure locale sans fuseau |  |  |
-
-<a id="m-RoleUserId"></a>
-#### RoleUserId
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `userId` | entier int64 ⚠ |  |  |
-| `roleId` | entier int64 ⚠ |  |  |
-
-<a id="m-Role"></a>
-#### Role
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `name` | texte | oui | longueur min `0`, longueur max `250`, motif `^[A-Z_]+$` |
-| `displayName` | texte |  |  |
-| `description` | texte |  |  |
-| `isSystemRole` | booléen |  |  |
-| `version` | entier |  |  |
-| `createdAt` | date-heure locale sans fuseau |  |  |
-| `updatedAt` | date-heure locale sans fuseau |  |  |
-| `isActive` | booléen |  |  |
-| `rolePermissions` | [RolePermission](#m-RolePermission)[] |  |  |
-
-<a id="m-RolePermission"></a>
-#### RolePermission
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `role` | [Role](#m-Role) |  |  |
-| `permission` | [Permission](#m-Permission) |  |  |
-| `created_by` | texte |  |  |
-| `isActive` | booléen |  |  |
-| `id` | [RolePermissionId](#m-RolePermissionId) |  |  |
-
-<a id="m-Permission"></a>
-#### Permission
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `name` | texte | oui | longueur min `0`, longueur max `100`, motif `^[A-Z_]+$` |
-| `displayName` | texte | oui | longueur min `0`, longueur max `100` |
-| `module` | texte | oui | longueur min `0`, longueur max `50` |
-| `action` | texte | oui | longueur min `0`, longueur max `60` |
-| `isSystemPermission` | booléen |  |  |
-| `isActive` | booléen |  |  |
-| `fullPermissionName` | texte |  |  |
-
-<a id="m-RolePermissionId"></a>
-#### RolePermissionId
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `roleId` | entier int64 ⚠ |  |  |
-| `permissionId` | entier int64 ⚠ |  |  |

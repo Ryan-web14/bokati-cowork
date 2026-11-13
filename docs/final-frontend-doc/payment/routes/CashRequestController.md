@@ -39,7 +39,7 @@ Module [payment](../README.md) · 5 route(s).
 <a id="r-patch-sni-api-v1-cash-registers-requests-requestnumber-approve"></a>
 ### PATCH /sni/api/v1/cash-registers/requests/{requestNumber}/approve
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:APPROVE`
 - Corps JSON (obligatoire) : `ReviewCashRequestRequest`
 - Réponse : `CashRequestResponse`
 - Modèles : [CashRequestResponse](#m-CashRequestResponse), [ReviewCashRequestRequest](#m-ReviewCashRequestRequest)
@@ -52,7 +52,7 @@ Module [payment](../README.md) · 5 route(s).
 <a id="r-patch-sni-api-v1-cash-registers-requests-requestnumber-reject"></a>
 ### PATCH /sni/api/v1/cash-registers/requests/{requestNumber}/reject
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:APPROVE`
 - Corps JSON (obligatoire) : `ReviewCashRequestRequest`
 - Réponse : `CashRequestResponse`
 - Modèles : [CashRequestResponse](#m-CashRequestResponse), [ReviewCashRequestRequest](#m-ReviewCashRequestRequest)
@@ -65,7 +65,7 @@ Module [payment](../README.md) · 5 route(s).
 <a id="r-post-sni-api-v1-cash-registers-sessions-sessionnumber-requests"></a>
 ### POST /sni/api/v1/cash-registers/sessions/{sessionNumber}/requests
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:CREATE`
 - Corps JSON (obligatoire) : `CreateCashRequestRequest`
 - Réponse : `CashRequestResponse`
 - Modèles : [CashRequestResponse](#m-CashRequestResponse), [CreateCashRequestRequest](#m-CreateCashRequestRequest)
@@ -116,7 +116,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `reviewedBy` | texte | oui | longueur min `1` |
+| `reviewedBy` | texte |  |  |
 | `note` | texte |  |  |
 
 <a id="m-CreateCashRequestRequest"></a>

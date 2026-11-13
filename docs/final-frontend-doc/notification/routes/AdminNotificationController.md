@@ -57,7 +57,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `eventType` | texte |  |  |
 | `aggregateType` | texte |  |  |
 | `aggregateId` | texte |  |  |
-| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK` |  |  |
+| `channel` | enum : `EMAIL`, `IN_APP`, `WEBHOOK`, `WHATSAPP` |  |  |
 | `recipientType` | enum : `MEMBER`, `CUSTOMER`, `BUSINESS`, `ADMIN`, `GUEST`, `SYSTEM` |  |  |
 | `recipientCode` | texte |  |  |
 | `recipientEmail` | texte |  |  |

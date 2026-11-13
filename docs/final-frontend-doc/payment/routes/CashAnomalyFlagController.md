@@ -26,7 +26,7 @@ Module [payment](../README.md) · 3 route(s).
 <a id="r-post-sni-api-v1-cash-registers-anomalies-sessions-sessionnumber-analyze"></a>
 ### POST /sni/api/v1/cash-registers/anomalies/sessions/{sessionNumber}/analyze
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_VARIANCE:DECIDE`
 - Réponse : `List<CashAnomalyFlagResponse>`
 - Modèles : [CashAnomalyFlagResponse](#m-CashAnomalyFlagResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/CashAnomalyFlagController.java`, méthode `analyzeSession`
@@ -38,7 +38,7 @@ Module [payment](../README.md) · 3 route(s).
 <a id="r-patch-sni-api-v1-cash-registers-anomalies-flagnumber-review"></a>
 ### PATCH /sni/api/v1/cash-registers/anomalies/{flagNumber}/review
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_VARIANCE:DECIDE`
 - Corps JSON (obligatoire) : `ReviewCashAnomalyRequest`
 - Réponse : `CashAnomalyFlagResponse`
 - Modèles : [CashAnomalyFlagResponse](#m-CashAnomalyFlagResponse), [ReviewCashAnomalyRequest](#m-ReviewCashAnomalyRequest)
@@ -61,7 +61,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `sessionNumber` | texte |  |  |
 | `movementNumber` | texte |  |  |
 | `registerCode` | texte |  |  |
-| `anomalyType` | enum : `VARIANCE_OUTLIER`, `ROUND_NUMBER_PATTERN`, `EXCESSIVE_REFUNDS`, `EXCESSIVE_ADJUSTMENTS`, `OFF_HOURS_SESSION`, `THRESHOLD_STRUCTURING`, `NEAR_MAX_CASH_RECURRENCE` |  |  |
+| `anomalyType` | enum : `VARIANCE_OUTLIER`, `ROUND_NUMBER_PATTERN`, `EXCESSIVE_REFUNDS`, `EXCESSIVE_ADJUSTMENTS`, `OFF_HOURS_SESSION`, `THRESHOLD_STRUCTURING`, `NEAR_MAX_CASH_RECURRENCE`, `OPENING_VARIANCE`, `LONG_SESSION`, `LONG_PAUSES`, `REPEATED_REVERSALS`, `DETENTION_CAP_EXCEEDED`, `UNKNOWN_DEVICE`, `DAMAGED_NOTES`, `TRANSFER_VARIANCE` |  |  |
 | `severity` | enum : `LOW`, `MEDIUM`, `HIGH` |  |  |
 | `score` | nombre décimal |  |  |
 | `description` | texte |  |  |
@@ -84,13 +84,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 <a id="m-CashAnomalyType"></a>
 #### CashAnomalyType
 
-Énumération : `VARIANCE_OUTLIER`, `ROUND_NUMBER_PATTERN`, `EXCESSIVE_REFUNDS`, `EXCESSIVE_ADJUSTMENTS`, `OFF_HOURS_SESSION`, `THRESHOLD_STRUCTURING`, `NEAR_MAX_CASH_RECURRENCE`
+Énumération : `VARIANCE_OUTLIER`, `ROUND_NUMBER_PATTERN`, `EXCESSIVE_REFUNDS`, `EXCESSIVE_ADJUSTMENTS`, `OFF_HOURS_SESSION`, `THRESHOLD_STRUCTURING`, `NEAR_MAX_CASH_RECURRENCE`, `OPENING_VARIANCE`, `LONG_SESSION`, `LONG_PAUSES`, `REPEATED_REVERSALS`, `DETENTION_CAP_EXCEEDED`, `UNKNOWN_DEVICE`, `DAMAGED_NOTES`, `TRANSFER_VARIANCE`
 
 <a id="m-ReviewCashAnomalyRequest"></a>
 #### ReviewCashAnomalyRequest
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `reviewedBy` | texte | oui | longueur min `1` |
+| `reviewedBy` | texte |  |  |
 | `status` | enum : `OPEN`, `ACKNOWLEDGED`, `DISMISSED`, `ESCALATED`, `RESOLVED` | oui |  |
 | `note` | texte |  |  |

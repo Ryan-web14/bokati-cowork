@@ -3076,6 +3076,35 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/subscriptions/{subscriptionNumber}/activate-with-billing",
+   "package": "features.subscription.subscription.controller",
+   "controller": "SubscriptionBillingLinkController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/subscription/controller/SubscriptionBillingLinkController.java",
+   "handler": "link",
+   "declaredIn": "SubscriptionBillingLinkController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "SUBSCRIPTION:ACTIVATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.subscription.subscription.controller.SubscriptionBillingLinkController.LinkRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "subscriptionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService.LinkResult>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/subscriptions/entitlement-definitions",
@@ -4862,6 +4891,10 @@
     "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
     "kind": "admin",
     "permission": "SUBSCRIPTION:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.subscription.lifecycle.controller.SubscriptionQuoteController.AcceptRequest",
+    "required": false
    },
    "params": [
     {
@@ -8346,6 +8379,63 @@
     }
    }
   },
+  "SubscriptionBillingLinkService.LinkResult": {
+   "type": "object",
+   "properties": {
+    "subscriptionNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "PENDING_ACTIVATION",
+      "PENDING_DOCUMENTS",
+      "TRIALING",
+      "ACTIVE",
+      "GRACE_PERIOD",
+      "PAST_DUE",
+      "PAUSED",
+      "SUSPENDED",
+      "PENDING_TERMINATION",
+      "CANCELLED",
+      "EXPIRED"
+     ]
+    },
+    "link": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService.Link"
+    },
+    "cancelledInvoices": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "warnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "SubscriptionBillingLinkController.LinkRequest": {
+   "type": "object",
+   "properties": {
+    "invoiceNumber": {
+     "type": "string"
+    },
+    "paymentNumber": {
+     "type": "string"
+    },
+    "activate": {
+     "type": "boolean"
+    },
+    "force": {
+     "type": "boolean"
+    }
+   }
+  },
   "EntitlementDefinitionResponse": {
    "type": "object",
    "properties": {
@@ -9069,6 +9159,12 @@
      "items": {
       "type": "string"
      }
+    },
+    "existingInvoiceNumber": {
+     "type": "string"
+    },
+    "existingPaymentNumber": {
+     "type": "string"
     }
    }
   },
@@ -10349,6 +10445,12 @@
     "createdAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "warnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
     }
    }
   },
@@ -10416,6 +10518,17 @@
      "type": "string"
     },
     "proposalNumber": {
+     "type": "string"
+    }
+   }
+  },
+  "SubscriptionQuoteController.AcceptRequest": {
+   "type": "object",
+   "properties": {
+    "existingInvoiceNumber": {
+     "type": "string"
+    },
+    "existingPaymentNumber": {
      "type": "string"
     }
    }
@@ -11424,6 +11537,35 @@
     }
    }
   },
+  "SubscriptionBillingLinkService.Link": {
+   "type": "object",
+   "properties": {
+    "invoiceNumber": {
+     "type": "string"
+    },
+    "paymentNumber": {
+     "type": "string"
+    },
+    "invoiceTotal": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "paid": {
+     "type": "boolean"
+    },
+    "warnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
   "PlanPriceResponse": {
    "type": "object",
    "properties": {
@@ -12081,6 +12223,8 @@
   "SubscriptionAddonResponse": "com.sni.bokaticowork.features.subscription.addon.dto.SubscriptionAddonResponse",
   "SubscriptionAddonStatus": "com.sni.bokaticowork.features.subscription.addon.enums.SubscriptionAddonStatus",
   "CreateSubscriptionAddonRequest": "com.sni.bokaticowork.features.subscription.addon.dto.CreateSubscriptionAddonRequest",
+  "SubscriptionBillingLinkService.LinkResult": "com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService.LinkResult",
+  "SubscriptionBillingLinkController.LinkRequest": "com.sni.bokaticowork.features.subscription.subscription.controller.SubscriptionBillingLinkController.LinkRequest",
   "EntitlementDefinitionResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.EntitlementDefinitionResponse",
   "EntitlementType": "com.sni.bokaticowork.features.subscription.subscription.enums.EntitlementType",
   "EntitlementUnit": "com.sni.bokaticowork.features.subscription.subscription.enums.EntitlementUnit",
@@ -12131,6 +12275,7 @@
   "SubscriptionQuoteController.QuoteView": "com.sni.bokaticowork.features.subscription.lifecycle.controller.SubscriptionQuoteController.QuoteView",
   "SubscriptionQuote.Status": "com.sni.bokaticowork.features.subscription.lifecycle.model.SubscriptionQuote.Status",
   "SubscriptionQuoteController.QuoteRequest": "com.sni.bokaticowork.features.subscription.lifecycle.controller.SubscriptionQuoteController.QuoteRequest",
+  "SubscriptionQuoteController.AcceptRequest": "com.sni.bokaticowork.features.subscription.lifecycle.controller.SubscriptionQuoteController.AcceptRequest",
   "SubscriptionQuoteService.Outlook": "com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionQuoteService.Outlook",
   "SubscriptionQuoteController.ReasonRequest": "com.sni.bokaticowork.features.subscription.lifecycle.controller.SubscriptionQuoteController.ReasonRequest",
   "RolloverRecordResponse": "com.sni.bokaticowork.features.subscription.rollover.dto.RolloverRecordResponse",
@@ -12160,6 +12305,7 @@
   "PlanDerivationBatchService.Line": "com.sni.bokaticowork.features.subscription.derivation.service.PlanDerivationBatchService.Line",
   "PlanDerivationService.DeltaLine": "com.sni.bokaticowork.features.subscription.derivation.service.PlanDerivationService.DeltaLine",
   "PromotionBeneficiaryService.ImportLine": "com.sni.bokaticowork.features.subscription.promotion.pricing.audience.service.PromotionBeneficiaryService.ImportLine",
+  "SubscriptionBillingLinkService.Link": "com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService.Link",
   "PlanPriceResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PlanPriceResponse",
   "PlanBenefitResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PlanBenefitResponse",
   "PlanEntitlementResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PlanEntitlementResponse",
