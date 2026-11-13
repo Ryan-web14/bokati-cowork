@@ -41,7 +41,16 @@ public record SimulateBillingDocumentResponse(
          * permet a l'interface d'avertir pendant la saisie plutot qu'au moment d'emettre.
          */
         List<com.sni.bokaticowork.features.billing.service.support.BillingDiscountGuard.DiscountViolation> violations,
-        Boolean blocked) {
+        Boolean blocked,
+        /**
+         * Lot B13 : toutes les alertes, ligne par ligne quand elles en concernent une ({@code lineIndex},
+         * 0 pour la premiere) : prix plancher et remise maximale, stock, organisation bloquee,
+         * plafond d'encours, exoneration appliquee. {@code severity} BLOCK : l'emission sera refusee.
+         */
+        List<Alert> alerts) {
+
+    /** Alerte de simulation ; {@code lineIndex} vide pour une alerte du document. */
+    public record Alert(Integer lineIndex, String code, String severity, String message) {}
 
     /**
      * @param netAmount      brut moins remise · le montant reellement facture pour cette ligne

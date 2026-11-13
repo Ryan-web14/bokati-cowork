@@ -29,8 +29,22 @@ public record SimulateBillingDocumentRequest(
         String currency,
         String title,
         @Valid @NotEmpty List<CreateBillingDocumentLineRequest> lines,
-        @Valid List<CreateBillingDocumentDiscountRequest> discounts
+        @Valid List<CreateBillingDocumentDiscountRequest> discounts,
+        /**
+         * Lot B13 : client facture, facultatif. Present, la simulation applique ses conditions comme
+         * la creation (exoneration de TVA) et annonce le blocage et le plafond d'encours.
+         */
+        String customerType,
+        String customerCode,
+        /** Organisation pour le compte de laquelle un membre est facture, facultative. */
+        String companyCustomerCode
 ) {
+
+    /** Compatibilite : simulation sans client. */
+    public SimulateBillingDocumentRequest(BillingDocumentType documentType, String currency, String title,
+                                          List<CreateBillingDocumentLineRequest> lines, List<CreateBillingDocumentDiscountRequest> discounts) {
+        this(documentType, currency, title, lines, discounts, null, null, null);
+    }
 
     /** Type retenu · l'immense majorite des simulations portent sur une facture. */
     public BillingDocumentType resolvedDocumentType() {

@@ -81,6 +81,13 @@ public class BillingDocumentController {
      * de sorte qu'il n'y ait plus a chercher un montant a la calculatrice ni a creer un brouillon
      * pour connaitre un total.
      */
+    /** Lot B13 : calcul d'une ligne a chaque saisie (quantite, prix, remise, taxe) et des totaux. */
+    @PostMapping("/documents/simulate-line")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse> simulateLine(
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.SimulateBillingLineRequest request) {
+        return ResponseEntity.ok(billingDocumentService.simulateLine(request));
+    }
+
     @PostMapping("/documents/simulate")
     public ResponseEntity<SimulateBillingDocumentResponse> simulate(
             @Valid @RequestBody SimulateBillingDocumentRequest request) {

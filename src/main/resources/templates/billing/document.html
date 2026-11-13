@@ -113,6 +113,8 @@
         .lines tbody td.col-amt { font-weight: 700; color: #1f1430; }
         .line-name { font-weight: 700; color: #1f1430; }
         .line-sub { font-size: 8.2px; color: #1f1430; margin-top: 2px; }
+        /* Lot B13 : descriptions longues imprimees entieres, retours a la ligne gardes. */
+        .line-name, .line-sub, .detail-block { white-space: pre-line; word-wrap: break-word; }
         .line-category {
             /* nowrap : le moteur PDF calcule mal la largeur shrink-to-fit d'un inline-block
                combinant text-transform et letter-spacing, et coupait "Espace de travail" en

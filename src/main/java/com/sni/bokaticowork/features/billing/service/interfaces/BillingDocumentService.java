@@ -31,6 +31,10 @@ public interface BillingDocumentService {
      * l'interface puisse simuler puis envoyer la meme charge utile.
      */
     SimulateBillingDocumentResponse simulate(SimulateBillingDocumentRequest request);
+
+    /** Lot B13 : calcul d'une ligne en cours de saisie et des totaux du document, sans rien creer. */
+    com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse simulateLine(
+            com.sni.bokaticowork.features.billing.dto.request.SimulateBillingLineRequest request);
     BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request);
 
     /**

@@ -19,8 +19,8 @@ public record UpdateBillingDocumentLineRequest(
          * de remise maximal et la reprise de la categorie et de l'unite.
          */
         @JsonAlias("catalogSourceCode") String itemCode,
-        @NotBlank String description,
-        String detailedDescription,
+        @NotBlank @jakarta.validation.constraints.Size(max = 4000) String description,
+        @jakarta.validation.constraints.Size(max = 4000) String detailedDescription,
         BigDecimal quantity,
         BigDecimal unitPrice,
         BigDecimal discountRate,
@@ -34,7 +34,7 @@ public record UpdateBillingDocumentLineRequest(
         @JsonAlias("catalogSourceType") String sourceType,
         String sourceCode,
         String externalReference,
-        String notes,
+        @jakarta.validation.constraints.Size(max = 4000) String notes,
         Boolean optional,
         /** Voir {@link CreateBillingDocumentLineRequest#category()}. */
         String category

@@ -164,6 +164,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     /** Instantane vendeur · peut etre absent dans les tests qui construisent le service a la main. */
     private final com.sni.bokaticowork.features.billing.service.support.BillingSellerSnapshot sellerSnapshot;
     private final com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
+    private final com.sni.bokaticowork.features.billing.service.support.BillingStockGuard stockGuard;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -171,8 +172,24 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     @Transactional(readOnly = true)
     public SimulateBillingDocumentResponse simulate(SimulateBillingDocumentRequest request) {
-        BillingCalculationService.CalculatedDocument calculation =
-                calculationService.calculate(request.lines(), request.resolvedDiscounts());
+        // Lot B13 : meme calcul que la creation. Les conditions du client (exoneration) s'appliquent,
+        // le blocage et le plafond d'encours sont annonces sans refuser.
+        BillingDocumentType type = request.resolvedDocumentType();
+        boolean claim = BillingReceivables.RECEIVABLE_TYPES.contains(type);
+        List<SimulateBillingDocumentResponse.Alert> alerts = new ArrayList<>();
+        var organization = StringUtils.hasText(request.customerType()) && StringUtils.hasText(request.customerCode())
+                ? customerSnapshotResolver.organizationOf(request.customerType(), request.customerCode()).orElse(null) : null;
+        var companyTerms = StringUtils.hasText(request.customerType()) && StringUtils.hasText(request.customerCode())
+                && billingCompanyResolver != null && organizationProfile != null
+                ? billingCompanyResolver.resolve(request.customerType(), request.customerCode(), request.companyCustomerCode())
+                .flatMap(organizationProfile::of).orElse(null) : null;
+        List<CreateBillingDocumentLineRequest> lineRequests = request.lines();
+        if (organization != null && organization.vatExempt()) {
+            lineRequests = calculationService.exempted(lineRequests);
+            alerts.add(new SimulateBillingDocumentResponse.Alert(null, "VAT_EXEMPT", "INFO",
+                    organization.customerName() + " est exonérée de TVA : les lignes sont calculées hors TVA"));
+        }
+        BillingCalculationService.CalculatedDocument calculation = calculationService.calculate(lineRequests, request.resolvedDiscounts());
 
         List<SimulateBillingDocumentResponse.SimulatedLine> lines = calculation.lines().stream()
                 .map(this::simulatedLine)
@@ -188,11 +205,31 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // La simulation constate mais ne refuse jamais · c'est l'emission qui bloque.
         List<BillingDiscountGuard.DiscountViolation> violations = discountGuard.evaluate(
                 calculation.lines(), calculation.subtotalAmount(), calculation.discountAmount());
-        boolean blocked = violations.stream()
-                .anyMatch(violation -> BillingDiscountGuard.Severity.BLOCK.name().equals(violation.severity()));
+        for (BillingDiscountGuard.DiscountViolation violation : violations) {
+            alerts.add(new SimulateBillingDocumentResponse.Alert(lineIndexOf(calculation.lines(), violation), violation.type(),
+                    violation.severity(), violation.message()));
+        }
+        if (stockGuard != null) {
+            for (com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.StockAlert stock
+                    : stockGuard.evaluate(type, stockLines(lineRequests))) {
+                alerts.add(new SimulateBillingDocumentResponse.Alert(stock.lineIndex(), "STOCK", stock.severity(), stock.message()));
+            }
+        }
+        for (var terms : java.util.Arrays.asList(organization, companyTerms)) {
+            if (terms == null || !claim) {
+                continue;
+            }
+            if (terms.blocked()) {
+                alerts.add(new SimulateBillingDocumentResponse.Alert(null, "ORGANIZATION_BLOCKED", "BLOCK",
+                        "L'organisation " + terms.customerName() + " est bloquée" + (terms.blockedReason() == null ? "" : " : " + terms.blockedReason())));
+            }
+            creditLimitExcess(terms, calculation.totalAmount()).ifPresent(message ->
+                    alerts.add(new SimulateBillingDocumentResponse.Alert(null, "CREDIT_LIMIT", isSuperAdmin() ? "WARN" : "BLOCK", message)));
+        }
+        boolean blocked = alerts.stream().anyMatch(alert -> "BLOCK".equals(alert.severity()));
 
         return new SimulateBillingDocumentResponse(
-                request.resolvedDocumentType(),
+                type,
                 request.resolvedCurrency(defaultCurrency()),
                 request.title(),
                 lines,
@@ -206,7 +243,76 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 calculation.taxAmount(),
                 calculation.totalAmount(),
                 violations,
-                blocked);
+                blocked,
+                alerts);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse simulateLine(
+            com.sni.bokaticowork.features.billing.dto.request.SimulateBillingLineRequest request) {
+        // Lot B13 : la ligne saisie prend sa place parmi les autres, puis tout le document est
+        // simule par le meme calcul ; la reponse isole la ligne et ses alertes.
+        List<CreateBillingDocumentLineRequest> all = new ArrayList<>(request.lines() == null ? List.of() : request.lines());
+        int index = request.lineIndex() == null || request.lineIndex() < 0 || request.lineIndex() >= all.size()
+                ? all.size() : request.lineIndex();
+        if (index < all.size()) {
+            all.set(index, request.line());
+        } else {
+            all.add(request.line());
+        }
+        SimulateBillingDocumentResponse document = simulate(new SimulateBillingDocumentRequest(request.documentType(), request.currency(), null,
+                all, request.discounts(), request.customerType(), request.customerCode(), request.companyCustomerCode()));
+        final int lineIndex = index;
+        return new com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse(lineIndex, document.lines().get(lineIndex),
+                document.alerts().stream().filter(alert -> alert.lineIndex() != null && alert.lineIndex() == lineIndex).toList(), document);
+    }
+
+    /** Rang de la ligne visee par une alerte de remise (article et libelle), ou vide. */
+    private static Integer lineIndexOf(List<BillingDocumentLine> lines, BillingDiscountGuard.DiscountViolation violation) {
+        for (int i = 0; i < lines.size(); i++) {
+            BillingDocumentLine line = lines.get(i);
+            boolean sameItem = violation.itemCode() != null && violation.itemCode().equals(line.getItemCode());
+            boolean sameLabel = violation.lineDescription() != null && violation.lineDescription().equals(line.getDescription());
+            if ((violation.itemCode() == null || sameItem) && (violation.lineDescription() == null || sameLabel)
+                    && (violation.itemCode() != null || violation.lineDescription() != null)) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    private static List<com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line> stockLines(
+            List<CreateBillingDocumentLineRequest> lines) {
+        List<com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line> result = new ArrayList<>();
+        for (int i = 0; i < lines.size(); i++) {
+            CreateBillingDocumentLineRequest line = lines.get(i);
+            result.add(new com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line(i,
+                    StringUtils.hasText(line.itemCode()) ? line.itemCode() : line.sourceCode(), line.sourceType(), line.lineType(),
+                    line.description(), line.quantity() == null ? BigDecimal.ONE : line.quantity()));
+        }
+        return result;
+    }
+
+    /** Depassement du plafond d'encours, sans refuser : le message, ou vide. */
+    private java.util.Optional<String> creditLimitExcess(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization,
+                                                         BigDecimal amount) {
+        if (organization.creditLimit() == null) {
+            return java.util.Optional.empty();
+        }
+        java.util.Set<BillingDocumentStatus> excluded = java.util.EnumSet.noneOf(BillingDocumentStatus.class);
+        excluded.addAll(BillingReceivables.NOT_ISSUED);
+        excluded.addAll(BillingReceivables.SETTLED);
+        BigDecimal outstanding = documentRepository.sumCompanyOutstanding(organization.customerCode(),
+                BillingReceivables.RECEIVABLE_TYPES, excluded);
+        BigDecimal after = (outstanding == null ? BigDecimal.ZERO : outstanding).add(amount == null ? BigDecimal.ZERO : amount);
+        if (after.compareTo(organization.creditLimit()) <= 0) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of("Plafond d'encours dépassé pour " + organization.customerName()
+                + " : encours " + (outstanding == null ? "0" : outstanding.stripTrailingZeros().toPlainString())
+                + ", plafond " + organization.creditLimit().stripTrailingZeros().toPlainString()
+                + ". Un super-administrateur peut émettre la facture malgré tout.");
     }
 
     /**
@@ -226,22 +332,13 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     private void ensureWithinCreditLimit(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization,
                                          BigDecimal amount) {
-        if (organization.creditLimit() == null || isSuperAdmin()) {
+        if (isSuperAdmin()) {
             return;
         }
-        java.util.Set<BillingDocumentStatus> excluded = java.util.EnumSet.noneOf(BillingDocumentStatus.class);
-        excluded.addAll(BillingReceivables.NOT_ISSUED);
-        excluded.addAll(BillingReceivables.SETTLED);
-        // L'encours de l'organisation compte aussi les factures de ses membres qui lui sont reliees.
-        BigDecimal outstanding = documentRepository.sumCompanyOutstanding(organization.customerCode(),
-                BillingReceivables.RECEIVABLE_TYPES, excluded);
-        BigDecimal after = outstanding.add(amount == null ? BigDecimal.ZERO : amount);
-        if (after.compareTo(organization.creditLimit()) > 0) {
-            throw new BadRequestException("Plafond d'encours dépassé pour " + organization.customerName()
-                    + " : encours " + outstanding.stripTrailingZeros().toPlainString()
-                    + ", plafond " + organization.creditLimit().stripTrailingZeros().toPlainString()
-                    + ". Un super-administrateur peut émettre la facture malgré tout.");
-        }
+        // Meme calcul que la simulation (lot B13).
+        creditLimitExcess(organization, amount).ifPresent(message -> {
+            throw new BadRequestException(message);
+        });
     }
 
     private boolean isSuperAdmin() {
@@ -1059,6 +1156,24 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse issue(String documentNumber, String discountOverrideReason) {
         BillingDocument document = serviceByNumber(documentNumber);
         lifecycleSupport.ensureCanIssue(document);
+        if (stockGuard != null) {
+            // Lot B13 (D5) : une facture ne sort pas une marchandise absente du stock, sauf article
+            // en stock negatif autorise. Sur un devis ou une proforma, ce n'est qu'une alerte.
+            List<BillingDocumentLine> issuedLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document);
+            List<com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line> toCheck = new ArrayList<>();
+            for (int i = 0; i < issuedLines.size(); i++) {
+                BillingDocumentLine line = issuedLines.get(i);
+                if (!Boolean.TRUE.equals(line.getOptional())) {
+                    toCheck.add(new com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line(i, line.getItemCode(),
+                            line.getSourceType(), line.getLineType(), line.getDescription(), line.getQuantity()));
+                }
+            }
+            List<String> shortages = stockGuard.evaluate(document.getDocumentType(), toCheck).stream()
+                    .filter(alert -> "BLOCK".equals(alert.severity())).map(alert -> alert.message()).toList();
+            if (!shortages.isEmpty()) {
+                throw new BadRequestException(String.join(" ; ", shortages));
+            }
+        }
 
         // Les limites de remise ne bloquent qu'ici, jamais au brouillon : le commercial
         // construit son offre librement, on l'arrete avant qu'elle n'engage.
