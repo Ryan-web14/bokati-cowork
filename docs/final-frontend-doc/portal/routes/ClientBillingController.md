@@ -491,7 +491,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `lineOrder` | entier |  |  |
-| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT` |  |  |
+| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT`, `DISBURSEMENT` |  |  |
 | `itemCode` | texte |  |  |
 | `category` | texte |  |  |
 | `description` | texte |  |  |
@@ -519,6 +519,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `serviceStart` | date AAAA-MM-JJ |  |  |
 | `serviceEnd` | date AAAA-MM-JJ |  |  |
 | `servicePeriod` | texte |  |  |
+| `taxRuleCode` | texte |  |  |
 
 <a id="m-MobileMoneyDepositResponse-PayerResponse"></a>
 #### MobileMoneyDepositResponse.PayerResponse

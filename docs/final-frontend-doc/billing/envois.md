@@ -52,3 +52,9 @@ Le renvoi d'une pièce est un nouvel envoi tracé.
 ## Routes anciennes
 
 `PATCH /documents/{n}/send` trace seulement l'envoi (date, version transmise) sans rien expédier. `POST /documents/{n}/send-email` envoie au destinataire du document : préférer `POST /documents/{n}/send`.
+
+## Compléments (lots C2 et C5)
+
+- **WhatsApp par type de pièce** : devis `devis_disponible`, proforma `proforma_disponible`, avoir `avoir_emis`, facture soldée `facture_payee`, facture à régler `rappel_paiement`. Les trois premiers modèles sont à créer dans l'écran des modèles WhatsApp puis à faire approuver par Meta ; sans modèle approuvé, l'envoi WhatsApp de la pièce est noté en échec avec un message clair, le courriel part quand même.
+- **Statut réel des courriels** dans `GET /billing/documents/{n}/sendings` : `QUEUED`, `SENT` (remis au serveur d'envoi, `deliveredAt`), `FAILED` (`error`). Les rebonds tardifs ne sont pas remontés.
+

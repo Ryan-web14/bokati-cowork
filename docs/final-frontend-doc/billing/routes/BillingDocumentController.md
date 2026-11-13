@@ -1612,7 +1612,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `lineOrder` | entier |  |  |
-| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT` |  |  |
+| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT`, `DISBURSEMENT` |  |  |
 | `itemCode` | texte |  |  |
 | `category` | texte |  |  |
 | `description` | texte |  |  |
@@ -1640,6 +1640,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `serviceStart` | date AAAA-MM-JJ |  |  |
 | `serviceEnd` | date AAAA-MM-JJ |  |  |
 | `servicePeriod` | texte |  |  |
+| `taxRuleCode` | texte |  |  |
 
 <a id="m-BillingDocumentDiscountResponse"></a>
 #### BillingDocumentDiscountResponse
@@ -1719,7 +1720,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `lineOrder` | entier |  |  |
-| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT` |  |  |
+| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT`, `DISBURSEMENT` |  |  |
 | `itemCode` | texte |  |  |
 | `description` | texte | oui | longueur min `0`, longueur max `4000` |
 | `detailedDescription` | texte |  | longueur min `0`, longueur max `4000` |
@@ -1872,7 +1873,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `action` | texte | oui |  |
 | `lineOrder` | entier | oui |  |
-| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT` |  |  |
+| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT`, `DISBURSEMENT` |  |  |
 | `itemCode` | texte |  |  |
 | `description` | texte | oui | longueur min `0`, longueur max `4000` |
 | `detailedDescription` | texte |  | longueur min `0`, longueur max `4000` |

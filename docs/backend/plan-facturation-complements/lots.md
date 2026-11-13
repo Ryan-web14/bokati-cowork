@@ -88,66 +88,73 @@ Lecture ouverte aux droits de consultation du catalogue ; gestion réservée à 
 
 ## C7. Dépôts de garantie
 
-- Table `billing_security_deposit` : client, pièce d'origine, montant, devise, statut (`HELD`, `PARTIALLY_RETAINED`, `REFUNDED`, `RETAINED`, `APPLIED`), mouvements.
-- Encaissement : crédit `165` (paramètre `accounting.sales.security-deposit-account`), jamais en produit.
-- Sortie : restitution (paiement sortant par caisse ou banque, avec l'approbation de caisse existante), retenue motivée (produit ou facture de dégâts), imputation sur la dernière facture.
-- Abonnements (CD6) : la ligne de caution crée le dépôt ; la rubrique de sortie `DEPOSIT_SETTLEMENT` ouvre la restitution. Reprise des cautions déjà encaissées par écriture de reclassement.
-- Routes : `GET /billing/security-deposits`, `POST .../{id}/refund`, `.../retain`, `.../apply`.
-- Tests : encaissement en `165`, restitution partielle et retenue, imputation, sortie d'abonnement, reprise.
+- Constat : la caution d'un abonnement est déjà facturée (ligne « Dépôt de garantie » de la première facture) et retenue sur le portefeuille, puis réglée à la résiliation (`SubscriptionDepositSettlement`). Mais la ligne était taxable et TTC (de la TVA extraite d'une caution) et la comptabilité la portait en produit `706`.
+- Une ligne de caution (caution d'abonnement, ou article du catalogue marqué caution) n'est plus taxable et part au compte `165` (paramètre `accounting.sales.security-deposit-account`).
+- Registre des cautions (`billing_security_deposit`) alimenté à l'émission de la facture ; mouvements une fois la facture soldée : restitution (D `165` / C `411`, le client devient créditeur et se rembourse par les circuits habituels), retenue motivée (D `165` / C `758`, paramètre `accounting.sales.deposit-retention-account`), imputation sur une facture ouverte du même client (D `165` / C `411` lettré avec elle).
+- Une caution d'abonnement encore couverte par sa retenue de portefeuille se règle par la sortie d'abonnement, pas par le registre (refus `CAUTION_ABONNEMENT`), pour ne jamais la rendre deux fois.
+- Point ouvert (CD6) : le circuit de la caution d'abonnement (portefeuille jamais crédité de la caution encaissée) est à revoir avec les abonnements ; les cautions déjà comptabilisées en `706` sont à reclasser par le comptable.
+- Tests : inscription au registre, facture d'acompte écartée, retenue puis restitution, imputation, refus avant encaissement et pour une caution d'abonnement.
 
 ## C8. Tarifs négociés par client
 
-- Table `billing_customer_price` : type et code du client (organisation ou membre), article, prix fixe ou taux de remise, devise, dates, référence du contrat, auteur.
-- Résolution du prix selon CD8 ; la réponse de simulation et de recherche d'article indique la source (`CONTRACT`, `SEGMENT`, `ITEM`).
-- Routes : `GET`, `POST /billing/customers/{type}/{code}/prices`, `PUT`, fin de validité ; import CSV.
-- Tests : priorité contrat, dates, segment quand le contrat a expiré.
+- Table `billing_customer_price` : type et code du client, article, prix fixe ou taux de remise (l'un des deux), devise, dates, référence du contrat, motif, auteur.
+- Ordre des prix (CD8) : contrat du client, puis prix du segment daté, puis prix de la fiche. Un taux négocié s'applique au prix du segment ou de la fiche. `GET /billing/catalog/{itemCode}/price` accepte `customerType` et `customerCode` ; la réponse porte `source = CONTRACT` quand le contrat s'applique (`reason` = référence du contrat).
+- Routes : `GET`, `POST /billing/customers/{type}/{code}/prices` (`current=true` pour les tarifs en vigueur), `PATCH /billing/customers/{type}/{code}/prices/{id}/end`. Un nouveau tarif du même article arrête le précédent la veille ; un tarif qui commencerait le même jour qu'un autre est refusé.
+- Tests : prix du contrat en premier, taux négocié, retour au prix du catalogue après la fin du contrat, prix ou taux exigé.
 
 ## C9. Paiements non affectés
 
-- `GET /billing/unallocated-payments/suggestions` : pour chaque somme en attente (`4719`), les factures ouvertes candidates notées (même client, même montant, référence trouvée dans le libellé, échéance proche).
-- `POST /billing/unallocated-payments/{id}/allocate` vers une ou plusieurs factures, avec le reliquat laissé en attente.
-- Tests : proposition exacte, affectation partagée, reliquat.
+- `GET /billing/unallocated-payments/suggestions` (`customerType`, `customerCode`, `limit`) : paiements réussis dont une partie n'est imputée à aucune facture (hors portefeuille), avec les factures ouvertes du même client notées sur 100 (même montant 50, numéro dans la référence du paiement 40, échéance à moins de 15 jours 10) et le montant proposé.
+- `POST /billing/unallocated-payments/{transactionNumber}/allocate` : une ou plusieurs factures du même client ; chaque montant ne dépasse ni le reste dû ni l'attente ; le reliquat reste en attente.
+- L'imputation est marquée `LATE` (`payment_allocation.allocation_mode`) : l'écriture du paiement la laisse au `4719`, son écriture propre (règle `SALES_LATE_ALLOCATION`) passe D `4719` / C `411` lettré avec la facture.
+- Tests : classement des candidates, affectation partielle marquée `LATE`, refus au-delà de l'attente ou pour un autre client.
 
 ## C10. Débours
 
-- Type de ligne `DISBURSEMENT` : hors TVA, hors remise globale, hors chiffre d'affaires, compte `billing.disbursement.account` (CD9).
-- PDF : rubrique « Débours » sous le total HT, avant le total à payer.
-- Tests : taxes sans les débours, écriture au compte de tiers, avoir d'un débours.
+- Type de ligne `DISBURSEMENT` : jamais taxable (même si l'écran envoie `taxable: true`), hors remise globale (ajouté au total après les remises), compte de tiers `accounting.sales.disbursement-account` (`4718`, CD9), donc hors chiffre d'affaires.
+- Un avoir d'un débours suit le même compte.
+- Tests : TVA sans les débours, remise globale sans les débours, débours jamais taxé.
 
 ## C11. Réclamations
 
-- Table `billing_claim` : facture, lignes visées, motif (liste de référence), montant demandé, statut (`OPEN`, `ACCEPTED`, `PARTIALLY_ACCEPTED`, `REJECTED`), décision motivée, pièces jointes.
-- Ouverture d'une réclamation : la facture passe en litige par le mécanisme du lot F19 (relances suspendues). Acceptation : avoir des lignes ou du montant accordé. Refus : motif envoyé au client. Clôture : fin du litige, relances reprises.
-- Routes back-office `/billing/claims`, ouverture côté client en C16.
-- Tests : avoir à l'acceptation, reprise des relances, refus motivé.
+- Table `billing_claim` (motif, description, lignes visées, montant demandé, canal `STAFF` ou `PORTAL`, décision) et liste des motifs `billing_claim_reason` (erreur de prix, quantité, prestation non rendue, qualité, doublon, autre ; enrichie depuis l'écran).
+- Une réclamation ouverte suspend les relances de la facture (nouveau point d'arrêt commun des relances, `DunningHold`). Une seule réclamation ouverte par facture.
+- Acceptation : avoir du montant accordé (par défaut le montant demandé), appliqué sur le reste dû s'il le couvre ; `PARTIALLY_ACCEPTED` si moins que demandé. Refus : motif obligatoire, communiqué au client. Retrait possible. Les relances reprennent dès la clôture.
+- Classer la facture en créance litigieuse (lot F19, compte `4161`) reste une décision comptable distincte.
+- Routes : `POST /billing/documents/{n}/claims`, `GET /billing/claims` (`documentNumber`, client, `openOnly`), `GET /billing/claims/{n}`, `PATCH .../accept`, `.../reject`, `.../withdraw` ; motifs `GET`, `PUT /billing/claim-reasons`. Ouverture côté client au lot C16.
+- Tests : relances suspendues, une seule réclamation ouverte, avoir partiel appliqué, refus motivé.
 
 ## C12. Recouvrement
 
-- Promesse de paiement sur une facture (date, montant, canal, auteur) : relances suspendues jusqu'à la date, reprise automatique si rien n'est arrivé.
-- Plan de règlement négocié : transforme le reste dû en échéancier (lot B9), avec accord du N+1 au-delà d'une durée paramétrée (`billing.collection.plan-approval-months`).
-- Palier de relance WhatsApp (modèle « rappel de paiement » existant) dans les paliers de relance.
-- Tests : suspension et reprise, plan transformé en échéancier, relance WhatsApp.
+- Promesse de paiement (`billing_payment_promise`) : date, montant (par défaut le reste dû), canal (`PHONE`, `EMAIL`, `WHATSAPP`, `VISIT`, `PORTAL`). Les relances attendent la date ; ensuite la promesse est tenue si le reste dû a baissé du montant promis, sinon rompue, et les relances reprennent. Une nouvelle promesse remplace celle en cours.
+- Plan de règlement : le reste dû en échéances égales (la dernière porte l'arrondi), transformé en échéancier de la facture (lot B9). Au-delà de `billing.collection.plan-approval-months` mois (3 par défaut), il demande le droit d'approbation de la facturation (responsable).
+- Palier de relance WhatsApp : canal `WHATSAPP` dans les politiques de relance, modèle `rappel_paiement` au numéro de la facture.
+- Routes : `POST /billing/documents/{n}/payment-promises`, `GET /billing/payment-promises`, `PATCH /billing/payment-promises/{n}/cancel`, `POST /billing/documents/{n}/payment-plan`.
+- Tests : suspension puis promesse rompue, promesse tenue, plan en échéances égales, plan long refusé sans le droit.
 
 ## C13. Facturation groupée périodique
 
-- Lancement par période : collecte des consommations non facturées par client (réservations, impressions, ventes de la marketplace, services à l'acte), aperçu par client, exclusions, puis émission en lot.
-- Un lancement est idempotent : une consommation facturée porte le numéro de sa facture et ne revient plus.
-- Routes : `POST /billing/batch-runs` (aperçu), `GET /billing/batch-runs/{id}`, `POST .../{id}/issue`, `POST .../{id}/cancel`.
-- Tests : aperçu, émission, second lancement sans doublon, exclusion.
+- Les consommations à facturer sont les éléments facturables en attente (abonnements, options, dépassements, réservations...), sans facture.
+- `POST /billing/batch-runs` (période, origines facultatives, titre) : aperçu client par client (organisation payeuse et devise comprises), total à facturer. Une consommation déjà retenue par un aperçu en cours n'entre pas dans un second.
+- `PATCH /billing/batch-runs/{n}/exclude` : exclure ou réintégrer un client. `POST .../issue` : une facture émise par client non exclu, chacune dans sa transaction ; une erreur est notée sur la ligne du client sans arrêter les autres. `POST .../cancel` : abandon de l'aperçu. `GET /billing/batch-runs`, `GET .../{n}`.
+- Une consommation facturée porte sa facture : un second lancement de la même période ne crée aucune facture de plus.
+- Tests : regroupement par client, consommation non reprise par un second aperçu, exclusion, filtre par origine.
 
 ## C14. Devis types et lots d'articles
 
-- Modèles de devis (`billing_quote_template`) : lignes, conditions, validité ; `POST /billing/quotes/from-template/{code}`.
-- Articles composés : un article du catalogue liste ses composants (quantité) ; vendu à prix global, ventilé au prorata pour les comptes de produit, stock sorti par composant.
-- Tests : devis créé du modèle, ventilation, sortie de stock des composants.
+- Modèles de devis (`billing_quote_template`) : articles du catalogue et quantités, validité, conditions. `PUT /billing/quote-templates` (création ou remplacement), `GET /billing/quote-templates`, `GET .../{code}` ; `POST /billing/quotes/from-template/{code}` crée un devis en brouillon aux prix du client (contrat, segment, fiche).
+- Articles composés (`billing_catalog_component`) : `PUT`, `GET /billing/catalog/{itemCode}/components` (prestation du catalogue ou article d'inventaire, quantité). Vendus à prix global ; en comptabilité, le produit se ventile entre les composants au prorata de leur valeur (prix du catalogue ou prix de vente d'inventaire), chacun sur son compte ; le stock sort composant d'inventaire par composant (facture ou bon de livraison).
+- Tests : devis de quatre lignes tiré du modèle « Séminaire journée », ventilation au prorata.
 
 ## C15. Tableau de bord commercial
 
-- `GET /billing/dashboard?from=&to=` : devis émis, acceptés, taux de transformation, délai moyen d'acceptation, délai moyen de paiement (DSO), prévision d'encaissement par semaine depuis les échéances, affaires par étape et montant pondéré, top clients, par devise.
-- Tests : recoupement avec les pièces d'un jeu de données.
+- `GET /billing/dashboard?from=&to=&currency=&weeks=` (par défaut le mois en cours, XAF, 8 semaines) : devis émis et transformés, taux de transformation, délai moyen du devis à sa facture ; factures, facturé, encaissé, reste dû, en retard, délai moyen de paiement (factures soldées de la période) ; prévision d'encaissement par semaine (reste dû à l'échéance, échéances d'échéanciers ; une échéance passée compte pour la semaine en cours) ; affaires par étape (montant attendu et pondéré par la probabilité) ; dix meilleurs clients. Une devise à la fois, jamais de cumul.
+- Le délai d'acceptation d'un devis n'est pas mesuré : la date d'acceptation n'est pas conservée en base ; le délai du devis à la facture le remplace.
+- Test : `BillingDashboardC15IT` sur le schéma de production.
 
 ## C16. Espace client
 
-- Routes du portail client authentifié (pas de lien à jeton) : liste des devis, factures, proformas et relevés du client ; accepter ou refuser un devis, le signer ; payer une facture, une proforma ou un acompte par mobile money (PawaPay, déjà intégré) ; télécharger les PDF ; ouvrir une réclamation (C11).
-- Un paiement de proforma devient acompte du devis (règle du lot B5).
-- Tests : un client ne voit que ses pièces, acceptation, paiement imputé, réclamation ouverte.
+- Routes de l'espace client authentifié (pas de lien à jeton) sous `/client/billing` : `GET /quotes?type=QUOTE|PROFORMA_INVOICE`, `GET /quotes/{n}`, `GET /quotes/{n}/pdf`, `POST /quotes/{n}/accept`, `POST /quotes/{n}/reject`, `POST /proformas/{n}/pay/mobile-money` (le paiement devient un acompte du devis, lot B5), `GET /claim-reasons`, `POST /invoices/{n}/claims` (canal `PORTAL`), `GET /claims`, `POST /claims/{n}/withdraw`.
+- Factures, paiement (mobile money, portefeuille, espèces) et relevés restaient déjà disponibles sur les routes existantes.
+- Le membre ne voit que ses pièces, jamais un brouillon ; un devis déjà répondu ne s'accepte plus.
+- Tests : acceptation de son devis seulement, brouillon et pièce d'un autre invisibles, réclamation par l'espace client, retrait de ses seules réclamations.

@@ -2,10 +2,17 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-111 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+192 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
+| GET | `/sni/api/v1/billing/batch-runs` | BILLING:READ | [BatchBillingController](routes/BatchBillingController.md#r-get-sni-api-v1-billing-batch-runs) |
+| POST | `/sni/api/v1/billing/batch-runs` | BILLING:CREATE | [BatchBillingController](routes/BatchBillingController.md#r-post-sni-api-v1-billing-batch-runs) |
+| GET | `/sni/api/v1/billing/batch-runs/{runNumber}` | BILLING:READ | [BatchBillingController](routes/BatchBillingController.md#r-get-sni-api-v1-billing-batch-runs-runnumber) |
+| POST | `/sni/api/v1/billing/batch-runs/{runNumber}/cancel` | BILLING:CANCEL | [BatchBillingController](routes/BatchBillingController.md#r-post-sni-api-v1-billing-batch-runs-runnumber-cancel) |
+| PATCH | `/sni/api/v1/billing/batch-runs/{runNumber}/exclude` | BILLING:UPDATE | [BatchBillingController](routes/BatchBillingController.md#r-patch-sni-api-v1-billing-batch-runs-runnumber-exclude) |
+| POST | `/sni/api/v1/billing/batch-runs/{runNumber}/issue` | BILLING:CREATE | [BatchBillingController](routes/BatchBillingController.md#r-post-sni-api-v1-billing-batch-runs-runnumber-issue) |
+| GET | `/sni/api/v1/billing/dashboard` | BILLING:READ | [BillingDashboardController](routes/BillingDashboardController.md#r-get-sni-api-v1-billing-dashboard) |
 | GET | `/sni/api/v1/billing/aging-report` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-aging-report) |
 | PATCH | `/sni/api/v1/billing/credit-notes/{creditNoteNumber}/apply` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-credit-notes-creditnotenumber-apply) |
 | PATCH | `/sni/api/v1/billing/credit-notes/{creditNoteNumber}/apply-to/{targetInvoiceNumber}` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-credit-notes-creditnotenumber-apply-to-targetinvoicenumber) |
@@ -77,6 +84,41 @@
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/revalidate` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-revalidate) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/select-options` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-select-options) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/start-negotiation` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-start-negotiation) |
+| GET | `/sni/api/v1/billing/catalog/categories` | BILLING:READ | [CatalogReferenceController](routes/CatalogReferenceController.md#r-get-sni-api-v1-billing-catalog-categories) |
+| POST | `/sni/api/v1/billing/catalog/categories` | BILLING:CREATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-post-sni-api-v1-billing-catalog-categories) |
+| DELETE | `/sni/api/v1/billing/catalog/categories/{code}` | BILLING:CANCEL | [CatalogReferenceController](routes/CatalogReferenceController.md#r-delete-sni-api-v1-billing-catalog-categories-code) |
+| PUT | `/sni/api/v1/billing/catalog/categories/{code}` | BILLING:UPDATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-put-sni-api-v1-billing-catalog-categories-code) |
+| PATCH | `/sni/api/v1/billing/catalog/categories/{code}/activate` | BILLING:UPDATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-patch-sni-api-v1-billing-catalog-categories-code-activate) |
+| PATCH | `/sni/api/v1/billing/catalog/categories/{code}/deactivate` | BILLING:UPDATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-patch-sni-api-v1-billing-catalog-categories-code-deactivate) |
+| GET | `/sni/api/v1/billing/catalog/categories/{code}/subcategories` | BILLING:READ | [CatalogReferenceController](routes/CatalogReferenceController.md#r-get-sni-api-v1-billing-catalog-categories-code-subcategories) |
+| POST | `/sni/api/v1/billing/catalog/categories/{code}/subcategories` | BILLING:CREATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-post-sni-api-v1-billing-catalog-categories-code-subcategories) |
+| DELETE | `/sni/api/v1/billing/catalog/categories/{code}/subcategories/{subCode}` | BILLING:CANCEL | [CatalogReferenceController](routes/CatalogReferenceController.md#r-delete-sni-api-v1-billing-catalog-categories-code-subcategories-subcode) |
+| PUT | `/sni/api/v1/billing/catalog/categories/{code}/subcategories/{subCode}` | BILLING:UPDATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-put-sni-api-v1-billing-catalog-categories-code-subcategories-subcode) |
+| PATCH | `/sni/api/v1/billing/catalog/categories/{code}/subcategories/{subCode}/activate` | BILLING:UPDATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-patch-sni-api-v1-billing-catalog-categories-code-subcategories-subcode-activate) |
+| PATCH | `/sni/api/v1/billing/catalog/categories/{code}/subcategories/{subCode}/deactivate` | BILLING:UPDATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-patch-sni-api-v1-billing-catalog-categories-code-subcategories-subcode-deactivate) |
+| GET | `/sni/api/v1/billing/catalog/references` | BILLING:READ | [CatalogReferenceController](routes/CatalogReferenceController.md#r-get-sni-api-v1-billing-catalog-references) |
+| POST | `/sni/api/v1/billing/catalog/references/merge` | BILLING:CREATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-post-sni-api-v1-billing-catalog-references-merge) |
+| GET | `/sni/api/v1/billing/catalog/units` | BILLING:READ | [CatalogReferenceController](routes/CatalogReferenceController.md#r-get-sni-api-v1-billing-catalog-units) |
+| POST | `/sni/api/v1/billing/catalog/units` | BILLING:CREATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-post-sni-api-v1-billing-catalog-units) |
+| DELETE | `/sni/api/v1/billing/catalog/units/{code}` | BILLING:CANCEL | [CatalogReferenceController](routes/CatalogReferenceController.md#r-delete-sni-api-v1-billing-catalog-units-code) |
+| PUT | `/sni/api/v1/billing/catalog/units/{code}` | BILLING:UPDATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-put-sni-api-v1-billing-catalog-units-code) |
+| PATCH | `/sni/api/v1/billing/catalog/units/{code}/activate` | BILLING:UPDATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-patch-sni-api-v1-billing-catalog-units-code-activate) |
+| PATCH | `/sni/api/v1/billing/catalog/units/{code}/deactivate` | BILLING:UPDATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-patch-sni-api-v1-billing-catalog-units-code-deactivate) |
+| GET | `/sni/api/v1/billing/claim-reasons` | BILLING:READ | [ClaimController](routes/ClaimController.md#r-get-sni-api-v1-billing-claim-reasons) |
+| PUT | `/sni/api/v1/billing/claim-reasons` | BILLING:UPDATE | [ClaimController](routes/ClaimController.md#r-put-sni-api-v1-billing-claim-reasons) |
+| GET | `/sni/api/v1/billing/claims` | BILLING:READ | [ClaimController](routes/ClaimController.md#r-get-sni-api-v1-billing-claims) |
+| GET | `/sni/api/v1/billing/claims/{claimNumber}` | BILLING:READ | [ClaimController](routes/ClaimController.md#r-get-sni-api-v1-billing-claims-claimnumber) |
+| PATCH | `/sni/api/v1/billing/claims/{claimNumber}/accept` | BILLING:UPDATE | [ClaimController](routes/ClaimController.md#r-patch-sni-api-v1-billing-claims-claimnumber-accept) |
+| PATCH | `/sni/api/v1/billing/claims/{claimNumber}/reject` | BILLING:UPDATE | [ClaimController](routes/ClaimController.md#r-patch-sni-api-v1-billing-claims-claimnumber-reject) |
+| PATCH | `/sni/api/v1/billing/claims/{claimNumber}/withdraw` | BILLING:UPDATE | [ClaimController](routes/ClaimController.md#r-patch-sni-api-v1-billing-claims-claimnumber-withdraw) |
+| POST | `/sni/api/v1/billing/documents/{documentNumber}/claims` | BILLING:CREATE | [ClaimController](routes/ClaimController.md#r-post-sni-api-v1-billing-documents-documentnumber-claims) |
+| POST | `/sni/api/v1/billing/documents/{documentNumber}/payment-plan` | PAYMENT:PROCESS | [CollectionController](routes/CollectionController.md#r-post-sni-api-v1-billing-documents-documentnumber-payment-plan) |
+| POST | `/sni/api/v1/billing/documents/{documentNumber}/payment-promises` | PAYMENT:PROCESS | [CollectionController](routes/CollectionController.md#r-post-sni-api-v1-billing-documents-documentnumber-payment-promises) |
+| GET | `/sni/api/v1/billing/payment-promises` | PAYMENT:PROCESS | [CollectionController](routes/CollectionController.md#r-get-sni-api-v1-billing-payment-promises) |
+| PATCH | `/sni/api/v1/billing/payment-promises/{promiseNumber}/cancel` | PAYMENT:PROCESS | [CollectionController](routes/CollectionController.md#r-patch-sni-api-v1-billing-payment-promises-promisenumber-cancel) |
+| GET | `/sni/api/v1/billing/customers/{customerType}/{customerCode}/prices` | BILLING:READ | [CustomerPriceController](routes/CustomerPriceController.md#r-get-sni-api-v1-billing-customers-customertype-customercode-prices) |
+| POST | `/sni/api/v1/billing/customers/{customerType}/{customerCode}/prices` | BILLING:CREATE | [CustomerPriceController](routes/CustomerPriceController.md#r-post-sni-api-v1-billing-customers-customertype-customercode-prices) |
+| PATCH | `/sni/api/v1/billing/customers/{customerType}/{customerCode}/prices/{id}/end` | BILLING:UPDATE | [CustomerPriceController](routes/CustomerPriceController.md#r-patch-sni-api-v1-billing-customers-customertype-customercode-prices-id-end) |
 | GET | `/sni/api/v1/billing/deals` | BILLING:READ | [DealController](routes/DealController.md#r-get-sni-api-v1-billing-deals) |
 | POST | `/sni/api/v1/billing/deals` | BILLING:CREATE | [DealController](routes/DealController.md#r-post-sni-api-v1-billing-deals) |
 | GET | `/sni/api/v1/billing/deals/export` | BILLING:READ | [DealController](routes/DealController.md#r-get-sni-api-v1-billing-deals-export) |
@@ -86,6 +128,15 @@
 | DELETE | `/sni/api/v1/billing/deals/{code}/documents/{documentNumber}` | BILLING:CANCEL | [DealController](routes/DealController.md#r-delete-sni-api-v1-billing-deals-code-documents-documentnumber) |
 | PATCH | `/sni/api/v1/billing/deals/{code}/documents/{documentNumber}` | BILLING:UPDATE | [DealController](routes/DealController.md#r-patch-sni-api-v1-billing-deals-code-documents-documentnumber) |
 | PATCH | `/sni/api/v1/billing/deals/{code}/stage` | BILLING:UPDATE | [DealController](routes/DealController.md#r-patch-sni-api-v1-billing-deals-code-stage) |
+| GET | `/sni/api/v1/billing/delivery-notes` | BILLING:READ | [DeliveryNoteController](routes/DeliveryNoteController.md#r-get-sni-api-v1-billing-delivery-notes) |
+| POST | `/sni/api/v1/billing/delivery-notes/invoice` | BILLING:CREATE | [DeliveryNoteController](routes/DeliveryNoteController.md#r-post-sni-api-v1-billing-delivery-notes-invoice) |
+| GET | `/sni/api/v1/billing/delivery-notes/{noteNumber}` | BILLING:READ | [DeliveryNoteController](routes/DeliveryNoteController.md#r-get-sni-api-v1-billing-delivery-notes-notenumber) |
+| PATCH | `/sni/api/v1/billing/delivery-notes/{noteNumber}/cancel` | BILLING:CANCEL | [DeliveryNoteController](routes/DeliveryNoteController.md#r-patch-sni-api-v1-billing-delivery-notes-notenumber-cancel) |
+| PATCH | `/sni/api/v1/billing/delivery-notes/{noteNumber}/deliver` | BILLING:UPDATE | [DeliveryNoteController](routes/DeliveryNoteController.md#r-patch-sni-api-v1-billing-delivery-notes-notenumber-deliver) |
+| GET | `/sni/api/v1/billing/delivery-notes/{noteNumber}/pdf` | BILLING:READ | [DeliveryNoteController](routes/DeliveryNoteController.md#r-get-sni-api-v1-billing-delivery-notes-notenumber-pdf) |
+| PATCH | `/sni/api/v1/billing/delivery-notes/{noteNumber}/signed-copy` | BILLING:UPDATE | [DeliveryNoteController](routes/DeliveryNoteController.md#r-patch-sni-api-v1-billing-delivery-notes-notenumber-signed-copy) |
+| POST | `/sni/api/v1/billing/documents/{documentNumber}/delivery-notes` | BILLING:CREATE | [DeliveryNoteController](routes/DeliveryNoteController.md#r-post-sni-api-v1-billing-documents-documentnumber-delivery-notes) |
+| GET | `/sni/api/v1/billing/documents/{documentNumber}/delivery-status` | BILLING:READ | [DeliveryNoteController](routes/DeliveryNoteController.md#r-get-sni-api-v1-billing-documents-documentnumber-delivery-status) |
 | GET | `/sni/api/v1/billing/dunning/notices` | BILLING:READ | [DunningController](routes/DunningController.md#r-get-sni-api-v1-billing-dunning-notices) |
 | GET | `/sni/api/v1/billing/dunning/notices/customers/{customerType}/{customerCode}` | BILLING:READ | [DunningController](routes/DunningController.md#r-get-sni-api-v1-billing-dunning-notices-customers-customertype-customercode) |
 | GET | `/sni/api/v1/billing/dunning/notices/documents/{documentNumber}` | BILLING:READ | [DunningController](routes/DunningController.md#r-get-sni-api-v1-billing-dunning-notices-documents-documentnumber) |
@@ -103,6 +154,17 @@
 | GET | `/sni/api/v1/billing/schedules/{scheduleNumber}` | BILLING:READ | [PaymentScheduleController](routes/PaymentScheduleController.md#r-get-sni-api-v1-billing-schedules-schedulenumber) |
 | GET | `/public/quotes/sign/{token}` | public | [QuoteSignaturePublicController](routes/QuoteSignaturePublicController.md#r-get-public-quotes-sign-token) |
 | POST | `/public/quotes/sign/{token}/confirm` | public | [QuoteSignaturePublicController](routes/QuoteSignaturePublicController.md#r-post-public-quotes-sign-token-confirm) |
+| GET | `/sni/api/v1/billing/catalog/{itemCode}/components` | BILLING:READ | [QuoteTemplateController](routes/QuoteTemplateController.md#r-get-sni-api-v1-billing-catalog-itemcode-components) |
+| PUT | `/sni/api/v1/billing/catalog/{itemCode}/components` | BILLING:UPDATE | [QuoteTemplateController](routes/QuoteTemplateController.md#r-put-sni-api-v1-billing-catalog-itemcode-components) |
+| GET | `/sni/api/v1/billing/quote-templates` | BILLING:READ | [QuoteTemplateController](routes/QuoteTemplateController.md#r-get-sni-api-v1-billing-quote-templates) |
+| PUT | `/sni/api/v1/billing/quote-templates` | BILLING:UPDATE | [QuoteTemplateController](routes/QuoteTemplateController.md#r-put-sni-api-v1-billing-quote-templates) |
+| GET | `/sni/api/v1/billing/quote-templates/{code}` | BILLING:READ | [QuoteTemplateController](routes/QuoteTemplateController.md#r-get-sni-api-v1-billing-quote-templates-code) |
+| POST | `/sni/api/v1/billing/quotes/from-template/{code}` | BILLING:CREATE | [QuoteTemplateController](routes/QuoteTemplateController.md#r-post-sni-api-v1-billing-quotes-from-template-code) |
+| PUT | `/sni/api/v1/billing/catalog/{itemCode}/security-deposit` | BILLING:UPDATE | [SecurityDepositController](routes/SecurityDepositController.md#r-put-sni-api-v1-billing-catalog-itemcode-security-deposit) |
+| GET | `/sni/api/v1/billing/security-deposits` | BILLING:READ | [SecurityDepositController](routes/SecurityDepositController.md#r-get-sni-api-v1-billing-security-deposits) |
+| GET | `/sni/api/v1/billing/security-deposits/legacy` | BILLING:READ | [SecurityDepositController](routes/SecurityDepositController.md#r-get-sni-api-v1-billing-security-deposits-legacy) |
+| GET | `/sni/api/v1/billing/security-deposits/{depositNumber}` | BILLING:READ | [SecurityDepositController](routes/SecurityDepositController.md#r-get-sni-api-v1-billing-security-deposits-depositnumber) |
+| POST | `/sni/api/v1/billing/security-deposits/{depositNumber}/movements` | BILLING:CREATE | [SecurityDepositController](routes/SecurityDepositController.md#r-post-sni-api-v1-billing-security-deposits-depositnumber-movements) |
 | GET | `/sni/api/v1/billing/catalog` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog) |
 | POST | `/sni/api/v1/billing/catalog` | BILLING:CREATE | [ServiceCatalogController](routes/ServiceCatalogController.md#r-post-sni-api-v1-billing-catalog) |
 | GET | `/sni/api/v1/billing/catalog/export` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog-export) |
@@ -117,3 +179,22 @@
 | GET | `/sni/api/v1/billing/catalog/{itemCode}/price` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog-itemcode-price) |
 | GET | `/sni/api/v1/billing/catalog/{itemCode}/prices` | BILLING:READ | [ServiceCatalogController](routes/ServiceCatalogController.md#r-get-sni-api-v1-billing-catalog-itemcode-prices) |
 | POST | `/sni/api/v1/billing/catalog/{itemCode}/prices` | BILLING:CREATE | [ServiceCatalogController](routes/ServiceCatalogController.md#r-post-sni-api-v1-billing-catalog-itemcode-prices) |
+| GET | `/sni/api/v1/billing/tax-rules` | BILLING:READ | [TaxRuleController](routes/TaxRuleController.md#r-get-sni-api-v1-billing-tax-rules) |
+| POST | `/sni/api/v1/billing/tax-rules` | BILLING:CREATE | [TaxRuleController](routes/TaxRuleController.md#r-post-sni-api-v1-billing-tax-rules) |
+| POST | `/sni/api/v1/billing/tax-rules/{baseCode}/successor` | BILLING:CREATE | [TaxRuleController](routes/TaxRuleController.md#r-post-sni-api-v1-billing-tax-rules-basecode-successor) |
+| GET | `/sni/api/v1/billing/tax-rules/{baseCode}/versions` | BILLING:READ | [TaxRuleController](routes/TaxRuleController.md#r-get-sni-api-v1-billing-tax-rules-basecode-versions) |
+| PUT | `/sni/api/v1/billing/tax-rules/{code}` | BILLING:UPDATE | [TaxRuleController](routes/TaxRuleController.md#r-put-sni-api-v1-billing-tax-rules-code) |
+| PATCH | `/sni/api/v1/billing/tax-rules/{code}/activate` | BILLING:UPDATE | [TaxRuleController](routes/TaxRuleController.md#r-patch-sni-api-v1-billing-tax-rules-code-activate) |
+| PATCH | `/sni/api/v1/billing/tax-rules/{code}/deactivate` | BILLING:UPDATE | [TaxRuleController](routes/TaxRuleController.md#r-patch-sni-api-v1-billing-tax-rules-code-deactivate) |
+| GET | `/sni/api/v1/billing/unallocated-payments/suggestions` | BILLING:READ | [UnallocatedPaymentController](routes/UnallocatedPaymentController.md#r-get-sni-api-v1-billing-unallocated-payments-suggestions) |
+| POST | `/sni/api/v1/billing/unallocated-payments/{transactionNumber}/allocate` | BILLING:CREATE | [UnallocatedPaymentController](routes/UnallocatedPaymentController.md#r-post-sni-api-v1-billing-unallocated-payments-transactionnumber-allocate) |
+| GET | `/sni/api/v1/billing/documents/{documentNumber}/withholdings` | BILLING:READ | [WithholdingController](routes/WithholdingController.md#r-get-sni-api-v1-billing-documents-documentnumber-withholdings) |
+| POST | `/sni/api/v1/billing/documents/{documentNumber}/withholdings` | BILLING:CREATE | [WithholdingController](routes/WithholdingController.md#r-post-sni-api-v1-billing-documents-documentnumber-withholdings) |
+| GET | `/sni/api/v1/billing/withholding-types` | BILLING:READ | [WithholdingController](routes/WithholdingController.md#r-get-sni-api-v1-billing-withholding-types) |
+| POST | `/sni/api/v1/billing/withholding-types` | BILLING:CREATE | [WithholdingController](routes/WithholdingController.md#r-post-sni-api-v1-billing-withholding-types) |
+| PUT | `/sni/api/v1/billing/withholding-types/{code}` | BILLING:UPDATE | [WithholdingController](routes/WithholdingController.md#r-put-sni-api-v1-billing-withholding-types-code) |
+| PATCH | `/sni/api/v1/billing/withholding-types/{code}/activate` | BILLING:UPDATE | [WithholdingController](routes/WithholdingController.md#r-patch-sni-api-v1-billing-withholding-types-code-activate) |
+| PATCH | `/sni/api/v1/billing/withholding-types/{code}/deactivate` | BILLING:UPDATE | [WithholdingController](routes/WithholdingController.md#r-patch-sni-api-v1-billing-withholding-types-code-deactivate) |
+| GET | `/sni/api/v1/billing/withholdings` | BILLING:READ | [WithholdingController](routes/WithholdingController.md#r-get-sni-api-v1-billing-withholdings) |
+| PATCH | `/sni/api/v1/billing/withholdings/{number}/cancel` | BILLING:CANCEL | [WithholdingController](routes/WithholdingController.md#r-patch-sni-api-v1-billing-withholdings-number-cancel) |
+| PATCH | `/sni/api/v1/billing/withholdings/{number}/certificate` | BILLING:UPDATE | [WithholdingController](routes/WithholdingController.md#r-patch-sni-api-v1-billing-withholdings-number-certificate) |

@@ -120,7 +120,7 @@ public class BillingStockService {
         }
         String quoteNumber = "QUOTE".equalsIgnoreCase(invoice.getSourceType()) ? invoice.getSourceCode() : null;
         List<BillingStockReservation> reserved = quoteNumber == null ? List.of() : reservations.findByDocumentNumberAndStatus(quoteNumber, "ACTIVE");
-        for (BillingDocumentLine line : lines.findAllByDocumentOrderByLineOrderAscIdAsc(invoice)) {
+        for (BillingDocumentLine line : expand(lines.findAllByDocumentOrderByLineOrderAscIdAsc(invoice))) {
             InventoryItem item = trackedItem(line);
             if (item == null) {
                 continue;
@@ -200,7 +200,7 @@ public class BillingStockService {
         }
         List<BillingStockReservation> reserved = quoteNumber == null ? List.of() : reservations.findByDocumentNumberAndStatus(quoteNumber, "ACTIVE");
         boolean issued = false;
-        for (BillingDocumentLine line : delivered) {
+        for (BillingDocumentLine line : expand(delivered)) {
             InventoryItem item = trackedItem(line);
             if (item == null) {
                 continue;
@@ -228,7 +228,7 @@ public class BillingStockService {
 
     /** Lot C4 : bon livre puis annule. La marchandise revient en stock, a l'emplacement le plus fourni. */
     public void returnForDelivery(String noteNumber, List<BillingDocumentLine> delivered) {
-        for (BillingDocumentLine line : delivered) {
+        for (BillingDocumentLine line : expand(delivered)) {
             InventoryItem item = trackedItem(line);
             if (item == null) {
                 continue;
@@ -248,6 +248,38 @@ public class BillingStockService {
             in.setPerformedBy("FACTURATION");
             stock.receive(in);
         }
+    }
+
+    /** Lot C14 : composants d'inventaire d'un article compose (facultatif). */
+    @Autowired(required = false)
+    private com.sni.bokaticowork.features.billing.repository.CatalogComponentRepository components;
+
+    /**
+     * Lot C14 : une ligne d'article compose devient une ligne par composant d'inventaire, a la
+     * quantite du composant fois celle de la ligne ; les autres lignes passent telles quelles.
+     */
+    List<BillingDocumentLine> expand(List<BillingDocumentLine> source) {
+        if (components == null) {
+            return source;
+        }
+        List<BillingDocumentLine> result = new java.util.ArrayList<>();
+        for (BillingDocumentLine line : source) {
+            List<com.sni.bokaticowork.features.billing.model.CatalogComponent> parts = StringUtils.hasText(line.getItemCode())
+                    ? components.findByParentItemCodeOrderByDisplayOrderAsc(line.getItemCode().trim()) : List.of();
+            if (parts.isEmpty() || Boolean.TRUE.equals(line.getOptional())) {
+                result.add(line);
+                continue;
+            }
+            BigDecimal quantity = line.getQuantity() == null ? BigDecimal.ONE : line.getQuantity();
+            for (var part : parts) {
+                if ("INVENTORY_ITEM".equals(part.getComponentSource())) {
+                    result.add(BillingDocumentLine.builder().lineOrder(line.getLineOrder()).itemCode(part.getComponentCode())
+                            .sourceType("INVENTORY_ITEM").lineType(com.sni.bokaticowork.features.billing.enums.BillingLineType.PRODUCT)
+                            .description(line.getDescription()).quantity(quantity.multiply(part.getQuantity())).optional(false).build());
+                }
+            }
+        }
+        return result;
     }
 
     private InventoryItem trackedItem(BillingDocumentLine line) {

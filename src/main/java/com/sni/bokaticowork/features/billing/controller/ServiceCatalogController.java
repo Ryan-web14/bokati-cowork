@@ -93,8 +93,11 @@ public class ServiceCatalogController {
     public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.CatalogPriceResponse> price(@PathVariable String itemCode,
             @org.springframework.web.bind.annotation.RequestParam(required = false) String segment,
             @org.springframework.web.bind.annotation.RequestParam(required = false)
-            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
-        return ResponseEntity.ok(catalogPrices.price(itemCode, segment, date));
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String customerType,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String customerCode) {
+        // Lot C8 : avec le client, son tarif negocie passe en premier (source CONTRACT).
+        return ResponseEntity.ok(catalogPrices.price(itemCode, segment, date, customerType, customerCode));
     }
 
     /** Lot B10 : lien vers l'article d'inventaire et compte de produit propre. */

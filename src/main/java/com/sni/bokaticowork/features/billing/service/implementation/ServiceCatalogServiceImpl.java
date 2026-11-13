@@ -387,7 +387,8 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
                 labels.subcategoryLabel(item.getCategory(), item.getSubcategory()),
                 labels.unitLabel(item.getUnit()),
                 labels.tax(item.getTaxRuleCode()),
-                warnings
+                warnings,
+                Boolean.TRUE.equals(item.getSecurityDeposit())
         );
     }
 

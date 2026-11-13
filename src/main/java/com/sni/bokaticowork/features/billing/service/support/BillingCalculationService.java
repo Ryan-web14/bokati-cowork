@@ -45,6 +45,8 @@ public class BillingCalculationService {
         // Net HT des lignes exonerees. Indispensable : leur taxableAmount vaut zero par
         // construction, donc les additionner a la base taxable les ferait disparaitre du total.
         BigDecimal nonTaxableNet = BigDecimal.ZERO;
+        // Lot C10 : debours, hors TVA et hors remise globale, ajoutes au total apres les remises.
+        BigDecimal disbursementNet = BigDecimal.ZERO;
 
         int index = 1;
         for (CreateBillingDocumentLineRequest request : lines) {
@@ -60,7 +62,9 @@ public class BillingCalculationService {
             vat = vat.add(line.getVatAmount());
             additionalCent = additionalCent.add(line.getAdditionalCentAmount());
             tax = tax.add(line.getTaxAmount());
-            if (!Boolean.TRUE.equals(line.getTaxable())) {
+            if (line.getLineType() == BillingLineType.DISBURSEMENT) {
+                disbursementNet = disbursementNet.add(money(line.getSubtotalAmount().subtract(line.getDiscountAmount())));
+            } else if (!Boolean.TRUE.equals(line.getTaxable())) {
                 nonTaxableNet = nonTaxableNet.add(
                         money(line.getSubtotalAmount().subtract(line.getDiscountAmount())));
             }
@@ -105,7 +109,7 @@ public class BillingCalculationService {
         BigDecimal recomposed = money(adjustedTaxable.add(adjustedNonTaxable).add(adjustedTax));
         BigDecimal drift = money(netTotal.subtract(recomposed));
         adjustedTaxable = money(adjustedTaxable.add(drift));
-        BigDecimal total = money(adjustedTaxable.add(adjustedNonTaxable).add(adjustedTax));
+        BigDecimal total = money(adjustedTaxable.add(adjustedNonTaxable).add(adjustedTax).add(disbursementNet));
 
         // La remise reportee sur le document reste exprimee en HT, comme les remises de ligne :
         // c'est la reduction reelle de l'assiette, et c'est elle qui doit se retrouver dans les
@@ -169,8 +173,8 @@ public class BillingCalculationService {
     }
 
     /** Valeurs reprises du catalogue quand la ligne ne les precise pas. */
-    private record CatalogDefaults(String category, String unit, String taxRuleCode, Boolean taxableByDefault) {
-        static final CatalogDefaults NONE = new CatalogDefaults(null, null, null, null);
+    private record CatalogDefaults(String category, String unit, String taxRuleCode, Boolean taxableByDefault, boolean securityDeposit) {
+        static final CatalogDefaults NONE = new CatalogDefaults(null, null, null, null, false);
     }
 
     private CatalogDefaults catalogDefaults(String itemCode) {
@@ -178,7 +182,8 @@ public class BillingCalculationService {
             return CatalogDefaults.NONE;
         }
         Optional<ServiceCatalogItem> item = catalogItemRepository.findByItemCode(itemCode.trim());
-        return item.map(found -> new CatalogDefaults(found.getCategory(), found.getUnit(), found.getTaxRuleCode(), found.getTaxableByDefault()))
+        return item.map(found -> new CatalogDefaults(found.getCategory(), found.getUnit(), found.getTaxRuleCode(), found.getTaxableByDefault(),
+                        Boolean.TRUE.equals(found.getSecurityDeposit())))
                 .orElse(CatalogDefaults.NONE);
     }
 
@@ -204,7 +209,12 @@ public class BillingCalculationService {
         // Un taux fixe par l'appelant (conversion d'une piece, derogation) reste prioritaire.
         TaxRule itemRule = taxRuleResolver.ruleFor(defaults.taxRuleCode(), java.time.LocalDate.now()).orElse(null);
         boolean taxable = request.taxable() != null ? request.taxable() : !Boolean.FALSE.equals(defaults.taxableByDefault());
-        if (request.vatRate() == null && BillingTaxRuleResolver.zeroRated(itemRule)) {
+        if (request.lineType() == BillingLineType.DISBURSEMENT) {
+            // Lot C10 : un debours n'est jamais taxe, quoi qu'envoie l'ecran.
+            taxable = false;
+        }
+        if (request.vatRate() == null && (BillingTaxRuleResolver.zeroRated(itemRule) || defaults.securityDeposit())) {
+            // Lot C7 : une caution n'est jamais taxee.
             taxable = false;
         }
         boolean taxIncluded = taxable && Boolean.TRUE.equals(request.taxIncluded());

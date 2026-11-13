@@ -10,5 +10,10 @@ public enum BillingLineType {
     OVERAGE,
     PENALTY,
     WALLET,
-    ADJUSTMENT
+    ADJUSTMENT,
+    /**
+     * Lot C10 : debours, frais avances pour le compte du client et refactures a l'identique (frais
+     * de dossier, timbres, formalites). Hors TVA, hors remise globale, hors chiffre d'affaires.
+     */
+    DISBURSEMENT
 }

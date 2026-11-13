@@ -62,6 +62,9 @@ public class SubscriptionDepositSettlement {
     private final BillingDocumentRepository documentRepository;
     private final PaymentService paymentService;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sni.bokaticowork.features.billing.service.implementation.SecurityDepositService securityDeposits;
+
     public SubscriptionDepositSettlement(WalletHoldRepository holdRepository, WalletHoldService holdService,
                                          BillingDocumentRepository documentRepository, @Lazy PaymentService paymentService) {
         this.holdRepository = holdRepository;
@@ -99,6 +102,11 @@ public class SubscriptionDepositSettlement {
             log.info("Abonnement {} · depot {} de {} : {} facture(s) reglee(s), {} rendu(s) au portefeuille",
                     subscriptionNumber, hold.getHoldNumber(), hold.getAmount().toPlainString(), paid.size(), remaining.toPlainString());
             outcomes.add(new Outcome(hold.getHoldNumber(), hold.getAmount(), paid, remaining));
+            if (securityDeposits != null) {
+                // Decision CD6 : le registre des cautions suit la sortie (imputations et restitution au portefeuille).
+                securityDeposits.onSubscriptionSettled(subscriptionNumber,
+                        paid.stream().map(item -> new String[]{item.documentNumber(), item.amount().toPlainString()}).toList(), remaining);
+            }
         }
         return outcomes;
     }

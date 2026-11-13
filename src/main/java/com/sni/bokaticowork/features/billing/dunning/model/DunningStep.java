@@ -32,7 +32,9 @@ public class DunningStep {
     }
 
     public enum Channel {
-        EMAIL, IN_APP, STAFF
+        EMAIL, IN_APP, STAFF,
+        /** Lot C12 : message WhatsApp par modele (rappel_paiement), au numero du client. */
+        WHATSAPP
     }
 
     @Id

@@ -5,6 +5,187 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/billing/batch-runs",
+   "package": "features.billing.controller",
+   "controller": "BatchBillingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/BatchBillingController.java",
+   "handler": "list",
+   "declaredIn": "BatchBillingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunSummary>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/batch-runs",
+   "package": "features.billing.controller",
+   "controller": "BatchBillingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/BatchBillingController.java",
+   "handler": "preview",
+   "declaredIn": "BatchBillingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.PreviewRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/batch-runs/{runNumber}",
+   "package": "features.billing.controller",
+   "controller": "BatchBillingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/BatchBillingController.java",
+   "handler": "get",
+   "declaredIn": "BatchBillingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "runNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/batch-runs/{runNumber}/cancel",
+   "package": "features.billing.controller",
+   "controller": "BatchBillingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/BatchBillingController.java",
+   "handler": "cancel",
+   "declaredIn": "BatchBillingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CANCEL"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "runNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/batch-runs/{runNumber}/exclude",
+   "package": "features.billing.controller",
+   "controller": "BatchBillingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/BatchBillingController.java",
+   "handler": "exclude",
+   "declaredIn": "BatchBillingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.ExcludeRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "runNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/batch-runs/{runNumber}/issue",
+   "package": "features.billing.controller",
+   "controller": "BatchBillingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/BatchBillingController.java",
+   "handler": "issue",
+   "declaredIn": "BatchBillingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "runNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/dashboard",
+   "package": "features.billing.controller",
+   "controller": "BillingDashboardController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDashboardController.java",
+   "handler": "dashboard",
+   "declaredIn": "BillingDashboardController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "currency",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "weeks",
+     "required": false,
+     "default": "8",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.Dashboard>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/billing/aging-report",
    "package": "features.billing.controller",
    "controller": "BillingDocumentController",
@@ -1949,6 +2130,994 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/billing/catalog/categories",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "categories",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "createCategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "deleteCategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:CANCEL"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "updateCategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryUpdateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}/activate",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "activateCategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}/deactivate",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "deactivateCategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}/subcategories",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "subcategories",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}/subcategories",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "createSubcategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}/subcategories/{subCode}",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "deleteSubcategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:CANCEL"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}/subcategories/{subCode}",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "updateSubcategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryUpdateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}/subcategories/{subCode}/activate",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "activateSubcategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/catalog/categories/{code}/subcategories/{subCode}/deactivate",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "deactivateSubcategory",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/catalog/references",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "references",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.ReferencesResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/catalog/references/merge",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "merge",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.MergeRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Long>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/catalog/units",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "units",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/catalog/units",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "createUnit",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/billing/catalog/units/{code}",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "deleteUnit",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:CANCEL"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/billing/catalog/units/{code}",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "updateUnit",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitUpdateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/catalog/units/{code}/activate",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "activateUnit",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/catalog/units/{code}/deactivate",
+   "package": "features.billing.controller",
+   "controller": "CatalogReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CatalogReferenceController.java",
+   "handler": "deactivateUnit",
+   "declaredIn": "CatalogReferenceController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/claim-reasons",
+   "package": "features.billing.controller",
+   "controller": "ClaimController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/ClaimController.java",
+   "handler": "reasons",
+   "declaredIn": "ClaimController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ReasonView>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/billing/claim-reasons",
+   "package": "features.billing.controller",
+   "controller": "ClaimController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/ClaimController.java",
+   "handler": "saveReason",
+   "declaredIn": "ClaimController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:CATALOG_REFERENCES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.ReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "active",
+     "required": false,
+     "type": "Boolean"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ReasonView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/claims",
+   "package": "features.billing.controller",
+   "controller": "ClaimController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/ClaimController.java",
+   "handler": "list",
+   "declaredIn": "ClaimController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "documentNumber",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "customerType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "customerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "openOnly",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/claims/{claimNumber}",
+   "package": "features.billing.controller",
+   "controller": "ClaimController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/ClaimController.java",
+   "handler": "get",
+   "declaredIn": "ClaimController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "claimNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/claims/{claimNumber}/accept",
+   "package": "features.billing.controller",
+   "controller": "ClaimController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/ClaimController.java",
+   "handler": "accept",
+   "declaredIn": "ClaimController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.AcceptRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "claimNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/claims/{claimNumber}/reject",
+   "package": "features.billing.controller",
+   "controller": "ClaimController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/ClaimController.java",
+   "handler": "reject",
+   "declaredIn": "ClaimController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.RejectRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "claimNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/claims/{claimNumber}/withdraw",
+   "package": "features.billing.controller",
+   "controller": "ClaimController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/ClaimController.java",
+   "handler": "withdraw",
+   "declaredIn": "ClaimController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "claimNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/claims",
+   "package": "features.billing.controller",
+   "controller": "ClaimController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/ClaimController.java",
+   "handler": "open",
+   "declaredIn": "ClaimController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.OpenRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/payment-plan",
+   "package": "features.billing.controller",
+   "controller": "CollectionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CollectionController.java",
+   "handler": "plan",
+   "declaredIn": "CollectionController",
+   "access": {
+    "kind": "admin",
+    "permission": "PAYMENT:PROCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CollectionDtos.PlanRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.PaymentScheduleResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/payment-promises",
+   "package": "features.billing.controller",
+   "controller": "CollectionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CollectionController.java",
+   "handler": "promise",
+   "declaredIn": "CollectionController",
+   "access": {
+    "kind": "admin",
+    "permission": "PAYMENT:PROCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CollectionDtos.PromiseRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CollectionDtos.PromiseView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/payment-promises",
+   "package": "features.billing.controller",
+   "controller": "CollectionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CollectionController.java",
+   "handler": "promises",
+   "declaredIn": "CollectionController",
+   "access": {
+    "kind": "admin",
+    "permission": "PAYMENT:PROCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "documentNumber",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "openOnly",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.CollectionDtos.PromiseView>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/payment-promises/{promiseNumber}/cancel",
+   "package": "features.billing.controller",
+   "controller": "CollectionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CollectionController.java",
+   "handler": "cancel",
+   "declaredIn": "CollectionController",
+   "access": {
+    "kind": "admin",
+    "permission": "PAYMENT:PROCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "promiseNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CollectionDtos.PromiseView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/customers/{customerType}/{customerCode}/prices",
+   "package": "features.billing.controller",
+   "controller": "CustomerPriceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CustomerPriceController.java",
+   "handler": "list",
+   "declaredIn": "CustomerPriceController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerType",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "customerCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "current",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.CustomerPriceDtos.PriceView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/customers/{customerType}/{customerCode}/prices",
+   "package": "features.billing.controller",
+   "controller": "CustomerPriceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CustomerPriceController.java",
+   "handler": "create",
+   "declaredIn": "CustomerPriceController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CustomerPriceDtos.PriceRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerType",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "customerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CustomerPriceDtos.PriceView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/customers/{customerType}/{customerCode}/prices/{id}/end",
+   "package": "features.billing.controller",
+   "controller": "CustomerPriceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/CustomerPriceController.java",
+   "handler": "end",
+   "declaredIn": "CustomerPriceController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CustomerPriceDtos.EndRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerType",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "customerCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CustomerPriceDtos.PriceView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/billing/deals",
    "package": "features.billing.controller",
    "controller": "DealController",
@@ -2251,6 +3420,247 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.DealResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/delivery-notes",
+   "package": "features.billing.controller",
+   "controller": "DeliveryNoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/DeliveryNoteController.java",
+   "handler": "list",
+   "declaredIn": "DeliveryNoteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "customerType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "customerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteSummary>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/delivery-notes/invoice",
+   "package": "features.billing.controller",
+   "controller": "DeliveryNoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/DeliveryNoteController.java",
+   "handler": "invoice",
+   "declaredIn": "DeliveryNoteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.InvoiceRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/delivery-notes/{noteNumber}",
+   "package": "features.billing.controller",
+   "controller": "DeliveryNoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/DeliveryNoteController.java",
+   "handler": "get",
+   "declaredIn": "DeliveryNoteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "noteNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/delivery-notes/{noteNumber}/cancel",
+   "package": "features.billing.controller",
+   "controller": "DeliveryNoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/DeliveryNoteController.java",
+   "handler": "cancel",
+   "declaredIn": "DeliveryNoteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CANCEL"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.CancelRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "noteNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/delivery-notes/{noteNumber}/deliver",
+   "package": "features.billing.controller",
+   "controller": "DeliveryNoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/DeliveryNoteController.java",
+   "handler": "deliver",
+   "declaredIn": "DeliveryNoteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.DeliverRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "noteNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/delivery-notes/{noteNumber}/pdf",
+   "package": "features.billing.controller",
+   "controller": "DeliveryNoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/DeliveryNoteController.java",
+   "handler": "pdf",
+   "declaredIn": "DeliveryNoteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "noteNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/delivery-notes/{noteNumber}/signed-copy",
+   "package": "features.billing.controller",
+   "controller": "DeliveryNoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/DeliveryNoteController.java",
+   "handler": "signedCopy",
+   "declaredIn": "DeliveryNoteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.SignedCopyRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "noteNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/delivery-notes",
+   "package": "features.billing.controller",
+   "controller": "DeliveryNoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/DeliveryNoteController.java",
+   "handler": "create",
+   "declaredIn": "DeliveryNoteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.CreateRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/delivery-status",
+   "package": "features.billing.controller",
+   "controller": "DeliveryNoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/DeliveryNoteController.java",
+   "handler": "status",
+   "declaredIn": "DeliveryNoteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.DeliveryStatus>"
   },
   {
    "methods": [
@@ -2655,6 +4065,290 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/billing/catalog/{itemCode}/components",
+   "package": "features.billing.controller",
+   "controller": "QuoteTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/QuoteTemplateController.java",
+   "handler": "components",
+   "declaredIn": "QuoteTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.Component>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/billing/catalog/{itemCode}/components",
+   "package": "features.billing.controller",
+   "controller": "QuoteTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/QuoteTemplateController.java",
+   "handler": "setComponents",
+   "declaredIn": "QuoteTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.ComponentsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.Component>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/quote-templates",
+   "package": "features.billing.controller",
+   "controller": "QuoteTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/QuoteTemplateController.java",
+   "handler": "list",
+   "declaredIn": "QuoteTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.TemplateView>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/billing/quote-templates",
+   "package": "features.billing.controller",
+   "controller": "QuoteTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/QuoteTemplateController.java",
+   "handler": "save",
+   "declaredIn": "QuoteTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.TemplateRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.TemplateView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/quote-templates/{code}",
+   "package": "features.billing.controller",
+   "controller": "QuoteTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/QuoteTemplateController.java",
+   "handler": "get",
+   "declaredIn": "QuoteTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.TemplateView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/quotes/from-template/{code}",
+   "package": "features.billing.controller",
+   "controller": "QuoteTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/QuoteTemplateController.java",
+   "handler": "fromTemplate",
+   "declaredIn": "QuoteTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.FromTemplateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/billing/catalog/{itemCode}/security-deposit",
+   "package": "features.billing.controller",
+   "controller": "SecurityDepositController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/SecurityDepositController.java",
+   "handler": "flag",
+   "declaredIn": "SecurityDepositController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.FlagRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Object>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/security-deposits",
+   "package": "features.billing.controller",
+   "controller": "SecurityDepositController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/SecurityDepositController.java",
+   "handler": "list",
+   "declaredIn": "SecurityDepositController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "customerType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "customerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "open",
+     "required": false,
+     "default": "true",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.DepositView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/security-deposits/legacy",
+   "package": "features.billing.controller",
+   "controller": "SecurityDepositController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/SecurityDepositController.java",
+   "handler": "legacy",
+   "declaredIn": "SecurityDepositController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.LegacyLine>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/security-deposits/{depositNumber}",
+   "package": "features.billing.controller",
+   "controller": "SecurityDepositController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/SecurityDepositController.java",
+   "handler": "get",
+   "declaredIn": "SecurityDepositController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "depositNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.DepositView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/security-deposits/{depositNumber}/movements",
+   "package": "features.billing.controller",
+   "controller": "SecurityDepositController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/SecurityDepositController.java",
+   "handler": "move",
+   "declaredIn": "SecurityDepositController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.MovementRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "depositNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.DepositView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/billing/catalog",
    "package": "features.billing.controller",
    "controller": "ServiceCatalogController",
@@ -2675,6 +4369,12 @@
     {
      "in": "query",
      "name": "category",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "subcategory",
      "required": false,
      "type": "String"
     },
@@ -2982,6 +4682,18 @@
      "name": "date",
      "required": false,
      "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "customerType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "customerCode",
+     "required": false,
+     "type": "String"
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.CatalogPriceResponse>"
@@ -3037,9 +4749,682 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.CatalogPriceResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/tax-rules",
+   "package": "features.billing.controller",
+   "controller": "TaxRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/TaxRuleController.java",
+   "handler": "list",
+   "declaredIn": "TaxRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/tax-rules",
+   "package": "features.billing.controller",
+   "controller": "TaxRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/TaxRuleController.java",
+   "handler": "create",
+   "declaredIn": "TaxRuleController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:TAX_RULES')",
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/tax-rules/{baseCode}/successor",
+   "package": "features.billing.controller",
+   "controller": "TaxRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/TaxRuleController.java",
+   "handler": "successor",
+   "declaredIn": "TaxRuleController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:TAX_RULES')",
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleSuccessorRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "baseCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/tax-rules/{baseCode}/versions",
+   "package": "features.billing.controller",
+   "controller": "TaxRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/TaxRuleController.java",
+   "handler": "versions",
+   "declaredIn": "TaxRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "baseCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleResponse>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/billing/tax-rules/{code}",
+   "package": "features.billing.controller",
+   "controller": "TaxRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/TaxRuleController.java",
+   "handler": "update",
+   "declaredIn": "TaxRuleController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:TAX_RULES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleUpdateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/tax-rules/{code}/activate",
+   "package": "features.billing.controller",
+   "controller": "TaxRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/TaxRuleController.java",
+   "handler": "activate",
+   "declaredIn": "TaxRuleController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:TAX_RULES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/tax-rules/{code}/deactivate",
+   "package": "features.billing.controller",
+   "controller": "TaxRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/TaxRuleController.java",
+   "handler": "deactivate",
+   "declaredIn": "TaxRuleController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:TAX_RULES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/unallocated-payments/suggestions",
+   "package": "features.billing.controller",
+   "controller": "UnallocatedPaymentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/UnallocatedPaymentController.java",
+   "handler": "suggestions",
+   "declaredIn": "UnallocatedPaymentController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "customerType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "customerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "100",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.Suggestion>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/unallocated-payments/{transactionNumber}/allocate",
+   "package": "features.billing.controller",
+   "controller": "UnallocatedPaymentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/UnallocatedPaymentController.java",
+   "handler": "allocate",
+   "declaredIn": "UnallocatedPaymentController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.AllocateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "transactionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.AllocationResult>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/withholdings",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "ofDocument",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.WithholdingView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/withholdings",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "record",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.RecordRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.WithholdingView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/withholding-types",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "types",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/withholding-types",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "createType",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:TAX_RULES')",
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeView>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/billing/withholding-types/{code}",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "updateType",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:TAX_RULES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeUpdateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/withholding-types/{code}/activate",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "activateType",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:TAX_RULES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/withholding-types/{code}/deactivate",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "deactivateType",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "preAuthorize": "hasAuthority('BILLING:TAX_RULES')",
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/withholdings",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "list",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "customerType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "customerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "certificate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.WithholdingView>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/withholdings/{number}/cancel",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "cancel",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CANCEL"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.CancelRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.WithholdingView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/billing/withholdings/{number}/certificate",
+   "package": "features.billing.controller",
+   "controller": "WithholdingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/WithholdingController.java",
+   "handler": "certificate",
+   "declaredIn": "WithholdingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.CertificateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.WithholdingDtos.WithholdingView>"
   }
  ],
  "schemas": {
+  "BatchBillingDtos.RunSummary": {
+   "type": "object",
+   "properties": {
+    "runNumber": {
+     "type": "string"
+    },
+    "periodFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "periodTo": {
+     "type": "string",
+     "format": "date"
+    },
+    "title": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "customers": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "invoices": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "BatchBillingDtos.RunView": {
+   "type": "object",
+   "properties": {
+    "runNumber": {
+     "type": "string"
+    },
+    "periodFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "periodTo": {
+     "type": "string",
+     "format": "date"
+    },
+    "title": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "issuedBy": {
+     "type": "string"
+    },
+    "issuedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "totalToInvoice": {
+     "type": "number"
+    },
+    "customers": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunItem"
+     }
+    }
+   }
+  },
+  "BatchBillingDtos.PreviewRequest": {
+   "required": [
+    "periodFrom",
+    "periodTo"
+   ],
+   "type": "object",
+   "properties": {
+    "periodFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "periodTo": {
+     "type": "string",
+     "format": "date"
+    },
+    "sourceTypes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "title": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "BatchBillingDtos.ExcludeRequest": {
+   "required": [
+    "excluded",
+    "itemId"
+   ],
+   "type": "object",
+   "properties": {
+    "itemId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "excluded": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BillingDashboardService.Dashboard": {
+   "type": "object",
+   "properties": {
+    "from": {
+     "type": "string",
+     "format": "date"
+    },
+    "to": {
+     "type": "string",
+     "format": "date"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "quotes": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.Quotes"
+    },
+    "invoicing": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.Invoicing"
+    },
+    "forecast": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.WeekForecast"
+     }
+    },
+    "deals": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.DealStage"
+     }
+    },
+    "topCustomers": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.TopCustomer"
+     }
+    }
+   }
+  },
   "billing.dto.response.BillingAgingReportResponse": {
    "type": "object",
    "properties": {
@@ -4997,6 +7382,695 @@
     }
    }
   },
+  "CatalogReferenceDtos.CategoryResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "parentCode": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "revenueAccount": {
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdFromItem": {
+     "type": "boolean"
+    },
+    "itemCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "subcategories": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse"
+     }
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CatalogReferenceDtos.CategoryRequest": {
+   "required": [
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "maxLength": 100,
+     "minLength": 0,
+     "type": "string"
+    },
+    "label": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "revenueAccount": {
+     "maxLength": 20,
+     "minLength": 0,
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "CatalogReferenceDtos.CategoryUpdateRequest": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "revenueAccount": {
+     "maxLength": 20,
+     "minLength": 0,
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "CatalogReferenceDtos.ReferencesResponse": {
+   "type": "object",
+   "properties": {
+    "categories": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse"
+     }
+    },
+    "units": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitResponse"
+     }
+    },
+    "taxRules": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleResponse"
+     }
+    },
+    "strict": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CatalogReferenceDtos.MergeRequest": {
+   "required": [
+    "list",
+    "sourceCode",
+    "targetCode"
+   ],
+   "type": "object",
+   "properties": {
+    "list": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "parentCode": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "targetCode": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "CatalogReferenceDtos.UnitResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "pluralLabel": {
+     "type": "string"
+    },
+    "symbol": {
+     "type": "string"
+    },
+    "quantityScale": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "inventoryUnitCode": {
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdFromItem": {
+     "type": "boolean"
+    },
+    "itemCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CatalogReferenceDtos.UnitRequest": {
+   "required": [
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "maxLength": 50,
+     "minLength": 0,
+     "type": "string"
+    },
+    "label": {
+     "maxLength": 100,
+     "minLength": 0,
+     "type": "string"
+    },
+    "pluralLabel": {
+     "maxLength": 100,
+     "minLength": 0,
+     "type": "string"
+    },
+    "symbol": {
+     "maxLength": 20,
+     "minLength": 0,
+     "type": "string"
+    },
+    "quantityScale": {
+     "maximum": 4,
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    },
+    "inventoryUnitCode": {
+     "maxLength": 50,
+     "minLength": 0,
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "CatalogReferenceDtos.UnitUpdateRequest": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "maxLength": 100,
+     "minLength": 0,
+     "type": "string"
+    },
+    "pluralLabel": {
+     "maxLength": 100,
+     "minLength": 0,
+     "type": "string"
+    },
+    "symbol": {
+     "maxLength": 20,
+     "minLength": 0,
+     "type": "string"
+    },
+    "quantityScale": {
+     "maximum": 4,
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    },
+    "inventoryUnitCode": {
+     "maxLength": 50,
+     "minLength": 0,
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ClaimDtos.ReasonView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ClaimDtos.ReasonRequest": {
+   "required": [
+    "code",
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "maxLength": 40,
+     "minLength": 0,
+     "type": "string"
+    },
+    "label": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ClaimDtos.ClaimView": {
+   "type": "object",
+   "properties": {
+    "claimNumber": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "reasonCode": {
+     "type": "string"
+    },
+    "reasonLabel": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "lineOrders": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "requestedAmount": {
+     "type": "number"
+    },
+    "status": {
+     "type": "string"
+    },
+    "channel": {
+     "type": "string"
+    },
+    "openedBy": {
+     "type": "string"
+    },
+    "grantedAmount": {
+     "type": "number"
+    },
+    "creditNoteNumber": {
+     "type": "string"
+    },
+    "decisionComment": {
+     "type": "string"
+    },
+    "decidedBy": {
+     "type": "string"
+    },
+    "decidedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ClaimDtos.AcceptRequest": {
+   "type": "object",
+   "properties": {
+    "grantedAmount": {
+     "minimum": 0.01,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "comment": {
+     "maxLength": 2000,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "ClaimDtos.RejectRequest": {
+   "required": [
+    "comment"
+   ],
+   "type": "object",
+   "properties": {
+    "comment": {
+     "maxLength": 2000,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "ClaimDtos.OpenRequest": {
+   "required": [
+    "reasonCode"
+   ],
+   "type": "object",
+   "properties": {
+    "reasonCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "maxLength": 4000,
+     "minLength": 0,
+     "type": "string"
+    },
+    "lineOrders": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "requestedAmount": {
+     "minimum": 0,
+     "exclusiveMinimum": false,
+     "type": "number"
+    }
+   }
+  },
+  "PaymentScheduleResponse": {
+   "type": "object",
+   "properties": {
+    "scheduleNumber": {
+     "type": "string"
+    },
+    "billingDocumentNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "COMPLETED",
+      "CANCELLED"
+     ]
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "paidAmount": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "installments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.response.PaymentScheduleInstallmentResponse"
+     }
+    }
+   }
+  },
+  "CollectionDtos.PlanRequest": {
+   "required": [
+    "firstDueDate",
+    "installments"
+   ],
+   "type": "object",
+   "properties": {
+    "installments": {
+     "maximum": 36,
+     "minimum": 2,
+     "type": "integer",
+     "format": "int32"
+    },
+    "firstDueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "intervalMonths": {
+     "maximum": 12,
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "notes": {
+     "maxLength": 1000,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "CollectionDtos.PromiseView": {
+   "type": "object",
+   "properties": {
+    "promiseNumber": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "promisedDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "balanceAtPromise": {
+     "type": "number"
+    },
+    "channel": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "closedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CollectionDtos.PromiseRequest": {
+   "required": [
+    "promisedDate"
+   ],
+   "type": "object",
+   "properties": {
+    "promisedDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "amount": {
+     "minimum": 0.01,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "channel": {
+     "type": "string"
+    },
+    "note": {
+     "maxLength": 1000,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "CustomerPriceDtos.PriceView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "itemCode": {
+     "type": "string"
+    },
+    "itemName": {
+     "type": "string"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "discountRate": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "currentlyValid": {
+     "type": "boolean"
+    },
+    "contractReference": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CustomerPriceDtos.PriceRequest": {
+   "required": [
+    "itemCode",
+    "validFrom"
+   ],
+   "type": "object",
+   "properties": {
+    "itemCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "unitPrice": {
+     "minimum": 0,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "discountRate": {
+     "maximum": 100,
+     "exclusiveMaximum": false,
+     "minimum": 0,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "contractReference": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "CustomerPriceDtos.EndRequest": {
+   "required": [
+    "validUntil"
+   ],
+   "type": "object",
+   "properties": {
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
   "DealResponse": {
    "type": "object",
    "properties": {
@@ -5196,6 +8270,206 @@
      "maxLength": 1000,
      "minLength": 0,
      "type": "string"
+    }
+   }
+  },
+  "DeliveryNoteDtos.NoteSummary": {
+   "type": "object",
+   "properties": {
+    "noteNumber": {
+     "type": "string"
+    },
+    "sourceDocumentNumber": {
+     "type": "string"
+    },
+    "sourceDocumentType": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "deliveredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "invoiceNumber": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DeliveryNoteDtos.InvoiceRequest": {
+   "required": [
+    "noteNumbers"
+   ],
+   "type": "object",
+   "properties": {
+    "noteNumbers": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "DeliveryNoteDtos.NoteView": {
+   "type": "object",
+   "properties": {
+    "noteNumber": {
+     "type": "string"
+    },
+    "sourceDocumentNumber": {
+     "type": "string"
+    },
+    "sourceDocumentType": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "deliveryAddress": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "showPrices": {
+     "type": "boolean"
+    },
+    "stockIssued": {
+     "type": "boolean"
+    },
+    "deliveredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "deliveredBy": {
+     "type": "string"
+    },
+    "receivedBy": {
+     "type": "string"
+    },
+    "signedCopyReference": {
+     "type": "string"
+    },
+    "invoiceNumber": {
+     "type": "string"
+    },
+    "cancelledAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "cancelReason": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteLine"
+     }
+    }
+   }
+  },
+  "DeliveryNoteDtos.CancelRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "DeliveryNoteDtos.DeliverRequest": {
+   "type": "object",
+   "properties": {
+    "receivedBy": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "DeliveryNoteDtos.SignedCopyRequest": {
+   "type": "object",
+   "properties": {
+    "reference": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "DeliveryNoteDtos.CreateRequest": {
+   "type": "object",
+   "properties": {
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.LineQuantity"
+     }
+    },
+    "deliveryAddress": {
+     "maxLength": 2000,
+     "minLength": 0,
+     "type": "string"
+    },
+    "notes": {
+     "maxLength": 4000,
+     "minLength": 0,
+     "type": "string"
+    },
+    "showPrices": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DeliveryNoteDtos.DeliveryStatus": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "documentType": {
+     "type": "string"
+    },
+    "complete": {
+     "type": "boolean"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.LineStatus"
+     }
+    },
+    "notes": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteSummary"
+     }
     }
    }
   },
@@ -5425,46 +8699,6 @@
     }
    }
   },
-  "PaymentScheduleResponse": {
-   "type": "object",
-   "properties": {
-    "scheduleNumber": {
-     "type": "string"
-    },
-    "billingDocumentNumber": {
-     "type": "string"
-    },
-    "status": {
-     "type": "string",
-     "enum": [
-      "ACTIVE",
-      "COMPLETED",
-      "CANCELLED"
-     ]
-    },
-    "totalAmount": {
-     "type": "number"
-    },
-    "paidAmount": {
-     "type": "number"
-    },
-    "balanceDue": {
-     "type": "number"
-    },
-    "currency": {
-     "type": "string"
-    },
-    "notes": {
-     "type": "string"
-    },
-    "installments": {
-     "type": "array",
-     "items": {
-      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.response.PaymentScheduleInstallmentResponse"
-     }
-    }
-   }
-  },
   "CreatePaymentScheduleRequest": {
    "required": [
     "installments"
@@ -5537,6 +8771,279 @@
      "type": "string"
     },
     "userAgent": {
+     "type": "string"
+    }
+   }
+  },
+  "QuoteTemplateDtos.Component": {
+   "required": [
+    "componentCode",
+    "componentSource",
+    "quantity"
+   ],
+   "type": "object",
+   "properties": {
+    "componentCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "componentSource": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "quantity": {
+     "minimum": 0.0001,
+     "exclusiveMinimum": false,
+     "type": "number"
+    }
+   }
+  },
+  "QuoteTemplateDtos.ComponentsRequest": {
+   "required": [
+    "components"
+   ],
+   "type": "object",
+   "properties": {
+    "components": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.Component"
+     }
+    }
+   }
+  },
+  "QuoteTemplateDtos.TemplateView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "validityDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "terms": {
+     "type": "string"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.TemplateLine"
+     }
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "QuoteTemplateDtos.TemplateRequest": {
+   "required": [
+    "code",
+    "lines",
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "maxLength": 60,
+     "minLength": 0,
+     "type": "string"
+    },
+    "name": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "validityDays": {
+     "maximum": 365,
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "terms": {
+     "type": "string"
+    },
+    "lines": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.TemplateLine"
+     }
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "QuoteTemplateDtos.FromTemplateRequest": {
+   "required": [
+    "customerCode",
+    "customerName",
+    "customerType"
+   ],
+   "type": "object",
+   "properties": {
+    "customerType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "customerCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "customerName": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "customerEmail": {
+     "type": "string"
+    },
+    "customerPhone": {
+     "type": "string"
+    },
+    "segment": {
+     "type": "string"
+    },
+    "title": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "SecurityDepositDtos.FlagRequest": {
+   "required": [
+    "securityDeposit"
+   ],
+   "type": "object",
+   "properties": {
+    "securityDeposit": {
+     "type": "boolean"
+    }
+   }
+  },
+  "SecurityDepositDtos.DepositView": {
+   "type": "object",
+   "properties": {
+    "depositNumber": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "subscriptionNumber": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "releasedAmount": {
+     "type": "number"
+    },
+    "retainedAmount": {
+     "type": "number"
+    },
+    "appliedAmount": {
+     "type": "number"
+    },
+    "remaining": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "movements": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.MovementView"
+     }
+    }
+   }
+  },
+  "SecurityDepositDtos.LegacyLine": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "description": {
+     "type": "string"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "netAmount": {
+     "type": "number"
+    },
+    "taxAmount": {
+     "type": "number"
+    },
+    "posted": {
+     "type": "boolean"
+    }
+   }
+  },
+  "SecurityDepositDtos.MovementRequest": {
+   "required": [
+    "kind"
+   ],
+   "type": "object",
+   "properties": {
+    "kind": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "targetDocumentNumber": {
      "type": "string"
     }
    }
@@ -5648,6 +9155,27 @@
      "format": "date"
     },
     "currentlyValid": {
+     "type": "boolean"
+    },
+    "categoryLabel": {
+     "type": "string"
+    },
+    "subcategoryLabel": {
+     "type": "string"
+    },
+    "unitLabel": {
+     "type": "string"
+    },
+    "taxRule": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleSummary"
+    },
+    "referenceWarnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "securityDeposit": {
      "type": "boolean"
     }
    }
@@ -6038,6 +9566,612 @@
     }
    }
   },
+  "CatalogReferenceDtos.TaxRuleResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "code": {
+     "type": "string"
+    },
+    "baseCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "taxType": {
+     "type": "string"
+    },
+    "rate": {
+     "type": "number"
+    },
+    "appliesOn": {
+     "type": "string"
+    },
+    "treatment": {
+     "type": "string"
+    },
+    "labelOnDocument": {
+     "type": "string"
+    },
+    "exemptionReason": {
+     "type": "string"
+    },
+    "countryCode": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "currentlyValid": {
+     "type": "boolean"
+    },
+    "selectableOnItem": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CatalogReferenceDtos.TaxRuleRequest": {
+   "required": [
+    "code",
+    "name",
+    "rate"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "name": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "taxType": {
+     "type": "string"
+    },
+    "rate": {
+     "minimum": 0,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "treatment": {
+     "type": "string"
+    },
+    "labelOnDocument": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "exemptionReason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "countryCode": {
+     "maxLength": 3,
+     "minLength": 0,
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "CatalogReferenceDtos.TaxRuleSuccessorRequest": {
+   "required": [
+    "rate",
+    "validFrom"
+   ],
+   "type": "object",
+   "properties": {
+    "rate": {
+     "minimum": 0,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "name": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "labelOnDocument": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "CatalogReferenceDtos.TaxRuleUpdateRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "labelOnDocument": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "exemptionReason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "UnallocatedPaymentDtos.Suggestion": {
+   "type": "object",
+   "properties": {
+    "transactionNumber": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "pending": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "paidAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "providerReference": {
+     "type": "string"
+    },
+    "payerName": {
+     "type": "string"
+    },
+    "candidates": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.Candidate"
+     }
+    }
+   }
+  },
+  "UnallocatedPaymentDtos.AllocationResult": {
+   "type": "object",
+   "properties": {
+    "transactionNumber": {
+     "type": "string"
+    },
+    "allocated": {
+     "type": "number"
+    },
+    "stillPending": {
+     "type": "number"
+    },
+    "documentNumbers": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "UnallocatedPaymentDtos.AllocateRequest": {
+   "required": [
+    "allocations"
+   ],
+   "type": "object",
+   "properties": {
+    "allocations": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.Allocation"
+     }
+    }
+   }
+  },
+  "WithholdingDtos.WithholdingView": {
+   "type": "object",
+   "properties": {
+    "withholdingNumber": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "typeCode": {
+     "type": "string"
+    },
+    "typeLabel": {
+     "type": "string"
+    },
+    "account": {
+     "type": "string"
+    },
+    "baseAmount": {
+     "type": "number"
+    },
+    "rate": {
+     "type": "number"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "certificateReference": {
+     "type": "string"
+    },
+    "certificateDocument": {
+     "type": "string"
+    },
+    "certificateAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "certificateMissing": {
+     "type": "boolean"
+    },
+    "status": {
+     "type": "string"
+    },
+    "withheldOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "recordedBy": {
+     "type": "string"
+    },
+    "cancelledAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "cancelReason": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "WithholdingDtos.RecordRequest": {
+   "required": [
+    "typeCode"
+   ],
+   "type": "object",
+   "properties": {
+    "typeCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "minimum": 0.01,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "withheldOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "certificateReference": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "certificateDocument": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "WithholdingDtos.TypeView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "rate": {
+     "type": "number"
+    },
+    "base": {
+     "type": "string"
+    },
+    "account": {
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "WithholdingDtos.TypeRequest": {
+   "required": [
+    "account",
+    "base",
+    "code",
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "maxLength": 40,
+     "minLength": 0,
+     "type": "string"
+    },
+    "label": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "rate": {
+     "type": "number"
+    },
+    "base": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "account": {
+     "maxLength": 20,
+     "minLength": 0,
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "WithholdingDtos.TypeUpdateRequest": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "rate": {
+     "type": "number"
+    },
+    "base": {
+     "type": "string"
+    },
+    "account": {
+     "maxLength": 20,
+     "minLength": 0,
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "WithholdingDtos.CancelRequest": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "WithholdingDtos.CertificateRequest": {
+   "required": [
+    "certificateDocument"
+   ],
+   "type": "object",
+   "properties": {
+    "certificateReference": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "certificateDocument": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "BatchBillingDtos.RunItem": {
+   "type": "object",
+   "properties": {
+    "itemId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "billingCompany": {
+     "type": "string"
+    },
+    "itemCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "excluded": {
+     "type": "boolean"
+    },
+    "invoiceNumber": {
+     "type": "string"
+    },
+    "error": {
+     "type": "string"
+    }
+   }
+  },
+  "BillingDashboardService.Quotes": {
+   "type": "object",
+   "properties": {
+    "issued": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "converted": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "conversionRate": {
+     "type": "number"
+    },
+    "issuedAmount": {
+     "type": "number"
+    },
+    "convertedAmount": {
+     "type": "number"
+    },
+    "averageDaysToInvoice": {
+     "type": "number"
+    }
+   }
+  },
+  "BillingDashboardService.Invoicing": {
+   "type": "object",
+   "properties": {
+    "invoices": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "invoiced": {
+     "type": "number"
+    },
+    "collected": {
+     "type": "number"
+    },
+    "outstanding": {
+     "type": "number"
+    },
+    "overdue": {
+     "type": "number"
+    },
+    "averageDaysToPay": {
+     "type": "number"
+    }
+   }
+  },
+  "BillingDashboardService.WeekForecast": {
+   "type": "object",
+   "properties": {
+    "weekStart": {
+     "type": "string",
+     "format": "date"
+    },
+    "expected": {
+     "type": "number"
+    },
+    "documents": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "BillingDashboardService.DealStage": {
+   "type": "object",
+   "properties": {
+    "stage": {
+     "type": "string"
+    },
+    "deals": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "expectedAmount": {
+     "type": "number"
+    },
+    "weightedAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "BillingDashboardService.TopCustomer": {
+   "type": "object",
+   "properties": {
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "invoiced": {
+     "type": "number"
+    },
+    "outstanding": {
+     "type": "number"
+    }
+   }
+  },
   "BillingAgingReportResponse.AgingSummary": {
    "type": "object",
    "properties": {
@@ -6121,7 +10255,8 @@
       "OVERAGE",
       "PENALTY",
       "WALLET",
-      "ADJUSTMENT"
+      "ADJUSTMENT",
+      "DISBURSEMENT"
      ]
     },
     "itemCode": {
@@ -6205,6 +10340,9 @@
      "format": "date"
     },
     "servicePeriod": {
+     "type": "string"
+    },
+    "taxRuleCode": {
      "type": "string"
     }
    }
@@ -6396,7 +10534,8 @@
       "OVERAGE",
       "PENALTY",
       "WALLET",
-      "ADJUSTMENT"
+      "ADJUSTMENT",
+      "DISBURSEMENT"
      ]
     },
     "itemCode": {
@@ -6789,7 +10928,8 @@
       "OVERAGE",
       "PENALTY",
       "WALLET",
-      "ADJUSTMENT"
+      "ADJUSTMENT",
+      "DISBURSEMENT"
      ]
     },
     "itemCode": {
@@ -7127,113 +11267,6 @@
     }
    }
   },
-  "DealDashboardResponse.Document": {
-   "type": "object",
-   "properties": {
-    "documentNumber": {
-     "type": "string"
-    },
-    "documentType": {
-     "type": "string"
-    },
-    "status": {
-     "type": "string"
-    },
-    "deposit": {
-     "type": "boolean"
-    },
-    "issueDate": {
-     "type": "string",
-     "format": "date"
-    },
-    "totalAmount": {
-     "type": "number"
-    },
-    "paidAmount": {
-     "type": "number"
-    },
-    "balanceDue": {
-     "type": "number"
-    },
-    "currency": {
-     "type": "string"
-    },
-    "createdAt": {
-     "type": "string",
-     "format": "date-time"
-    }
-   }
-  },
-  "DunningController.StepView": {
-   "type": "object",
-   "properties": {
-    "stepOrder": {
-     "type": "integer",
-     "format": "int32"
-    },
-    "daysAfterDue": {
-     "type": "integer",
-     "format": "int32"
-    },
-    "action": {
-     "type": "string",
-     "enum": [
-      "REMINDER",
-      "FORMAL_NOTICE",
-      "GRACE_PERIOD",
-      "SUSPEND",
-      "HANDOVER"
-     ]
-    },
-    "channel": {
-     "type": "string",
-     "enum": [
-      "EMAIL",
-      "IN_APP",
-      "STAFF"
-     ]
-    },
-    "subjectTemplate": {
-     "type": "string"
-    },
-    "messageTemplate": {
-     "type": "string"
-    }
-   }
-  },
-  "DunningController.StepRequest": {
-   "type": "object",
-   "properties": {
-    "daysAfterDue": {
-     "type": "integer",
-     "format": "int32"
-    },
-    "action": {
-     "type": "string",
-     "enum": [
-      "REMINDER",
-      "FORMAL_NOTICE",
-      "GRACE_PERIOD",
-      "SUSPEND",
-      "HANDOVER"
-     ]
-    },
-    "channel": {
-     "type": "string",
-     "enum": [
-      "EMAIL",
-      "IN_APP",
-      "STAFF"
-     ]
-    },
-    "subjectTemplate": {
-     "type": "string"
-    },
-    "messageTemplate": {
-     "type": "string"
-    }
-   }
-  },
   "PaymentScheduleInstallmentResponse": {
    "type": "object",
    "properties": {
@@ -7276,6 +11309,181 @@
     }
    }
   },
+  "DealDashboardResponse.Document": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "documentType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "deposit": {
+     "type": "boolean"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "paidAmount": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DeliveryNoteDtos.NoteLine": {
+   "type": "object",
+   "properties": {
+    "lineOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "itemCode": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "unit": {
+     "type": "string"
+    },
+    "quantity": {
+     "type": "number"
+    },
+    "unitPrice": {
+     "type": "number"
+    }
+   }
+  },
+  "DeliveryNoteDtos.LineQuantity": {
+   "type": "object",
+   "properties": {
+    "lineOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "quantity": {
+     "type": "number"
+    }
+   }
+  },
+  "DeliveryNoteDtos.LineStatus": {
+   "type": "object",
+   "properties": {
+    "lineOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "itemCode": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "unit": {
+     "type": "string"
+    },
+    "ordered": {
+     "type": "number"
+    },
+    "delivered": {
+     "type": "number"
+    },
+    "inDraft": {
+     "type": "number"
+    },
+    "remaining": {
+     "type": "number"
+    }
+   }
+  },
+  "DunningController.StepView": {
+   "type": "object",
+   "properties": {
+    "stepOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "daysAfterDue": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "action": {
+     "type": "string",
+     "enum": [
+      "REMINDER",
+      "FORMAL_NOTICE",
+      "GRACE_PERIOD",
+      "SUSPEND",
+      "HANDOVER"
+     ]
+    },
+    "channel": {
+     "type": "string",
+     "enum": [
+      "EMAIL",
+      "IN_APP",
+      "STAFF",
+      "WHATSAPP"
+     ]
+    },
+    "subjectTemplate": {
+     "type": "string"
+    },
+    "messageTemplate": {
+     "type": "string"
+    }
+   }
+  },
+  "DunningController.StepRequest": {
+   "type": "object",
+   "properties": {
+    "daysAfterDue": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "action": {
+     "type": "string",
+     "enum": [
+      "REMINDER",
+      "FORMAL_NOTICE",
+      "GRACE_PERIOD",
+      "SUSPEND",
+      "HANDOVER"
+     ]
+    },
+    "channel": {
+     "type": "string",
+     "enum": [
+      "EMAIL",
+      "IN_APP",
+      "STAFF",
+      "WHATSAPP"
+     ]
+    },
+    "subjectTemplate": {
+     "type": "string"
+    },
+    "messageTemplate": {
+     "type": "string"
+    }
+   }
+  },
   "CreateInstallmentInput": {
    "required": [
     "amount",
@@ -7292,6 +11500,127 @@
     "dueDate": {
      "type": "string",
      "format": "date"
+    }
+   }
+  },
+  "QuoteTemplateDtos.TemplateLine": {
+   "required": [
+    "itemCode",
+    "quantity"
+   ],
+   "type": "object",
+   "properties": {
+    "itemCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "quantity": {
+     "minimum": 0.0001,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "description": {
+     "maxLength": 4000,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "SecurityDepositDtos.MovementView": {
+   "type": "object",
+   "properties": {
+    "movementNumber": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "targetDocumentNumber": {
+     "type": "string"
+    },
+    "movementDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CatalogReferenceDtos.TaxRuleSummary": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "rate": {
+     "type": "number"
+    },
+    "treatment": {
+     "type": "string"
+    },
+    "labelOnDocument": {
+     "type": "string"
+    }
+   }
+  },
+  "UnallocatedPaymentDtos.Candidate": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "dueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "score": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "reasons": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "proposedAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "UnallocatedPaymentDtos.Allocation": {
+   "required": [
+    "amount",
+    "documentNumber"
+   ],
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
     }
    }
   },
@@ -7382,6 +11711,11 @@
   ]
  },
  "names": {
+  "BatchBillingDtos.RunSummary": "com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunSummary",
+  "BatchBillingDtos.RunView": "com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunView",
+  "BatchBillingDtos.PreviewRequest": "com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.PreviewRequest",
+  "BatchBillingDtos.ExcludeRequest": "com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.ExcludeRequest",
+  "BillingDashboardService.Dashboard": "com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.Dashboard",
   "billing.dto.response.BillingAgingReportResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingAgingReportResponse",
   "BillingDocumentResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse",
   "BillingRecipientsResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingRecipientsResponse",
@@ -7428,21 +11762,58 @@
   "RequestSignatureRequest": "com.sni.bokaticowork.features.billing.dto.request.RequestSignatureRequest",
   "RevalidateQuoteRequest": "com.sni.bokaticowork.features.billing.dto.request.RevalidateQuoteRequest",
   "SelectQuoteOptionsRequest": "com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest",
+  "CatalogReferenceDtos.CategoryResponse": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse",
+  "CatalogReferenceDtos.CategoryRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryRequest",
+  "CatalogReferenceDtos.CategoryUpdateRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryUpdateRequest",
+  "CatalogReferenceDtos.ReferencesResponse": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.ReferencesResponse",
+  "CatalogReferenceDtos.MergeRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.MergeRequest",
+  "CatalogReferenceDtos.UnitResponse": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitResponse",
+  "CatalogReferenceDtos.UnitRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitRequest",
+  "CatalogReferenceDtos.UnitUpdateRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.UnitUpdateRequest",
+  "ClaimDtos.ReasonView": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.ReasonView",
+  "ClaimDtos.ReasonRequest": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.ReasonRequest",
+  "ClaimDtos.ClaimView": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView",
+  "ClaimDtos.AcceptRequest": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.AcceptRequest",
+  "ClaimDtos.RejectRequest": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.RejectRequest",
+  "ClaimDtos.OpenRequest": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.OpenRequest",
+  "PaymentScheduleResponse": "com.sni.bokaticowork.features.billing.dto.response.PaymentScheduleResponse",
+  "CollectionDtos.PlanRequest": "com.sni.bokaticowork.features.billing.dto.CollectionDtos.PlanRequest",
+  "CollectionDtos.PromiseView": "com.sni.bokaticowork.features.billing.dto.CollectionDtos.PromiseView",
+  "CollectionDtos.PromiseRequest": "com.sni.bokaticowork.features.billing.dto.CollectionDtos.PromiseRequest",
+  "CustomerPriceDtos.PriceView": "com.sni.bokaticowork.features.billing.dto.CustomerPriceDtos.PriceView",
+  "CustomerPriceDtos.PriceRequest": "com.sni.bokaticowork.features.billing.dto.CustomerPriceDtos.PriceRequest",
+  "CustomerPriceDtos.EndRequest": "com.sni.bokaticowork.features.billing.dto.CustomerPriceDtos.EndRequest",
   "DealResponse": "com.sni.bokaticowork.features.billing.dto.response.DealResponse",
   "BillingDealStage": "com.sni.bokaticowork.features.billing.enums.BillingDealStage",
   "DealRequest": "com.sni.bokaticowork.features.billing.dto.request.DealRequest",
   "DealDashboardResponse": "com.sni.bokaticowork.features.billing.dto.response.DealDashboardResponse",
   "DealStageRequest": "com.sni.bokaticowork.features.billing.dto.request.DealStageRequest",
+  "DeliveryNoteDtos.NoteSummary": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteSummary",
+  "DeliveryNoteDtos.InvoiceRequest": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.InvoiceRequest",
+  "DeliveryNoteDtos.NoteView": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteView",
+  "DeliveryNoteDtos.CancelRequest": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.CancelRequest",
+  "DeliveryNoteDtos.DeliverRequest": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.DeliverRequest",
+  "DeliveryNoteDtos.SignedCopyRequest": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.SignedCopyRequest",
+  "DeliveryNoteDtos.CreateRequest": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.CreateRequest",
+  "DeliveryNoteDtos.DeliveryStatus": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.DeliveryStatus",
   "DunningController.NoticeView": "com.sni.bokaticowork.features.billing.dunning.controller.DunningController.NoticeView",
   "DunningController.PolicyView": "com.sni.bokaticowork.features.billing.dunning.controller.DunningController.PolicyView",
   "DunningController.PolicyRequest": "com.sni.bokaticowork.features.billing.dunning.controller.DunningController.PolicyRequest",
   "DunningPolicyWorker.Outcome": "com.sni.bokaticowork.features.billing.dunning.worker.DunningPolicyWorker.Outcome",
   "FiscalIntegrityCheckService.FiscalIntegrityReport": "com.sni.bokaticowork.features.billing.service.fiscal.FiscalIntegrityCheckService.FiscalIntegrityReport",
   "FiscalIntegrityReportLog": "com.sni.bokaticowork.features.billing.model.FiscalIntegrityReportLog",
-  "PaymentScheduleResponse": "com.sni.bokaticowork.features.billing.dto.response.PaymentScheduleResponse",
   "CreatePaymentScheduleRequest": "com.sni.bokaticowork.features.billing.dto.request.CreatePaymentScheduleRequest",
   "PublicSignatureConfirmation": "com.sni.bokaticowork.features.billing.dto.response.PublicSignatureConfirmation",
   "ConfirmSignatureRequest": "com.sni.bokaticowork.features.billing.dto.request.ConfirmSignatureRequest",
+  "QuoteTemplateDtos.Component": "com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.Component",
+  "QuoteTemplateDtos.ComponentsRequest": "com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.ComponentsRequest",
+  "QuoteTemplateDtos.TemplateView": "com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.TemplateView",
+  "QuoteTemplateDtos.TemplateRequest": "com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.TemplateRequest",
+  "QuoteTemplateDtos.FromTemplateRequest": "com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.FromTemplateRequest",
+  "SecurityDepositDtos.FlagRequest": "com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.FlagRequest",
+  "SecurityDepositDtos.DepositView": "com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.DepositView",
+  "SecurityDepositDtos.LegacyLine": "com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.LegacyLine",
+  "SecurityDepositDtos.MovementRequest": "com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.MovementRequest",
   "ServiceCatalogItemResponse": "com.sni.bokaticowork.features.billing.dto.response.ServiceCatalogItemResponse",
   "CreateServiceCatalogItemRequest": "com.sni.bokaticowork.features.billing.dto.request.CreateServiceCatalogItemRequest",
   "CatalogPriceService.ImportResult": "com.sni.bokaticowork.features.billing.service.implementation.CatalogPriceService.ImportResult",
@@ -7452,6 +11823,26 @@
   "CatalogLinksRequest": "com.sni.bokaticowork.features.billing.dto.request.CatalogLinksRequest",
   "CatalogPriceResponse": "com.sni.bokaticowork.features.billing.dto.response.CatalogPriceResponse",
   "CatalogPriceRequest": "com.sni.bokaticowork.features.billing.dto.request.CatalogPriceRequest",
+  "CatalogReferenceDtos.TaxRuleResponse": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleResponse",
+  "CatalogReferenceDtos.TaxRuleRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleRequest",
+  "CatalogReferenceDtos.TaxRuleSuccessorRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleSuccessorRequest",
+  "CatalogReferenceDtos.TaxRuleUpdateRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleUpdateRequest",
+  "UnallocatedPaymentDtos.Suggestion": "com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.Suggestion",
+  "UnallocatedPaymentDtos.AllocationResult": "com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.AllocationResult",
+  "UnallocatedPaymentDtos.AllocateRequest": "com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.AllocateRequest",
+  "WithholdingDtos.WithholdingView": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.WithholdingView",
+  "WithholdingDtos.RecordRequest": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.RecordRequest",
+  "WithholdingDtos.TypeView": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeView",
+  "WithholdingDtos.TypeRequest": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeRequest",
+  "WithholdingDtos.TypeUpdateRequest": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.TypeUpdateRequest",
+  "WithholdingDtos.CancelRequest": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.CancelRequest",
+  "WithholdingDtos.CertificateRequest": "com.sni.bokaticowork.features.billing.dto.WithholdingDtos.CertificateRequest",
+  "BatchBillingDtos.RunItem": "com.sni.bokaticowork.features.billing.dto.BatchBillingDtos.RunItem",
+  "BillingDashboardService.Quotes": "com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.Quotes",
+  "BillingDashboardService.Invoicing": "com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.Invoicing",
+  "BillingDashboardService.WeekForecast": "com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.WeekForecast",
+  "BillingDashboardService.DealStage": "com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.DealStage",
+  "BillingDashboardService.TopCustomer": "com.sni.bokaticowork.features.billing.service.implementation.BillingDashboardService.TopCustomer",
   "BillingAgingReportResponse.AgingSummary": "com.sni.bokaticowork.features.billing.dto.response.BillingAgingReportResponse.AgingSummary",
   "BillingAgingReportResponse.AgingDocument": "com.sni.bokaticowork.features.billing.dto.response.BillingAgingReportResponse.AgingDocument",
   "BillingDocumentLineResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse",
@@ -7479,11 +11870,19 @@
   "PaymentTransactionResponse": "com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse",
   "DepositPlanRequest.Deposit": "com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest.Deposit",
   "QuoteNegotiationResponse.Round": "com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.Round",
+  "PaymentScheduleInstallmentResponse": "com.sni.bokaticowork.features.billing.dto.response.PaymentScheduleInstallmentResponse",
   "DealDashboardResponse.Document": "com.sni.bokaticowork.features.billing.dto.response.DealDashboardResponse.Document",
+  "DeliveryNoteDtos.NoteLine": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteLine",
+  "DeliveryNoteDtos.LineQuantity": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.LineQuantity",
+  "DeliveryNoteDtos.LineStatus": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.LineStatus",
   "DunningController.StepView": "com.sni.bokaticowork.features.billing.dunning.controller.DunningController.StepView",
   "DunningController.StepRequest": "com.sni.bokaticowork.features.billing.dunning.controller.DunningController.StepRequest",
-  "PaymentScheduleInstallmentResponse": "com.sni.bokaticowork.features.billing.dto.response.PaymentScheduleInstallmentResponse",
   "CreateInstallmentInput": "com.sni.bokaticowork.features.billing.dto.request.CreateInstallmentInput",
+  "QuoteTemplateDtos.TemplateLine": "com.sni.bokaticowork.features.billing.dto.QuoteTemplateDtos.TemplateLine",
+  "SecurityDepositDtos.MovementView": "com.sni.bokaticowork.features.billing.dto.SecurityDepositDtos.MovementView",
+  "CatalogReferenceDtos.TaxRuleSummary": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleSummary",
+  "UnallocatedPaymentDtos.Candidate": "com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.Candidate",
+  "UnallocatedPaymentDtos.Allocation": "com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.Allocation",
   "billing.dto.response.BillingAgingReportResponse.AgingBucket": "com.sni.bokaticowork.features.billing.dto.response.BillingAgingReportResponse.AgingBucket",
   "QuoteNegotiationResponse.LineChange": "com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange"
  }

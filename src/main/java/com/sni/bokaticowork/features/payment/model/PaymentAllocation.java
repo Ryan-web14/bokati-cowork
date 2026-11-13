@@ -44,6 +44,17 @@ public class PaymentAllocation {
     @Column(name = "allocated_at", nullable = false)
     private Instant allocatedAt;
 
+    /**
+     * Lot C9 (facturation) : PAYMENT pour une imputation faite avec le paiement, LATE pour une
+     * affectation apres coup d'une somme en attente (ecriture propre 4719 vers 411).
+     */
+    @Column(name = "allocation_mode", nullable = false, length = 20)
+    @Builder.Default
+    private String allocationMode = "PAYMENT";
+
+    @Column(name = "allocated_by", length = 180)
+    private String allocatedBy;
+
     @PrePersist
     public void prePersist() {
         allocatedAt = Instant.now();

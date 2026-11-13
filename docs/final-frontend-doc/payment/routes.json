@@ -12750,7 +12750,8 @@
       "OVERAGE",
       "PENALTY",
       "WALLET",
-      "ADJUSTMENT"
+      "ADJUSTMENT",
+      "DISBURSEMENT"
      ]
     },
     "itemCode": {
@@ -12834,6 +12835,9 @@
      "format": "date"
     },
     "servicePeriod": {
+     "type": "string"
+    },
+    "taxRuleCode": {
      "type": "string"
     }
    }

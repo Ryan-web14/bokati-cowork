@@ -152,7 +152,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `stepOrder` | entier |  |  |
 | `daysAfterDue` | entier |  |  |
 | `action` | enum : `REMINDER`, `FORMAL_NOTICE`, `GRACE_PERIOD`, `SUSPEND`, `HANDOVER` |  |  |
-| `channel` | enum : `EMAIL`, `IN_APP`, `STAFF` |  |  |
+| `channel` | enum : `EMAIL`, `IN_APP`, `STAFF`, `WHATSAPP` |  |  |
 | `subjectTemplate` | texte |  |  |
 | `messageTemplate` | texte |  |  |
 
@@ -163,6 +163,6 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `daysAfterDue` | entier |  |  |
 | `action` | enum : `REMINDER`, `FORMAL_NOTICE`, `GRACE_PERIOD`, `SUSPEND`, `HANDOVER` |  |  |
-| `channel` | enum : `EMAIL`, `IN_APP`, `STAFF` |  |  |
+| `channel` | enum : `EMAIL`, `IN_APP`, `STAFF`, `WHATSAPP` |  |  |
 | `subjectTemplate` | texte |  |  |
 | `messageTemplate` | texte |  |  |

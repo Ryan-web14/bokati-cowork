@@ -13359,7 +13359,8 @@
       "OVERAGE",
       "PENALTY",
       "WALLET",
-      "ADJUSTMENT"
+      "ADJUSTMENT",
+      "DISBURSEMENT"
      ]
     },
     "itemCode": {
@@ -13429,6 +13430,9 @@
      "type": "boolean"
     },
     "sourceType": {
+     "type": "string"
+    },
+    "taxRuleCode": {
      "type": "string"
     },
     "sourceCode": {
@@ -18688,6 +18692,24 @@
     "discountOverrideAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "discountApprovalNumber": {
+     "type": "string"
+    },
+    "discountApprovalStatus": {
+     "type": "string"
+    },
+    "discountApprovalFingerprint": {
+     "type": "string"
+    },
+    "discountApprovalReason": {
+     "type": "string"
+    },
+    "discountApprovalComment": {
+     "type": "string"
+    },
+    "discountApprovedBy": {
+     "type": "string"
     },
     "pdfStorageProvider": {
      "type": "string"

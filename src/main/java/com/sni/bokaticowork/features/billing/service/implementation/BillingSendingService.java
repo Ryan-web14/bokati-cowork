@@ -127,7 +127,7 @@ public class BillingSendingService {
     }
 
     /** Modele et variables WhatsApp d'une piece, selon son type (lot C2). */
-    record WhatsAppContent(String purpose, List<String> values, String portalPath) {
+    public record WhatsAppContent(String purpose, List<String> values, String portalPath) {
     }
 
     /**
@@ -135,7 +135,7 @@ public class BillingSendingService {
      * soldee : facture_payee ; facture a regler : rappel_paiement. Sans modele approuve pour cet
      * usage, l'envoi WhatsApp echoue avec un message clair, le courriel part quand meme.
      */
-    static WhatsAppContent whatsAppContent(BillingDocument document) {
+    public static WhatsAppContent whatsAppContent(BillingDocument document) {
         String name = StringUtils.hasText(document.getCustomerName()) ? document.getCustomerName().trim().split("\\s+")[0] : "client";
         String until = document.getDueDate() == null ? "réception" : DateTimeFormatter.ofPattern("dd/MM/yyyy").format(document.getDueDate());
         BillingDocumentType type = document.getDocumentType();

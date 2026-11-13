@@ -166,6 +166,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
     private final com.sni.bokaticowork.features.billing.service.support.BillingStockGuard stockGuard;
     private final com.sni.bokaticowork.features.billing.repository.BillingDocumentSignatureRepository signatureRepository;
+    /** Lot C7 : registre des depots de garantie (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private SecurityDepositService securityDeposits;
+
     /** Lot C3 : derogations de remise par le centre d'approbation (facultatif dans les tests). */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private DiscountApprovalService discountApprovals;
@@ -1518,8 +1522,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                         item.getAmount(),
                         BigDecimal.ZERO,
                         BigDecimal.ZERO,
-                        Boolean.TRUE,
-                        Boolean.TRUE,
+                        // Lot C7 : la caution d'un abonnement n'est pas taxee (aucune TVA extraite).
+                        !"DEPOSIT".equalsIgnoreCase(item.getSourceType()),
+                        !"DEPOSIT".equalsIgnoreCase(item.getSourceType()),
                         null,
                         null,
                         item.getSourceType(),
@@ -1940,6 +1945,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (stockService != null && saved.getDocumentType() == BillingDocumentType.INVOICE) {
             // Lot B7 : la facture sort le stock (reservations du devis consommees, reste sorti).
             stockService.issueForInvoice(saved);
+        }
+        if (securityDeposits != null && saved.getDocumentType() == BillingDocumentType.INVOICE) {
+            // Lot C7 : les lignes de caution s'inscrivent au registre des depots de garantie.
+            securityDeposits.registerFromInvoice(saved);
         }
         eventWriter.write(saved, "BILLING_DOCUMENT_ISSUED", null);
         memberInAppNotifier.notify("BILLING_DOCUMENT_ISSUED", "BILLING_DOCUMENT", saved.getDocumentNumber(),
@@ -2624,6 +2633,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         DepositService deposits = depositServices == null ? null : depositServices.getIfAvailable();
         if (deposits != null && StringUtils.hasText(document.getDepositForDocumentNumber())) {
             deposits.onDepositInvoicePayment(document);
+        }
+        if (securityDeposits != null && document.getStatus() == BillingDocumentStatus.PAID) {
+            // Decision CD6 : la caution d'abonnement encaissee rejoint le portefeuille, sous sa retenue.
+            securityDeposits.onInvoicePaid(document);
         }
     }
 

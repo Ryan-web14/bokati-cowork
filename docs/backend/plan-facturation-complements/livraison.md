@@ -100,11 +100,87 @@ Dev `V338__listes_reference_catalogue.sql`, prod `V332__listes_reference_catalog
 - Routes : `POST`, `GET /billing/documents/{n}/withholdings`, `GET /billing/withholdings` (`customerType`, `customerCode`, `certificate=missing`), `PATCH /billing/withholdings/{n}/certificate`, `PATCH .../cancel` ; types : `GET`, `POST /billing/withholding-types`, `PUT /{code}`, `PATCH .../activate`, `.../deactivate` (droit `BILLING:TAX_RULES` pour écrire).
 - Codes : `RETENUE_IMPOSSIBLE`, `RETENUE_MONTANT`, `RETENUE_ANNULEE`.
 - Comptabilité : alimentée par le traitement des ventes (`SalesAccountingService`), une fois la facture comptabilisée ; une retenue annulée avant d'être comptabilisée ne l'est jamais.
-- Point à confirmer par le comptable (CD5) : comptes `4449` et `4492`, et, en régime des encaissements, le sort de la TVA en attente sur la part retenue.
+- Comptes validés (CD5) : `4449` et `4492`. En régime des encaissements (décision CD11), une retenue de TVA (type de base `TVA`) solde la TVA en attente : D `4438` / C `411`, au lieu du compte de la retenue.
 - Migrations : dev `V342__retenues_a_la_source.sql`, prod `V336__retenues_a_la_source.sql`.
 - Tests : `WithholdingC6Test`.
+
+## C7. Dépôts de garantie
+
+- Correction : la ligne « Dépôt de garantie » d'une facture d'abonnement n'est plus taxable (plus de TVA extraite d'une caution) et part au `165` au lieu du `706`. Un article du catalogue se marque caution : `PUT /billing/catalog/{itemCode}/security-deposit` (`securityDeposit` dans la réponse de l'article).
+- Tables `billing_security_deposit`, `billing_security_deposit_movement` ; numérotations `CAU`, `MVC` ; règle comptable `SALES_SECURITY_DEPOSIT_MOVEMENT`.
+- Routes : `GET /billing/security-deposits` (`customerType`, `customerCode`, `open`), `GET /billing/security-deposits/{n}`, `POST /billing/security-deposits/{n}/movements` (`kind` RELEASE, RETAIN, APPLY ; `amount` ; `reason` ; `targetDocumentNumber`).
+- Codes : `CAUTION_INVALIDE`, `CAUTION_NON_ENCAISSEE`, `CAUTION_ABONNEMENT`, `CAUTION_MONTANT`, `MOTIF_REQUIS`.
+- Paramètres : `accounting.sales.security-deposit-account` (165), `accounting.sales.deposit-retention-account` (758).
+- Caution d'abonnement (décision CD6) : quand la facture qui la porte est soldée, la caution est créditée sur le portefeuille du client, où la retenue posée à la création de l'abonnement la bloque (mouvement de portefeuille de source `SECURITY_DEPOSIT`, écriture D `165` / C compte du portefeuille). À la sortie d'abonnement, le règlement de la retenue inscrit au registre les factures réglées par la caution et la part rendue au portefeuille, sans écriture propre (`wallet_settled`).
+- Reprise (décision CD10) : `GET /billing/security-deposits/legacy` liste les cautions facturées avant ce lot (ligne taxable, en produit avec TVA), avec le montant hors taxe, la TVA extraite et l'état comptabilisé ; le comptable passe lui-même les écritures de reclassement.
+- Migrations : dev `V343__depots_de_garantie.sql`, prod `V337__depots_de_garantie.sql`.
+- Tests : `SecurityDepositC7Test`.
+
+## C8. Tarifs négociés par client
+
+- Table `billing_customer_price` ; `CustomerPriceService`, `CustomerPriceController`.
+- Routes : `GET`, `POST /billing/customers/{type}/{code}/prices`, `PATCH .../{id}/end` ; `GET /billing/catalog/{itemCode}/price?customerType=&customerCode=` (source `CONTRACT`).
+- Code : `TARIF_INVALIDE`.
+- Migrations : dev `V344__tarifs_clients.sql`, prod `V338__tarifs_clients.sql`.
+- Tests : `CustomerPriceC8Test`.
+
+## C9. Paiements non affectés
+
+- Routes : `GET /billing/unallocated-payments/suggestions`, `POST /billing/unallocated-payments/{transactionNumber}/allocate`.
+- Colonnes `payment_allocation.allocation_mode` (`PAYMENT`, `LATE`) et `allocated_by` ; règle comptable `SALES_LATE_ALLOCATION` (événement `LATE_ALLOCATION`, référence `ALLOC-{id}`).
+- Codes : `AFFECTATION_INVALIDE`, `AFFECTATION_MONTANT`.
+- Migrations : dev `V345__paiements_non_affectes.sql`, prod `V339__paiements_non_affectes.sql`.
+- Tests : `UnallocatedPaymentC9Test`.
+
+## C10. Débours
+
+- Type de ligne `DISBURSEMENT` (enum `BillingLineType`), paramètre `accounting.sales.disbursement-account` (`4718`).
+- Pas de migration.
+- Tests : `BillingDisbursementC10Test`.
+
+## C11. Réclamations
+
+- Tables `billing_claim`, `billing_claim_reason` ; numérotation `RCL` ; `ClaimService` (aussi point d'arrêt des relances), `ClaimController`.
+- Codes : `RECLAMATION_IMPOSSIBLE`, `RECLAMATION_EN_COURS`, `RECLAMATION_MONTANT`, `RECLAMATION_CLOSE`, `REFERENCE_INCONNUE`, `MOTIF_REQUIS`.
+- Migrations : dev `V346__reclamations.sql`, prod `V340__reclamations.sql`.
+- Tests : `ClaimC11Test`.
+
+## C12. Recouvrement
+
+- Table `billing_payment_promise` ; numérotation `PRM` ; `CollectionService` (aussi point d'arrêt des relances), `CollectionController`.
+- Relances : canal `WHATSAPP` ajouté aux paliers (contrainte `ck_dunning_step_channel`) ; les relances consultent les points d'arrêt (`DunningHold` : réclamation en cours, promesse non échue) et notent le palier « sauté » avec le motif.
+- Paramètre : `billing.collection.plan-approval-months` (3).
+- Codes : `PROMESSE_INVALIDE`, `PROMESSE_CLOSE`, `RECOUVREMENT_IMPOSSIBLE` ; 403 pour un plan long sans le droit.
+- Migrations : dev `V347__recouvrement.sql`, prod `V341__recouvrement.sql`.
+- Tests : `CollectionC12Test`.
+
+## C13. Facturation groupée périodique
+
+- Tables `billing_batch_run`, `billing_batch_run_item` ; numérotation `LFG` ; `BatchBillingService`, `BatchBillingController`.
+- Codes : `LANCEMENT_INVALIDE`, `RIEN_A_FACTURER`, `LANCEMENT_STATUT`.
+- Migrations : dev `V348__facturation_groupee.sql`, prod `V342__facturation_groupee.sql`.
+- Tests : `BatchBillingC13Test`.
+
+## C14. Devis types et lots d'articles
+
+- Tables `billing_quote_template`, `billing_catalog_component` ; `QuoteTemplateService`, `QuoteTemplateController`.
+- Ventilation comptable dans `SalesAccountingService` ; sortie de stock par composant dans `BillingStockService` (facture et bon de livraison).
+- Codes : `MODELE_INACTIF`, `COMPOSANT_INVALIDE`.
+- Migrations : dev `V349__devis_types_lots.sql`, prod `V343__devis_types_lots.sql`.
+- Tests : `QuoteTemplateC14Test`.
+
+## C15. Tableau de bord commercial
+
+- `BillingDashboardService`, `BillingDashboardController` ; pas de migration.
+- Test : `BillingDashboardC15IT`.
+
+## C16. Espace client
+
+- `ClientQuoteService`, `ClientQuoteController` (portail) ; pas de migration.
+- Tests : `ClientQuoteC16Test`.
 
 ### Hors lot, livré en même temps
 
 - **Procfile :** tas porté à 600 Mo. Le démarrage en production dépassait 90 secondes depuis la fusion de la facturation ; aussi sur `hotfix/demarrage-memoire`.
+- **Écriture des factures :** une ligne non taxable (article exonéré, organisation exonérée, caution) reste en produit au lieu d'être comptée en remise ; l'écriture redevient équilibrée (test `SalesAccountingF4IT.exemptLineStaysInRevenue`).
 - **Alertes d'administration :** une alerte émise avant la connexion au courtier de messages (premières secondes après un démarrage) attend la connexion au lieu d'être perdue (`AdminInAppNotifier`, test `AdminInAppNotifierBrokerTest`).

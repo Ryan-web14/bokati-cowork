@@ -41,3 +41,26 @@ Les refus qui portent un montant ou une liste (stock manquant, plafond d'encours
 ## Routes dépréciées
 
 Les routes `/sni/api/v1/billing/quotations/...` répondent encore jusqu'au 13/05/2027 avec les en-têtes `Deprecation: true`, `Sunset` et `Link` vers la route `/billing/quotes/...` qui les remplace. N'utiliser que `/billing/quotes/...`.
+
+## Compléments (lots C0 à C16)
+
+| Code | Où | Sens |
+| --- | --- | --- |
+| `REFERENCE_INCONNUE` | Article, réclamation | Valeur absente de la liste (mode strict) ou motif inconnu |
+| `REFERENCE_INACTIVE` | Article | Entrée désactivée (mode strict) |
+| `REFERENCE_UTILISEE` | Listes | Suppression d'une entrée encore utilisée |
+| `REFERENCE_EXISTANTE`, `REFERENCE_INVALIDE`, `FUSION_IMPOSSIBLE` | Listes | Code déjà pris, libellé vide, fusion impossible |
+| `TAXE_INVALIDE`, `TAXE_EXISTANTE` | Règles de taxe | Règle incohérente ou déjà existante |
+| `DEROGATION_EN_ATTENTE` (409) | Émission, révision de devis | Remise hors limites : demande d'approbation partie ou en attente |
+| `DEROGATION_MOTIF_REQUIS`, `DEROGATION_REFUSEE` | Idem | Motif manquant ; dérogation refusée |
+| `LIVRAISON_*`, `RIEN_A_LIVRER` | Bons de livraison | Voir [livraisons](livraisons.md) |
+| `RETENUE_*` | Retenues | Voir [retenues](retenues.md) |
+| `CAUTION_*` | Cautions | Voir [cautions](cautions.md) |
+| `TARIF_INVALIDE` | Tarifs clients | Prix et taux ensemble, dates incohérentes |
+| `AFFECTATION_*` | Paiements en attente | Voir [paiements en attente](paiements-en-attente.md) |
+| `RECLAMATION_*` | Réclamations | Voir [réclamations](reclamations.md) |
+| `PROMESSE_*`, `RECOUVREMENT_IMPOSSIBLE` | Recouvrement | Voir [recouvrement](recouvrement.md) |
+| `LANCEMENT_*`, `RIEN_A_FACTURER` | Facturation groupée | Voir [facturation groupée](facturation-groupee.md) |
+| `MODELE_INACTIF`, `COMPOSANT_INVALIDE` | Devis types | Voir [devis types](devis-types.md) |
+| `MOTIF_REQUIS` | Plusieurs | Motif obligatoire manquant |
+

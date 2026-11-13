@@ -203,3 +203,5 @@ Règles propres à chaque domaine : dans les fichiers de parcours.
 18. **Devis en brouillon visibles et acceptables** : `GET /sni/api/v1/client/quotes` rend aussi les devis `DRAFT` pas encore envoyés, et `accept` les accepte (`open()` inclut `DRAFT`) (`src/main/java/com/sni/bokaticowork/features/subscription/lifecycle/model/SubscriptionQuote.java:35`, `ClientSubscriptionSelfService.quotes`).
 19. **Défi `OTP` jamais reçu** : le lancement d'un transfert annonce `challenge` `OTP` ou `PIN_AND_OTP`, mais la confirmation ne reçoit qu'un `pin` et ne vérifie que le code secret (`src/main/java/com/sni/bokaticowork/features/payment/security/service/WalletConfirmationService.java:145`).
 20. **Niveau KYC du plan masqué** : la souscription applique le niveau KYC exigé par le plan (`SubscriptionCreationOperator`, `SubscriberKycLevelGuard`) alors que le détail de plan du portail le rend toujours `null` (écart 14) : l'écran ne peut pas prévenir le refus.
+
+- Devis, proformas et réclamations (lot C16 de la facturation) : [devis-et-reclamations.md](devis-et-reclamations.md).

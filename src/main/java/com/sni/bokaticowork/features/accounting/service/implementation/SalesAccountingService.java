@@ -171,6 +171,24 @@ public class SalesAccountingService {
                     + "ORDER BY w.cancelled_at LIMIT ?", String.class, batch)
                     .forEach(number -> counter.run(number, () -> feedWithholdingCancellation(number)));
         }
+        if (settings.familyEnabled("SALES")) {
+            // Lot C7 : mouvements de caution (restitution, retenue, imputation), une fois la facture de la caution comptabilisee.
+            jdbc.queryForList("SELECT m.movement_number FROM billing_security_deposit_movement m JOIN billing_security_deposit d ON d.id = m.deposit_id "
+                    + "WHERE EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_ISSUED' AND e.reference = d.document_number) "
+                    + "AND m.wallet_settled = FALSE "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'SECURITY_DEPOSIT_MOVEMENT' AND e.reference = m.movement_number) "
+                    + "ORDER BY m.created_at LIMIT ?", String.class, batch)
+                    .forEach(number -> counter.run(number, () -> feedSecurityDepositMovement(number)));
+        }
+        if (settings.familyEnabled("PAYMENT")) {
+            // Lot C9 : affectation apres coup d'une somme en attente, une fois le paiement comptabilise.
+            jdbc.queryForList("SELECT a.id FROM payment_allocation a JOIN payment_transaction t ON t.id = a.payment_transaction_id "
+                    + "WHERE a.allocation_mode = 'LATE' "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'PAYMENT_RECEIVED' AND e.reference = t.transaction_number) "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'LATE_ALLOCATION' AND e.reference = CONCAT('ALLOC-', a.id)) "
+                    + "ORDER BY a.allocated_at LIMIT ?", Long.class, batch)
+                    .forEach(id -> counter.run("ALLOC-" + id, () -> feedLateAllocation(id)));
+        }
         if (settings.familyEnabled("PAYMENT")) {
             Instant settled = Instant.now().minusSeconds(60L * Math.max(0, settings.paymentDelayMinutes()));
             jdbc.queryForList("SELECT t.transaction_number FROM payment_transaction t WHERE t.status IN ('SUCCEEDED', 'REFUNDED', 'REVERSED') "
@@ -237,6 +255,22 @@ public class SalesAccountingService {
         for (BillingDocumentLine line : documentLineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document)) {
             BigDecimal amount = fx.apply(money(line.getSubtotalAmount() != null ? line.getSubtotalAmount() : line.getTaxableAmount()));
             if (amount.signum() == 0 || Boolean.TRUE.equals(line.getOptional())) {
+                continue;
+            }
+            List<com.sni.bokaticowork.features.billing.service.implementation.QuoteTemplateService.Share> shares =
+                    bundles == null ? List.of() : bundles.split(line.getItemCode(), amount);
+            if (!shares.isEmpty()) {
+                // Lot C14 : article compose, produit ventile entre ses composants (compte de chacun).
+                for (var share : shares) {
+                    Map<String, Object> part = new LinkedHashMap<>();
+                    part.put("account", "INVENTORY_ITEM".equals(share.componentSource()) ? settings.text("accounting.sales.account.PRODUCT", "701")
+                            : productAccount(BillingDocumentLine.builder().itemCode(share.componentCode()).lineType(line.getLineType())
+                            .document(line.getDocument()).build()));
+                    part.put("amount", share.amount());
+                    part.put("label", line.getDescription());
+                    lines.add(part);
+                }
+                gross = gross.add(amount);
                 continue;
             }
             Map<String, Object> item = new LinkedHashMap<>();
@@ -323,10 +357,55 @@ public class SalesAccountingService {
         engine.receive("RECEIVABLE_TRANSFER", newDocumentNumber, "SALES", date, json(data), replay(date));
     }
 
+    /**
+     * Lot C7 : mouvement de caution. D 165 ; C 411 du client (restitution : le client devient
+     * crediteur, rembourse par les circuits habituels ; imputation : lettre avec la facture cible)
+     * ou C produit (retenue).
+     */
+    void feedSecurityDepositMovement(String movementNumber) {
+        Map<String, Object> row = jdbc.queryForMap("SELECT m.kind, m.amount, m.target_document_number, m.movement_date, d.deposit_number, "
+                + "d.document_number FROM billing_security_deposit_movement m JOIN billing_security_deposit d ON d.id = m.deposit_id "
+                + "WHERE m.movement_number = ?", movementNumber);
+        BillingDocument invoice = documentRepository.findByDocumentNumber((String) row.get("document_number")).orElseThrow();
+        LocalDate date = row.get("movement_date") instanceof java.sql.Date day ? day.toLocalDate() : LocalDate.now();
+        Conversion fx = conversion(invoice.getCurrency(), invoice.getExchangeRate(), date);
+        String kind = (String) row.get("kind");
+        boolean retained = "RETAIN".equals(kind);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("depositNumber", row.get("deposit_number"));
+        data.put("kindLabel", retained ? "Retenue" : "APPLY".equals(kind) ? "Imputation" : "Restitution");
+        data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
+        data.put("securityDepositAccount", settings.text("accounting.sales.security-deposit-account", "165"));
+        data.put("counterAccount", retained ? settings.text("accounting.sales.deposit-retention-account", "758")
+                : settings.text("accounting.sales.client-account", "411"));
+        data.put("thirdParty", retained ? null : customerCode(invoice));
+        data.put("reference", "APPLY".equals(kind) ? row.get("target_document_number") : retained ? movementNumber : invoice.getDocumentNumber());
+        data.put("amount", fx.apply(money((BigDecimal) row.get("amount"))));
+        engine.receive("SECURITY_DEPOSIT_MOVEMENT", movementNumber, "SALES", date, json(data), replay(date));
+    }
+
+    /** Lot C9 : affectation apres coup, D 4719 / C 411 du client (lettre avec la facture). */
+    void feedLateAllocation(Long allocationId) {
+        Map<String, Object> row = jdbc.queryForMap("SELECT a.billing_document_number, a.allocated_amount, a.allocated_at, t.transaction_number "
+                + "FROM payment_allocation a JOIN payment_transaction t ON t.id = a.payment_transaction_id WHERE a.id = ?", allocationId);
+        BillingDocument document = documentRepository.findByDocumentNumber((String) row.get("billing_document_number")).orElseThrow();
+        LocalDate date = date(row.get("allocated_at") instanceof java.sql.Timestamp at ? at.toInstant() : Instant.now());
+        Conversion fx = conversion(document.getCurrency(), document.getExchangeRate(), date);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("transactionNumber", row.get("transaction_number"));
+        data.put("documentNumber", document.getDocumentNumber());
+        data.put("customerCode", customerCode(document));
+        data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
+        data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
+        data.put("unallocatedAccount", settings.text("accounting.sales.unallocated-account", "4719"));
+        data.put("amount", fx.apply(money((BigDecimal) row.get("allocated_amount"))));
+        engine.receive("LATE_ALLOCATION", "ALLOC-" + allocationId, "SALES", date, json(data), replay(date));
+    }
+
     /** Lot C6 : retenue a la source, D compte de la retenue / C 411 du client (lettre avec la facture). */
     void feedWithholding(String withholdingNumber) {
-        Map<String, Object> row = jdbc.queryForMap("SELECT w.document_number, w.account, w.amount, w.withheld_on FROM billing_withholding w "
-                + "WHERE w.withholding_number = ?", withholdingNumber);
+        Map<String, Object> row = jdbc.queryForMap("SELECT w.document_number, w.account, w.amount, w.withheld_on, t.base FROM billing_withholding w "
+                + "LEFT JOIN billing_withholding_type t ON t.code = w.type_code WHERE w.withholding_number = ?", withholdingNumber);
         BillingDocument document = documentRepository.findByDocumentNumber((String) row.get("document_number")).orElseThrow();
         LocalDate date = row.get("withheld_on") instanceof java.sql.Date day ? day.toLocalDate() : LocalDate.now();
         Conversion fx = conversion(document.getCurrency(), document.getExchangeRate(), date);
@@ -336,7 +415,10 @@ public class SalesAccountingService {
         data.put("customerCode", customerCode(document));
         data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
         data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
-        data.put("withholdingAccount", row.get("account"));
+        // Decision CD11 : en regime des encaissements, une retenue de TVA solde la TVA en attente (4438) :
+        // le client l'a versee a l'Etat, l'exploitant n'a rien a reverser sur cette part.
+        data.put("withholdingAccount", paymentRegime() && "TVA".equals(row.get("base"))
+                ? settings.text("accounting.vat.pending-account", "4438") : row.get("account"));
         data.put("amount", fx.apply(money((BigDecimal) row.get("amount"))));
         engine.receive("WITHHOLDING_RECORDED", withholdingNumber, "SALES", date, json(data), replay(date));
     }
@@ -362,6 +444,10 @@ public class SalesAccountingService {
     }
 
     private ReceivableRiskService receivableRisks;
+
+    /** Lot C14 : ventilation des articles composes (facultatif). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sni.bokaticowork.features.billing.service.implementation.QuoteTemplateService bundles;
 
     /** Lot F19 : facultatif, pour ne pas changer le constructeur. */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -396,6 +482,10 @@ public class SalesAccountingService {
         for (PaymentAllocation allocation : allocationRepository.findAllByPaymentTransactionId(source.getId())) {
             if (left.signum() <= 0) {
                 break;
+            }
+            if ("LATE".equals(allocation.getAllocationMode())) {
+                // Lot C9 : affectee apres coup, elle reste en attente ici et se solde par sa propre ecriture.
+                continue;
             }
             BigDecimal value = money(allocation.getAllocatedAmount()).min(left);
             if (value.signum() <= 0) {
@@ -478,6 +568,11 @@ public class SalesAccountingService {
             }
             default -> counter = settings.text("accounting.sales.unallocated-account", "4719");
         }
+        if (com.sni.bokaticowork.features.billing.service.implementation.SecurityDepositService.WALLET_SOURCE.equals(entry.getSourceType())) {
+            // Decision CD6 : la caution d'abonnement passe du 165 au portefeuille du client.
+            counter = settings.text("accounting.sales.security-deposit-account", "165");
+            counterThirdParty = null;
+        }
         data.put("counterAccount", counter);
         data.put("counterThirdParty", counterThirdParty);
         data.put("counterReference", counterReference);
@@ -545,6 +640,11 @@ public class SalesAccountingService {
     }
 
     public String productAccount(BillingDocumentLine line) {
+        // Lot C7 : une caution n'est pas un produit, elle part au 165.
+        if (com.sni.bokaticowork.features.billing.service.implementation.SecurityDepositService.isSecurityDepositLine(line,
+                line.getDocument(), catalogItems)) {
+            return settings.text("accounting.sales.security-deposit-account", "165");
+        }
         // Lot B10 : le compte de produit propre a l'article du catalogue passe avant celui du type de ligne.
         if (catalogItems != null && StringUtils.hasText(line.getItemCode())) {
             java.util.Optional<String> own = catalogItems.findByItemCode(line.getItemCode().trim())
@@ -554,6 +654,10 @@ public class SalesAccountingService {
             }
         }
         String type = line.getLineType() == null ? "SERVICE" : line.getLineType().name();
+        if ("DISBURSEMENT".equals(type)) {
+            // Lot C10 : debours, compte de tiers (decision CD9), ni produit ni TVA.
+            return settings.text("accounting.sales.disbursement-account", "4718");
+        }
         String fallback = switch (type) {
             case "PRODUCT" -> "701";
             case "SUBSCRIPTION", "PASS" -> "7062";
