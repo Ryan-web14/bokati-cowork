@@ -190,7 +190,7 @@ public class FundVoucherService {
             default -> throw new BadRequestException("Modèle sans pièce de fonds : " + templateCode);
         };
         return DocumentData.fromVoucher(templateCode, vouchers.view(built.title(), built.issued(), built.sections(), built.amount(),
-                built.commitment(), built.signatures()), built.amount());
+                built.commitment(), built.signatures()), built.amount()).source(built.issued().sourceCode());
     }
 
     private byte[] render(Built built) {

@@ -105,7 +105,9 @@ public class DocumentTemplateService {
         // Un modele qui ne se rend pas avec les donnees d'exemple n'est pas publie.
         if (dataSources.supports(template.getCode())) {
             try {
-                printer.render(content, dataSources.sample(template.getCode()));
+                DocumentData sample = dataSources.sample(template.getCode());
+                printer.addFields(content, sample, true);
+                printer.render(content, sample);
             } catch (PdfRenderer.PdfRenderException | org.thymeleaf.exceptions.TemplateProcessingException ex) {
                 throw BadRequestException.coded("MODELE_INVALIDE", "Le modèle ne se rend pas : " + ex.getMessage());
             }
@@ -132,7 +134,7 @@ public class DocumentTemplateService {
         if (DRAFT.equals(source.getStatus())) {
             throw ConflictException.coded("VERSION_BROUILLON", "La version " + versionNumber + " est déjà le brouillon");
         }
-        return saveDraft(code, new Content(source.getPageFormat(), source.getCopies(), source.getStyle(), source.getBlocks(),
+        return saveDraft(code, new Content(source.getPageFormat(), source.getCopies(), source.getStyle(), source.getBlocks(), source.getFields(),
                 "Reprise de la version " + versionNumber));
     }
 
@@ -167,7 +169,9 @@ public class DocumentTemplateService {
                     .map(DocumentTemplatePrinter::content)
                     .orElseThrow(() -> BadRequestException.coded("AUCUN_CONTENU", "Le modèle " + code + " n'a ni brouillon ni version publiée"));
         }
-        DocumentData data = number == null || number.isBlank() ? dataSources.sample(template.getCode()) : dataSources.load(template.getCode(), number);
+        boolean sample = number == null || number.isBlank();
+        DocumentData data = sample ? dataSources.sample(template.getCode()) : dataSources.load(template.getCode(), number);
+        printer.addFields(content, data, sample);
         try {
             return printer.render(content, data);
         } catch (PdfRenderer.PdfRenderException | org.thymeleaf.exceptions.TemplateProcessingException ex) {
@@ -205,7 +209,7 @@ public class DocumentTemplateService {
         if (request == null) {
             throw BadRequestException.coded("MODELE_INVALIDE", "Contenu du modèle manquant");
         }
-        return new TemplateContent(request.pageFormat(), request.copies(), request.style(), request.blocks());
+        return new TemplateContent(request.pageFormat(), request.copies(), request.style(), request.blocks(), request.fields());
     }
 
     private static void apply(DocumentTemplateVersion version, TemplateContent content, String note) {
@@ -213,12 +217,13 @@ public class DocumentTemplateService {
         version.setCopies(new ArrayList<>(content.copies()));
         version.setStyle(new java.util.LinkedHashMap<>(content.style()));
         version.setBlocks(new ArrayList<>(content.blocks()));
+        version.setFields(new ArrayList<>(content.fields()));
         version.setNote(note);
     }
 
     static Version view(DocumentTemplateVersion version) {
         return new Version(version.getVersionNumber(), version.getStatus(), version.getPageFormat(), version.getCopies(), version.getStyle(),
-                version.getBlocks(), version.getNote(), version.getCreatedBy(), version.getCreatedAt(), version.getUpdatedAt(),
+                version.getBlocks(), version.getFields(), version.getNote(), version.getCreatedBy(), version.getCreatedAt(), version.getUpdatedAt(),
                 version.getPublishedBy(), version.getPublishedAt(), version.getArchivedAt());
     }
 

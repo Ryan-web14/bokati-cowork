@@ -63,6 +63,11 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         this.templatePrinter = templatePrinter;
     }
 
+    @Override
+    public String templateCode(String movementNumber) {
+        return CashVoucherDocumentData.templateCode(cashRegisterMapper.toCashMovementResponse(movement(movementNumber)));
+    }
+
     /** Donnees d'un mouvement pour l'apercu d'un modele de bon de caisse. */
     @Override
     public com.sni.bokaticowork.features.document.template.render.DocumentData previewData(String templateCode, String movementNumber) {

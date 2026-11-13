@@ -22,7 +22,11 @@ import java.util.Map;
  */
 public final class DocumentData {
 
+    /** Champ ; une valeur nulle est une ligne a remplir a la main (champ ajoute imprime vide, lot D3). */
     public record Field(String label, String value) {
+        public boolean blank() {
+            return value == null;
+        }
     }
 
     public record Column(String key, String label, boolean numeric) {
@@ -35,6 +39,7 @@ public final class DocumentData {
     }
 
     private final String code;
+    private String sourceCode;
     private String title;
     private String number;
     private String currency = "XAF";
@@ -57,6 +62,7 @@ public final class DocumentData {
     /** Donnees d'une piece de fonds ou de comptabilite, a partir de la vue de {@link VoucherService}. */
     public static DocumentData fromVoucher(String code, VoucherService.View view, BigDecimal amount) {
         DocumentData data = new DocumentData(code).title(view.title()).number(view.number()).amount(amount, "XAF");
+        data.sourceCode = view.number();
         data.duplicate = view.duplicate();
         data.duplicateLabel = view.duplicate() ? "DUPLICATA, réimpression du " + view.printedAtLabel() : null;
         data.cancelledBy = view.cancelledBy();
@@ -96,6 +102,25 @@ public final class DocumentData {
     }
 
     // ------------------------------------------------------------------ construction
+
+    /**
+     * Numero de la piece metier (mouvement de caisse, etat de besoin, demande de fonds...) auquel
+     * les valeurs des champs saisis sont rattachees (lot D3) ; par defaut le numero imprime.
+     */
+    public DocumentData source(String sourceCode) {
+        this.sourceCode = sourceCode;
+        return this;
+    }
+
+    /** Ligne a remplir a la main. */
+    public DocumentData blankField(String key, String label) {
+        fields.put(key, new Field(label, null));
+        return this;
+    }
+
+    public String sourceCode() {
+        return sourceCode != null ? sourceCode : number;
+    }
 
     public DocumentData title(String title) {
         this.title = title;

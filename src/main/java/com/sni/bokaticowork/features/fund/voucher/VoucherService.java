@@ -246,7 +246,7 @@ public class VoucherService {
         String templateCode = issued == null ? null : TEMPLATE_BY_TYPE.get(issued.type());
         if (templatePrinter != null && templateCode != null) {
             Optional<byte[]> printed = templatePrinter.tryRender(templateCode,
-                    com.sni.bokaticowork.features.document.template.render.DocumentData.fromVoucher(templateCode, view, amount));
+                    com.sni.bokaticowork.features.document.template.render.DocumentData.fromVoucher(templateCode, view, amount).source(issued.sourceCode()));
             if (printed.isPresent()) {
                 return printed.get();
             }

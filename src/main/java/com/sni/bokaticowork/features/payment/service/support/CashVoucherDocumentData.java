@@ -49,7 +49,7 @@ public final class CashVoucherDocumentData {
         String party = firstNonBlank(accounting == null ? null : accounting.beneficiaryName(), movement.counterpartyName(),
                 movement.relatedCustomerName(), movement.counterpartyCode());
         String request = firstNonBlank(accounting == null ? null : accounting.requestNumber(), movement.transferOrderNumber());
-        DocumentData data = new DocumentData(code).title(title).number(movement.movementNumber())
+        DocumentData data = new DocumentData(code).title(title).number(movement.movementNumber()).source(movement.movementNumber())
                 .amount(movement.amount(), movement.currency())
                 .duplicate(duplicate, "DUPLICATA").cancelledBy(reversedBy)
                 .issued(movement.createdAt() == null ? "" : VoucherService.date(movement.createdAt()), movement.createdBy())

@@ -61,6 +61,12 @@ public class DocumentTemplateVersion {
     @Column(name = "blocks_json", nullable = false, columnDefinition = "jsonb")
     private List<Map<String, Object>> blocks;
 
+    /** Champs ajoutes (lot D3) : cle, libelle, type, mode PRINTED_BLANK ou CAPTURED, obligatoire, valeurs d'une liste. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fields_json", nullable = false, columnDefinition = "jsonb")
+    @Builder.Default
+    private List<Map<String, Object>> fields = new java.util.ArrayList<>();
+
     @Column(name = "note", length = 500)
     private String note;
 

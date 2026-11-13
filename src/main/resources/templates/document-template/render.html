@@ -43,6 +43,7 @@
         .fields td { vertical-align: top; padding: 0 12px 6px 0; }
         .f-label { font-size: 7.5px; letter-spacing: 1px; text-transform: uppercase; }
         .f-value { font-weight: 700; font-size: 9.5px; }
+        .f-blank { height: 14px; border-bottom: 1px dotted #1f1430; }
         .lines { width: 100%; }
         .lines th { font-size: 7.8px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; background: #f3eef6; border-top: 1.2px solid #1f1430;
             border-bottom: 1.2px solid #1f1430; padding: 5px 6px; text-align: left; }
@@ -115,7 +116,8 @@
                 <tr th:each="row : ${b.rows()}">
                     <td th:each="cell : ${row}">
                         <div class="f-label" th:text="${cell.label()}">Libellé</div>
-                        <div class="f-value" th:text="${cell.value()}">Valeur</div>
+                        <div class="f-value" th:if="${!cell.blank()}" th:text="${cell.value()}">Valeur</div>
+                        <div class="f-blank" th:if="${cell.blank()}"></div>
                     </td>
                 </tr>
             </table>

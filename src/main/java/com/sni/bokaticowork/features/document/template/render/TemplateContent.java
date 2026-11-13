@@ -17,10 +17,16 @@ import java.util.regex.Pattern;
  * borne les tailles pour qu'un modele ne puisse pas produire une piece demesuree.
  */
 public record TemplateContent(String pageFormat, List<Map<String, Object>> copies, Map<String, Object> style,
-                              List<Map<String, Object>> blocks) {
+                              List<Map<String, Object>> blocks, List<Map<String, Object>> fields) {
 
     public static final Set<String> PAGE_FORMATS = Set.of("A4", "A5_TWO_UP", "A6");
     public static final Set<String> BLOCK_TYPES = Set.of("HEADER", "TITLE", "FIELDS", "LINES", "TOTALS", "TEXT", "SIGNATURES", "FOOTER");
+    /** Champs ajoutes (lot D3) : types, modes et prefixe de leur cle dans les blocs. */
+    public static final Set<String> FIELD_TYPES = Set.of("TEXT", "NUMBER", "AMOUNT", "DATE", "LIST", "CHECKBOX");
+    public static final Set<String> FIELD_MODES = Set.of("PRINTED_BLANK", "CAPTURED");
+    public static final String FIELD_PREFIX = "champ.";
+    private static final Pattern FIELD_KEY = Pattern.compile("^[a-z][a-z0-9_]{0,39}$");
+    private static final Set<String> FIELD_OPTIONS = Set.of("key", "label", "type", "mode", "required", "options", "help");
     private static final Pattern COLOR = Pattern.compile("^#[0-9a-fA-F]{6}$");
     private static final Pattern KEY = Pattern.compile("^[a-z0-9_.]{1,80}$");
     private static final int MAX_BLOCKS = 40;
@@ -41,6 +47,12 @@ public record TemplateContent(String pageFormat, List<Map<String, Object>> copie
         copies = copies == null ? List.of() : copies;
         style = style == null ? Map.of() : style;
         blocks = blocks == null ? List.of() : blocks;
+        fields = fields == null ? List.of() : fields;
+    }
+
+    /** Forme du lot D2, sans champs ajoutes. */
+    public TemplateContent(String pageFormat, List<Map<String, Object>> copies, Map<String, Object> style, List<Map<String, Object>> blocks) {
+        this(pageFormat, copies, style, blocks, List.of());
     }
 
     /** Controle complet ; leve {@code MODELE_INVALIDE} avec la liste des erreurs. */
@@ -70,6 +82,7 @@ public record TemplateContent(String pageFormat, List<Map<String, Object>> copie
         for (int index = 0; index < blocks.size(); index++) {
             validateBlock(index + 1, blocks.get(index), errors);
         }
+        validateFields(errors);
         if (!errors.isEmpty()) {
             throw BadRequestException.coded("MODELE_INVALIDE", "Modèle invalide : " + String.join(" ; ", errors));
         }
@@ -135,6 +148,68 @@ public record TemplateContent(String pageFormat, List<Map<String, Object>> copie
             }
             default -> {
             }
+        }
+    }
+
+    private void validateFields(List<String> errors) {
+        if (fields.size() > 20) {
+            errors.add("Vingt champs ajoutés au plus");
+        }
+        Set<String> seen = new java.util.HashSet<>();
+        for (int index = 0; index < fields.size(); index++) {
+            Map<String, Object> field = fields.get(index);
+            String where = "champ " + (index + 1);
+            String key = text(field.get("key"));
+            if (!FIELD_KEY.matcher(key).matches()) {
+                errors.add(where + " : clé invalide « " + key + " » (minuscules, chiffres, souligné, 40 caractères au plus)");
+            } else if (!seen.add(key)) {
+                errors.add(where + " : clé « " + key + " » en double");
+            }
+            for (String option : field.keySet()) {
+                if (!FIELD_OPTIONS.contains(option)) {
+                    errors.add(where + " : option inconnue « " + option + " »");
+                }
+            }
+            String label = text(field.get("label"));
+            if (label.isBlank() || label.length() > 80) {
+                errors.add(where + " : libellé obligatoire (80 caractères au plus)");
+            }
+            String type = text(field.get("type")).toUpperCase();
+            if (!FIELD_TYPES.contains(type)) {
+                errors.add(where + " : type inconnu « " + field.get("type") + " » (TEXT, NUMBER, AMOUNT, DATE, LIST, CHECKBOX)");
+            }
+            if (!FIELD_MODES.contains(text(field.get("mode")).toUpperCase())) {
+                errors.add(where + " : mode inconnu « " + field.get("mode") + " » (PRINTED_BLANK ou CAPTURED)");
+            }
+            List<?> options = list(field.get("options"));
+            if ("LIST".equals(type) && (options.isEmpty() || options.size() > 30)) {
+                errors.add(where + " : une liste a de une à trente valeurs");
+            }
+            if (text(field.get("help")).length() > 200) {
+                errors.add(where + " : aide trop longue (200 caractères au plus)");
+            }
+        }
+    }
+
+    /** Champs ajoutes lus, dans leur ordre. */
+    public List<FieldSpec> fieldSpecs() {
+        List<FieldSpec> specs = new ArrayList<>();
+        for (Map<String, Object> field : fields) {
+            specs.add(new FieldSpec(text(field.get("key")), text(field.get("label")), text(field.get("type")).toUpperCase(),
+                    text(field.get("mode")).toUpperCase(), flag(field.get("required"), false),
+                    list(field.get("options")).stream().map(Object::toString).toList(), text(field.get("help"))));
+        }
+        return specs;
+    }
+
+    /** Champ ajoute : imprime vide (rempli a la main) ou saisi dans l'application ; cle {@code champ.<key>} dans les blocs. */
+    public record FieldSpec(String key, String label, String type, String mode, boolean required, List<String> options, String help) {
+        public boolean captured() {
+            return "CAPTURED".equals(mode);
+        }
+
+        public String dataKey() {
+            return FIELD_PREFIX + key;
         }
     }
 

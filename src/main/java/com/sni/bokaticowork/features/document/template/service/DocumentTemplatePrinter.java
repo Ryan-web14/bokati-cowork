@@ -7,6 +7,7 @@ import com.sni.bokaticowork.features.document.template.model.DocumentTemplateVer
 import com.sni.bokaticowork.features.document.template.render.DocumentData;
 import com.sni.bokaticowork.features.document.template.render.TemplateContent;
 import com.sni.bokaticowork.features.document.template.render.TemplateRenderer;
+import com.sni.bokaticowork.features.document.template.repository.DocumentFieldValueRepository;
 import com.sni.bokaticowork.features.document.template.repository.DocumentTemplateRepository;
 import com.sni.bokaticowork.features.document.template.repository.DocumentTemplateVersionRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,10 +45,13 @@ public class DocumentTemplatePrinter {
     private final OperatorIdentityService operatorIdentityService;
     private final BrandLogo brandLogo;
     private final TemplateRenderer renderer;
+    private final DocumentFieldValueRepository fieldValues;
     private final Map<String, Cached> cache = new ConcurrentHashMap<>();
 
     public DocumentTemplatePrinter(DocumentTemplateRepository templates, DocumentTemplateVersionRepository versions,
-                                   OperatorIdentityService operatorIdentityService, BrandLogo brandLogo, SpringTemplateEngine templateEngine) {
+                                   OperatorIdentityService operatorIdentityService, BrandLogo brandLogo, SpringTemplateEngine templateEngine,
+                                   DocumentFieldValueRepository fieldValues) {
+        this.fieldValues = fieldValues;
         this.templates = templates;
         this.versions = versions;
         this.operatorIdentityService = operatorIdentityService;
@@ -65,6 +70,16 @@ public class DocumentTemplatePrinter {
         if (content.isEmpty()) {
             return Optional.empty();
         }
+        // Champs ajoutes (lot D3) : un champ obligatoire non saisi bloque l'impression, avec la liste
+        // des champs a saisir. C'est une regle de l'exploitant, pas un echec du rendu : elle remonte.
+        try {
+            addFields(content.get(), data, false);
+        } catch (MissingFieldsException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            log.warn("Champs ajoutes du modele {} illisibles, gabarit d'origine utilise : {}", templateCode, ex.getMessage());
+            return Optional.empty();
+        }
         try {
             return Optional.of(render(content.get(), data));
         } catch (RuntimeException ex) {
@@ -78,11 +93,80 @@ public class DocumentTemplatePrinter {
         return renderer.pdf(content, data, operatorIdentityService.current(), brandLogo.base64());
     }
 
+    /**
+     * Ajoute aux donnees les champs du modele : vides pour ceux a remplir a la main, valeurs saisies
+     * pour les autres. Avec {@code sample}, une valeur fictive remplace la saisie et rien n'est exige.
+     *
+     * @throws MissingFieldsException si un champ obligatoire n'est pas saisi pour cette piece
+     */
+    public void addFields(TemplateContent content, DocumentData data, boolean sample) {
+        List<TemplateContent.FieldSpec> specs = content.fieldSpecs();
+        if (specs.isEmpty()) {
+            return;
+        }
+        Map<String, String> values = new java.util.HashMap<>();
+        if (!sample && data.sourceCode() != null) {
+            fieldValues.findByTemplateCodeAndSourceCode(data.code(), data.sourceCode())
+                    .forEach(value -> values.put(value.getFieldKey(), value.getValue()));
+        }
+        List<String> missing = new java.util.ArrayList<>();
+        for (TemplateContent.FieldSpec spec : specs) {
+            if (!spec.captured()) {
+                data.blankField(spec.dataKey(), spec.label());
+                continue;
+            }
+            String raw = sample ? sampleValue(spec) : values.get(spec.key());
+            if ((raw == null || raw.isBlank()) && spec.required() && !sample) {
+                missing.add(spec.label());
+            }
+            data.field(spec.dataKey(), spec.label(), printable(spec, raw));
+        }
+        if (!missing.isEmpty()) {
+            throw new MissingFieldsException(data.sourceCode(), missing);
+        }
+    }
+
+    /** Valeur imprimee : date jj/mm/aaaa, montant groupe par milliers, case cochee Oui ou Non. */
+    public static String printable(TemplateContent.FieldSpec spec, String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+        try {
+            return switch (spec.type()) {
+                case "DATE" -> java.time.LocalDate.parse(raw).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                case "AMOUNT" -> com.sni.bokaticowork.features.fund.voucher.VoucherService.money(new java.math.BigDecimal(raw));
+                case "CHECKBOX" -> Boolean.parseBoolean(raw) ? "Oui" : "Non";
+                default -> raw;
+            };
+        } catch (RuntimeException ex) {
+            return raw;
+        }
+    }
+
+    private static String sampleValue(TemplateContent.FieldSpec spec) {
+        return switch (spec.type()) {
+            case "DATE" -> "2026-11-12";
+            case "AMOUNT" -> "50000";
+            case "NUMBER" -> "3";
+            case "CHECKBOX" -> "true";
+            case "LIST" -> spec.options().isEmpty() ? "" : spec.options().get(0);
+            default -> "Valeur saisie";
+        };
+    }
+
+    /** Champs obligatoires non saisis : l'impression est refusee (code {@code CHAMPS_A_SAISIR}). */
+    public static class MissingFieldsException extends com.sni.bokaticowork.core.exception.customs.BadRequestException {
+        public MissingFieldsException(String sourceCode, List<String> labels) {
+            super("Champs à saisir avant d'imprimer la pièce " + sourceCode + " : " + String.join(", ", labels));
+            withReason("CHAMPS_A_SAISIR");
+        }
+    }
+
     public void evict(String templateCode) {
         cache.remove(templateCode);
     }
 
-    Optional<TemplateContent> published(String templateCode) {
+    public Optional<TemplateContent> published(String templateCode) {
         Cached cached = cache.get(templateCode);
         if (cached != null && cached.loadedAt().plus(TTL).isAfter(Instant.now())) {
             return cached.content();
@@ -98,6 +182,6 @@ public class DocumentTemplatePrinter {
     }
 
     public static TemplateContent content(DocumentTemplateVersion version) {
-        return new TemplateContent(version.getPageFormat(), version.getCopies(), version.getStyle(), version.getBlocks());
+        return new TemplateContent(version.getPageFormat(), version.getCopies(), version.getStyle(), version.getBlocks(), version.getFields());
     }
 }

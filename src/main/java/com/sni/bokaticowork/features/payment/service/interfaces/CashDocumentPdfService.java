@@ -7,4 +7,7 @@ public interface CashDocumentPdfService {
 
     /** Donnees d'un bon d'entree ou de sortie pour l'apercu d'un modele de document (lot D2). */
     com.sni.bokaticowork.features.document.template.render.DocumentData previewData(String templateCode, String movementNumber);
+
+    /** Modele d'un mouvement (bon de sortie ou d'entree), ou {@code null} ; le mouvement doit exister. */
+    String templateCode(String movementNumber);
 }

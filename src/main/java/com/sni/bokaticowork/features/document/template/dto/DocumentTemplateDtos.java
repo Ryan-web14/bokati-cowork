@@ -22,7 +22,7 @@ public final class DocumentTemplateDtos {
     }
 
     public record Version(int versionNumber, String status, String pageFormat, List<Map<String, Object>> copies, Map<String, Object> style,
-                          List<Map<String, Object>> blocks, String note, String createdBy, Instant createdAt, Instant updatedAt,
+                          List<Map<String, Object>> blocks, List<Map<String, Object>> fields, String note, String createdBy, Instant createdAt, Instant updatedAt,
                           String publishedBy, Instant publishedAt, Instant archivedAt) {
     }
 
@@ -31,9 +31,32 @@ public final class DocumentTemplateDtos {
                          Version published, Version draft, List<VersionSummary> versions) {
     }
 
-    /** Brouillon ou contenu d'apercu : format, exemplaires, style ({@code accent}), blocs. */
+    /**
+     * Brouillon ou contenu d'apercu : format, exemplaires, style ({@code accent}), blocs et champs
+     * ajoutes (lot D3, references dans les blocs par {@code champ.<cle>}).
+     */
     public record Content(String pageFormat, @Size(max = 4) List<Map<String, Object>> copies, Map<String, Object> style,
-                          @Size(max = 40) List<Map<String, Object>> blocks, @Size(max = 500) String note) {
+                          @Size(max = 40) List<Map<String, Object>> blocks, @Size(max = 20) List<Map<String, Object>> fields,
+                          @Size(max = 500) String note) {
+        /** Forme du lot D2, sans champs ajoutes. */
+        public Content(String pageFormat, List<Map<String, Object>> copies, Map<String, Object> style, List<Map<String, Object>> blocks,
+                       String note) {
+            this(pageFormat, copies, style, blocks, List.of(), note);
+        }
+    }
+
+    /** Champ ajoute d'une piece, avec sa valeur saisie (lot D3). */
+    public record PieceField(String key, String blockKey, String label, String type, String mode, boolean required, List<String> options,
+                             String help, String value, String enteredBy, Instant enteredAt) {
+    }
+
+    /** Champs ajoutes d'une piece selon la version publiee de son modele, et ceux qui restent a saisir. */
+    public record PieceFields(String templateCode, Integer publishedVersion, String sourceCode, List<PieceField> fields,
+                              List<String> missingRequired) {
+    }
+
+    /** Valeurs saisies : cle du champ, valeur (vide ou nulle pour effacer). */
+    public record PieceFieldsRequest(Map<String, Object> values) {
     }
 
     public record FieldEntry(String key, String label, String sample) {

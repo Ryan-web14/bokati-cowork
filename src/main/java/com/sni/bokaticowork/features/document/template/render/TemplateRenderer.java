@@ -40,7 +40,8 @@ public final class TemplateRenderer {
 
     // ------------------------------------------------------------------ vues lues par le gabarit
 
-    public record Cell(String label, String value) {
+    /** Cellule d'un bloc de champs ; {@code blank} : ligne a remplir a la main. */
+    public record Cell(String label, String value, boolean blank) {
     }
 
     public record Col(String label, boolean numeric, String width) {
@@ -86,7 +87,7 @@ public final class TemplateRenderer {
             case "A6" -> 365;
             default -> 726;
         };
-        for (Map<String, Object> block : content.blocks()) {
+        for (Map<String, Object> block : withAddedFields(content)) {
             blocks.add(resolve(block, data, contentWidth));
         }
         List<Map<String, Object>> copySpecs = content.copies().isEmpty() ? List.of(Map.of("label", "")) : content.copies();
@@ -122,6 +123,40 @@ public final class TemplateRenderer {
         };
     }
 
+    /**
+     * Blocs du modele, plus un bloc « Informations complementaires » pour les champs ajoutes
+     * qu'aucun bloc de champs ne place (lot D3), insere avant les signatures ou le pied.
+     */
+    static List<Map<String, Object>> withAddedFields(TemplateContent content) {
+        List<TemplateContent.FieldSpec> specs = content.fieldSpecs();
+        if (specs.isEmpty()) {
+            return content.blocks();
+        }
+        java.util.Set<String> placed = new java.util.HashSet<>();
+        for (Map<String, Object> block : content.blocks()) {
+            if ("FIELDS".equalsIgnoreCase(text(block.get("type")))) {
+                for (Object item : list(block.get("fields"))) {
+                    placed.add(item instanceof Map<?, ?> map ? text(map.get("key")) : text(item));
+                }
+            }
+        }
+        List<String> missing = specs.stream().map(TemplateContent.FieldSpec::dataKey).filter(key -> !placed.contains(key)).toList();
+        if (missing.isEmpty()) {
+            return content.blocks();
+        }
+        List<Map<String, Object>> blocks = new ArrayList<>(content.blocks());
+        int at = blocks.size();
+        for (int index = 0; index < blocks.size(); index++) {
+            String type = text(blocks.get(index).get("type")).toUpperCase();
+            if (type.equals("SIGNATURES") || type.equals("FOOTER")) {
+                at = index;
+                break;
+            }
+        }
+        blocks.add(at, TemplateContent.block("type", "FIELDS", "title", "Informations complémentaires", "columns", 3, "fields", missing));
+        return blocks;
+    }
+
     private static BlockView simple(String type, String title, boolean flag) {
         return new BlockView(type, title, flag, 0, List.of(), List.of(), List.of(), null, List.of(), 0, 0, null, null, null, null);
     }
@@ -138,13 +173,14 @@ public final class TemplateRenderer {
             } else {
                 key = text(item);
             }
-            cells.add(new Cell(label == null || label.isBlank() ? data.label(key) : label, data.value(key)));
+            DocumentData.Field field = data.fields().get(key);
+            cells.add(new Cell(label == null || label.isBlank() ? data.label(key) : label, data.value(key), field != null && field.blank()));
         }
         List<List<Cell>> rows = new ArrayList<>();
         for (int index = 0; index < cells.size(); index += columns) {
             List<Cell> row = new ArrayList<>(cells.subList(index, Math.min(index + columns, cells.size())));
             while (row.size() < columns) {
-                row.add(new Cell("", ""));
+                row.add(new Cell("", "", false));
             }
             rows.add(row);
         }
