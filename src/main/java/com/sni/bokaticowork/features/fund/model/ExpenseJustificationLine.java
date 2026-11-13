@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.fund.model;
 
+import java.time.LocalDate;
+
 import com.sni.bokaticowork.core.annotation.IdGeneration;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -91,4 +93,13 @@ public class ExpenseJustificationLine {
             createdAt = java.time.Instant.now();
         }
     }
+
+    @Column(name = "service_start")
+    private LocalDate serviceStart;
+
+    @Column(name = "service_end")
+    private LocalDate serviceEnd;
+
+    @Column(name = "recognition_method")
+    private String recognitionMethod;
 }

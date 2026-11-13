@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.billing.model;
 
+import java.time.LocalDate;
+
 import com.sni.bokaticowork.core.annotation.IdGeneration;
 import com.sni.bokaticowork.features.billing.enums.BillingLineType;
 import jakarta.persistence.Column;
@@ -144,4 +146,19 @@ public class BillingDocumentLine {
     public void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    @Column(name = "service_start")
+    private LocalDate serviceStart;
+
+    @Column(name = "service_end")
+    private LocalDate serviceEnd;
+
+    @Column(name = "recognition_method")
+    private String recognitionMethod;
+
+    @Column(name = "recognition_source")
+    private String recognitionSource;
+
+    @Column(name = "original_line_id")
+    private Long originalLineId;
 }

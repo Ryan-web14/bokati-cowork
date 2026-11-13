@@ -250,6 +250,14 @@ public class SalesAccountingService {
         engine.receive(INVOICE_CANCELLED, number, "SALES", date, json(data), replay(date));
     }
 
+    private ReceivableRiskService receivableRisks;
+
+    /** Lot F19 : facultatif, pour ne pas changer le constructeur. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setReceivableRisks(ReceivableRiskService receivableRisks) {
+        this.receivableRisks = receivableRisks;
+    }
+
     void feedTransaction(String number) {
         PaymentTransaction transaction = transactionRepository.findByTransactionNumber(number).orElseThrow();
         String originalNumber = originalTransaction(transaction);
@@ -287,6 +295,11 @@ public class SalesAccountingService {
             item.put("customerCode", documentRepository.findByDocumentNumber(allocation.getBillingDocumentNumber()).map(this::customerCode).orElse(customer));
             BigDecimal converted = fx.apply(value);
             item.put("amount", converted);
+            // Lot F19 : facture douteuse ou litigieuse, credit 4162 ou 4161 ; facture passee en perte, compte de recuperation.
+            String riskAccount = receivableRisks == null ? null : receivableRisks.paymentAccount(allocation.getBillingDocumentNumber());
+            if (riskAccount != null) {
+                item.put("clientAccount", riskAccount);
+            }
             if (fx.foreign()) {
                 item.put("foreignAmount", value);
             }
@@ -311,6 +324,12 @@ public class SalesAccountingService {
             data.put("foreignAmount", foreignAmount);
         }
         engine.receive(refund ? PAYMENT_REFUNDED : PAYMENT_RECEIVED, number, "PAYMENT", date, json(data), replay(date));
+        if (!refund && receivableRisks != null) {
+            // Reste du suivi et reprise de la depreciation au prorata de ce qui est encaisse.
+            for (Map<String, Object> item : allocations) {
+                receivableRisks.onPayment((String) item.get("documentNumber"), (BigDecimal) item.get("amount"), date);
+            }
+        }
     }
 
     void feedWalletEntry(String number) {
@@ -406,7 +425,7 @@ public class SalesAccountingService {
     }
 
     /** Compte de produit d'une ligne : reglage par type de ligne. */
-    private String productAccount(BillingDocumentLine line) {
+    public String productAccount(BillingDocumentLine line) {
         String type = line.getLineType() == null ? "SERVICE" : line.getLineType().name();
         String fallback = switch (type) {
             case "PRODUCT" -> "701";
@@ -433,8 +452,9 @@ public class SalesAccountingService {
         int ok = 0;
         List<String> errors = new ArrayList<>();
         // Lot F13 : les fournisseurs (401) se lettrent aussi par reference (numero de facture fournisseur interne).
+        // Lot F19 : les creances litigieuses et douteuses (4161, 4162) se lettrent aussi par numero de facture.
         for (String account : List.of(settings.text("accounting.sales.client-account", "411"), "4191", "421",
-                settings.text("accounting.purchase.supplier-account", "401"))) {
+                settings.text("accounting.purchase.supplier-account", "401"), "4161", "4162")) {
             if (chart.find(account).isEmpty()) {
                 continue;
             }

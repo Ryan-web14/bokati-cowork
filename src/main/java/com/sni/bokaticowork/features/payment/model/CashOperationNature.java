@@ -99,6 +99,17 @@ public class CashOperationNature {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /** Lot F20 : nature a periode (loyer, assurance, licence...), sa duree et sa methode proposees. */
+    @Builder.Default
+    @Column(name = "periodic", nullable = false)
+    private Boolean periodic = Boolean.FALSE;
+
+    @Column(name = "default_duration_months")
+    private Integer defaultDurationMonths;
+
+    @Column(name = "default_method", length = 20)
+    private String defaultMethod;
+
     @PrePersist
     @PreUpdate
     void touch() {

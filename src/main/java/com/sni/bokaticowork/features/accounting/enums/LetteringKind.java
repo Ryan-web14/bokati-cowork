@@ -7,5 +7,7 @@ public enum LetteringKind {
     /** Automatique par montant. */
     AUTO_MATCH,
     /** Manuel. */
-    MANUAL
+    MANUAL,
+    /** Reprise en a-nouveau a la cloture : la ligne de l'exercice clos est soldee, sa suite est la ligne d'a-nouveau (lot F12). */
+    CARRY_FORWARD
 }

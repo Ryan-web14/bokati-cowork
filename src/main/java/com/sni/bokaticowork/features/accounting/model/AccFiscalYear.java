@@ -46,4 +46,16 @@ public class AccFiscalYear {
 
     @Column(name = "closed_by", length = 180)
     private String closedBy;
+
+    /** Resultat net arrete a la cloture (lot F12). */
+    @Column(name = "net_result")
+    private java.math.BigDecimal netResult;
+
+    /** Piece d'a-nouveaux de l'exercice suivant (lot F12). */
+    @Column(name = "opening_entry_number", length = 40)
+    private String openingEntryNumber;
+
+    /** Motif de la derogation du responsable financier, si une etape a ete levee (lot F12). */
+    @Column(name = "closing_derogation")
+    private String closingDerogation;
 }

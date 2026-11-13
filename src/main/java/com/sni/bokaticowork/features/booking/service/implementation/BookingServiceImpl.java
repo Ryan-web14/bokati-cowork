@@ -71,6 +71,14 @@ import java.security.SecureRandom;
 @Slf4j
 public class BookingServiceImpl implements BookingService {
 
+    private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.ReceivableRiskQuery> receivableRisk;
+
+    /** Lot F19 : creances a risque ; facultatif, sans comptabilite rien ne change. */
+    @org.springframework.beans.factory.annotation.Autowired
+    void setReceivableRisk(org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.ReceivableRiskQuery> receivableRisk) {
+        this.receivableRisk = receivableRisk;
+    }
+
     private static final char[] TOKEN_CHARS = "ABCDEFGHJKLMNPRSTUVWXY23456789".toCharArray();
     private static final SecureRandom TOKEN_RANDOM = new SecureRandom();
 
@@ -195,6 +203,18 @@ public class BookingServiceImpl implements BookingService {
                 request.paymentMode(), identity, resource, request.billingCompanyCode());
         BookingPolicyEnforcer.EffectivePolicy effectivePolicy = policyEnforcer.enforce(identity.ownerType(), identity.ownerCode(),
                 resource, request.startedAt(), request.endedAt(), staffActor != null);
+        com.sni.bokaticowork.core.accounting.ReceivableRiskQuery risk = receivableRisk == null ? null : receivableRisk.getIfAvailable();
+        if (risk != null) {
+            // Lot F19 : un client bloque pour creance douteuse ne reserve pas sans derogation.
+            String warning = risk.guardNewSale(String.valueOf(identity.ownerType()), identity.ownerCode(), "la reservation");
+            // Politique PREPAY : une reservation facturee sur compte (organisation payeuse) est une vente a credit.
+            if (StringUtils.hasText(request.billingCompanyCode())) {
+                risk.guardCreditSale(String.valueOf(identity.ownerType()), identity.ownerCode(), "la reservation facturee sur compte");
+            }
+            if (warning != null) {
+                log.warn("Reservation de {} : {}", identity.ownerCode(), warning);
+            }
+        }
 
         Booking booking = bookingMapper.toEntity(request);
         String resourceTypeName = resource.getResourceType() != null ? resource.getResourceType().getName() : "RES";

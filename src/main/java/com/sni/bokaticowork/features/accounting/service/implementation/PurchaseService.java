@@ -11,6 +11,7 @@ import com.sni.bokaticowork.features.accounting.enums.EntryStatus;
 import com.sni.bokaticowork.features.accounting.model.*;
 import com.sni.bokaticowork.features.accounting.repository.*;
 import com.sni.bokaticowork.features.accounting.service.support.AccountingSettings;
+import com.sni.bokaticowork.features.accounting.service.support.FixedAssetIntake;
 import com.sni.bokaticowork.features.fund.enums.FundNeedStatus;
 import com.sni.bokaticowork.features.fund.model.FundNeedLine;
 import com.sni.bokaticowork.features.fund.model.FundNeedStatement;
@@ -75,6 +76,8 @@ public class PurchaseService {
     private final EntityManager entityManager;
     /** Fiches fournisseurs d'inventaire (reference des fournisseurs, suggestion). */
     private final SupplierRepository inventorySuppliers;
+    /** Immobilisations (lot F18), absentes d'un contexte reduit. */
+    private final ObjectProvider<FixedAssetIntake> fixedAssets;
 
     // ------------------------------------------------------------------ fournisseurs
 
@@ -173,8 +176,13 @@ public class PurchaseService {
 
     // ------------------------------------------------------------------ commandes
 
+    /** Ligne de commande ou de facture ; {@code fixedAssetCode} rattache une ligne de facture a une fiche d'immobilisation (lot F18). */
     public record LineInput(String designation, BigDecimal quantity, BigDecimal unitPrice, String natureCode, String accountNumber, BigDecimal vatRate,
-                            String sectionCode, Integer orderLineNo) {
+                            String sectionCode, Integer orderLineNo, String fixedAssetCode) {
+        public LineInput(String designation, BigDecimal quantity, BigDecimal unitPrice, String natureCode, String accountNumber, BigDecimal vatRate,
+                         String sectionCode, Integer orderLineNo) {
+            this(designation, quantity, unitPrice, natureCode, accountNumber, vatRate, sectionCode, orderLineNo, null);
+        }
     }
 
     public record OrderRequest(String supplierCode, String subject, LocalDate orderDate, LocalDate expectedDate, String sectionCode, List<LineInput> lines) {
@@ -440,9 +448,18 @@ public class PurchaseService {
             BigDecimal rate = Boolean.TRUE.equals(supplier.getVatExempt()) ? BigDecimal.ZERO : (input.vatRate() == null ? defaultVatRate() : input.vatRate());
             BigDecimal lineVat = money(amount.multiply(rate).divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP));
             String account = account(input.natureCode(), input.accountNumber(), supplier);
+            FixedAssetIntake intake = fixedAssets.getIfAvailable();
+            String fixedAssetCode = StringUtils.hasText(input.fixedAssetCode()) ? input.fixedAssetCode().trim().toUpperCase(Locale.ROOT) : null;
+            String vatAccount = vatAccount(account);
+            if (intake != null && (account.startsWith("2") || fixedAssetCode != null)) {
+                // Lot F18 : seuil d'immobilisation, fiche rattachee, TVA non recuperable incorporee au bien.
+                intake.checkInvoiceLine(account, input.unitPrice(), fixedAssetCode);
+                vatAccount = Optional.ofNullable(intake.vatAccountFor(account)).orElse(vatAccount);
+            }
             invoiceLines.save(AccSupplierInvoiceLine.builder().invoiceId(invoice.getId()).lineNo(no).designation(input.designation())
                     .natureCode(input.natureCode()).accountNumber(account).amountHt(amount).vatRate(rate).vatAmount(lineVat)
-                    .vatAccount(vatAccount(account)).sectionCode(input.sectionCode()).orderLineNo(input.orderLineNo()).build());
+                    .vatAccount(vatAccount).sectionCode(input.sectionCode()).orderLineNo(input.orderLineNo())
+                    .quantity(quantity).fixedAssetCode(fixedAssetCode).build());
             ht = ht.add(amount);
             vat = vat.add(lineVat);
             no++;
@@ -479,6 +496,15 @@ public class PurchaseService {
         boolean credit = "CREDIT_NOTE".equals(invoice.getKind());
         String label = (credit ? "Avoir " : "Facture ") + supplier.getName() + " " + invoice.getSupplierReference();
         String letteringReference = credit && invoice.getOriginalNumber() != null ? invoice.getOriginalNumber() : invoice.getNumber();
+        FixedAssetIntake intake = fixedAssets.getIfAvailable();
+        String payable = supplier.getAccountNumber();
+        if (credit && invoice.getOriginalNumber() != null) {
+            // L'avoir credite le meme compte que sa facture (401 ou 481).
+            payable = invoices.findByNumber(invoice.getOriginalNumber()).map(this::payableAccount).orElse(payable);
+        } else if (intake != null) {
+            payable = intake.payableAccount(lines, supplier.getAccountNumber());
+        }
+        invoice.setPayableAccount(payable.equals(supplier.getAccountNumber()) ? null : payable);
         List<AccountingRequests.EntryLine> entry = new ArrayList<>();
         for (AccSupplierInvoiceLine line : lines) {
             entry.add(line(line.getAccountNumber(), null, line.getDesignation(), line.getAmountHt(), !credit, invoice.getNumber(), null, null, line.getSectionCode(), null));
@@ -487,7 +513,7 @@ public class PurchaseService {
                         "TVA" + line.getVatRate().stripTrailingZeros().toPlainString(), line.getAmountHt(), null, null));
             }
         }
-        entry.add(line(supplier.getAccountNumber(), supplier.getCode(), label, invoice.getNetToPay(), credit, letteringReference, null, null, null,
+        entry.add(line(payable, supplier.getCode(), label, invoice.getNetToPay(), credit, letteringReference, null, null, null,
                 credit ? null : invoice.getDueDate()));
         if (invoice.getWithholdingAmount().signum() > 0) {
             entry.add(line(supplier.getWithholdingAccount(), null, (supplier.getWithholdingLabel() == null ? "Retenue a la source" : supplier.getWithholdingLabel())
@@ -503,9 +529,13 @@ public class PurchaseService {
         invoice.setPostedBy(actors.resolve("SYSTEM"));
         invoice.setPostedAt(Instant.now());
         invoices.save(invoice);
+        if (intake != null) {
+            // Lot F18 : fiches d'immobilisation pre-remplies, frais accessoires et avoirs rattaches.
+            intake.onInvoicePosted(invoice, lines, supplier.getName());
+        }
         if (credit) {
             // L'avoir se lettre avec sa facture ; la facture d'origine voit son reste diminuer.
-            lettering.autoLetterByReference(supplier.getAccountNumber(), supplier.getCode(), letteringReference);
+            lettering.autoLetterByReference(payable, supplier.getCode(), letteringReference);
             invoices.findByNumber(letteringReference).ifPresent(this::refreshPaidStatus);
             refreshPaidStatus(invoice);
         } else if (invoice.getOrderNumber() != null) {
@@ -573,7 +603,7 @@ public class PurchaseService {
         LocalDate date = request.date() == null ? LocalDate.now() : request.date();
         String label = "Reglement " + supplier.getName() + " " + invoice.getSupplierReference();
         AccEntry posted = entries.post(request.journalCode().trim(), date, label, EntryOrigin.PLATFORM, "SUPPLIER_PAYMENT", invoice.getNumber(), List.of(
-                line(supplier.getAccountNumber(), supplier.getCode(), label, amount, true, invoice.getNumber(), null, null, null, null),
+                line(payableAccount(invoice), supplier.getCode(), label, amount, true, invoice.getNumber(), null, null, null, null),
                 line(request.treasuryAccount().trim(), null, label, amount, false, StringUtils.hasText(request.reference()) ? request.reference() : invoice.getNumber(),
                         null, null, null, null)), actors.resolve("SYSTEM"));
         if (posted.getStatus() != EntryStatus.VALIDATED) {
@@ -582,7 +612,7 @@ public class PurchaseService {
         payments.save(AccSupplierPayment.builder().invoiceNumber(invoice.getNumber()).supplierCode(supplier.getCode()).paymentDate(date).amount(amount)
                 .treasuryAccount(request.treasuryAccount().trim()).journalCode(request.journalCode().trim()).reference(request.reference())
                 .entryNumber(posted.getEntryNumber()).createdBy(actors.resolve("SYSTEM")).build());
-        lettering.autoLetterByReference(supplier.getAccountNumber(), supplier.getCode(), invoice.getNumber());
+        lettering.autoLetterByReference(payableAccount(invoice), supplier.getCode(), invoice.getNumber());
         refreshPaidStatus(invoice);
         return invoice(number);
     }
@@ -653,17 +683,17 @@ public class PurchaseService {
         entityManager.flush();
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
         BigDecimal opening = Optional.ofNullable(jdbc.queryForObject("SELECT COALESCE(SUM(l.credit - l.debit), 0) FROM acc_entry_line l JOIN acc_entry e ON e.id = l.entry_id "
-                + "WHERE l.account_number = ? AND l.third_party_code = ? AND e.status IN ('VALIDATED', 'REVERSED') AND e.entry_date < ?", BigDecimal.class,
-                supplier.getAccountNumber(), supplier.getCode(), Date.valueOf(start))).orElse(BigDecimal.ZERO);
+                + "WHERE l.account_number IN (?, ?) AND l.third_party_code = ? AND e.status IN ('VALIDATED', 'REVERSED') AND e.entry_date < ?", BigDecimal.class,
+                supplier.getAccountNumber(), investmentAccount(supplier), supplier.getCode(), Date.valueOf(start))).orElse(BigDecimal.ZERO);
         List<StatementLine> lines = new ArrayList<>();
         BigDecimal[] running = {opening};
         jdbc.query("SELECT e.entry_date, e.entry_number, e.journal_code, l.label, l.reference, l.debit, l.credit FROM acc_entry_line l JOIN acc_entry e ON e.id = l.entry_id "
-                + "WHERE l.account_number = ? AND l.third_party_code = ? AND e.status IN ('VALIDATED', 'REVERSED') AND e.entry_date BETWEEN ? AND ? "
+                + "WHERE l.account_number IN (?, ?) AND l.third_party_code = ? AND e.status IN ('VALIDATED', 'REVERSED') AND e.entry_date BETWEEN ? AND ? "
                 + "ORDER BY e.entry_date, e.id, l.line_no", rs -> {
             running[0] = running[0].add(rs.getBigDecimal("credit")).subtract(rs.getBigDecimal("debit"));
             lines.add(new StatementLine(rs.getDate("entry_date").toLocalDate(), rs.getString("entry_number"), rs.getString("journal_code"), rs.getString("label"),
                     rs.getString("reference"), rs.getBigDecimal("debit"), rs.getBigDecimal("credit"), running[0]));
-        }, supplier.getAccountNumber(), supplier.getCode(), Date.valueOf(start), Date.valueOf(end));
+        }, supplier.getAccountNumber(), investmentAccount(supplier), supplier.getCode(), Date.valueOf(start), Date.valueOf(end));
         return new Statement(supplier, start, end, opening, lines, running[0]);
     }
 
@@ -743,6 +773,20 @@ public class PurchaseService {
             return supplier.getDefaultAccount();
         }
         throw new BadRequestException("Indiquez la nature d'operation ou le compte de charge de chaque ligne");
+    }
+
+    /** Compte du fournisseur credite par la facture : 481 pour une facture d'immobilisation (lot F18), sinon celui du fournisseur. */
+    private String payableAccount(AccSupplierInvoice invoice) {
+        if (StringUtils.hasText(invoice.getPayableAccount())) {
+            return invoice.getPayableAccount();
+        }
+        return suppliers.findByCode(invoice.getSupplierCode()).map(AccSupplier::getAccountNumber)
+                .orElse(settings.text("accounting.purchase.supplier-account", "401"));
+    }
+
+    /** Compte des fournisseurs d'investissements repris au releve du fournisseur (lot F18). */
+    private String investmentAccount(AccSupplier supplier) {
+        return settings.text("accounting.fixed-asset.supplier-account", supplier.getAccountNumber());
     }
 
     /** TVA recuperable : 4454 sur les services exterieurs (62, 63), 4451 sur immobilisations (2), 4452 sinon. */

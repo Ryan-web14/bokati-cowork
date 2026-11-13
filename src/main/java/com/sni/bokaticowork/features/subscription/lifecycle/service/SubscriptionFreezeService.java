@@ -33,6 +33,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SubscriptionFreezeService {
 
+    private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.DeferralEvents> deferralEvents;
+
+    /** Lot F20 : la comptabilite decale la reconnaissance du chiffre d'affaires pendant le gel. */
+    @org.springframework.beans.factory.annotation.Autowired
+    void setDeferralEvents(org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.DeferralEvents> deferralEvents) {
+        this.deferralEvents = deferralEvents;
+    }
+
+    private void notifyDeferral(java.util.function.Consumer<com.sni.bokaticowork.core.accounting.DeferralEvents> action) {
+        com.sni.bokaticowork.core.accounting.DeferralEvents events = deferralEvents == null ? null : deferralEvents.getIfAvailable();
+        if (events == null) {
+            return;
+        }
+        try {
+            action.accept(events);
+        } catch (RuntimeException exception) {
+            log.warn("Gel d'abonnement : echeanciers comptables non decales : {}", exception.getMessage());
+        }
+    }
+
     static final String FEE_SOURCE = "FREEZE_FEE";
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
@@ -87,6 +107,7 @@ public class SubscriptionFreezeService {
                     fee, today, until.minusDays(1)));
         }
         SubscriptionFreeze saved = freezeRepository.save(freeze);
+        notifyDeferral(events -> events.subscriptionFrozen(subscription.getSubscriptionNumber(), today, days));
         eventWriter.writeEvent(subscription, SubscriptionEventType.FREEZE_STARTED,
                 com.sni.bokaticowork.core.utils.json.JsonPayload.of("until", until, "days", days, "fee", fee, "usedThisYear", lastYear.size() + 1));
         log.info("Abonnement {} · gel {} jours jusqu'au {} (frais {})", subscription.getSubscriptionNumber(), days, until, fee);
@@ -100,6 +121,7 @@ public class SubscriptionFreezeService {
             freeze.setResumedOn(resumedOn);
             freeze.setDaysEffective((int) Math.max(0, ChronoUnit.DAYS.between(freeze.getStartedOn(), resumedOn)));
             freezeRepository.save(freeze);
+            notifyDeferral(events -> events.subscriptionResumed(subscription.getSubscriptionNumber(), freeze.getStartedOn(), freeze.getDaysEffective()));
         });
     }
 
