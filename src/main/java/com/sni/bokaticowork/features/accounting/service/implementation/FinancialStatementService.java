@@ -233,6 +233,42 @@ public class FinancialStatementService {
         mappings.deleteById(id);
     }
 
+    // ================================================================== codes de flux
+
+    @Transactional
+    public Map<String, Object> setEntryFlowCode(String reference, String code) {
+        require(EDIT);
+        String value = flowCode(code);
+        int updated = jdbc.update("UPDATE acc_entry SET cash_flow_code = ? WHERE entry_number = ? OR provisional_number = ?", value, reference, reference);
+        if (updated == 0) {
+            throw new ResourceNotFoundException("Piece introuvable : " + reference);
+        }
+        return Map.of("reference", reference, "cashFlowCode", value == null ? "" : value);
+    }
+
+    /** Code de flux de toutes les versions d'un schema d'imputation. */
+    @Transactional
+    public Map<String, Object> setRuleFlowCode(String ruleCode, String code) {
+        require(EDIT);
+        String value = flowCode(code);
+        int updated = jdbc.update("UPDATE acc_posting_rule SET cash_flow_code = ? WHERE code = ?", value, ruleCode);
+        if (updated == 0) {
+            throw new ResourceNotFoundException("Schema introuvable : " + ruleCode);
+        }
+        return Map.of("rule", ruleCode, "cashFlowCode", value == null ? "" : value);
+    }
+
+    private static String flowCode(String code) {
+        if (!StringUtils.hasText(code)) {
+            return null;
+        }
+        String value = code.trim().toUpperCase(Locale.ROOT);
+        if (!FLOW_CODES.contains(value)) {
+            throw new BadRequestException("Code de flux inconnu : " + value + " (" + String.join(", ", FLOW_CODES) + ")");
+        }
+        return value;
+    }
+
     // ================================================================== calcul
 
     private record Template(AccStatementTemplate template, List<AccStatementLine> lines, List<AccStatementMapping> mappings) {
@@ -435,6 +471,7 @@ public class FinancialStatementService {
         flows.put("FI", value(income, "TN"));
         flows.put("FJ", credit(moves, prefix -> prefix.startsWith("27")));
         BigDecimal capital = credit(moves, prefix -> prefix.startsWith("10")).subtract(debit(moves, prefix -> prefix.startsWith("10")));
+        // Codes de flux portes par les pieces (ou leur schema) : la tresorerie de ces pieces remplace l'estimation par les comptes.
         flows.put("FK", capital.signum() > 0 ? capital : BigDecimal.ZERO);
         flows.put("FM", capital.signum() < 0 ? capital.negate() : BigDecimal.ZERO);
         flows.put("FL", credit(moves, prefix -> prefix.startsWith("14")));
@@ -443,7 +480,32 @@ public class FinancialStatementService {
         flows.put("FP", credit(moves, prefix -> (prefix.startsWith("16") && !prefix.startsWith("161") && !prefix.startsWith("162"))
                 || prefix.startsWith("17") || prefix.startsWith("18")));
         flows.put("FQ", debit(moves, prefix -> prefix.startsWith("16") || prefix.startsWith("17") || prefix.startsWith("18")));
+        flows.putAll(codedFlows(year));
         return flows;
+    }
+
+    /** Codes de flux reconnus : postes de detail des flux d'investissement et de financement. */
+    public static final List<String> FLOW_CODES = List.of("FF", "FG", "FH", "FI", "FJ", "FK", "FL", "FM", "FN", "FO", "FP", "FQ");
+
+    /**
+     * Flux codes de l'exercice : mouvement de tresorerie (classe 5, hors 58 et hors a-nouveaux) des
+     * pieces qui portent un code, ou dont le schema en porte un. Montant positif quel que soit le sens.
+     */
+    private Map<String, BigDecimal> codedFlows(AccFiscalYear year) {
+        Map<String, BigDecimal> coded = new HashMap<>();
+        jdbc.query("SELECT COALESCE(e.cash_flow_code, r.cash_flow_code), ABS(COALESCE(SUM(l.debit), 0) - COALESCE(SUM(l.credit), 0)) "
+                        + "FROM acc_entry e JOIN acc_entry_line l ON l.entry_id = e.id LEFT JOIN acc_posting_event pe ON pe.id = e.posting_event_id "
+                        + "LEFT JOIN acc_posting_rule r ON r.code = pe.rule_code AND r.version = pe.rule_version "
+                        + "WHERE e.status IN ('VALIDATED', 'REVERSED') AND e.entry_date BETWEEN ? AND ? AND e.origin <> 'OPENING' "
+                        + "AND COALESCE(e.cash_flow_code, r.cash_flow_code) IS NOT NULL AND l.account_number LIKE '5%' AND l.account_number NOT LIKE '58%' "
+                        + "GROUP BY e.id, COALESCE(e.cash_flow_code, r.cash_flow_code)",
+                rs -> {
+                    String code = rs.getString(1);
+                    if (FLOW_CODES.contains(code)) {
+                        coded.merge(code, rs.getBigDecimal(2), BigDecimal::add);
+                    }
+                }, year.getStartDate(), year.getEndDate());
+        return coded;
     }
 
     private static BigDecimal value(Computed computed, String code) {

@@ -85,6 +85,15 @@ management:
         enabled: false
 
 bokati:
+  whatsapp:
+    infobip:
+      # Envoi WhatsApp par Infobip (texte seul, modeles approuves par Meta). Cle jamais dans le depot.
+      enabled: ${INFOBIP_WHATSAPP_ENABLED:false}
+      base-url: ${INFOBIP_BASE_URL:}
+      api-key: ${INFOBIP_API_KEY:}
+      sender: ${INFOBIP_WHATSAPP_SENDER:}
+      language: ${INFOBIP_WHATSAPP_LANGUAGE:fr}
+      free-text-allowed: ${INFOBIP_WHATSAPP_FREE_TEXT:false}
   checkin:
     # En local le serveur est en HTTP · un cookie Secure ne serait pas conserve par le
     # navigateur, et le poste de pointage ne pourrait jamais etre autorise. En production

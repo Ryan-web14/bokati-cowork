@@ -23,6 +23,7 @@ accounting.cash.treasury-parent-account	ACCOUNTING	TEXT	LIVE	571	Compte parent s
 accounting.cash.vat-collected-account	ACCOUNTING	TEXT	LIVE	4431	Compte de TVA collectee sur une entree de caisse
 accounting.cash.vat-recoverable-account	ACCOUNTING	TEXT	LIVE	4452	Compte de TVA recuperable sur une sortie de caisse
 accounting.closing.collective-accounts	ACCOUNTING	TEXT	LIVE	411,401,421,4191,422,462,165	Comptes collectifs a justifier par leurs tiers avant la cloture
+accounting.closing.inventory-sources	ACCOUNTING	TEXT	LIVE	FIXED_ASSET_DEPRECIATION,FIXED_ASSET_DEROGATORY,FIXED_ASSET_IMPAIRMENT,IMPAIRMENT_REVERSAL,RECEIVABLE_IMPAIRMENT_ADJUSTED,RECEIVABLE_IMPAIRMENT_RELEASED,RECEIVABLE_IMPAIRMENT_RECLASS,RISK_PROVISION_POSTED,RISK_PROVISION_RELEASED,RISK_PROVISION_RECLASS,STOCK_IMPAIRMENT,TREASURY_IMPAIRMENT,STAFF_ADVANCE_IMPAIRMENT,DEPOSIT_IMPAIRMENT,DISPOSAL_RECEIVABLE_IMPAIRMENT,REVENUE_DEFERRAL_ADJUSTED,EXPENSE_DEFERRAL_ADJUSTED,ACCRUED_REVENUE_POSTED,ACCRUED_EXPENSE_POSTED,TAX_RESULT	Types de piece des ecritures d'inventaire (balance avant et apres inventaire)
 accounting.closing.loss-account	ACCOUNTING	TEXT	LIVE	139	Compte du resultat en perte repris en a-nouveau
 accounting.closing.off-balance-journal	ACCOUNTING	TEXT	LIVE	HB	Journal de reprise des engagements hors bilan a la cloture
 accounting.closing.opening-journal	ACCOUNTING	TEXT	LIVE	AN	Journal des a-nouveaux de l'exercice suivant
@@ -95,6 +96,7 @@ accounting.partner.interest-account	ACCOUNTING	TEXT	LIVE	671	Compte de charge de
 accounting.partner.journal	ACCOUNTING	TEXT	LIVE	OD	Journal des interets et mouvements sans tresorerie des comptes courants
 accounting.payroll.journal	ACCOUNTING	TEXT	LIVE	PA	Journal de paie
 accounting.payroll.section-required	ACCOUNTING	BOOLEAN	LIVE	false	Paie : refuser un salarie sans section analytique
+accounting.period.billing-closure-sync	ACCOUNTING	ENUM	LIVE	PROPOSE	Clore un mois de facturation : PROPOSE (notifier les comptables), LOCK (verrouiller la periode comptable) ou NONE
 accounting.posting.batch-size	ACCOUNTING	INTEGER	LIVE	50	Nombre d'evenements comptables traites par passage du moteur d'imputation
 accounting.posting.disabled-families	ACCOUNTING	TEXT	LIVE		Familles d'evenements non comptabilisees pour l'instant (CASH, SALES, PAYMENT...), separees par des virgules
 accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	RESTART	30000	Intervalle du moteur d'imputation (millisecondes)

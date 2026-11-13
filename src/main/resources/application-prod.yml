@@ -113,6 +113,15 @@ management:
         enabled: false
 
 bokati:
+  whatsapp:
+    infobip:
+      # Envoi WhatsApp par Infobip (texte seul, modeles approuves par Meta). Cle jamais dans le depot.
+      enabled: ${INFOBIP_WHATSAPP_ENABLED:false}
+      base-url: ${INFOBIP_BASE_URL:}
+      api-key: ${INFOBIP_API_KEY:}
+      sender: ${INFOBIP_WHATSAPP_SENDER:}
+      language: ${INFOBIP_WHATSAPP_LANGUAGE:fr}
+      free-text-allowed: ${INFOBIP_WHATSAPP_FREE_TEXT:false}
   websocket:
     use-stomp-relay: ${BOKATI_WEBSOCKET_USE_STOMP_RELAY:true}
     stomp:

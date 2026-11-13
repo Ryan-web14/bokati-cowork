@@ -17,6 +17,7 @@ Spécification : `docs/backend/plan-finance-comptabilite/README.md` (sections 4.
   - `balance_justification` : justificatifs de solde figés (préparé par, revu par) ;
   - `acc_confirmation_request` : confirmations de solde et leur suivi.
 - Données livrées : bilan (`BILAN`), compte de résultat (`COMPTE_RESULTAT`) et tableau des flux (`TFT`) du SYSCOHADA révisé, avec leurs codes de rubrique (`AD` à `DZ`, `TA` à `XI`, `ZA` à `ZH`) et la correspondance des comptes.
+- Compléments : dev `V319__complements_f12.sql`, prod `V313__complements_f12.sql` (canal et destinataire de l'envoi des confirmations, codes de flux sur les schémas d'imputation et les pièces).
 - Droits : `ACCOUNTING_CLOSING:READ`, `MANAGE`, `FINALIZE`, `ACCOUNTING_STATEMENT:EDIT`, `BALANCE_JUSTIFICATION:PREPARE` et `REVIEW`.
 
 | Rôle | Droits |
@@ -41,6 +42,7 @@ Règles de calcul :
 - **Totaux** : formules de codes de postes (`XG+XH-RQ-RS`), stockées sur le poste.
 - **Périmètre** : les comptes de bilan cumulent depuis le lendemain du dernier exercice clos (à-nouveaux compris), les comptes de gestion portent sur l'exercice. Le résultat de l'exercice entre au poste `CJ`. Tant qu'un exercice antérieur n'est pas clos, son résultat y entre aussi (en instance d'affectation).
 - **Tableau des flux** : les mouvements excluent les à-nouveaux. La CAFG part du résultat net, ajoute les dotations et la valeur comptable des cessions, retire les reprises et les produits de cession. Les variations portent sur les valeurs brutes de l'actif circulant et sur le passif circulant, hors provisions à court terme et dividendes à payer.
+- **Codes de flux** : une pièce peut porter un code de flux (`FF` à `FQ`, postes de détail des flux d'investissement et de financement), saisi sur la pièce ou hérité de son schéma d'imputation. Pour chaque code présent dans l'exercice, le tableau des flux prend le mouvement de trésorerie de ces pièces (classe 5 hors `58`, hors à-nouveaux) à la place de l'estimation par les comptes. Coder une partie seulement des pièces d'un même poste fausse ce poste : le contrôle de trésorerie le signale.
 - **Mention** : un état est `provisional` tant que l'exercice n'est pas clos. `firstYear` signale l'absence de colonne N-1.
 
 Contrôles servis avec chaque état :
@@ -105,6 +107,25 @@ Suite du lettrage :
 
 `GET /accounting/closing/{year}/opening-preview` simule les à-nouveaux sans écrire.
 
+## Balance avant et après inventaire
+
+Pour un exercice, par compte : solde avant inventaire, mouvements d'inventaire, solde après inventaire. Elle donne aussi le résultat avant et après inventaire, et la liste des écritures d'inventaire.
+
+Une écriture d'inventaire est d'origine clôture, ou son type de pièce figure dans `accounting.closing.inventory-sources` :
+- dotations et dépréciations des immobilisations, amortissements dérogatoires ;
+- dépréciations de créances, provisions pour risques, dépréciations de stock, de trésorerie, d'avances et de dépôts ;
+- constatations d'avance de fin de période, factures à établir et non parvenues ;
+- impôt sur le résultat.
+
+## Synchronisation avec la clôture de facturation
+
+Quand un mois de facturation est clos (totaux scellés), la facturation publie l'événement `core/accounting/BillingPeriodClosedEvent`. La comptabilité réagit selon `accounting.period.billing-closure-sync` :
+- `PROPOSE` (défaut) : les comptables reçoivent une notification qui propose de verrouiller la période comptable du mois ;
+- `LOCK` : la période est verrouillée. Si le verrouillage est refusé (rapprochement manquant, pièce en attente), la notification en donne le motif ;
+- `NONE` : rien.
+
+Seule une période ouverte est concernée. Les clôtures de jour et d'année n'ont pas d'effet.
+
 ## Justification des soldes
 
 **Justificatif d'un tiers** (ou d'un compte) à une date :
@@ -142,6 +163,12 @@ Un compte à revoir passe à justifié quand un justificatif figé à la date de
 
 - **Sélection** : les tiers désignés, ou les 20 plus gros soldes du collectif et tout solde au-delà de 1 000 000 (paramètres `accounting.confirmation.top-count` et `threshold`). Un tiers déjà circularisé à la même date n'est pas repris.
 - **Lettre** (PDF) : solde dans nos livres, pièces ouvertes, coupon-réponse, numéro `CONF-{année}-{rang}` à rappeler.
+- **Envoi, sans aucune ouverture vers l'extérieur** (`channel`) :
+  - `EMAIL` (défaut) : la lettre PDF part en pièce jointe, à l'adresse donnée ou à celle du tiers (adresse de facturation du client, membre du client, organisation, fournisseur) ;
+  - `WHATSAPP` : message texte par Infobip, avec le modèle approuvé `BALANCE_CONFIRMATION` (voir `docs/backend/whatsapp-infobip`), au numéro donné ou au numéro WhatsApp du client ou de son membre. Pas de PDF ;
+  - `PRINT` : la lettre s'imprime, l'envoi est seulement noté.
+- Le tiers répond par retour de courriel, sur WhatsApp ou par courrier. Le comptable saisit sa réponse.
+- Le canal et le destinataire du dernier envoi sont gardés (`sentChannel`, `recipient`).
 - **Suivi** : préparée (`PREPARED`), envoyée (`SENT`), relancée (`REMINDED`), conforme (`AGREED`) ou en écart (`DISPUTED`), puis rapprochée (`RECONCILED`, droit `REVIEW`, avec l'explication de l'écart).
 - La réponse note son canal (courrier, portail...), le solde confirmé et l'écart.
 
@@ -181,7 +208,10 @@ Catalogue du SYSCOHADA révisé (notes 1 à 35 utiles, plus événements postér
 | `GET /accounting/closing/{year}/justification-file?format=json\|csv\|pdf` | Dossier de justification des soldes |
 | `POST /accounting/confirmations` `{accountNumber, date, top, threshold, thirdParties}` | Préparer des confirmations |
 | `GET /accounting/confirmations` | Suivi des confirmations |
-| `POST /accounting/confirmations/{number}/send?reminder=` | Envoi ou relance |
+| `POST /accounting/confirmations/{number}/send?reminder=&channel=EMAIL\|WHATSAPP\|PRINT&recipient=` | Envoi ou relance |
+| `GET /accounting/closing/{year}/inventory-balance?format=json\|csv\|pdf` | Balance avant et après inventaire |
+| `PATCH /accounting/entries/{reference}/cash-flow-code` `{code}` | Code de flux d'une pièce (droit `ACCOUNTING_STATEMENT:EDIT`) |
+| `PATCH /accounting/posting-rules/{code}/cash-flow-code` `{code}` | Code de flux d'un schéma d'imputation |
 | `POST /accounting/confirmations/{number}/reply` `{channel, confirmedBalance, detail}` | Réponse du tiers |
 | `POST /accounting/confirmations/{number}/reconcile` `{comment}` | Rapprochement d'un écart |
 | `GET /accounting/confirmations/{number}/letter?format=pdf\|json` | Lettre de confirmation |
@@ -196,15 +226,17 @@ Catalogue du SYSCOHADA révisé (notes 1 à 35 utiles, plus événements postér
 | `accounting.closing.suspense-accounts` | `471,585` |
 | `accounting.closing.collective-accounts` | `411,401,421,4191,422,462,165` |
 | `accounting.confirmation.top-count`, `threshold` | `20`, `1000000` |
+| `accounting.closing.inventory-sources` | Types de pièce des écritures d'inventaire |
+| `accounting.period.billing-closure-sync` | `PROPOSE` |
 
 ## Non fait dans ce lot
 
-- **Balance avant et après inventaire** : la balance générale existe (lot F1). La liste des écritures d'inventaire n'est pas encore isolée.
-- **Synchronisation avec la clôture de facturation** : clore une période de facturation ne propose pas encore de verrouiller la période comptable.
-- **Codes de flux** sur les natures d'opération : le tableau des flux se calcule à partir des comptes, sans code porté par les schémas.
+- **Réglé** : balance avant et après inventaire (voir plus haut).
+- **Réglé** : synchronisation avec la clôture de facturation.
+- **Réglé en partie** : codes de flux, portés par les schémas d'imputation et les pièces. Les natures d'opération de caisse n'en portent pas encore.
 - **Système minimal de trésorerie** : non retenu (décision 1). Un modèle `SMT` peut se charger par migration.
 - **Notes chiffrées** : elles listent les comptes et leurs soldes. Les tableaux de mouvements propres à chaque note (entrées, sorties) restent dans les états des lots F18 et F19.
-- **Confirmations par courriel et réponse depuis le portail** : la lettre se télécharge et s'imprime, l'envoi est noté à la main. L'envoi automatique et le coupon en ligne restent à faire.
+- **Réglé** : confirmations par courriel (PDF joint) et par WhatsApp (Infobip, texte seul). Pas de réponse en ligne : décision de ne rien ouvrir vers l'extérieur.
 - **Comparaison ligne à ligne** avec l'état envoyé par le tiers : l'écart se rapproche avec un commentaire.
 
 ## Tests
@@ -214,12 +246,16 @@ Catalogue du SYSCOHADA révisé (notes 1 à 35 utiles, plus événements postér
 - compte de résultat : chiffre d'affaires 1 500 000, EBE 1 200 000 ;
 - tableau des flux : trésorerie de clôture 8 880 000, égale au bilan ;
 - justificatif du client : la facture B ouverte au 31/12, écart nul ; collectif `411` justifié avec un solde anormal ; revue refusée à son préparateur ;
-- confirmations : deux tiers, l'un conforme, l'autre en écart de 10 000 puis rapproché ;
+- confirmations : deux tiers, l'un conforme, l'autre en écart de 10 000 puis rapproché ; envoi imprimé, WhatsApp refusé sans configuration, courriel refusé sans adresse ;
+- balance d'inventaire : résultat de 1 200 000 avant la dotation, 720 000 après ;
+- code de flux `FG` sur l'achat du mobilier : le poste reste à 2 400 000 et le contrôle de trésorerie passe ;
 - liste de clôture : seules les deux étapes à cocher manquent, la clôture est refusée avant ;
 - clôture : à-nouveaux égaux aux soldes, résultat en `131`, facture client reprise avec sa référence ;
 - suite du lettrage : le règlement de janvier 2021 est lettré avec la ligne d'à-nouveau, la facture fournisseur reste ouverte en 2021 ;
 - bilan de janvier 2021 avec sa colonne N-1 ;
 - édition définitive figée et vérifiée.
+
+`BillingClosureSyncTest` : proposition par défaut, verrouillage en mode `LOCK`, rien pour un jour ou en mode `NONE`.
 
 ## Pour le frontend
 
