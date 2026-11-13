@@ -37,6 +37,15 @@ public interface BillingDocumentService {
             com.sni.bokaticowork.features.billing.dto.request.SimulateBillingLineRequest request);
     BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request);
 
+    /** Lot B2 : revision d'un devis en negociation, avec motif et origine ; une version par revision. */
+    BillingDocumentResponse reviseQuote(String quoteNumber, com.sni.bokaticowork.features.billing.dto.request.ReviseQuoteRequest request);
+
+    /** Lot B2 : frise des versions d'un devis et ecarts de prix entre elles. */
+    com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse negotiation(String quoteNumber);
+
+    /** Decision D4 : un devis expire repart avec une nouvelle date de validite. */
+    BillingDocumentResponse revalidateQuote(String quoteNumber, com.sni.bokaticowork.features.billing.dto.request.RevalidateQuoteRequest request);
+
     /**
      * Corrige les coordonnees du destinataire imprimees sur le document sans changer le client
      * auquel il est rattache. Le proprietaire ({@code customerType} / {@code customerCode})

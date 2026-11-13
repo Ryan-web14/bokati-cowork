@@ -165,6 +165,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final com.sni.bokaticowork.features.billing.service.support.BillingSellerSnapshot sellerSnapshot;
     private final com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
     private final com.sni.bokaticowork.features.billing.service.support.BillingStockGuard stockGuard;
+    private final com.sni.bokaticowork.features.billing.repository.BillingDocumentSignatureRepository signatureRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -453,6 +454,13 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request) {
         BillingDocument document = serviceByNumber(documentNumber);
         lifecycleSupport.ensureNotLocked(document);
+        if (document.getDocumentType() == BillingDocumentType.QUOTE && document.getStatus() != BillingDocumentStatus.DRAFT
+                && NEGOTIABLE_QUOTE.contains(document.getStatus())) {
+            // Lot B2 (ecart E9) : un devis envoye, vu, en negociation ou accepte se modifie en entier,
+            // comme une revision interne.
+            return reviseQuote(documentNumber, new com.sni.bokaticowork.features.billing.dto.request.ReviseQuoteRequest(
+                    "Modification du devis", "INTERNAL", null, request));
+        }
         boolean isDraft = document.getStatus() == BillingDocumentStatus.DRAFT;
         boolean isRestrictedEdit = document.getStatus() == BillingDocumentStatus.ISSUED
                 || document.getStatus() == BillingDocumentStatus.SENT;
@@ -486,68 +494,270 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
 
         if (isDraft) {
-            if (StringUtils.hasText(request.title())) document.setTitle(request.title().trim());
-            if (StringUtils.hasText(request.description())) document.setDescription(request.description().trim());
-            if (request.issueDate() != null) document.setIssueDate(request.issueDate());
-            if (StringUtils.hasText(request.customerReference())) document.setCustomerReference(request.customerReference().trim());
-            if (StringUtils.hasText(request.poNumber())) document.setPoNumber(request.poNumber().trim());
-            if (StringUtils.hasText(request.projectCode())) document.setProjectCode(request.projectCode().trim());
-            if (StringUtils.hasText(request.salespersonCode())) document.setSalespersonCode(request.salespersonCode().trim());
-            if (StringUtils.hasText(request.deliveryAddressJson())) document.setDeliveryAddressJson(request.deliveryAddressJson().trim());
-            if (StringUtils.hasText(request.language())) document.setLanguage(request.language().trim());
-            if (request.exchangeRate() != null) document.setExchangeRate(request.exchangeRate());
-            if (StringUtils.hasText(request.paymentReference())) document.setPaymentReference(request.paymentReference().trim());
-            if (StringUtils.hasText(request.bankDetailsJson())) document.setBankDetailsJson(request.bankDetailsJson().trim());
-
-            applyLineUpdates(document, request.lines());
-
-            if (request.discounts() != null) {
-                discountRepository.deleteAllByDocument(document);
-            }
-            if (request.clauses() != null) {
-                clauseRepository.deleteAllByDocument(document);
-            }
-
-            // Recalculate totals from remaining lines
-            List<BillingDocumentLine> remainingLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document);
-            if (!remainingLines.isEmpty()) {
-                List<CreateBillingDocumentLineRequest> lineRequests = remainingLines.stream()
-                        .map(this::toCreateLineRequest).toList();
-                // Memes conditions qu'a la creation : une organisation exoneree reste facturee hors TVA,
-                // y compris sur les lignes ajoutees par cette mise a jour.
-                if (customerSnapshotResolver.organizationOf(document.getCustomerType(), document.getCustomerCode())
-                        .map(organization -> organization.vatExempt()).orElse(false)) {
-                    lineRequests = calculationService.exempted(lineRequests);
-                }
-                // Sans remises dans la demande, celles en base restent · le recalcul les compte,
-                // sinon le total ignorait des remises toujours affichees sur le document.
-                List<CreateBillingDocumentDiscountRequest> effectiveDiscounts = request.discounts() != null
-                        ? request.discounts()
-                        : discountRepository.findAllByDocumentOrderByIdAsc(document).stream()
-                                .map(d -> new CreateBillingDocumentDiscountRequest(d.getDiscountCode(), d.getDescription(),
-                                        d.getDiscountType(), d.getValue(), d.getSourceType(), d.getSourceCode()))
-                                .toList();
-                BillingCalculationService.CalculatedDocument recalc = calculationService.calculate(
-                        lineRequests,
-                        effectiveDiscounts
-                );
-                document.setSubtotalAmount(recalc.subtotalAmount());
-                document.setDiscountAmount(recalc.discountAmount());
-                document.setTaxableAmount(recalc.taxableAmount());
-                document.setVatAmount(recalc.vatAmount());
-                document.setAdditionalCentAmount(recalc.additionalCentAmount());
-                document.setTaxAmount(recalc.taxAmount());
-                document.setTotalAmount(recalc.totalAmount());
-                document.setBalanceDue(recalc.totalAmount().subtract(document.getPaidAmount()));
-
-                // Remises, taxes et clauses reecrites sans toucher aux lignes, deja en base
-                documentWriter.rewriteDetails(document, recalc, request.discounts(), request.clauses());
-            }
+            applyFullEdit(document, request);
         }
 
         BillingDocument saved = documentRepository.save(document);
         eventWriter.write(saved, "BILLING_DOCUMENT_UPDATED", null);
         return mapper.toResponse(saved);
+    }
+
+
+    /**
+     * Modification complete : en-tete, lignes, remises, clauses, et recalcul par le meme calcul que
+     * la creation. Brouillon, et devis en negociation (lot B2).
+     */
+    private void applyFullEdit(BillingDocument document, UpdateBillingDocumentRequest request) {
+        if (StringUtils.hasText(request.title())) document.setTitle(request.title().trim());
+        if (StringUtils.hasText(request.description())) document.setDescription(request.description().trim());
+        if (request.issueDate() != null) document.setIssueDate(request.issueDate());
+        if (StringUtils.hasText(request.customerReference())) document.setCustomerReference(request.customerReference().trim());
+        if (StringUtils.hasText(request.poNumber())) document.setPoNumber(request.poNumber().trim());
+        if (StringUtils.hasText(request.projectCode())) document.setProjectCode(request.projectCode().trim());
+        if (StringUtils.hasText(request.salespersonCode())) document.setSalespersonCode(request.salespersonCode().trim());
+        if (StringUtils.hasText(request.deliveryAddressJson())) document.setDeliveryAddressJson(request.deliveryAddressJson().trim());
+        if (StringUtils.hasText(request.language())) document.setLanguage(request.language().trim());
+        if (request.exchangeRate() != null) document.setExchangeRate(request.exchangeRate());
+        if (StringUtils.hasText(request.paymentReference())) document.setPaymentReference(request.paymentReference().trim());
+        if (StringUtils.hasText(request.bankDetailsJson())) document.setBankDetailsJson(request.bankDetailsJson().trim());
+
+        applyLineUpdates(document, request.lines());
+
+        if (request.discounts() != null) {
+            discountRepository.deleteAllByDocument(document);
+        }
+        if (request.clauses() != null) {
+            clauseRepository.deleteAllByDocument(document);
+        }
+
+        // Recalculate totals from remaining lines
+        List<BillingDocumentLine> remainingLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document);
+        if (!remainingLines.isEmpty()) {
+            List<CreateBillingDocumentLineRequest> lineRequests = remainingLines.stream()
+                    .map(this::toCreateLineRequest).toList();
+            // Memes conditions qu'a la creation : une organisation exoneree reste facturee hors TVA,
+            // y compris sur les lignes ajoutees par cette mise a jour.
+            if (customerSnapshotResolver.organizationOf(document.getCustomerType(), document.getCustomerCode())
+                    .map(organization -> organization.vatExempt()).orElse(false)) {
+                lineRequests = calculationService.exempted(lineRequests);
+            }
+            // Sans remises dans la demande, celles en base restent · le recalcul les compte,
+            // sinon le total ignorait des remises toujours affichees sur le document.
+            List<CreateBillingDocumentDiscountRequest> effectiveDiscounts = request.discounts() != null
+                    ? request.discounts()
+                    : discountRepository.findAllByDocumentOrderByIdAsc(document).stream()
+                            .map(d -> new CreateBillingDocumentDiscountRequest(d.getDiscountCode(), d.getDescription(),
+                                    d.getDiscountType(), d.getValue(), d.getSourceType(), d.getSourceCode()))
+                            .toList();
+            BillingCalculationService.CalculatedDocument recalc = calculationService.calculate(
+                    lineRequests,
+                    effectiveDiscounts
+            );
+            document.setSubtotalAmount(recalc.subtotalAmount());
+            document.setDiscountAmount(recalc.discountAmount());
+            document.setTaxableAmount(recalc.taxableAmount());
+            document.setVatAmount(recalc.vatAmount());
+            document.setAdditionalCentAmount(recalc.additionalCentAmount());
+            document.setTaxAmount(recalc.taxAmount());
+            document.setTotalAmount(recalc.totalAmount());
+            document.setBalanceDue(recalc.totalAmount().subtract(document.getPaidAmount()));
+
+            // Remises, taxes et clauses reecrites sans toucher aux lignes, deja en base
+            documentWriter.rewriteDetails(document, recalc, request.discounts(), request.clauses());
+        }
+    }
+
+    /** Statuts d'un devis qui admettent une revision (lot B2) ; ACCEPTED repasse en negociation (D1). */
+    private static final java.util.Set<BillingDocumentStatus> NEGOTIABLE_QUOTE = java.util.EnumSet.of(BillingDocumentStatus.DRAFT,
+            BillingDocumentStatus.ISSUED, BillingDocumentStatus.SENT, BillingDocumentStatus.VIEWED, BillingDocumentStatus.NEGOTIATION,
+            BillingDocumentStatus.ACCEPTED);
+    static final String QUOTE_REVISION_VALIDITY_DAYS_KEY = "billing.quote.revision-validity-days";
+
+    @Override
+    public BillingDocumentResponse reviseQuote(String quoteNumber, com.sni.bokaticowork.features.billing.dto.request.ReviseQuoteRequest request) {
+        BillingDocument quote = quote(quoteNumber);
+        lifecycleSupport.ensureNotLocked(quote);
+        BillingDocumentStatus before = quote.getStatus();
+        if (!NEGOTIABLE_QUOTE.contains(before)) {
+            throw new BadRequestException(before == BillingDocumentStatus.EXPIRED
+                    ? "Ce devis a expiré : réactivez-le avec une nouvelle date de validité avant de le modifier"
+                    : "Un devis au statut " + before + " ne se modifie plus");
+        }
+        // L'etat presente au client est archive avant toute modification.
+        versionService.archive(quote, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote), "QUOTE_REVISION");
+        stampAuthor(quote, false);
+        quote.setVersionReason(request.reason().trim());
+        quote.setVersionOrigin(StringUtils.hasText(request.origin()) ? request.origin() : "INTERNAL");
+
+        UpdateBillingDocumentRequest changes = request.changes();
+        if (changes.internalNotes() != null) {
+            quote.setInternalNotes(StringUtils.hasText(changes.internalNotes()) ? changes.internalNotes().trim() : null);
+        }
+        if (changes.dueDate() != null) {
+            quote.setDueDate(changes.dueDate());
+        }
+        if (StringUtils.hasText(changes.terms())) {
+            quote.setTerms(changes.terms().trim());
+        }
+        if (StringUtils.hasText(changes.paymentInstructions())) {
+            quote.setPaymentInstructions(changes.paymentInstructions().trim());
+        }
+        applyFullEdit(quote, changes);
+
+        if (before != BillingDocumentStatus.DRAFT) {
+            // Chaque version proposee au client respecte le plancher et la remise maximale du
+            // catalogue ; au-dela, derogation motivee avec le droit adequat.
+            String override = discountGuard.enforce(discountGuard.evaluate(lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote),
+                    quote.getSubtotalAmount(), quote.getDiscountAmount()), request.discountOverrideReason());
+            if (override != null) {
+                quote.setDiscountOverrideReason(override);
+                quote.setDiscountOverrideBy(currentUserName());
+                quote.setDiscountOverrideAt(Instant.now());
+                fiscalAuditService.log("DISCOUNT_OVERRIDE", "BILLING_DOCUMENT", quote.getDocumentNumber(), null, "reason=" + override);
+            }
+            // La validite se prolonge a la revision.
+            LocalDate minimum = LocalDate.now().plusDays(revisionValidityDays());
+            if (quote.getDueDate() == null || quote.getDueDate().isBefore(minimum)) {
+                quote.setDueDate(minimum);
+            }
+            if (before == BillingDocumentStatus.ACCEPTED) {
+                // D1 : le devis accepte revise repasse en negociation ; l'acceptation et la signature
+                // tombent, le client accepte de nouveau la nouvelle version.
+                cancelQuoteSignatures(quote);
+            }
+            quote.setStatus(BillingDocumentStatus.NEGOTIATION);
+        }
+        BillingDocument saved = documentRepository.save(quote);
+        eventWriter.write(saved, "QUOTE_REVISED", java.util.Map.of("reason", saved.getVersionReason(), "origin", saved.getVersionOrigin(),
+                "previousStatus", before.name(), "revision", versionService.currentRevision(saved)));
+        return mapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse negotiation(String quoteNumber) {
+        BillingDocument quote = quote(quoteNumber);
+        List<java.util.Map<String, Object>> snapshots = versionService.rounds(quote, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote));
+        List<com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.Round> rounds = new ArrayList<>();
+        java.util.Map<String, Object> previous = null;
+        for (java.util.Map<String, Object> snapshot : snapshots) {
+            BigDecimal total = decimal(snapshot.get("totalAmount"));
+            BigDecimal previousTotal = previous == null ? null : decimal(previous.get("totalAmount"));
+            rounds.add(new com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.Round(
+                    ((Number) snapshot.get("_version")).intValue(), Boolean.TRUE.equals(snapshot.get("_current")),
+                    (String) snapshot.get("versionAuthorName"), (String) snapshot.get("versionReason"), (String) snapshot.get("versionOrigin"),
+                    (String) snapshot.get("status"), instant(snapshot.get("_changedAt")), instant(snapshot.get("_sentAt")),
+                    decimal(snapshot.get("subtotalAmount")), decimal(snapshot.get("discountAmount")), total,
+                    previousTotal == null || total == null ? null : total.subtract(previousTotal),
+                    previous == null ? List.of() : lineChanges(previous, snapshot)));
+            previous = snapshot;
+        }
+        return new com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse(quote.getDocumentNumber(), quote.getStatus().name(),
+                versionService.currentRevision(quote), rounds);
+    }
+
+    @Override
+    public BillingDocumentResponse revalidateQuote(String quoteNumber, com.sni.bokaticowork.features.billing.dto.request.RevalidateQuoteRequest request) {
+        BillingDocument quote = quote(quoteNumber);
+        if (quote.getStatus() != BillingDocumentStatus.EXPIRED) {
+            throw new BadRequestException("Seul un devis expiré se réactive");
+        }
+        if (!request.validUntil().isAfter(LocalDate.now())) {
+            throw new BadRequestException("La nouvelle date de validité est postérieure à aujourd'hui");
+        }
+        versionService.archive(quote, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote), "QUOTE_REVALIDATION");
+        stampAuthor(quote, false);
+        quote.setVersionReason(request.reason().trim());
+        quote.setVersionOrigin("INTERNAL");
+        quote.setDueDate(request.validUntil());
+        quote.setStatus(BillingDocumentStatus.SENT);
+        BillingDocument saved = documentRepository.save(quote);
+        eventWriter.write(saved, "QUOTE_REVALIDATED", java.util.Map.of("validUntil", request.validUntil().toString(), "reason", request.reason().trim()));
+        return mapper.toResponse(saved);
+    }
+
+    private long revisionValidityDays() {
+        return platformSettings == null ? 30 : platformSettings.number(QUOTE_REVISION_VALIDITY_DAYS_KEY, 30);
+    }
+
+    /** Signatures en attente ou obtenues sur la version precedente : caduques (D1). */
+    private void cancelQuoteSignatures(BillingDocument quote) {
+        if (signatureRepository == null) {
+            return;
+        }
+        signatureRepository.findAllByDocumentOrderByCreatedAtDesc(quote).stream()
+                .filter(signature -> signature.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingSignatureStatus.PENDING
+                        || signature.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingSignatureStatus.SIGNED)
+                .forEach(signature -> {
+                    signature.setStatus(com.sni.bokaticowork.features.billing.enums.BillingSignatureStatus.CANCELLED);
+                    signatureRepository.save(signature);
+                });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange> lineChanges(
+            java.util.Map<String, Object> before, java.util.Map<String, Object> after) {
+        List<java.util.Map<String, Object>> oldLines = (List<java.util.Map<String, Object>>) before.getOrDefault("lines", List.of());
+        List<java.util.Map<String, Object>> newLines = (List<java.util.Map<String, Object>>) after.getOrDefault("lines", List.of());
+        List<com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange> changes = new ArrayList<>();
+        java.util.Map<String, java.util.Map<String, Object>> oldByKey = new java.util.LinkedHashMap<>();
+        oldLines.forEach(line -> oldByKey.put(lineKey(line), line));
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (java.util.Map<String, Object> line : newLines) {
+            String key = lineKey(line);
+            seen.add(key);
+            java.util.Map<String, Object> old = oldByKey.get(key);
+            if (old == null) {
+                changes.add(lineChange("ADDED", null, line));
+            } else if (!java.util.Objects.equals(old.get("quantity"), line.get("quantity"))
+                    || !java.util.Objects.equals(old.get("unitPrice"), line.get("unitPrice"))
+                    || !java.util.Objects.equals(old.get("discountAmount"), line.get("discountAmount"))
+                    || !java.util.Objects.equals(old.get("totalAmount"), line.get("totalAmount"))) {
+                changes.add(lineChange("CHANGED", old, line));
+            }
+        }
+        oldByKey.forEach((key, line) -> {
+            if (!seen.contains(key)) {
+                changes.add(lineChange("REMOVED", line, null));
+            }
+        });
+        return changes;
+    }
+
+    /** Une ligne se reconnait d'une version a l'autre par son article, a defaut par son libelle. */
+    private static String lineKey(java.util.Map<String, Object> line) {
+        Object item = line.get("itemCode");
+        return item != null ? "item:" + item : "label:" + line.get("description");
+    }
+
+    private static com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange lineChange(String change,
+            java.util.Map<String, Object> before, java.util.Map<String, Object> after) {
+        java.util.Map<String, Object> label = after != null ? after : before;
+        return new com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange(change, (String) label.get("description"),
+                text(before, "quantity"), text(after, "quantity"), text(before, "unitPrice"), text(after, "unitPrice"),
+                text(before, "discountAmount"), text(after, "discountAmount"), text(before, "totalAmount"), text(after, "totalAmount"));
+    }
+
+    private static String text(java.util.Map<String, Object> line, String field) {
+        return line == null || line.get(field) == null ? null : String.valueOf(line.get(field));
+    }
+
+    private static BigDecimal decimal(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return new BigDecimal(String.valueOf(value));
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private static Instant instant(Object value) {
+        if (value instanceof Instant at) {
+            return at;
+        }
+        return value == null ? null : Instant.parse(String.valueOf(value));
     }
 
     @Override

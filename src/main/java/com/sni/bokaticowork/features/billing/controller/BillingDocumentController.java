@@ -205,6 +205,26 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.send(documentNumber));
     }
 
+    /** Lot B2 : revision d'un devis (prix, quantites, remises, lignes) avec motif et origine. */
+    @PutMapping("/quotes/{quoteNumber}")
+    public ResponseEntity<BillingDocumentResponse> reviseQuote(@PathVariable String quoteNumber,
+                                                               @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.ReviseQuoteRequest request) {
+        return ResponseEntity.ok(billingDocumentService.reviseQuote(quoteNumber, request));
+    }
+
+    /** Lot B2 : frise de negociation (versions, auteurs, motifs, ecarts de prix). */
+    @GetMapping("/quotes/{quoteNumber}/negotiation")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse> negotiation(@PathVariable String quoteNumber) {
+        return ResponseEntity.ok(billingDocumentService.negotiation(quoteNumber));
+    }
+
+    /** Decision D4 : reactivation d'un devis expire avec une nouvelle date de validite. */
+    @PatchMapping("/quotes/{quoteNumber}/revalidate")
+    public ResponseEntity<BillingDocumentResponse> revalidateQuote(@PathVariable String quoteNumber,
+                                                                   @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.RevalidateQuoteRequest request) {
+        return ResponseEntity.ok(billingDocumentService.revalidateQuote(quoteNumber, request));
+    }
+
     @PatchMapping("/quotes/{quoteNumber}/mark-viewed")
     public ResponseEntity<BillingDocumentResponse> markViewed(@PathVariable String quoteNumber) {
         return ResponseEntity.ok(billingDocumentService.markViewed(quoteNumber));

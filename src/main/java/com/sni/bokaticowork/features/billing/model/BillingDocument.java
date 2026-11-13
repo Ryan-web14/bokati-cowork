@@ -402,4 +402,12 @@ public class BillingDocument {
 
     @Column(name = "version_author_title", length = 160)
     private String versionAuthorTitle;
+
+    // -- Lot B2 : motif et origine de la version courante ---------------------------------------
+    @Column(name = "version_reason", length = 1000)
+    private String versionReason;
+
+    /** CLIENT_PROPOSAL (proposition du client), COUNTER_PROPOSAL (contre-proposition) ou INTERNAL. */
+    @Column(name = "version_origin", length = 30)
+    private String versionOrigin;
 }
