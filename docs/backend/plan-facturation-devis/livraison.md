@@ -58,7 +58,11 @@ Retirés : `fund.approval.reminder-hours`, `fund.approval.escalation-days` (remp
 
 `APPROVAL_MANAGE` (SUPER_ADMIN, ADMIN), `BILLING_APPROVE` (SUPER_ADMIN, ADMIN, FINANCE, MANAGER), `BILLING_APPROVE_L2` (SUPER_ADMIN, ADMIN, FINANCE).
 
-## 5. Schémas comptables ajoutés
+## 5. Décision D3, TVA des acomptes
+
+Validée par l'exploitant le 13/11/2026 : TVA portée par la facture finale ; en régime des encaissements, exigible au fur et à mesure que les acomptes sont déduits de la facture finale, pas à leur encaissement. C'est le comportement livré (schémas `SALES_DEPOSIT_INVOICE` et `SALES_DEPOSIT_APPLIED`).
+
+## 5 bis. Schémas comptables ajoutés
 
 `SALES_DEPOSIT_INVOICE` (facture d'acompte : D client, C 4191), `SALES_DEPOSIT_APPLIED` (acompte déduit : D 4191, C client, TVA en attente libérée au prorata), `SALES_RECEIVABLE_TRANSFER` (règlement transféré d'un client à l'autre). Correctif : une facture annulée par avoir n'est plus contre-passée une seconde fois.
 
@@ -71,6 +75,5 @@ Retirés : `fund.approval.reminder-hours`, `fund.approval.escalation-days` (remp
 
 ## 7. Points ouverts
 
-- **D3, TVA des acomptes** : la TVA est portée par la facture finale ; en régime des encaissements elle devient exigible au prorata de chaque acompte déduit. À valider avec l'expert-comptable (exigibilité à l'encaissement de l'acompte).
 - **Abonnement aux événements WhatsApp** (remise et lecture) : à créer avec une clé Infobip portant `subscriptions:manage` (voir `docs/backend/whatsapp-infobip`) ; en attendant, la tâche de suivi relit les statuts.
 - **Courriel en file** : le journal des envois note `QUEUED` pour un courriel ; l'état de remise réel se lit dans le journal des courriels du socle.

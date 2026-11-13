@@ -128,4 +128,4 @@ Le droit exact de chaque route figure dans [routes.md](routes.md) (généré).
 
 ## Écarts relevés
 
-Les écarts E1 à E19 relevés avant la refonte sont réglés par les lots B0 à B15 ; le suivi détaillé est dans `docs/backend/plan-facturation-devis/ecarts.md`. Reste à valider avec l'expert-comptable : la date d'exigibilité de la TVA d'un acompte (décision D3 ; aujourd'hui la TVA est portée par la facture finale et, en régime des encaissements, devient exigible au prorata de chaque acompte déduit).
+Les écarts E1 à E19 relevés avant la refonte sont réglés par les lots B0 à B15 ; le suivi détaillé est dans `docs/backend/plan-facturation-devis/ecarts.md`. Décision D3 validée : TVA portée par la facture finale ; en régime des encaissements, exigible au fur et à mesure que les acomptes sont déduits de la facture finale, pas à leur encaissement.

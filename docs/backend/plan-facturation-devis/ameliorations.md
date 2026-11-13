@@ -38,7 +38,7 @@ Principe commun : **une pièce certifiée par notre système ne se modifie jamai
   - un acompte qui n'a pas été pris pendant le devis se demande ainsi sur la facture (facture d'acompte rattachée) ;
   - la facture finale déduit chaque acompte facturé (ligne « Acompte n° ... du ... ») et ne réclame que le reste.
 - **Annulation** : un acompte demandé puis abandonné passe en CANCELLED. Un acompte encaissé sur un devis refusé se rembourse ou se garde en avoir, selon la décision prise.
-- **Comptabilité** : facture d'acompte au crédit du `4191` (clients, avances et acomptes reçus) ; la facture finale solde le `4191` contre le `411`. La TVA sur les acomptes suit le régime choisi (décision D3).
+- **Comptabilité** : facture d'acompte au crédit du `4191` (clients, avances et acomptes reçus) ; la facture finale solde le `4191` contre le `411`. La TVA sur les acomptes : TVA portée par la facture finale ; en régime des encaissements, exigible au fur et à mesure que les acomptes sont déduits de la facture finale, pas à leur encaissement (décision D3, validée).
 - **Routes** : `POST /quotes/{n}/deposits` (un ou plusieurs), `POST /invoices/{n}/deposits`, `GET /documents/{n}/deposits`, `PATCH /deposits/{id}/cancel`.
 
 **Critère** : un devis de 1 000 000 avec deux acomptes de 30 % puis 20 % ; les deux factures d'acompte sont encaissées ; la facture finale affiche 1 000 000, déduit 500 000 et réclame 500 000 ; le `4191` est soldé après la facture finale.

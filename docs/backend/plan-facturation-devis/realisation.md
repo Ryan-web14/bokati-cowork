@@ -8,7 +8,7 @@ Au 13/11/2026. Je corrige d'abord les 13 écarts encore ouverts du module de fac
 | --- | --- | --- |
 | D1 | Devis accepté | Révision admise : retour en négociation, nouvelle version, signature annulée, nouvelle acceptation |
 | D2 | Paiement d'une proforma | La proforma passe en devis, puis en facture (détail ci-dessous) |
-| D3 | TVA des acomptes | Paramètre : à l'encaissement de l'acompte (par défaut) ou à la facture finale ; à valider par l'expert-comptable |
+| D3 | TVA des acomptes | Validé le 13/11/2026 : TVA portée par la facture finale ; en régime des encaissements, exigible au fur et à mesure que les acomptes sont déduits de la facture finale, pas à leur encaissement |
 | D4 | Acompte d'un devis expiré | Au choix : rembourser, garder en avoir, ou remettre le devis en validité en changeant sa date de validité |
 | D5 | Stock insuffisant | Alerte sur le devis, blocage à la facture ; la facture s'émet quand même si l'article autorise le stock négatif |
 | D6 | Changer le client d'une facture payée | Le système propose les deux : paiements gardés en avoir au client d'origine, ou transférés sur la facture du nouveau client |
@@ -92,7 +92,7 @@ Un devis peut porter plusieurs acomptes ; ce qui n'a pas été pris sur le devis
 - **Côté facture** : exactement les mêmes possibilités (un ou plusieurs acomptes, montant ou pourcentage, plan d'acomptes) ; un acompte non pris sur le devis se demande ainsi sur la facture.
 - **Facture finale** : une ligne « Acompte n° … du … » par acompte facturé ; seul le reste est réclamé.
 - **Devis expiré avec acompte encaissé (D4)** : au choix, remboursement, avoir gardé pour le client, ou devis remis en validité avec une nouvelle date de validité.
-- **TVA (D3)** : paramètre, à l'encaissement de l'acompte par défaut, ou à la facture finale.
+- **TVA (D3)** : TVA portée par la facture finale ; en régime des encaissements, exigible au fur et à mesure que les acomptes sont déduits de la facture finale, pas à leur encaissement (validé le 13/11/2026).
 - **Comptabilité** : l'acompte au crédit du `4191` (clients, avances et acomptes reçus) ; la facture finale solde le `4191` contre le `411`.
 - **Routes** : `POST /quotes/{n}/deposits`, `POST /invoices/{n}/deposits`, `GET /documents/{n}/deposits`, `PATCH /deposits/{id}/cancel`, `PATCH /quotes/{n}/revalidate`.
 

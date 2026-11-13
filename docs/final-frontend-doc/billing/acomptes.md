@@ -40,7 +40,7 @@ Réponse : la liste des acomptes créés (`DepositResponse`).
 | `paidAmount`, `deductedAmount`, `deductedOn`, `deductedAt` | Encaissé, déduit, sur quelle facture finale |
 | `settlementDocument` | Avoir qui solde un acompte remboursé ou gardé en avoir |
 
-La facture d'acompte se paie comme toute facture (`POST /invoices/{n}/pay` ou les parcours du module payment). Son PDF est titré « FACTURE D'ACOMPTE » ; sa ligne n'a pas de TVA (la TVA est portée par la facture finale, décision D3).
+La facture d'acompte se paie comme toute facture (`POST /invoices/{n}/pay` ou les parcours du module payment). Son PDF est titré « FACTURE D'ACOMPTE » ; sa ligne n'a pas de TVA (la TVA est portée par la facture finale, décision D3 validée).
 
 ## Facture finale
 
@@ -62,4 +62,4 @@ Les acomptes non encaissés tombent avec le devis. Un devis qui porte un acompte
 
 ## Comptabilité
 
-La facture d'acompte crédite le compte `4191` (clients, avances et acomptes reçus) ; la déduction sur la facture finale solde le `4191` contre le `411` (paramètre `accounting.sales.deposit-account`). En régime des encaissements, la TVA en attente de la facture finale devient exigible au prorata de chaque acompte déduit.
+La facture d'acompte crédite le compte `4191` (clients, avances et acomptes reçus) ; la déduction sur la facture finale solde le `4191` contre le `411` (paramètre `accounting.sales.deposit-account`). En régime des encaissements, la TVA en attente de la facture finale devient exigible au fur et à mesure que les acomptes sont déduits de la facture finale, pas à leur encaissement (décision D3, validée le 13/11/2026).

@@ -65,7 +65,7 @@ Tranchées le 13/11/2026 : voir [realisation.md](realisation.md#1-décisions-ret
 | --- | --- | --- | --- |
 | D1 | Révision d'un devis accepté | Une révision après acceptation est-elle admise, ou faut-il un nouveau devis ? | Admise : retour en NEGOTIATION, signature annulée, nouvelle acceptation |
 | D2 | Paiement sur proforma | Un paiement total convertit-il la proforma en facture, ou crée-t-il une facture d'acompte ? | Paiement total : conversion ; paiement partiel : facture d'acompte |
-| D3 | TVA sur les acomptes | Exigible à l'encaissement de l'acompte, ou à la facture finale ? | À valider avec l'expert-comptable (régime des prestations de services) |
+| D3 | TVA sur les acomptes | Exigible à l'encaissement de l'acompte, ou à la facture finale ? | **Validé par l'exploitant le 13/11/2026** : TVA portée par la facture finale ; en régime des encaissements, exigible au fur et à mesure que les acomptes sont déduits de la facture finale, pas à leur encaissement |
 | D4 | Acompte d'un devis refusé | Remboursé, ou gardé en avoir ? | Au choix de l'utilisateur, avec motif |
 | D5 | Stock insuffisant sur un devis | Avertissement ou blocage ? | Avertissement sur le devis, blocage à la facturation (paramètre) |
 | D6 | Changement de client d'une facture payée | Refusé, ou paiements reportés en avoir ? | Paiements du client d'origine reportés en avoir à rembourser ou imputer |
