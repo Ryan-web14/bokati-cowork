@@ -1651,6 +1651,9 @@
     "password": {
      "minLength": 1,
      "type": "string"
+    },
+    "space": {
+     "type": "string"
     }
    }
   },

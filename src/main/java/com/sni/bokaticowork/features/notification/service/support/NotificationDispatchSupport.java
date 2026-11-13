@@ -161,6 +161,11 @@ public class NotificationDispatchSupport {
             afterCommit(() -> publishInAppToRabbit(message));
             return;
         }
+        if (message.getChannel() == NotificationChannel.WHATSAPP) {
+            // Envoye et suivi par le service WhatsApp : la notification n'en est que le reflet.
+            fail(message, "Un message WhatsApp se renvoie depuis le service WhatsApp");
+            return;
+        }
         if (message.getChannel() == NotificationChannel.WEBHOOK) {
             markSent(message);
             afterCommit(() -> publishWebhookToRabbit(message));

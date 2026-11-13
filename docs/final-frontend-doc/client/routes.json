@@ -938,8 +938,7 @@
      "format": "email"
     },
     "billingEmail": {
-     "type": "string",
-     "format": "email"
+     "type": "string"
     },
     "address": {
      "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
@@ -1100,10 +1099,9 @@
      "type": "string"
     },
     "billingEmail": {
-     "maxLength": 250,
+     "maxLength": 500,
      "minLength": 0,
-     "type": "string",
-     "format": "email"
+     "type": "string"
     },
     "address": {
      "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"

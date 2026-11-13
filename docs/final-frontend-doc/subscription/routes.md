@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-195 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+196 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -115,6 +115,7 @@
 | GET | `/sni/api/v1/subscriptions/addons` | SUBSCRIPTION:READ | [SubscriptionAddonController](routes/SubscriptionAddonController.md#r-get-sni-api-v1-subscriptions-addons) |
 | PATCH | `/sni/api/v1/subscriptions/addons/{addonId}/cancel` | SUBSCRIPTION:CANCEL | [SubscriptionAddonController](routes/SubscriptionAddonController.md#r-patch-sni-api-v1-subscriptions-addons-addonid-cancel) |
 | POST | `/sni/api/v1/subscriptions/{subscriptionNumber}/addons` | SUBSCRIPTION:CREATE | [SubscriptionAddonController](routes/SubscriptionAddonController.md#r-post-sni-api-v1-subscriptions-subscriptionnumber-addons) |
+| POST | `/sni/api/v1/subscriptions/{subscriptionNumber}/activate-with-billing` | SUBSCRIPTION:ACTIVATE | [SubscriptionBillingLinkController](routes/SubscriptionBillingLinkController.md#r-post-sni-api-v1-subscriptions-subscriptionnumber-activate-with-billing) |
 | GET | `/sni/api/v1/subscriptions/entitlement-definitions` | SUBSCRIPTION:READ | [SubscriptionCatalogController](routes/SubscriptionCatalogController.md#r-get-sni-api-v1-subscriptions-entitlement-definitions) |
 | POST | `/sni/api/v1/subscriptions/entitlement-definitions` | SUBSCRIPTION:CREATE | [SubscriptionCatalogController](routes/SubscriptionCatalogController.md#r-post-sni-api-v1-subscriptions-entitlement-definitions) |
 | GET | `/sni/api/v1/subscriptions/entitlement-definitions/search/basic` | SUBSCRIPTION:READ | [SubscriptionCatalogController](routes/SubscriptionCatalogController.md#r-get-sni-api-v1-subscriptions-entitlement-definitions-search-basic) |

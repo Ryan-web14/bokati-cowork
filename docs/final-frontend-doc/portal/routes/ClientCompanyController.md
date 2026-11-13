@@ -423,6 +423,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `externalReference` | texte |  |  |
 | `notes` | texte |  |  |
 | `optional` | booléen |  |  |
+| `serviceStart` | date AAAA-MM-JJ |  |  |
+| `serviceEnd` | date AAAA-MM-JJ |  |  |
+| `servicePeriod` | texte |  |  |
 
 <a id="m-MobileMoneyDepositResponse-PayerResponse"></a>
 #### MobileMoneyDepositResponse.PayerResponse

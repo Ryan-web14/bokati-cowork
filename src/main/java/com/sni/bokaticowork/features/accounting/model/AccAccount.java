@@ -107,4 +107,8 @@ public class AccAccount {
     void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    /** Part non deductible fiscalement des charges du compte, en pourcentage (lot F15) ; vide : deductible. */
+    @Column(name = "non_deductible_rate")
+    private java.math.BigDecimal nonDeductibleRate;
 }

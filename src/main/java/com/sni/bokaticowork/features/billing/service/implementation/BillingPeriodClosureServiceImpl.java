@@ -31,12 +31,14 @@ public class BillingPeriodClosureServiceImpl {
     );
 
     private final BillingPeriodClosureRepository closureRepository;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     public void computeAndSave(String periodType, LocalDate refDate, String computedBy) {
         String periodLabel = buildPeriodLabel(periodType, refDate);
         LocalDate periodStart = periodStart(periodType, refDate);
         LocalDate periodEnd   = periodEnd(periodType, refDate);
 
+        boolean sealed = false;
         for (BillingDocumentType docType : CLOSABLE_TYPES) {
             if (closureRepository.existsByPeriodTypeAndPeriodLabelAndDocumentType(
                     periodType, periodLabel, docType.name())) {
@@ -79,8 +81,13 @@ public class BillingPeriodClosureServiceImpl {
                     .build();
 
             closureRepository.save(closure);
+            sealed = true;
             log.info("Period closure saved: {} {} {} · {} docs, {} invoiced",
                     periodType, periodLabel, docType, totalDocs, totalInv);
+        }
+        if (sealed) {
+            // La comptabilite propose (ou fait) le verrouillage de la periode comptable correspondante.
+            events.publishEvent(new com.sni.bokaticowork.core.accounting.BillingPeriodClosedEvent(periodType, periodLabel, periodStart, periodEnd));
         }
     }
 

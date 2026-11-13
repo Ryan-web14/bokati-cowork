@@ -67,7 +67,7 @@
    "declaredIn": "CashAnomalyFlagController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_VARIANCE:DECIDE"
    },
    "params": [
     {
@@ -91,7 +91,7 @@
    "declaredIn": "CashAnomalyFlagController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_VARIANCE:DECIDE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.ReviewCashAnomalyRequest",
@@ -106,6 +106,78 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashAnomalyFlagResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/position",
+   "package": "features.payment.controller",
+   "controller": "CashDashboardController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashDashboardController.java",
+   "handler": "position",
+   "declaredIn": "CashDashboardController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REPORT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "locationCode",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashPositionResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/reports/{kind}",
+   "package": "features.payment.controller",
+   "controller": "CashDashboardController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashDashboardController.java",
+   "handler": "report",
+   "declaredIn": "CashDashboardController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REPORT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "kind",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "registerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "format",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<?>"
   },
   {
    "methods": [
@@ -178,6 +250,339 @@
     }
    ],
    "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/movements/{movementNumber}/approve",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "approve",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_MOVEMENT:APPROVE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "movementNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/movements/{movementNumber}/cancel",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "cancel",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_MOVEMENT:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "movementNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/movements/{movementNumber}/reverse",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "reverse",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_MOVEMENT:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "movementNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/natures",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "natures",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "direction",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.payment.enums.CashFlowDirection"
+    },
+    {
+     "in": "query",
+     "name": "family",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.payment.enums.CashNatureFamily"
+    },
+    {
+     "in": "query",
+     "name": "search",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashNatureResponse>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/cash-registers/natures",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "replaceNatures",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REGISTER:MANAGE"
+   },
+   "body": {
+    "type": "List<com.sni.bokaticowork.features.payment.dto.request.CashNatureRequest>",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashNatureResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/exchanges",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "exchange",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_MOVEMENT:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashExchangeRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/transfers",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "transfers",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "registerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.payment.enums.CashTransferStatus"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashTransferResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/transfers",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "send",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_TRANSFER:SEND"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashTransferRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashTransferResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/transfers/{transferNumber}/cancel",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "cancelTransfer",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_TRANSFER:SEND"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "transferNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashTransferResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/transfers/{transferNumber}/receive",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "receive",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_TRANSFER:RECEIVE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashTransferReceiveRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "transferNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashTransferResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/petty-cash/refill",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "pettyRefillProposal",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashPettyRefillResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/petty-cash/refill",
+   "package": "features.payment.controller",
+   "controller": "CashOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashOperationsController.java",
+   "handler": "pettyRefill",
+   "declaredIn": "CashOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_TRANSFER:SEND"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "carrierEmail",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashTransferResponse>"
   },
   {
    "methods": [
@@ -297,6 +702,514 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/cash-registers/form-defaults",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "formDefaults",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "context",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "parameters",
+     "required": true,
+     "type": "Map<String, String>"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashFormDefaultsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/mine",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "myRegisters",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/reference-lists",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "referenceLists",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, List<com.sni.bokaticowork.features.payment.dto.response.CashReferenceValueResponse>>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/reference-lists/{listCode}",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "referenceList",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "listCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashReferenceValueResponse>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/cash-registers/reference-lists/{listCode}",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "replaceReferenceList",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REGISTER:MANAGE"
+   },
+   "body": {
+    "type": "List<com.sni.bokaticowork.features.payment.dto.request.CashReferenceValueRequest>",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "listCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashReferenceValueResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/responsibility-transfers/{transferNumber}/sign",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "signTransfer",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:OPEN"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "transferNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashResponsibilityTransferResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "get",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "update",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REGISTER:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.UpdateCashRegisterRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/assignments",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "assignments",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "includeEnded",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashRegisterAssignmentResponse>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/assignments",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "replaceAssignments",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_STAFF:MANAGE"
+   },
+   "body": {
+    "type": "List<com.sni.bokaticowork.features.payment.dto.request.CashRegisterAssignmentRequest>",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashRegisterAssignmentResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/close",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "close",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REGISTER:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashRegisterStatusRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/devices/{deviceCode}",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "decideDevice",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REGISTER:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashDeviceDecisionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "deviceCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/emergency-assignments",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "emergencyAssignment",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_STAFF:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.EmergencyAssignmentRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashRegisterAssignmentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/history",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "history",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashRegisterHistoryResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/reactivate",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "reactivate",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REGISTER:MANAGE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/responsibility-transfers",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "transfers",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashResponsibilityTransferResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/responsibility-transfers",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "createTransfer",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_STAFF:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CreateResponsibilityTransferRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashResponsibilityTransferResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/responsibility-transfers/pending-items",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "pendingItems",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashPendingItemResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/suspend",
+   "package": "features.payment.controller",
+   "controller": "CashRegisterAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterAdminController.java",
+   "handler": "suspend",
+   "declaredIn": "CashRegisterAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REGISTER:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashRegisterStatusRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/cash-registers",
    "package": "features.payment.controller",
    "controller": "CashRegisterController",
@@ -353,7 +1266,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_REGISTER:MANAGE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.CreateCashRegisterRequest",
@@ -584,7 +1497,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_MOVEMENT:CREATE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.AddCashMovementAttachmentRequest",
@@ -612,7 +1525,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_MOVEMENT:CREATE"
    },
    "params": [
     {
@@ -636,7 +1549,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_MOVEMENT:CREATE"
    },
    "params": [
     {
@@ -720,7 +1633,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_SESSION:OPEN"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.OpenCashSessionRequest",
@@ -741,7 +1654,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_VARIANCE:DECIDE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.ApproveCashVarianceRequest",
@@ -769,7 +1682,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:CLOSE_SESSION"
+    "permission": "CASH_SESSION:CLOSE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.CloseCashSessionRequest",
@@ -797,7 +1710,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_SESSION:CLOSE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.CloseCashSessionRequest",
@@ -915,7 +1828,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_MOVEMENT:CREATE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.CreateCashVoucherRequest",
@@ -1033,7 +1946,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_MOVEMENT:CREATE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.CreateCashVoucherRequest",
@@ -1061,7 +1974,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_MOVEMENT:CREATE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.CreateCashMovementRequest",
@@ -1113,7 +2026,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_REGISTER:MANAGE"
    },
    "params": [
     {
@@ -1137,7 +2050,7 @@
    "declaredIn": "CashRegisterController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_REGISTER:MANAGE"
    },
    "params": [
     {
@@ -1245,7 +2158,7 @@
    "declaredIn": "CashRequestController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_MOVEMENT:APPROVE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.ReviewCashRequestRequest",
@@ -1273,7 +2186,7 @@
    "declaredIn": "CashRequestController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_MOVEMENT:APPROVE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.ReviewCashRequestRequest",
@@ -1301,7 +2214,7 @@
    "declaredIn": "CashRequestController",
    "access": {
     "kind": "admin",
-    "permission": "CASH:ADJUST"
+    "permission": "CASH_MOVEMENT:CREATE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.CreateCashRequestRequest",
@@ -1316,6 +2229,938 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashRequestResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/denominations",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "denominations",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "currency",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "includeRetired",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashDenominationResponse>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/cash-registers/denominations/{currency}",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "replaceDenominations",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_REGISTER:MANAGE"
+   },
+   "body": {
+    "type": "List<com.sni.bokaticowork.features.payment.dto.request.CashDenominationRequest>",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "currency",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashDenominationResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/handovers/{handoverNumber}/accept",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "acceptHandover",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:OPEN"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashHandoverAnswerRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "handoverNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/handovers/{handoverNumber}/cancel",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "cancelHandover",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:OPEN"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "handoverNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashHandoverResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/handovers/{handoverNumber}/dispute",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "disputeHandover",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:OPEN"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashHandoverAnswerRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "handoverNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/cancel",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "cancel",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:CLOSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/confirm-opening",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "confirmOpening",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:CLOSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/contest",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "contest",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:CLOSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/counts",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "counts",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashCountResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/counts",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "submitCount",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:CLOSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashCountRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/force-close",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "forceClose",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:FORCE_CLOSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.controller.CashSessionLifecycleController.ForceCloseRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/handover",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "handover",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:CLOSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashHandoverRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashHandoverResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/pause",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "pause",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:PAUSE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/recount",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "recount",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_VARIANCE:DECIDE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/resume",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "resume",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:PAUSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.ResumeCashSessionRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/spot-checks",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "spotCheck",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:SPOT_CHECK"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashCountRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/start-closing",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "startClosing",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:CLOSE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/suspend",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "suspend",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:SUSPEND"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/unsuspend",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "unsuspend",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_SESSION:SUSPEND"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/variance-decision",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "decideSessionVariance",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_VARIANCE:DECIDE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashVarianceDecisionRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/variance-reviews",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "reviews",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.payment.enums.CashVarianceStatus"
+    },
+    {
+     "in": "query",
+     "name": "registerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "sessionNumber",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashVarianceReviewResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/variance-reviews/{reviewNumber}/decision",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "decideReview",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_VARIANCE:DECIDE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashVarianceDecisionRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "reviewNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/expected-opening",
+   "package": "features.payment.controller",
+   "controller": "CashSessionLifecycleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionLifecycleController.java",
+   "handler": "expectedOpening",
+   "declaredIn": "CashSessionLifecycleController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashExpectedOpeningResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/absences",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "absences",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "userEmail",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.payment.enums.CashAbsenceStatus"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashAbsenceResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/absences",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "declare",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_STAFF:DECLARE_ABSENCE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashAbsenceRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashAbsenceResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/absences/replacement-suggestions",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "suggestions",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashReplacementSuggestionResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/absences/{absenceNumber}/approve",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "approve",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_STAFF:MANAGE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "absenceNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashAbsenceResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/absences/{absenceNumber}/cancel",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "cancel",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_STAFF:DECLARE_ABSENCE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "absenceNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashAbsenceResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/absences/{absenceNumber}/end",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "end",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_STAFF:MANAGE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "absenceNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashAbsenceResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/delegations",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "delegations",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashDelegationResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/delegations",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "delegate",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_VARIANCE:DECIDE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashDelegationRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashDelegationResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/delegations/{id}/cancel",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "cancelDelegation",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_VARIANCE:DECIDE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashDelegationResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/seal",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "seal",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_STAFF:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashSealRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSealResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/seals",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "seals",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.dto.response.CashSealResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/{registerCode}/unseal",
+   "package": "features.payment.controller",
+   "controller": "CashStaffController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashStaffController.java",
+   "handler": "unseal",
+   "declaredIn": "CashStaffController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_STAFF:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CashSealRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "registerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashSealResponse>"
   },
   {
    "methods": [
@@ -4228,7 +6073,15 @@
       "EXCESSIVE_ADJUSTMENTS",
       "OFF_HOURS_SESSION",
       "THRESHOLD_STRUCTURING",
-      "NEAR_MAX_CASH_RECURRENCE"
+      "NEAR_MAX_CASH_RECURRENCE",
+      "OPENING_VARIANCE",
+      "LONG_SESSION",
+      "LONG_PAUSES",
+      "REPEATED_REVERSALS",
+      "DETENTION_CAP_EXCEEDED",
+      "UNKNOWN_DEVICE",
+      "DAMAGED_NOTES",
+      "TRANSFER_VARIANCE"
      ]
     },
     "severity": {
@@ -4273,13 +6126,11 @@
   },
   "ReviewCashAnomalyRequest": {
    "required": [
-    "reviewedBy",
     "status"
    ],
    "type": "object",
    "properties": {
     "reviewedBy": {
-     "minLength": 1,
      "type": "string"
     },
     "status": {
@@ -4297,302 +6148,27 @@
     }
    }
   },
-  "CashPaymentDeclarationResponse": {
+  "CashPositionResponse": {
    "type": "object",
    "properties": {
-    "declarationNumber": {
-     "type": "string"
-    },
-    "documentNumber": {
-     "type": "string"
-    },
-    "bookingNumber": {
-     "type": "string"
-    },
-    "customerType": {
-     "type": "string"
-    },
-    "customerCode": {
-     "type": "string"
-    },
-    "customerName": {
-     "type": "string"
-    },
-    "amount": {
-     "type": "number"
-    },
-    "currency": {
-     "type": "string"
-    },
-    "status": {
-     "type": "string",
-     "enum": [
-      "AWAITING_CONFIRMATION",
-      "CONFIRMED",
-      "CANCELLED",
-      "EXPIRED"
-     ]
-    },
-    "note": {
-     "type": "string"
-    },
-    "declaredAt": {
+    "generatedAt": {
      "type": "string",
      "format": "date-time"
     },
-    "declaredBy": {
-     "type": "string"
+    "registers": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashPositionResponse.RegisterPosition"
+     }
     },
-    "expiresAt": {
-     "type": "string",
-     "format": "date-time"
+    "sites": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashPositionResponse.SiteTotal"
+     }
     },
-    "confirmedAt": {
-     "type": "string",
-     "format": "date-time"
-    },
-    "confirmedBy": {
-     "type": "string"
-    },
-    "confirmedAmount": {
-     "type": "number"
-    },
-    "cashSessionNumber": {
-     "type": "string"
-    },
-    "transactionNumber": {
-     "type": "string"
-    },
-    "closedAt": {
-     "type": "string",
-     "format": "date-time"
-    },
-    "closedBy": {
-     "type": "string"
-    },
-    "closeReason": {
-     "type": "string"
-    }
-   }
-  },
-  "CloseCashDeclarationRequest": {
-   "type": "object",
-   "properties": {
-    "reason": {
-     "maxLength": 500,
-     "minLength": 0,
-     "type": "string"
-    }
-   }
-  },
-  "ConfirmCashPaymentRequest": {
-   "required": [
-    "cashSessionNumber"
-   ],
-   "type": "object",
-   "properties": {
-    "cashSessionNumber": {
-     "minLength": 1,
-     "type": "string"
-    },
-    "amount": {
-     "type": "number"
-    },
-    "receivedBy": {
-     "type": "string"
-    },
-    "note": {
-     "type": "string"
-    }
-   }
-  },
-  "CashRegisterResponse": {
-   "type": "object",
-   "properties": {
-    "registerCode": {
-     "type": "string"
-    },
-    "name": {
-     "type": "string"
-    },
-    "locationCode": {
-     "type": "string"
-    },
-    "businessEntityCode": {
-     "type": "string"
-    },
-    "deviceCode": {
-     "type": "string"
-    },
-    "active": {
-     "type": "boolean"
-    },
-    "cashControlEnabled": {
-     "type": "boolean"
-    },
-    "systemManaged": {
-     "type": "boolean"
-    },
-    "restrictedToMethod": {
-     "type": "string",
-     "enum": [
-      "CASH",
-      "WALLET",
-      "MOBILE_MONEY",
-      "MOBILE_MONEY_OFFLINE",
-      "BANK_TRANSFER",
-      "CARD",
-      "CHEQUE",
-      "MANUAL_ADJUSTMENT",
-      "CREDIT_NOTE"
-     ]
-    },
-    "maxCashAmount": {
-     "type": "number"
-    },
-    "managerEmail": {
-     "type": "string"
-    },
-    "createdAt": {
-     "type": "string",
-     "format": "date-time"
-    },
-    "updatedAt": {
-     "type": "string",
-     "format": "date-time"
-    }
-   }
-  },
-  "CreateCashRegisterRequest": {
-   "required": [
-    "name"
-   ],
-   "type": "object",
-   "properties": {
-    "name": {
-     "minLength": 1,
-     "type": "string"
-    },
-    "locationCode": {
-     "type": "string"
-    },
-    "businessEntityCode": {
-     "type": "string"
-    },
-    "deviceCode": {
-     "type": "string"
-    },
-    "cashControlEnabled": {
-     "type": "boolean"
-    },
-    "maxCashAmount": {
-     "type": "number"
-    },
-    "managerEmail": {
-     "type": "string"
-    }
-   }
-  },
-  "CashMetricsOverviewResponse": {
-   "type": "object",
-   "properties": {
-    "currency": {
-     "type": "string"
-    },
-    "registerCount": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "activeRegisterCount": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "openSessionCount": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "closingReviewSessionCount": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "closedSessionCount": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "movementCount": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "openingFloatAmount": {
-     "type": "number"
-    },
-    "totalPayments": {
-     "type": "number"
-    },
-    "totalRefunds": {
-     "type": "number"
-    },
-    "totalCashIn": {
-     "type": "number"
-    },
-    "totalCashOut": {
-     "type": "number"
-    },
-    "totalAdjustments": {
-     "type": "number"
-    },
-    "netCashPosition": {
-     "type": "number"
-    },
-    "pendingVarianceAmount": {
-     "type": "number"
-    }
-   }
-  },
-  "CashRegisterMetricsResponse": {
-   "type": "object",
-   "properties": {
-    "registerCode": {
-     "type": "string"
-    },
-    "registerName": {
-     "type": "string"
-    },
-    "businessEntityCode": {
-     "type": "string"
-    },
-    "deviceCode": {
-     "type": "string"
-    },
-    "openSessionCount": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "closingReviewSessionCount": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "movementCount": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "totalPayments": {
-     "type": "number"
-    },
-    "totalRefunds": {
-     "type": "number"
-    },
-    "totalCashIn": {
-     "type": "number"
-    },
-    "totalCashOut": {
-     "type": "number"
-    },
-    "totalAdjustments": {
-     "type": "number"
-    },
-    "netCashPosition": {
-     "type": "number"
+    "total": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashPositionResponse.SiteTotal"
     }
    }
   },
@@ -4620,9 +6196,13 @@
     "sessionStatus": {
      "type": "string",
      "enum": [
+      "OPENING",
       "OPEN",
+      "PAUSED",
       "SUSPENDED",
+      "COUNTING",
       "CLOSING_REVIEW",
+      "RECOUNT",
       "CLOSED",
       "CANCELLED"
      ]
@@ -4646,7 +6226,9 @@
       "TRANSFER_IN",
       "TRANSFER_OUT",
       "ADJUSTMENT",
-      "CLOSING_COUNT"
+      "CLOSING_COUNT",
+      "EXCHANGE",
+      "VARIANCE"
      ]
     },
     "flowDirection": {
@@ -4804,6 +6386,1491 @@
     "createdAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "natureCode": {
+     "type": "string"
+    },
+    "transferOrderNumber": {
+     "type": "string"
+    },
+    "approvedBy": {
+     "type": "string"
+    },
+    "approvedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "reversalReason": {
+     "type": "string"
+    },
+    "cancelReason": {
+     "type": "string"
+    },
+    "accounting": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse.Accounting"
+    }
+   }
+  },
+  "CashReasonRequest": {
+   "type": "object",
+   "properties": {
+    "reasonCode": {
+     "type": "string"
+    },
+    "reasonText": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    }
+   }
+  },
+  "CashNatureResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "family": {
+     "type": "string",
+     "enum": [
+      "ENCAISSEMENTS",
+      "ACHATS",
+      "DEPLACEMENTS",
+      "AVANCES",
+      "REMISES",
+      "TRANSFERTS",
+      "REMBOURSEMENTS",
+      "DIVERS"
+     ]
+    },
+    "direction": {
+     "type": "string",
+     "enum": [
+      "IN",
+      "OUT",
+      "ADJUSTMENT"
+     ]
+    },
+    "movementType": {
+     "type": "string",
+     "enum": [
+      "OPENING_FLOAT",
+      "PAYMENT",
+      "REFUND",
+      "CASH_IN",
+      "CASH_OUT",
+      "SAFE_DEPOSIT",
+      "TRANSFER_IN",
+      "TRANSFER_OUT",
+      "ADJUSTMENT",
+      "CLOSING_COUNT",
+      "EXCHANGE",
+      "VARIANCE"
+     ]
+    },
+    "accountNumber": {
+     "type": "string"
+    },
+    "vatCode": {
+     "type": "string"
+    },
+    "documentRequired": {
+     "type": "boolean"
+    },
+    "justificationDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "defaultSection": {
+     "type": "string"
+    },
+    "maxPerOperation": {
+     "type": "number"
+    },
+    "priorRequestRequired": {
+     "type": "boolean"
+    },
+    "doubleVisaThreshold": {
+     "type": "number"
+    },
+    "keywords": {
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "usageCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "systemValue": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CashNatureRequest": {
+   "required": [
+    "code",
+    "direction",
+    "family",
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "label": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "family": {
+     "type": "string",
+     "enum": [
+      "ENCAISSEMENTS",
+      "ACHATS",
+      "DEPLACEMENTS",
+      "AVANCES",
+      "REMISES",
+      "TRANSFERTS",
+      "REMBOURSEMENTS",
+      "DIVERS"
+     ]
+    },
+    "direction": {
+     "type": "string",
+     "enum": [
+      "IN",
+      "OUT",
+      "ADJUSTMENT"
+     ]
+    },
+    "movementType": {
+     "type": "string",
+     "enum": [
+      "OPENING_FLOAT",
+      "PAYMENT",
+      "REFUND",
+      "CASH_IN",
+      "CASH_OUT",
+      "SAFE_DEPOSIT",
+      "TRANSFER_IN",
+      "TRANSFER_OUT",
+      "ADJUSTMENT",
+      "CLOSING_COUNT",
+      "EXCHANGE",
+      "VARIANCE"
+     ]
+    },
+    "accountNumber": {
+     "type": "string"
+    },
+    "vatCode": {
+     "type": "string"
+    },
+    "documentRequired": {
+     "type": "boolean"
+    },
+    "justificationDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "defaultSection": {
+     "type": "string"
+    },
+    "maxPerOperation": {
+     "type": "number"
+    },
+    "priorRequestRequired": {
+     "type": "boolean"
+    },
+    "doubleVisaThreshold": {
+     "type": "number"
+    },
+    "keywords": {
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CashExchangeRequest": {
+   "required": [
+    "given",
+    "received"
+   ],
+   "type": "object",
+   "properties": {
+    "given": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.Line"
+     }
+    },
+    "received": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.Line"
+     }
+    },
+    "note": {
+     "type": "string"
+    }
+   }
+  },
+  "CashTransferResponse": {
+   "type": "object",
+   "properties": {
+    "transferNumber": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "FEED",
+      "REMITTANCE",
+      "SAFE_DEPOSIT",
+      "SAFE_WITHDRAWAL",
+      "PETTY_REFILL",
+      "OTHER"
+     ]
+    },
+    "fromRegister": {
+     "type": "string"
+    },
+    "toRegister": {
+     "type": "string"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "sentAmount": {
+     "type": "number"
+    },
+    "receivedAmount": {
+     "type": "number"
+    },
+    "difference": {
+     "type": "number"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "IN_TRANSIT",
+      "RECEIVED",
+      "DISPUTED",
+      "CANCELLED"
+     ]
+    },
+    "carrier": {
+     "type": "string"
+    },
+    "sentBy": {
+     "type": "string"
+    },
+    "sentAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromSession": {
+     "type": "string"
+    },
+    "outMovement": {
+     "type": "string"
+    },
+    "receivedBy": {
+     "type": "string"
+    },
+    "receivedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "toSession": {
+     "type": "string"
+    },
+    "inMovement": {
+     "type": "string"
+    },
+    "reviewNumber": {
+     "type": "string"
+    },
+    "cancelledBy": {
+     "type": "string"
+    },
+    "cancelledAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "cancelReason": {
+     "type": "string"
+    },
+    "minutesInTransit": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "note": {
+     "type": "string"
+    }
+   }
+  },
+  "CashTransferRequest": {
+   "required": [
+    "fromRegisterCode"
+   ],
+   "type": "object",
+   "properties": {
+    "fromRegisterCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "toRegisterCode": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "count": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest"
+    },
+    "carrierEmail": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    }
+   }
+  },
+  "CashTransferReceiveRequest": {
+   "required": [
+    "count"
+   ],
+   "type": "object",
+   "properties": {
+    "count": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "CashPettyRefillResponse": {
+   "type": "object",
+   "properties": {
+    "registerCode": {
+     "type": "string"
+    },
+    "parentRegisterCode": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "since": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expenseCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "standardFloat": {
+     "type": "number"
+    }
+   }
+  },
+  "CashPaymentDeclarationResponse": {
+   "type": "object",
+   "properties": {
+    "declarationNumber": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "bookingNumber": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "AWAITING_CONFIRMATION",
+      "CONFIRMED",
+      "CANCELLED",
+      "EXPIRED"
+     ]
+    },
+    "note": {
+     "type": "string"
+    },
+    "declaredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "declaredBy": {
+     "type": "string"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "confirmedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "confirmedBy": {
+     "type": "string"
+    },
+    "confirmedAmount": {
+     "type": "number"
+    },
+    "cashSessionNumber": {
+     "type": "string"
+    },
+    "transactionNumber": {
+     "type": "string"
+    },
+    "closedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "closedBy": {
+     "type": "string"
+    },
+    "closeReason": {
+     "type": "string"
+    }
+   }
+  },
+  "CloseCashDeclarationRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "ConfirmCashPaymentRequest": {
+   "required": [
+    "cashSessionNumber"
+   ],
+   "type": "object",
+   "properties": {
+    "cashSessionNumber": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "receivedBy": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    }
+   }
+  },
+  "CashFormDefaultsResponse": {
+   "type": "object",
+   "properties": {
+    "context": {
+     "type": "string"
+    },
+    "values": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     }
+    },
+    "origins": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    },
+    "choices": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashFormDefaultsResponse.Choice"
+      }
+     }
+    },
+    "warnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "CashRegisterDetailResponse": {
+   "type": "object",
+   "properties": {
+    "registerCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "registerType": {
+     "type": "string",
+     "enum": [
+      "COUNTER",
+      "MAIN",
+      "PETTY_CASH",
+      "SAFE",
+      "AUTOMATIC"
+     ]
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "SUSPENDED",
+      "CLOSED"
+     ]
+    },
+    "statusReason": {
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "businessEntityCode": {
+     "type": "string"
+    },
+    "deviceCode": {
+     "type": "string"
+    },
+    "parentRegisterCode": {
+     "type": "string"
+    },
+    "systemManaged": {
+     "type": "boolean"
+    },
+    "restrictedToMethod": {
+     "type": "string",
+     "enum": [
+      "CASH",
+      "WALLET",
+      "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
+      "BANK_TRANSFER",
+      "CARD",
+      "CHEQUE",
+      "MANUAL_ADJUSTMENT",
+      "CREDIT_NOTE"
+     ]
+    },
+    "acceptedMethods": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "acceptedCurrencies": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "cashControlEnabled": {
+     "type": "boolean"
+    },
+    "maxCashAmount": {
+     "type": "number"
+    },
+    "capBehavior": {
+     "type": "string",
+     "enum": [
+      "ALERT",
+      "BLOCK"
+     ]
+    },
+    "maxOutPerOperation": {
+     "type": "number"
+    },
+    "maxOutPerDay": {
+     "type": "number"
+    },
+    "standardFloat": {
+     "type": "number"
+    },
+    "alertRecipients": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "treasuryAccountNumber": {
+     "type": "string"
+    },
+    "defaultJournalCode": {
+     "type": "string"
+    },
+    "lastCountAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastCountAmount": {
+     "type": "number"
+    },
+    "currentHolder": {
+     "type": "string"
+    },
+    "assignments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashRegisterAssignmentResponse"
+     }
+    },
+    "schedules": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse.Schedule"
+     }
+    },
+    "devices": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse.Device"
+     }
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedBy": {
+     "type": "string"
+    },
+    "closedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CashReferenceValueResponse": {
+   "type": "object",
+   "properties": {
+    "listCode": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "requiresText": {
+     "type": "boolean"
+    },
+    "systemValue": {
+     "type": "boolean"
+    },
+    "usageCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "CashReferenceValueRequest": {
+   "required": [
+    "code",
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "label": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "requiresText": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CashResponsibilityTransferResponse": {
+   "type": "object",
+   "properties": {
+    "transferNumber": {
+     "type": "string"
+    },
+    "registerCode": {
+     "type": "string"
+    },
+    "fromUser": {
+     "type": "string"
+    },
+    "toUser": {
+     "type": "string"
+    },
+    "reasonCode": {
+     "type": "string"
+    },
+    "reasonLabel": {
+     "type": "string"
+    },
+    "reasonText": {
+     "type": "string"
+    },
+    "permanent": {
+     "type": "boolean"
+    },
+    "effectiveAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "endsAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expectedAmount": {
+     "type": "number"
+    },
+    "countedAmount": {
+     "type": "number"
+    },
+    "difference": {
+     "type": "number"
+    },
+    "witness": {
+     "type": "string"
+    },
+    "pendingItems": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashPendingItemResponse"
+     }
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING_SIGNATURES",
+      "SIGNED",
+      "CANCELLED"
+     ]
+    },
+    "outgoingSignedBy": {
+     "type": "string"
+    },
+    "outgoingSignedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "incomingSignedBy": {
+     "type": "string"
+    },
+    "incomingSignedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "UpdateCashRegisterRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "businessEntityCode": {
+     "type": "string"
+    },
+    "parentRegisterCode": {
+     "type": "string"
+    },
+    "cashControlEnabled": {
+     "type": "boolean"
+    },
+    "maxCashAmount": {
+     "type": "number"
+    },
+    "acceptedMethods": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "CASH",
+       "WALLET",
+       "MOBILE_MONEY",
+       "MOBILE_MONEY_OFFLINE",
+       "BANK_TRANSFER",
+       "CARD",
+       "CHEQUE",
+       "MANUAL_ADJUSTMENT",
+       "CREDIT_NOTE"
+      ]
+     }
+    },
+    "acceptedCurrencies": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "capBehavior": {
+     "type": "string",
+     "enum": [
+      "ALERT",
+      "BLOCK"
+     ]
+    },
+    "maxOutPerOperation": {
+     "type": "number"
+    },
+    "maxOutPerDay": {
+     "type": "number"
+    },
+    "standardFloat": {
+     "type": "number"
+    },
+    "alertRecipients": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "treasuryAccountNumber": {
+     "type": "string"
+    },
+    "defaultJournalCode": {
+     "type": "string"
+    },
+    "schedules": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashRegisterScheduleRequest"
+     }
+    },
+    "effectiveAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "CashRegisterAssignmentResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "registerCode": {
+     "type": "string"
+    },
+    "userEmail": {
+     "type": "string"
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "CASHIER",
+      "HEAD_CASHIER",
+      "SUPERVISOR",
+      "VIEWER"
+     ]
+    },
+    "quality": {
+     "type": "string",
+     "enum": [
+      "HOLDER",
+      "BACKUP",
+      "INTERIM"
+     ]
+    },
+    "backupRank": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validTo": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "emergency": {
+     "type": "boolean"
+    },
+    "source": {
+     "type": "string"
+    },
+    "sourceReference": {
+     "type": "string"
+    },
+    "grantedBy": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "revokedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "revokedBy": {
+     "type": "string"
+    },
+    "effectiveNow": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CashRegisterAssignmentRequest": {
+   "required": [
+    "quality",
+    "role",
+    "userEmail"
+   ],
+   "type": "object",
+   "properties": {
+    "userEmail": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "CASHIER",
+      "HEAD_CASHIER",
+      "SUPERVISOR",
+      "VIEWER"
+     ]
+    },
+    "quality": {
+     "type": "string",
+     "enum": [
+      "HOLDER",
+      "BACKUP",
+      "INTERIM"
+     ]
+    },
+    "backupRank": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validTo": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "note": {
+     "type": "string"
+    }
+   }
+  },
+  "CashRegisterStatusRequest": {
+   "type": "object",
+   "properties": {
+    "reasonCode": {
+     "type": "string"
+    },
+    "reasonText": {
+     "type": "string"
+    }
+   }
+  },
+  "CashDeviceDecisionRequest": {
+   "required": [
+    "status"
+   ],
+   "type": "object",
+   "properties": {
+    "status": {
+     "type": "string",
+     "enum": [
+      "PROPOSED",
+      "ALLOWED",
+      "REFUSED"
+     ]
+    },
+    "label": {
+     "type": "string"
+    }
+   }
+  },
+  "EmergencyAssignmentRequest": {
+   "required": [
+    "reason",
+    "userEmail"
+   ],
+   "type": "object",
+   "properties": {
+    "userEmail": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "hours": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "CashRegisterHistoryResponse": {
+   "type": "object",
+   "properties": {
+    "field": {
+     "type": "string"
+    },
+    "oldValue": {
+     "type": "string"
+    },
+    "newValue": {
+     "type": "string"
+    },
+    "changedBy": {
+     "type": "string"
+    },
+    "changedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "effectiveAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "CreateResponsibilityTransferRequest": {
+   "required": [
+    "permanent",
+    "reasonCode",
+    "toUserEmail"
+   ],
+   "type": "object",
+   "properties": {
+    "toUserEmail": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "reasonCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "reasonText": {
+     "type": "string"
+    },
+    "permanent": {
+     "type": "boolean"
+    },
+    "effectiveAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "endsAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "countedAmount": {
+     "type": "number"
+    },
+    "witnessEmail": {
+     "type": "string"
+    },
+    "outgoingAbsent": {
+     "type": "boolean"
+    },
+    "keepFormerAsBackup": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CashPendingItemResponse": {
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string"
+    },
+    "reference": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "blocking": {
+     "type": "boolean"
+    },
+    "fate": {
+     "type": "string"
+    }
+   }
+  },
+  "CashRegisterResponse": {
+   "type": "object",
+   "properties": {
+    "registerCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "businessEntityCode": {
+     "type": "string"
+    },
+    "deviceCode": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "cashControlEnabled": {
+     "type": "boolean"
+    },
+    "systemManaged": {
+     "type": "boolean"
+    },
+    "restrictedToMethod": {
+     "type": "string",
+     "enum": [
+      "CASH",
+      "WALLET",
+      "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
+      "BANK_TRANSFER",
+      "CARD",
+      "CHEQUE",
+      "MANUAL_ADJUSTMENT",
+      "CREDIT_NOTE"
+     ]
+    },
+    "maxCashAmount": {
+     "type": "number"
+    },
+    "managerEmail": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "registerType": {
+     "type": "string",
+     "enum": [
+      "COUNTER",
+      "MAIN",
+      "PETTY_CASH",
+      "SAFE",
+      "AUTOMATIC"
+     ]
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "SUSPENDED",
+      "CLOSED"
+     ]
+    },
+    "parentRegisterCode": {
+     "type": "string"
+    },
+    "lastCountAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastCountAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "CreateCashRegisterRequest": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "businessEntityCode": {
+     "type": "string"
+    },
+    "deviceCode": {
+     "type": "string"
+    },
+    "cashControlEnabled": {
+     "type": "boolean"
+    },
+    "maxCashAmount": {
+     "type": "number"
+    },
+    "managerEmail": {
+     "type": "string"
+    },
+    "registerType": {
+     "type": "string",
+     "enum": [
+      "COUNTER",
+      "MAIN",
+      "PETTY_CASH",
+      "SAFE",
+      "AUTOMATIC"
+     ]
+    },
+    "parentRegisterCode": {
+     "type": "string"
+    },
+    "acceptedMethods": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "CASH",
+       "WALLET",
+       "MOBILE_MONEY",
+       "MOBILE_MONEY_OFFLINE",
+       "BANK_TRANSFER",
+       "CARD",
+       "CHEQUE",
+       "MANUAL_ADJUSTMENT",
+       "CREDIT_NOTE"
+      ]
+     }
+    },
+    "acceptedCurrencies": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "capBehavior": {
+     "type": "string",
+     "enum": [
+      "ALERT",
+      "BLOCK"
+     ]
+    },
+    "maxOutPerOperation": {
+     "type": "number"
+    },
+    "maxOutPerDay": {
+     "type": "number"
+    },
+    "standardFloat": {
+     "type": "number"
+    },
+    "alertRecipients": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "holderEmail": {
+     "type": "string"
+    },
+    "backupEmails": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "schedules": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashRegisterScheduleRequest"
+     }
+    }
+   }
+  },
+  "CashMetricsOverviewResponse": {
+   "type": "object",
+   "properties": {
+    "currency": {
+     "type": "string"
+    },
+    "registerCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activeRegisterCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "openSessionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "closingReviewSessionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "closedSessionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "movementCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "openingFloatAmount": {
+     "type": "number"
+    },
+    "totalPayments": {
+     "type": "number"
+    },
+    "totalRefunds": {
+     "type": "number"
+    },
+    "totalCashIn": {
+     "type": "number"
+    },
+    "totalCashOut": {
+     "type": "number"
+    },
+    "totalAdjustments": {
+     "type": "number"
+    },
+    "netCashPosition": {
+     "type": "number"
+    },
+    "pendingVarianceAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "CashRegisterMetricsResponse": {
+   "type": "object",
+   "properties": {
+    "registerCode": {
+     "type": "string"
+    },
+    "registerName": {
+     "type": "string"
+    },
+    "businessEntityCode": {
+     "type": "string"
+    },
+    "deviceCode": {
+     "type": "string"
+    },
+    "openSessionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "closingReviewSessionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "movementCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalPayments": {
+     "type": "number"
+    },
+    "totalRefunds": {
+     "type": "number"
+    },
+    "totalCashIn": {
+     "type": "number"
+    },
+    "totalCashOut": {
+     "type": "number"
+    },
+    "totalAdjustments": {
+     "type": "number"
+    },
+    "netCashPosition": {
+     "type": "number"
     }
    }
   },
@@ -4845,9 +7912,13 @@
     "status": {
      "type": "string",
      "enum": [
+      "OPENING",
       "OPEN",
+      "PAUSED",
       "SUSPENDED",
+      "COUNTING",
       "CLOSING_REVIEW",
+      "RECOUNT",
       "CLOSED",
       "CANCELLED"
      ]
@@ -4890,12 +7961,68 @@
     "closedAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "expectedOpeningAmount": {
+     "type": "number"
+    },
+    "openingVariance": {
+     "type": "number"
+    },
+    "openingVarianceReason": {
+     "type": "string"
+    },
+    "pausedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "pauseSeconds": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "suspendedBy": {
+     "type": "string"
+    },
+    "suspensionReason": {
+     "type": "string"
+    },
+    "keptFloat": {
+     "type": "number"
+    },
+    "amountToRemit": {
+     "type": "number"
+    },
+    "closingCountNumber": {
+     "type": "string"
+    },
+    "varianceDecision": {
+     "type": "string",
+     "enum": [
+      "EXPENSE",
+      "INCOME",
+      "CASHIER",
+      "INVESTIGATION",
+      "TOLERATED"
+     ]
+    },
+    "varianceDecidedBy": {
+     "type": "string"
+    },
+    "forcedClose": {
+     "type": "boolean"
+    },
+    "handoverNumber": {
+     "type": "string"
+    },
+    "outOfHoursReason": {
+     "type": "string"
+    },
+    "expectedHidden": {
+     "type": "boolean"
     }
    }
   },
   "OpenCashSessionRequest": {
    "required": [
-    "openedBy",
     "registerCode"
    ],
    "type": "object",
@@ -4905,22 +8032,29 @@
      "type": "string"
     },
     "openedBy": {
-     "minLength": 1,
      "type": "string"
     },
     "openingAmount": {
      "type": "number"
+    },
+    "deviceCode": {
+     "type": "string"
+    },
+    "outOfHoursReasonCode": {
+     "type": "string"
+    },
+    "outOfHoursReasonText": {
+     "type": "string"
+    },
+    "openingCount": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest"
     }
    }
   },
   "ApproveCashVarianceRequest": {
-   "required": [
-    "reviewedBy"
-   ],
    "type": "object",
    "properties": {
     "reviewedBy": {
-     "minLength": 1,
      "type": "string"
     },
     "note": {
@@ -4929,13 +8063,9 @@
    }
   },
   "CloseCashSessionRequest": {
-   "required": [
-    "closedBy"
-   ],
    "type": "object",
    "properties": {
     "closedBy": {
-     "minLength": 1,
      "type": "string"
     },
     "closingAmount": {
@@ -4952,7 +8082,6 @@
   "CreateCashVoucherRequest": {
    "required": [
     "amount",
-    "createdBy",
     "documentNumber"
    ],
    "type": "object",
@@ -4986,7 +8115,6 @@
      "type": "string"
     },
     "createdBy": {
-     "minLength": 1,
      "type": "string"
     },
     "documentType": {
@@ -5005,6 +8133,9 @@
      ]
     },
     "metadataJson": {
+     "type": "string"
+    },
+    "natureCode": {
      "type": "string"
     }
    }
@@ -5028,7 +8159,9 @@
       "TRANSFER_IN",
       "TRANSFER_OUT",
       "ADJUSTMENT",
-      "CLOSING_COUNT"
+      "CLOSING_COUNT",
+      "EXCHANGE",
+      "VARIANCE"
      ]
     },
     "amount": {
@@ -5109,6 +8242,41 @@
     },
     "tags": {
      "type": "string"
+    },
+    "direction": {
+     "type": "string",
+     "enum": [
+      "IN",
+      "OUT",
+      "ADJUSTMENT"
+     ]
+    },
+    "natureCode": {
+     "type": "string"
+    },
+    "journalCode": {
+     "type": "string"
+    },
+    "vatAmount": {
+     "type": "number"
+    },
+    "vatCode": {
+     "type": "string"
+    },
+    "supplierCode": {
+     "type": "string"
+    },
+    "beneficiaryName": {
+     "type": "string"
+    },
+    "beneficiaryIdNumber": {
+     "type": "string"
+    },
+    "beneficiaryPhone": {
+     "type": "string"
+    },
+    "requestNumber": {
+     "type": "string"
     }
    }
   },
@@ -5124,9 +8292,13 @@
     "status": {
      "type": "string",
      "enum": [
+      "OPENING",
       "OPEN",
+      "PAUSED",
       "SUSPENDED",
+      "COUNTING",
       "CLOSING_REVIEW",
+      "RECOUNT",
       "CLOSED",
       "CANCELLED"
      ]
@@ -5260,13 +8432,9 @@
    }
   },
   "ReviewCashRequestRequest": {
-   "required": [
-    "reviewedBy"
-   ],
    "type": "object",
    "properties": {
     "reviewedBy": {
-     "minLength": 1,
      "type": "string"
     },
     "note": {
@@ -5307,6 +8475,768 @@
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CreateCashRequestRequest.CashRequestAttachmentInput"
      }
+    }
+   }
+  },
+  "CashDenominationResponse": {
+   "type": "object",
+   "properties": {
+    "currency": {
+     "type": "string"
+    },
+    "value": {
+     "type": "number"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "BILL",
+      "COIN"
+     ]
+    },
+    "label": {
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "activeFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "activeTo": {
+     "type": "string",
+     "format": "date"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CashDenominationRequest": {
+   "required": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "type": "object",
+   "properties": {
+    "value": {
+     "type": "number"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "BILL",
+      "COIN"
+     ]
+    },
+    "label": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "activeFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "activeTo": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "CashSessionStepResponse": {
+   "type": "object",
+   "properties": {
+    "session": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashSessionResponse"
+    },
+    "count": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashCountResponse"
+    },
+    "review": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashVarianceReviewResponse"
+    },
+    "messages": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "CashHandoverAnswerRequest": {
+   "type": "object",
+   "properties": {
+    "count": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "deviceCode": {
+     "type": "string"
+    }
+   }
+  },
+  "CashHandoverResponse": {
+   "type": "object",
+   "properties": {
+    "handoverNumber": {
+     "type": "string"
+    },
+    "registerCode": {
+     "type": "string"
+    },
+    "fromSession": {
+     "type": "string"
+    },
+    "toSession": {
+     "type": "string"
+    },
+    "outgoing": {
+     "type": "string"
+    },
+    "incoming": {
+     "type": "string"
+    },
+    "outgoingCount": {
+     "type": "string"
+    },
+    "incomingCount": {
+     "type": "string"
+    },
+    "outgoingAmount": {
+     "type": "number"
+    },
+    "incomingAmount": {
+     "type": "number"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "ACCEPTED",
+      "DISPUTED",
+      "CANCELLED"
+     ]
+    },
+    "disputeReason": {
+     "type": "string"
+    },
+    "outgoingSignedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "incomingSignedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CashCountResponse": {
+   "type": "object",
+   "properties": {
+    "countNumber": {
+     "type": "string"
+    },
+    "registerCode": {
+     "type": "string"
+    },
+    "sessionNumber": {
+     "type": "string"
+    },
+    "moment": {
+     "type": "string",
+     "enum": [
+      "OPENING",
+      "CLOSING",
+      "RECOUNT",
+      "HANDOVER",
+      "SPOT_CHECK",
+      "TRANSFER_RECEIPT",
+      "PERIODIC",
+      "RESPONSIBILITY_TRANSFER",
+      "FORCED_CLOSE",
+      "SEAL",
+      "UNSEAL"
+     ]
+    },
+    "currency": {
+     "type": "string"
+    },
+    "total": {
+     "type": "number"
+    },
+    "damagedTotal": {
+     "type": "number"
+    },
+    "withLines": {
+     "type": "boolean"
+    },
+    "expectedAmount": {
+     "type": "number"
+    },
+    "variance": {
+     "type": "number"
+    },
+    "countedBy": {
+     "type": "string"
+    },
+    "secondCounter": {
+     "type": "string"
+    },
+    "witness": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "supersededBy": {
+     "type": "string"
+    },
+    "referenceNumber": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashCountResponse.Line"
+     }
+    }
+   }
+  },
+  "CashCountRequest": {
+   "type": "object",
+   "properties": {
+    "currency": {
+     "type": "string"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.Line"
+     }
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "secondCounterEmail": {
+     "type": "string"
+    },
+    "witnessEmail": {
+     "type": "string"
+    },
+    "keptFloat": {
+     "type": "number"
+    },
+    "varianceReasonCode": {
+     "type": "string"
+    },
+    "varianceReasonText": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    }
+   }
+  },
+  "CashSessionLifecycleController.ForceCloseRequest": {
+   "type": "object",
+   "properties": {
+    "count": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest"
+    },
+    "reason": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest"
+    }
+   }
+  },
+  "CashHandoverRequest": {
+   "required": [
+    "count",
+    "incomingEmail"
+   ],
+   "type": "object",
+   "properties": {
+    "incomingEmail": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "count": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest"
+    }
+   }
+  },
+  "ResumeCashSessionRequest": {
+   "type": "object",
+   "properties": {
+    "password": {
+     "type": "string"
+    }
+   }
+  },
+  "CashVarianceDecisionRequest": {
+   "type": "object",
+   "properties": {
+    "decision": {
+     "type": "string",
+     "enum": [
+      "EXPENSE",
+      "INCOME",
+      "CASHIER",
+      "INVESTIGATION",
+      "TOLERATED"
+     ]
+    },
+    "note": {
+     "type": "string"
+    },
+    "reviewDueAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CashVarianceReviewResponse": {
+   "type": "object",
+   "properties": {
+    "reviewNumber": {
+     "type": "string"
+    },
+    "registerCode": {
+     "type": "string"
+    },
+    "sessionNumber": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "OPENING",
+      "CLOSING",
+      "SPOT_CHECK",
+      "HANDOVER",
+      "FORCED_CLOSE",
+      "UNSEAL",
+      "TRANSFER",
+      "RESPONSIBILITY_TRANSFER"
+     ]
+    },
+    "amount": {
+     "type": "number"
+    },
+    "countNumber": {
+     "type": "string"
+    },
+    "cashier": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "DECIDED",
+      "TOLERATED"
+     ]
+    },
+    "decision": {
+     "type": "string",
+     "enum": [
+      "EXPENSE",
+      "INCOME",
+      "CASHIER",
+      "INVESTIGATION",
+      "TOLERATED"
+     ]
+    },
+    "proposedDecision": {
+     "type": "string",
+     "enum": [
+      "EXPENSE",
+      "INCOME",
+      "CASHIER",
+      "INVESTIGATION",
+      "TOLERATED"
+     ]
+    },
+    "decidedBy": {
+     "type": "string"
+    },
+    "decidedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "decisionNote": {
+     "type": "string"
+    },
+    "contestDeadline": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "contestedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "contestReason": {
+     "type": "string"
+    },
+    "reviewDueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "decidableNow": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CashExpectedOpeningResponse": {
+   "type": "object",
+   "properties": {
+    "registerCode": {
+     "type": "string"
+    },
+    "expectedAmount": {
+     "type": "number"
+    },
+    "lastCountAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "neverCounted": {
+     "type": "boolean"
+    },
+    "standardFloat": {
+     "type": "number"
+    },
+    "countLinesRequired": {
+     "type": "boolean"
+    },
+    "denominations": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashDenominationResponse"
+     }
+    }
+   }
+  },
+  "CashAbsenceResponse": {
+   "type": "object",
+   "properties": {
+    "absenceNumber": {
+     "type": "string"
+    },
+    "userEmail": {
+     "type": "string"
+    },
+    "kindCode": {
+     "type": "string"
+    },
+    "kindLabel": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "startsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "endsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "replacementUser": {
+     "type": "string"
+    },
+    "registerCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "noReplacementPolicy": {
+     "type": "string",
+     "enum": [
+      "REMIT_TO_PARENT",
+      "SEAL",
+      "SIMPLE_SUSPENSION"
+     ]
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PLANNED",
+      "APPROVED",
+      "ACTIVE",
+      "ENDED",
+      "CANCELLED"
+     ]
+    },
+    "unplanned": {
+     "type": "boolean"
+    },
+    "declaredBy": {
+     "type": "string"
+    },
+    "approvedBy": {
+     "type": "string"
+    },
+    "approvedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "forced": {
+     "type": "boolean"
+    },
+    "forcedNote": {
+     "type": "string"
+    },
+    "warnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "CashAbsenceRequest": {
+   "required": [
+    "kindCode",
+    "startsOn"
+   ],
+   "type": "object",
+   "properties": {
+    "userEmail": {
+     "type": "string"
+    },
+    "kindCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "reasonText": {
+     "type": "string"
+    },
+    "startsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "endsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "replacementEmail": {
+     "type": "string"
+    },
+    "noReplacementPolicy": {
+     "type": "string",
+     "enum": [
+      "REMIT_TO_PARENT",
+      "SEAL",
+      "SIMPLE_SUSPENSION"
+     ]
+    },
+    "unplanned": {
+     "type": "boolean"
+    },
+    "force": {
+     "type": "boolean"
+    },
+    "forceNote": {
+     "type": "string"
+    }
+   }
+  },
+  "CashReplacementSuggestionResponse": {
+   "type": "object",
+   "properties": {
+    "userEmail": {
+     "type": "string"
+    },
+    "origin": {
+     "type": "string"
+    },
+    "rank": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "registerCode": {
+     "type": "string"
+    }
+   }
+  },
+  "CashDelegationResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "delegator": {
+     "type": "string"
+    },
+    "delegate": {
+     "type": "string"
+    },
+    "permissions": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "startsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "endsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "note": {
+     "type": "string"
+    },
+    "activeNow": {
+     "type": "boolean"
+    },
+    "cancelledAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CashDelegationRequest": {
+   "required": [
+    "delegateEmail",
+    "endsOn",
+    "permissions",
+    "startsOn"
+   ],
+   "type": "object",
+   "properties": {
+    "delegateEmail": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "permissions": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "startsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "endsOn": {
+     "type": "string",
+     "format": "date"
+    },
+    "note": {
+     "type": "string"
+    }
+   }
+  },
+  "CashSealResponse": {
+   "type": "object",
+   "properties": {
+    "sealNumber": {
+     "type": "string"
+    },
+    "registerCode": {
+     "type": "string"
+    },
+    "envelopeNumber": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "countNumber": {
+     "type": "string"
+    },
+    "sealedBy": {
+     "type": "string"
+    },
+    "witness": {
+     "type": "string"
+    },
+    "depositedIn": {
+     "type": "string"
+    },
+    "sealedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "unsealedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "unsealedBy": {
+     "type": "string"
+    },
+    "unsealWitness": {
+     "type": "string"
+    },
+    "unsealCount": {
+     "type": "string"
+    },
+    "unsealAmount": {
+     "type": "number"
+    },
+    "difference": {
+     "type": "number"
+    },
+    "absenceNumber": {
+     "type": "string"
+    }
+   }
+  },
+  "CashSealRequest": {
+   "required": [
+    "count",
+    "witnessEmail"
+   ],
+   "type": "object",
+   "properties": {
+    "envelopeNumber": {
+     "type": "string"
+    },
+    "depositedIn": {
+     "type": "string"
+    },
+    "witnessEmail": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "count": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CashCountRequest"
+    },
+    "absenceNumber": {
+     "type": "string"
     }
    }
   },
@@ -6815,13 +10745,11 @@
   },
   "RegisterCashPaymentRequest": {
    "required": [
-    "cashSessionNumber",
-    "receivedBy"
+    "cashSessionNumber"
    ],
    "type": "object",
    "properties": {
     "receivedBy": {
-     "minLength": 1,
      "type": "string"
     },
     "cashSessionNumber": {
@@ -8203,6 +12131,126 @@
     }
    }
   },
+  "CashPositionResponse.RegisterPosition": {
+   "type": "object",
+   "properties": {
+    "registerCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "registerType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "sessionNumber": {
+     "type": "string"
+    },
+    "sessionStatus": {
+     "type": "string"
+    },
+    "cashier": {
+     "type": "string"
+    },
+    "expectedBalance": {
+     "type": "number"
+    },
+    "expectedHidden": {
+     "type": "boolean"
+    },
+    "lastCountAmount": {
+     "type": "number"
+    },
+    "lastCountAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "daysSinceCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "maxCashAmount": {
+     "type": "number"
+    },
+    "occupancyPercent": {
+     "type": "number"
+    },
+    "transfersInCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "transfersInAmount": {
+     "type": "number"
+    },
+    "transfersOutCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "transfersOutAmount": {
+     "type": "number"
+    },
+    "pendingReviews": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "pendingVisas": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "lastSpotCheckAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "spotCheckOverdue": {
+     "type": "boolean"
+    },
+    "alerts": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "CashPositionResponse.SiteTotal": {
+   "type": "object",
+   "properties": {
+    "locationCode": {
+     "type": "string"
+    },
+    "registers": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "openSessions": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "expectedBalance": {
+     "type": "number"
+    },
+    "lastCountTotal": {
+     "type": "number"
+    },
+    "inTransit": {
+     "type": "number"
+    },
+    "pendingReviews": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "alerts": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
   "CashMovementAttachmentResponse": {
    "type": "object",
    "properties": {
@@ -8228,6 +12276,148 @@
     "uploadedAt": {
      "type": "string",
      "format": "date-time"
+    }
+   }
+  },
+  "CashMovementResponse.Accounting": {
+   "type": "object",
+   "properties": {
+    "journalCode": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "entryNumber": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "vatAmount": {
+     "type": "number"
+    },
+    "vatCode": {
+     "type": "string"
+    },
+    "supplierCode": {
+     "type": "string"
+    },
+    "beneficiaryName": {
+     "type": "string"
+    },
+    "beneficiaryIdNumber": {
+     "type": "string"
+    },
+    "beneficiaryPhone": {
+     "type": "string"
+    },
+    "requestNumber": {
+     "type": "string"
+    }
+   }
+  },
+  "CashCountRequest.Line": {
+   "type": "object",
+   "properties": {
+    "value": {
+     "type": "number"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "BILL",
+      "COIN"
+     ]
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "damagedQuantity": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "CashFormDefaultsResponse.Choice": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    }
+   }
+  },
+  "CashRegisterDetailResponse.Schedule": {
+   "type": "object",
+   "properties": {
+    "dayOfWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "opensAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "closesAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    }
+   }
+  },
+  "CashRegisterDetailResponse.Device": {
+   "type": "object",
+   "properties": {
+    "deviceCode": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PROPOSED",
+      "ALLOWED",
+      "REFUSED"
+     ]
+    },
+    "firstSeenAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "firstSeenBy": {
+     "type": "string"
+    },
+    "decidedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "decidedBy": {
+     "type": "string"
+    }
+   }
+  },
+  "CashRegisterScheduleRequest": {
+   "required": [
+    "closesAt",
+    "dayOfWeek",
+    "opensAt"
+   ],
+   "type": "object",
+   "properties": {
+    "dayOfWeek": {
+     "maximum": 7,
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "opensAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "closesAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
     }
    }
   },
@@ -8294,6 +12484,32 @@
     },
     "label": {
      "type": "string"
+    }
+   }
+  },
+  "CashCountResponse.Line": {
+   "type": "object",
+   "properties": {
+    "value": {
+     "type": "number"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "BILL",
+      "COIN"
+     ]
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "damagedQuantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "amount": {
+     "type": "number"
     }
    }
   },
@@ -8605,6 +12821,17 @@
     },
     "optional": {
      "type": "boolean"
+    },
+    "serviceStart": {
+     "type": "string",
+     "format": "date"
+    },
+    "serviceEnd": {
+     "type": "string",
+     "format": "date"
+    },
+    "servicePeriod": {
+     "type": "string"
     }
    }
   },
@@ -8892,6 +13119,27 @@
     }
    }
   },
+  "LocalTime": {
+   "type": "object",
+   "properties": {
+    "hour": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minute": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "second": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "nano": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
   "MobileMoneyDepositResponse.AccountDetailsResponse": {
    "type": "object",
    "properties": {
@@ -8924,7 +13172,36 @@
    "EXCESSIVE_ADJUSTMENTS",
    "OFF_HOURS_SESSION",
    "THRESHOLD_STRUCTURING",
-   "NEAR_MAX_CASH_RECURRENCE"
+   "NEAR_MAX_CASH_RECURRENCE",
+   "OPENING_VARIANCE",
+   "LONG_SESSION",
+   "LONG_PAUSES",
+   "REPEATED_REVERSALS",
+   "DETENTION_CAP_EXCEEDED",
+   "UNKNOWN_DEVICE",
+   "DAMAGED_NOTES",
+   "TRANSFER_VARIANCE"
+  ],
+  "CashFlowDirection": [
+   "IN",
+   "OUT",
+   "ADJUSTMENT"
+  ],
+  "CashNatureFamily": [
+   "ENCAISSEMENTS",
+   "ACHATS",
+   "DEPLACEMENTS",
+   "AVANCES",
+   "REMISES",
+   "TRANSFERTS",
+   "REMBOURSEMENTS",
+   "DIVERS"
+  ],
+  "CashTransferStatus": [
+   "IN_TRANSIT",
+   "RECEIVED",
+   "DISPUTED",
+   "CANCELLED"
   ],
   "CashMovementType": [
    "OPENING_FLOAT",
@@ -8936,7 +13213,9 @@
    "TRANSFER_IN",
    "TRANSFER_OUT",
    "ADJUSTMENT",
-   "CLOSING_COUNT"
+   "CLOSING_COUNT",
+   "EXCHANGE",
+   "VARIANCE"
   ],
   "CashDocumentType": [
    "CASH_VOUCHER",
@@ -8951,9 +13230,13 @@
    "OTHER"
   ],
   "CashSessionStatus": [
+   "OPENING",
    "OPEN",
+   "PAUSED",
    "SUSPENDED",
+   "COUNTING",
    "CLOSING_REVIEW",
+   "RECOUNT",
    "CLOSED",
    "CANCELLED"
   ],
@@ -8968,6 +13251,18 @@
    "APPROVED",
    "REJECTED",
    "EXECUTED",
+   "CANCELLED"
+  ],
+  "CashVarianceStatus": [
+   "PENDING",
+   "DECIDED",
+   "TOLERATED"
+  ],
+  "CashAbsenceStatus": [
+   "PLANNED",
+   "APPROVED",
+   "ACTIVE",
+   "ENDED",
    "CANCELLED"
   ],
   "CongoCorrespondent": [
@@ -9021,14 +13316,40 @@
   "CashAnomalyStatus": "com.sni.bokaticowork.features.payment.enums.CashAnomalyStatus",
   "CashAnomalyType": "com.sni.bokaticowork.features.payment.enums.CashAnomalyType",
   "ReviewCashAnomalyRequest": "com.sni.bokaticowork.features.payment.dto.request.ReviewCashAnomalyRequest",
+  "CashPositionResponse": "com.sni.bokaticowork.features.payment.dto.response.CashPositionResponse",
+  "CashMovementResponse": "com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse",
+  "CashReasonRequest": "com.sni.bokaticowork.features.payment.dto.request.CashReasonRequest",
+  "CashNatureResponse": "com.sni.bokaticowork.features.payment.dto.response.CashNatureResponse",
+  "CashFlowDirection": "com.sni.bokaticowork.features.payment.enums.CashFlowDirection",
+  "CashNatureFamily": "com.sni.bokaticowork.features.payment.enums.CashNatureFamily",
+  "CashNatureRequest": "com.sni.bokaticowork.features.payment.dto.request.CashNatureRequest",
+  "CashExchangeRequest": "com.sni.bokaticowork.features.payment.dto.request.CashExchangeRequest",
+  "CashTransferResponse": "com.sni.bokaticowork.features.payment.dto.response.CashTransferResponse",
+  "CashTransferStatus": "com.sni.bokaticowork.features.payment.enums.CashTransferStatus",
+  "CashTransferRequest": "com.sni.bokaticowork.features.payment.dto.request.CashTransferRequest",
+  "CashTransferReceiveRequest": "com.sni.bokaticowork.features.payment.dto.request.CashTransferReceiveRequest",
+  "CashPettyRefillResponse": "com.sni.bokaticowork.features.payment.dto.response.CashPettyRefillResponse",
   "CashPaymentDeclarationResponse": "com.sni.bokaticowork.features.payment.cash.dto.response.CashPaymentDeclarationResponse",
   "CloseCashDeclarationRequest": "com.sni.bokaticowork.features.payment.cash.dto.request.CloseCashDeclarationRequest",
   "ConfirmCashPaymentRequest": "com.sni.bokaticowork.features.payment.cash.dto.request.ConfirmCashPaymentRequest",
+  "CashFormDefaultsResponse": "com.sni.bokaticowork.features.payment.dto.response.CashFormDefaultsResponse",
+  "CashRegisterDetailResponse": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse",
+  "CashReferenceValueResponse": "com.sni.bokaticowork.features.payment.dto.response.CashReferenceValueResponse",
+  "CashReferenceValueRequest": "com.sni.bokaticowork.features.payment.dto.request.CashReferenceValueRequest",
+  "CashResponsibilityTransferResponse": "com.sni.bokaticowork.features.payment.dto.response.CashResponsibilityTransferResponse",
+  "UpdateCashRegisterRequest": "com.sni.bokaticowork.features.payment.dto.request.UpdateCashRegisterRequest",
+  "CashRegisterAssignmentResponse": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterAssignmentResponse",
+  "CashRegisterAssignmentRequest": "com.sni.bokaticowork.features.payment.dto.request.CashRegisterAssignmentRequest",
+  "CashRegisterStatusRequest": "com.sni.bokaticowork.features.payment.dto.request.CashRegisterStatusRequest",
+  "CashDeviceDecisionRequest": "com.sni.bokaticowork.features.payment.dto.request.CashDeviceDecisionRequest",
+  "EmergencyAssignmentRequest": "com.sni.bokaticowork.features.payment.dto.request.EmergencyAssignmentRequest",
+  "CashRegisterHistoryResponse": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterHistoryResponse",
+  "CreateResponsibilityTransferRequest": "com.sni.bokaticowork.features.payment.dto.request.CreateResponsibilityTransferRequest",
+  "CashPendingItemResponse": "com.sni.bokaticowork.features.payment.dto.response.CashPendingItemResponse",
   "CashRegisterResponse": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterResponse",
   "CreateCashRegisterRequest": "com.sni.bokaticowork.features.payment.dto.request.CreateCashRegisterRequest",
   "CashMetricsOverviewResponse": "com.sni.bokaticowork.features.payment.dto.response.CashMetricsOverviewResponse",
   "CashRegisterMetricsResponse": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterMetricsResponse",
-  "CashMovementResponse": "com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse",
   "CashMovementType": "com.sni.bokaticowork.features.payment.enums.CashMovementType",
   "CashDocumentType": "com.sni.bokaticowork.features.payment.enums.CashDocumentType",
   "AddCashMovementAttachmentRequest": "com.sni.bokaticowork.features.payment.dto.request.AddCashMovementAttachmentRequest",
@@ -9045,6 +13366,28 @@
   "CashRequestStatus": "com.sni.bokaticowork.features.payment.enums.CashRequestStatus",
   "ReviewCashRequestRequest": "com.sni.bokaticowork.features.payment.dto.request.ReviewCashRequestRequest",
   "CreateCashRequestRequest": "com.sni.bokaticowork.features.payment.dto.request.CreateCashRequestRequest",
+  "CashDenominationResponse": "com.sni.bokaticowork.features.payment.dto.response.CashDenominationResponse",
+  "CashDenominationRequest": "com.sni.bokaticowork.features.payment.dto.request.CashDenominationRequest",
+  "CashSessionStepResponse": "com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse",
+  "CashHandoverAnswerRequest": "com.sni.bokaticowork.features.payment.dto.request.CashHandoverAnswerRequest",
+  "CashHandoverResponse": "com.sni.bokaticowork.features.payment.dto.response.CashHandoverResponse",
+  "CashCountResponse": "com.sni.bokaticowork.features.payment.dto.response.CashCountResponse",
+  "CashCountRequest": "com.sni.bokaticowork.features.payment.dto.request.CashCountRequest",
+  "CashSessionLifecycleController.ForceCloseRequest": "com.sni.bokaticowork.features.payment.controller.CashSessionLifecycleController.ForceCloseRequest",
+  "CashHandoverRequest": "com.sni.bokaticowork.features.payment.dto.request.CashHandoverRequest",
+  "ResumeCashSessionRequest": "com.sni.bokaticowork.features.payment.dto.request.ResumeCashSessionRequest",
+  "CashVarianceDecisionRequest": "com.sni.bokaticowork.features.payment.dto.request.CashVarianceDecisionRequest",
+  "CashVarianceReviewResponse": "com.sni.bokaticowork.features.payment.dto.response.CashVarianceReviewResponse",
+  "CashVarianceStatus": "com.sni.bokaticowork.features.payment.enums.CashVarianceStatus",
+  "CashExpectedOpeningResponse": "com.sni.bokaticowork.features.payment.dto.response.CashExpectedOpeningResponse",
+  "CashAbsenceResponse": "com.sni.bokaticowork.features.payment.dto.response.CashAbsenceResponse",
+  "CashAbsenceStatus": "com.sni.bokaticowork.features.payment.enums.CashAbsenceStatus",
+  "CashAbsenceRequest": "com.sni.bokaticowork.features.payment.dto.request.CashAbsenceRequest",
+  "CashReplacementSuggestionResponse": "com.sni.bokaticowork.features.payment.dto.response.CashReplacementSuggestionResponse",
+  "CashDelegationResponse": "com.sni.bokaticowork.features.payment.dto.response.CashDelegationResponse",
+  "CashDelegationRequest": "com.sni.bokaticowork.features.payment.dto.request.CashDelegationRequest",
+  "CashSealResponse": "com.sni.bokaticowork.features.payment.dto.response.CashSealResponse",
+  "CashSealRequest": "com.sni.bokaticowork.features.payment.dto.request.CashSealRequest",
   "CashierStatisticsResponse": "com.sni.bokaticowork.features.payment.dto.response.CashierStatisticsResponse",
   "CashRegisterStatisticsResponse": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterStatisticsResponse",
   "CashSessionStatisticsResponse": "com.sni.bokaticowork.features.payment.dto.response.CashSessionStatisticsResponse",
@@ -9118,10 +13461,19 @@
   "CreateWalletHoldRequest": "com.sni.bokaticowork.features.payment.dto.request.CreateWalletHoldRequest",
   "WalletIntegrityService.IntegrityReport": "com.sni.bokaticowork.features.payment.integrity.service.WalletIntegrityService.IntegrityReport",
   "WalletLimitService.LimitSnapshot": "com.sni.bokaticowork.features.payment.limit.service.WalletLimitService.LimitSnapshot",
+  "CashPositionResponse.RegisterPosition": "com.sni.bokaticowork.features.payment.dto.response.CashPositionResponse.RegisterPosition",
+  "CashPositionResponse.SiteTotal": "com.sni.bokaticowork.features.payment.dto.response.CashPositionResponse.SiteTotal",
   "CashMovementAttachmentResponse": "com.sni.bokaticowork.features.payment.dto.response.CashMovementAttachmentResponse",
+  "CashMovementResponse.Accounting": "com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse.Accounting",
+  "CashCountRequest.Line": "com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.Line",
+  "CashFormDefaultsResponse.Choice": "com.sni.bokaticowork.features.payment.dto.response.CashFormDefaultsResponse.Choice",
+  "CashRegisterDetailResponse.Schedule": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse.Schedule",
+  "CashRegisterDetailResponse.Device": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterDetailResponse.Device",
+  "CashRegisterScheduleRequest": "com.sni.bokaticowork.features.payment.dto.request.CashRegisterScheduleRequest",
   "CashSessionSummaryResponse.NonCashPaymentTotal": "com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResponse.NonCashPaymentTotal",
   "CashRequestResponse.AttachmentRef": "com.sni.bokaticowork.features.payment.dto.response.CashRequestResponse.AttachmentRef",
   "CreateCashRequestRequest.CashRequestAttachmentInput": "com.sni.bokaticowork.features.payment.dto.request.CreateCashRequestRequest.CashRequestAttachmentInput",
+  "CashCountResponse.Line": "com.sni.bokaticowork.features.payment.dto.response.CashCountResponse.Line",
   "CashRegisterStatisticsResponse.HourlyVolume": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterStatisticsResponse.HourlyVolume",
   "ComplianceDashboardService.RuleStat": "com.sni.bokaticowork.features.payment.compliance.service.ComplianceDashboardService.RuleStat",
   "ComplianceDtos.ListEntryRequest": "com.sni.bokaticowork.features.payment.compliance.dto.ComplianceDtos.ListEntryRequest",
@@ -9140,6 +13492,7 @@
   "BillingRecoverableResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingRecoverableResponse",
   "PaymentReceiptAllocationResponse": "com.sni.bokaticowork.features.payment.dto.response.PaymentReceiptAllocationResponse",
   "WalletControlCentreService.VolumeLine": "com.sni.bokaticowork.features.payment.control.service.WalletControlCentreService.VolumeLine",
+  "LocalTime": "java.time.LocalTime",
   "MobileMoneyDepositResponse.AccountDetailsResponse": "com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse.AccountDetailsResponse"
  }
 }

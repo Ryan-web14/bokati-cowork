@@ -219,9 +219,32 @@ public class ClosingController {
 
     @Audited(module = "ACCOUNTING", action = "CONFIRMATION_SEND", ressource = "acc_confirmation_request")
     @PostMapping("/accounting/confirmations/{number}/send")
-    public ResponseEntity<AccConfirmationRequest> sendConfirmation(@PathVariable String number,
-                                                                   @RequestParam(required = false, defaultValue = "false") boolean reminder) {
-        return ResponseEntity.ok(justifications.send(number, reminder));
+    public ResponseEntity<BalanceJustificationService.SendResult> sendConfirmation(@PathVariable String number,
+                                                                                   @RequestParam(required = false, defaultValue = "false") boolean reminder,
+                                                                                   @RequestParam(required = false, defaultValue = "EMAIL") String channel,
+                                                                                   @RequestParam(required = false) String recipient) {
+        return ResponseEntity.ok(justifications.send(number, reminder, channel, recipient));
+    }
+
+    @GetMapping("/accounting/closing/{year}/inventory-balance")
+    public ResponseEntity<?> inventoryBalance(@PathVariable String year, @RequestParam(required = false, defaultValue = "json") String format) {
+        ClosingService.InventoryBalance balance = closing.inventoryBalance(year);
+        return "json".equalsIgnoreCase(format) ? ResponseEntity.ok(balance) : table(closing.inventoryTable(balance), format);
+    }
+
+    public record FlowCodeRequest(String code) {
+    }
+
+    @Audited(module = "ACCOUNTING", action = "CASH_FLOW_CODE", ressource = "acc_entry")
+    @PatchMapping("/accounting/entries/{reference}/cash-flow-code")
+    public ResponseEntity<Map<String, Object>> entryFlowCode(@PathVariable String reference, @RequestBody FlowCodeRequest request) {
+        return ResponseEntity.ok(statements.setEntryFlowCode(reference, request == null ? null : request.code()));
+    }
+
+    @Audited(module = "ACCOUNTING", action = "CASH_FLOW_CODE", ressource = "acc_posting_rule")
+    @PatchMapping("/accounting/posting-rules/{code}/cash-flow-code")
+    public ResponseEntity<Map<String, Object>> ruleFlowCode(@PathVariable String code, @RequestBody FlowCodeRequest request) {
+        return ResponseEntity.ok(statements.setRuleFlowCode(code, request == null ? null : request.code()));
     }
 
     @Audited(module = "ACCOUNTING", action = "CONFIRMATION_REPLY", ressource = "acc_confirmation_request")

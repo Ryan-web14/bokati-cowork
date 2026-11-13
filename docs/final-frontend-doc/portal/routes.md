@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-189 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+193 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -138,6 +138,10 @@
 | DELETE | `/sni/api/v1/client/sessions` | membre | [ClientSessionController](routes/ClientSessionController.md#r-delete-sni-api-v1-client-sessions) |
 | GET | `/sni/api/v1/client/sessions` | membre | [ClientSessionController](routes/ClientSessionController.md#r-get-sni-api-v1-client-sessions) |
 | DELETE | `/sni/api/v1/client/sessions/{sessionId}` | membre | [ClientSessionController](routes/ClientSessionController.md#r-delete-sni-api-v1-client-sessions-sessionid) |
+| GET | `/sni/api/v1/client/settings` | membre | [ClientSettingsController](routes/ClientSettingsController.md#r-get-sni-api-v1-client-settings) |
+| PATCH | `/sni/api/v1/client/settings` | membre | [ClientSettingsController](routes/ClientSettingsController.md#r-patch-sni-api-v1-client-settings) |
+| GET | `/sni/api/v1/client/settings/notifications` | membre | [ClientSettingsController](routes/ClientSettingsController.md#r-get-sni-api-v1-client-settings-notifications) |
+| PATCH | `/sni/api/v1/client/settings/notifications` | membre | [ClientSettingsController](routes/ClientSettingsController.md#r-patch-sni-api-v1-client-settings-notifications) |
 | GET | `/sni/api/v1/client/subscriptions` | membre | [ClientSubscriptionController](routes/ClientSubscriptionController.md#r-get-sni-api-v1-client-subscriptions) |
 | GET | `/sni/api/v1/client/subscriptions/current` | membre | [ClientSubscriptionController](routes/ClientSubscriptionController.md#r-get-sni-api-v1-client-subscriptions-current) |
 | DELETE | `/sni/api/v1/client/subscriptions/{subscriptionNumber}` | membre | [ClientSubscriptionController](routes/ClientSubscriptionController.md#r-delete-sni-api-v1-client-subscriptions-subscriptionnumber) |

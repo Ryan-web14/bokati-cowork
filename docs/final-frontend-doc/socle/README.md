@@ -8,6 +8,8 @@ Le socle regroupe les outils transverses de `core/` qui ne sont ni la sécurité
 
 Public visé : le back-office technique (écrans « Système » ou « Exploitation »), réservés aux comptes qui portent `SYSTEM:SETTINGS` ou `SYSTEM:AUDIT`. Seule la liste des pays est publique, utile aux formulaires d'inscription et de saisie d'adresse de tous les portails.
 
+L'envoi de messages WhatsApp par Infobip (modèles, suivi de remise et de lecture, webhook signé) est décrit dans [whatsapp.md](whatsapp.md).
+
 Il travaille avec tous les modules : chaque module publie ses événements dans l'outbox (notifications, contrats, documents, KYC, réservations, paiements), envoie ses courriels par le service de courriel suivi ici, et ses routes annotées `@Audited` alimentent le journal d'audit. Le module [parametres](../parametres/README.md) écrit le journal des changements de paramètres lu ici.
 
 ## Notions

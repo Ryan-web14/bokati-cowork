@@ -112,4 +112,8 @@ public class AccPostingRule {
     void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    /** Code de flux du tableau des flux de tresorerie (FF a FQ) des pieces de ce schema (complements F12). */
+    @Column(name = "cash_flow_code", length = 4)
+    private String cashFlowCode;
 }

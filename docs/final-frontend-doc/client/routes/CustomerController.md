@@ -155,7 +155,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `lastname` | texte |  |  |
 | `companyName` | texte |  |  |
 | `email` | string (email) |  |  |
-| `billingEmail` | string (email) |  |  |
+| `billingEmail` | texte |  |  |
 | `address` | [AddressRequest](#m-AddressRequest) |  |  |
 | `phone` | texte | oui |  |
 | `whatsappPhone` | texte |  |  |

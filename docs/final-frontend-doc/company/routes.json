@@ -2213,8 +2213,7 @@
      "format": "email"
     },
     "billingEmail": {
-     "type": "string",
-     "format": "email"
+     "type": "string"
     },
     "phone": {
      "minLength": 1,
@@ -2247,8 +2246,7 @@
    "type": "object",
    "properties": {
     "billingEmail": {
-     "type": "string",
-     "format": "email"
+     "type": "string"
     },
     "billingAddress": {
      "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"

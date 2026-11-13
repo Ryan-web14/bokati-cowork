@@ -83,4 +83,12 @@ public class AccConfirmationRequest {
     @Builder.Default
     @Column(name = "created_at")
     private Instant createdAt = Instant.now();
+
+    /** Canal du dernier envoi : EMAIL, WHATSAPP ou PRINT (complements F12). */
+    @Column(name = "sent_channel")
+    private String sentChannel;
+
+    /** Adresse ou numero du dernier envoi. */
+    @Column(name = "recipient")
+    private String recipient;
 }

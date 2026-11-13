@@ -25,7 +25,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-post-sni-api-v1-cash-registers"></a>
 ### POST /sni/api/v1/cash-registers
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_REGISTER:MANAGE`
 - Corps JSON (obligatoire) : `CreateCashRegisterRequest`
 - Réponse : `CashRegisterResponse`
 - Modèles : [CashRegisterResponse](#m-CashRegisterResponse), [CreateCashRegisterRequest](#m-CreateCashRegisterRequest)
@@ -101,7 +101,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-post-sni-api-v1-cash-registers-movements-movementnumber-attachments"></a>
 ### POST /sni/api/v1/cash-registers/movements/{movementNumber}/attachments
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:CREATE`
 - Corps JSON (obligatoire) : `AddCashMovementAttachmentRequest`
 - Réponse : `CashMovementResponse`
 - Modèles : [CashMovementResponse](#m-CashMovementResponse), [AddCashMovementAttachmentRequest](#m-AddCashMovementAttachmentRequest)
@@ -114,7 +114,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-patch-sni-api-v1-cash-registers-movements-movementnumber-print"></a>
 ### PATCH /sni/api/v1/cash-registers/movements/{movementNumber}/print
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:CREATE`
 - Réponse : `CashMovementResponse`
 - Modèles : [CashMovementResponse](#m-CashMovementResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterController.java`, méthode `markPrinted`
@@ -126,7 +126,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-patch-sni-api-v1-cash-registers-movements-movementnumber-sign"></a>
 ### PATCH /sni/api/v1/cash-registers/movements/{movementNumber}/sign
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:CREATE`
 - Réponse : `CashMovementResponse`
 - Modèles : [CashMovementResponse](#m-CashMovementResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterController.java`, méthode `signMovement`
@@ -156,7 +156,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-post-sni-api-v1-cash-registers-sessions"></a>
 ### POST /sni/api/v1/cash-registers/sessions
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_SESSION:OPEN`
 - Corps JSON (obligatoire) : `OpenCashSessionRequest`
 - Réponse : `CashSessionResponse`
 - Modèles : [CashSessionResponse](#m-CashSessionResponse), [OpenCashSessionRequest](#m-OpenCashSessionRequest)
@@ -165,7 +165,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-patch-sni-api-v1-cash-registers-sessions-sessionnumber-approve-variance"></a>
 ### PATCH /sni/api/v1/cash-registers/sessions/{sessionNumber}/approve-variance
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_VARIANCE:DECIDE`
 - Corps JSON (obligatoire) : `ApproveCashVarianceRequest`
 - Réponse : `CashSessionResponse`
 - Modèles : [CashSessionResponse](#m-CashSessionResponse), [ApproveCashVarianceRequest](#m-ApproveCashVarianceRequest)
@@ -178,7 +178,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-patch-sni-api-v1-cash-registers-sessions-sessionnumber-close"></a>
 ### PATCH /sni/api/v1/cash-registers/sessions/{sessionNumber}/close
 
-- Accès : back-office : rôle d'administration et droit `CASH:CLOSE_SESSION`
+- Accès : back-office : rôle d'administration et droit `CASH_SESSION:CLOSE`
 - Corps JSON (obligatoire) : `CloseCashSessionRequest`
 - Réponse : `CashSessionResponse`
 - Modèles : [CashSessionResponse](#m-CashSessionResponse), [CloseCashSessionRequest](#m-CloseCashSessionRequest)
@@ -191,7 +191,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-post-sni-api-v1-cash-registers-sessions-sessionnumber-closing-request"></a>
 ### POST /sni/api/v1/cash-registers/sessions/{sessionNumber}/closing-request
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_SESSION:CLOSE`
 - Corps JSON (obligatoire) : `CloseCashSessionRequest`
 - Réponse : `CashSessionResponse`
 - Modèles : [CashSessionResponse](#m-CashSessionResponse), [CloseCashSessionRequest](#m-CloseCashSessionRequest)
@@ -227,7 +227,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-post-sni-api-v1-cash-registers-sessions-sessionnumber-entry-vouchers"></a>
 ### POST /sni/api/v1/cash-registers/sessions/{sessionNumber}/entry-vouchers
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:CREATE`
 - Corps JSON (obligatoire) : `CreateCashVoucherRequest`
 - Réponse : `CashMovementResponse`
 - Modèles : [CashMovementResponse](#m-CashMovementResponse), [CreateCashVoucherRequest](#m-CreateCashVoucherRequest)
@@ -263,7 +263,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-post-sni-api-v1-cash-registers-sessions-sessionnumber-exit-vouchers"></a>
 ### POST /sni/api/v1/cash-registers/sessions/{sessionNumber}/exit-vouchers
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:CREATE`
 - Corps JSON (obligatoire) : `CreateCashVoucherRequest`
 - Réponse : `CashMovementResponse`
 - Modèles : [CashMovementResponse](#m-CashMovementResponse), [CreateCashVoucherRequest](#m-CreateCashVoucherRequest)
@@ -276,7 +276,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-post-sni-api-v1-cash-registers-sessions-sessionnumber-movements"></a>
 ### POST /sni/api/v1/cash-registers/sessions/{sessionNumber}/movements
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:CREATE`
 - Corps JSON (obligatoire) : `CreateCashMovementRequest`
 - Réponse : `CashMovementResponse`
 - Modèles : [CashMovementResponse](#m-CashMovementResponse), [CreateCashMovementRequest](#m-CreateCashMovementRequest)
@@ -301,7 +301,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-patch-sni-api-v1-cash-registers-registercode-activate"></a>
 ### PATCH /sni/api/v1/cash-registers/{registerCode}/activate
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_REGISTER:MANAGE`
 - Réponse : `CashRegisterResponse`
 - Modèles : [CashRegisterResponse](#m-CashRegisterResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterController.java`, méthode `activateRegister`
@@ -313,7 +313,7 @@ Module [payment](../README.md) · 22 route(s).
 <a id="r-patch-sni-api-v1-cash-registers-registercode-deactivate"></a>
 ### PATCH /sni/api/v1/cash-registers/{registerCode}/deactivate
 
-- Accès : back-office : rôle d'administration et droit `CASH:ADJUST`
+- Accès : back-office : rôle d'administration et droit `CASH_REGISTER:MANAGE`
 - Réponse : `CashRegisterResponse`
 - Modèles : [CashRegisterResponse](#m-CashRegisterResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/CashRegisterController.java`, méthode `deactivateRegister`
@@ -344,6 +344,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `managerEmail` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
+| `registerType` | enum : `COUNTER`, `MAIN`, `PETTY_CASH`, `SAFE`, `AUTOMATIC` |  |  |
+| `status` | enum : `ACTIVE`, `SUSPENDED`, `CLOSED` |  |  |
+| `parentRegisterCode` | texte |  |  |
+| `lastCountAt` | date-heure ISO 8601 UTC |  |  |
+| `lastCountAmount` | nombre décimal |  |  |
 
 <a id="m-CreateCashRegisterRequest"></a>
 #### CreateCashRegisterRequest
@@ -357,6 +362,18 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `cashControlEnabled` | booléen |  |  |
 | `maxCashAmount` | nombre décimal |  |  |
 | `managerEmail` | texte |  |  |
+| `registerType` | enum : `COUNTER`, `MAIN`, `PETTY_CASH`, `SAFE`, `AUTOMATIC` |  |  |
+| `parentRegisterCode` | texte |  |  |
+| `acceptedMethods` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE`[] |  |  |
+| `acceptedCurrencies` | texte[] |  |  |
+| `capBehavior` | enum : `ALERT`, `BLOCK` |  |  |
+| `maxOutPerOperation` | nombre décimal |  |  |
+| `maxOutPerDay` | nombre décimal |  |  |
+| `standardFloat` | nombre décimal |  |  |
+| `alertRecipients` | texte[] |  |  |
+| `holderEmail` | texte |  |  |
+| `backupEmails` | texte[] |  |  |
+| `schedules` | [CashRegisterScheduleRequest](#m-CashRegisterScheduleRequest)[] |  |  |
 
 <a id="m-CashMetricsOverviewResponse"></a>
 #### CashMetricsOverviewResponse
@@ -409,10 +426,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `registerName` | texte |  |  |
 | `businessEntityCode` | texte |  |  |
 | `deviceCode` | texte |  |  |
-| `sessionStatus` | enum : `OPEN`, `SUSPENDED`, `CLOSING_REVIEW`, `CLOSED`, `CANCELLED` |  |  |
+| `sessionStatus` | enum : `OPENING`, `OPEN`, `PAUSED`, `SUSPENDED`, `COUNTING`, `CLOSING_REVIEW`, `RECOUNT`, `CLOSED`, `CANCELLED` |  |  |
 | `sessionOpenedBy` | texte |  |  |
 | `sessionOpenedAt` | date-heure ISO 8601 UTC |  |  |
-| `movementType` | enum : `OPENING_FLOAT`, `PAYMENT`, `REFUND`, `CASH_IN`, `CASH_OUT`, `SAFE_DEPOSIT`, `TRANSFER_IN`, `TRANSFER_OUT`, `ADJUSTMENT`, `CLOSING_COUNT` |  |  |
+| `movementType` | enum : `OPENING_FLOAT`, `PAYMENT`, `REFUND`, `CASH_IN`, `CASH_OUT`, `SAFE_DEPOSIT`, `TRANSFER_IN`, `TRANSFER_OUT`, `ADJUSTMENT`, `CLOSING_COUNT`, `EXCHANGE`, `VARIANCE` |  |  |
 | `flowDirection` | enum : `IN`, `OUT`, `ADJUSTMENT` |  |  |
 | `amount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
@@ -453,11 +470,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `printedAt` | date-heure ISO 8601 UTC |  |  |
 | `attachments` | [CashMovementAttachmentResponse](#m-CashMovementAttachmentResponse)[] |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
+| `natureCode` | texte |  |  |
+| `transferOrderNumber` | texte |  |  |
+| `approvedBy` | texte |  |  |
+| `approvedAt` | date-heure ISO 8601 UTC |  |  |
+| `expiresAt` | date-heure ISO 8601 UTC |  |  |
+| `reversalReason` | texte |  |  |
+| `cancelReason` | texte |  |  |
+| `accounting` | [CashMovementResponse.Accounting](#m-CashMovementResponse-Accounting) |  |  |
 
 <a id="m-CashMovementType"></a>
 #### CashMovementType
 
-Énumération : `OPENING_FLOAT`, `PAYMENT`, `REFUND`, `CASH_IN`, `CASH_OUT`, `SAFE_DEPOSIT`, `TRANSFER_IN`, `TRANSFER_OUT`, `ADJUSTMENT`, `CLOSING_COUNT`
+Énumération : `OPENING_FLOAT`, `PAYMENT`, `REFUND`, `CASH_IN`, `CASH_OUT`, `SAFE_DEPOSIT`, `TRANSFER_IN`, `TRANSFER_OUT`, `ADJUSTMENT`, `CLOSING_COUNT`, `EXCHANGE`, `VARIANCE`
 
 <a id="m-CashDocumentType"></a>
 #### CashDocumentType
@@ -482,7 +507,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `sessionNumber` | texte |  |  |
 | `registerCode` | texte |  |  |
-| `status` | enum : `OPEN`, `SUSPENDED`, `CLOSING_REVIEW`, `CLOSED`, `CANCELLED` |  |  |
+| `status` | enum : `OPENING`, `OPEN`, `PAUSED`, `SUSPENDED`, `COUNTING`, `CLOSING_REVIEW`, `RECOUNT`, `CLOSED`, `CANCELLED` |  |  |
 | `openedBy` | texte |  |  |
 | `closedBy` | texte |  |  |
 | `reviewedBy` | texte |  |  |
@@ -495,11 +520,27 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `openedAt` | date-heure ISO 8601 UTC |  |  |
 | `closingRequestedAt` | date-heure ISO 8601 UTC |  |  |
 | `closedAt` | date-heure ISO 8601 UTC |  |  |
+| `expectedOpeningAmount` | nombre décimal |  |  |
+| `openingVariance` | nombre décimal |  |  |
+| `openingVarianceReason` | texte |  |  |
+| `pausedAt` | date-heure ISO 8601 UTC |  |  |
+| `pauseSeconds` | entier int64 ⚠ |  |  |
+| `suspendedBy` | texte |  |  |
+| `suspensionReason` | texte |  |  |
+| `keptFloat` | nombre décimal |  |  |
+| `amountToRemit` | nombre décimal |  |  |
+| `closingCountNumber` | texte |  |  |
+| `varianceDecision` | enum : `EXPENSE`, `INCOME`, `CASHIER`, `INVESTIGATION`, `TOLERATED` |  |  |
+| `varianceDecidedBy` | texte |  |  |
+| `forcedClose` | booléen |  |  |
+| `handoverNumber` | texte |  |  |
+| `outOfHoursReason` | texte |  |  |
+| `expectedHidden` | booléen |  |  |
 
 <a id="m-CashSessionStatus"></a>
 #### CashSessionStatus
 
-Énumération : `OPEN`, `SUSPENDED`, `CLOSING_REVIEW`, `CLOSED`, `CANCELLED`
+Énumération : `OPENING`, `OPEN`, `PAUSED`, `SUSPENDED`, `COUNTING`, `CLOSING_REVIEW`, `RECOUNT`, `CLOSED`, `CANCELLED`
 
 <a id="m-OpenCashSessionRequest"></a>
 #### OpenCashSessionRequest
@@ -507,15 +548,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `registerCode` | texte | oui | longueur min `1` |
-| `openedBy` | texte | oui | longueur min `1` |
+| `openedBy` | texte |  |  |
 | `openingAmount` | nombre décimal |  |  |
+| `deviceCode` | texte |  |  |
+| `outOfHoursReasonCode` | texte |  |  |
+| `outOfHoursReasonText` | texte |  |  |
+| `openingCount` | [CashCountRequest](#m-CashCountRequest) |  |  |
 
 <a id="m-ApproveCashVarianceRequest"></a>
 #### ApproveCashVarianceRequest
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `reviewedBy` | texte | oui | longueur min `1` |
+| `reviewedBy` | texte |  |  |
 | `note` | texte |  |  |
 
 <a id="m-CloseCashSessionRequest"></a>
@@ -523,7 +568,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `closedBy` | texte | oui | longueur min `1` |
+| `closedBy` | texte |  |  |
 | `closingAmount` | nombre décimal |  |  |
 | `countedClosingAmount` | nombre décimal |  |  |
 | `varianceReason` | texte |  |  |
@@ -542,16 +587,17 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `counterpartyCode` | texte |  |  |
 | `counterpartyName` | texte |  |  |
 | `reason` | texte |  |  |
-| `createdBy` | texte | oui | longueur min `1` |
+| `createdBy` | texte |  |  |
 | `documentType` | enum : `CASH_VOUCHER`, `ENTRY_VOUCHER`, `EXIT_VOUCHER`, `RECEIPT`, `INVOICE`, `EXPENSE_NOTE`, `BANK_SLIP`, `TRANSFER_NOTE`, `EXTERNAL_REFERENCE`, `OTHER` |  |  |
 | `metadataJson` | texte |  |  |
+| `natureCode` | texte |  |  |
 
 <a id="m-CreateCashMovementRequest"></a>
 #### CreateCashMovementRequest
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `movementType` | enum : `OPENING_FLOAT`, `PAYMENT`, `REFUND`, `CASH_IN`, `CASH_OUT`, `SAFE_DEPOSIT`, `TRANSFER_IN`, `TRANSFER_OUT`, `ADJUSTMENT`, `CLOSING_COUNT` | oui |  |
+| `movementType` | enum : `OPENING_FLOAT`, `PAYMENT`, `REFUND`, `CASH_IN`, `CASH_OUT`, `SAFE_DEPOSIT`, `TRANSFER_IN`, `TRANSFER_OUT`, `ADJUSTMENT`, `CLOSING_COUNT`, `EXCHANGE`, `VARIANCE` | oui |  |
 | `amount` | nombre décimal | oui |  |
 | `documentType` | enum : `CASH_VOUCHER`, `ENTRY_VOUCHER`, `EXIT_VOUCHER`, `RECEIPT`, `INVOICE`, `EXPENSE_NOTE`, `BANK_SLIP`, `TRANSFER_NOTE`, `EXTERNAL_REFERENCE`, `OTHER` |  |  |
 | `documentNumber` | texte |  |  |
@@ -572,6 +618,16 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `deviceIp` | texte |  |  |
 | `subCategory` | texte |  |  |
 | `tags` | texte |  |  |
+| `direction` | enum : `IN`, `OUT`, `ADJUSTMENT` |  |  |
+| `natureCode` | texte |  |  |
+| `journalCode` | texte |  |  |
+| `vatAmount` | nombre décimal |  |  |
+| `vatCode` | texte |  |  |
+| `supplierCode` | texte |  |  |
+| `beneficiaryName` | texte |  |  |
+| `beneficiaryIdNumber` | texte |  |  |
+| `beneficiaryPhone` | texte |  |  |
+| `requestNumber` | texte |  |  |
 
 <a id="m-CashSessionSummaryResponse"></a>
 #### CashSessionSummaryResponse
@@ -580,7 +636,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `sessionNumber` | texte |  |  |
 | `registerCode` | texte |  |  |
-| `status` | enum : `OPEN`, `SUSPENDED`, `CLOSING_REVIEW`, `CLOSED`, `CANCELLED` |  |  |
+| `status` | enum : `OPENING`, `OPEN`, `PAUSED`, `SUSPENDED`, `COUNTING`, `CLOSING_REVIEW`, `RECOUNT`, `CLOSED`, `CANCELLED` |  |  |
 | `openedBy` | texte |  |  |
 | `closedBy` | texte |  |  |
 | `openingAmount` | nombre décimal |  |  |
@@ -598,6 +654,15 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `closedAt` | date-heure ISO 8601 UTC |  |  |
 | `nonCashPayments` | [CashSessionSummaryResponse.NonCashPaymentTotal](#m-CashSessionSummaryResponse-NonCashPaymentTotal)[] |  |  |
 
+<a id="m-CashRegisterScheduleRequest"></a>
+#### CashRegisterScheduleRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `dayOfWeek` | entier | oui | min `1`, max `7` |
+| `opensAt` | [LocalTime](#m-LocalTime) | oui |  |
+| `closesAt` | [LocalTime](#m-LocalTime) | oui |  |
+
 <a id="m-CashMovementAttachmentResponse"></a>
 #### CashMovementAttachmentResponse
 
@@ -611,6 +676,38 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `uploadedBy` | texte |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
 
+<a id="m-CashMovementResponse-Accounting"></a>
+#### CashMovementResponse.Accounting
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `journalCode` | texte |  |  |
+| `status` | texte |  |  |
+| `entryNumber` | texte |  |  |
+| `note` | texte |  |  |
+| `vatAmount` | nombre décimal |  |  |
+| `vatCode` | texte |  |  |
+| `supplierCode` | texte |  |  |
+| `beneficiaryName` | texte |  |  |
+| `beneficiaryIdNumber` | texte |  |  |
+| `beneficiaryPhone` | texte |  |  |
+| `requestNumber` | texte |  |  |
+
+<a id="m-CashCountRequest"></a>
+#### CashCountRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `currency` | texte |  |  |
+| `lines` | [CashCountRequest.Line](#m-CashCountRequest-Line)[] |  |  |
+| `totalAmount` | nombre décimal |  |  |
+| `secondCounterEmail` | texte |  |  |
+| `witnessEmail` | texte |  |  |
+| `keptFloat` | nombre décimal |  |  |
+| `varianceReasonCode` | texte |  |  |
+| `varianceReasonText` | texte |  |  |
+| `note` | texte |  |  |
+
 <a id="m-CashSessionSummaryResponse-NonCashPaymentTotal"></a>
 #### CashSessionSummaryResponse.NonCashPaymentTotal
 
@@ -621,3 +718,23 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `label` | texte |  |  |
 | `count` | entier int64 ⚠ |  |  |
 | `amount` | nombre décimal |  |  |
+
+<a id="m-LocalTime"></a>
+#### LocalTime
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `hour` | entier |  |  |
+| `minute` | entier |  |  |
+| `second` | entier |  |  |
+| `nano` | entier |  |  |
+
+<a id="m-CashCountRequest-Line"></a>
+#### CashCountRequest.Line
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `value` | nombre décimal |  |  |
+| `kind` | enum : `BILL`, `COIN` |  |  |
+| `quantity` | entier |  |  |
+| `damagedQuantity` | entier |  |  |

@@ -159,4 +159,8 @@ public class AccEntry {
     void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    /** Code de flux du tableau des flux de tresorerie, saisi sur la piece ; a defaut, celui de son schema (complements F12). */
+    @Column(name = "cash_flow_code", length = 4)
+    private String cashFlowCode;
 }

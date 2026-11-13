@@ -1103,6 +1103,210 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.core.maintenance.MemberPurgeService.PurgeReport>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/whatsapp/messages",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppController.java",
+   "handler": "messages",
+   "declaredIn": "WhatsAppController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('WHATSAPP:MANAGE','WHATSAPP_MANAGE')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "reference",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessage>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/whatsapp/messages/refresh",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppController.java",
+   "handler": "refresh",
+   "declaredIn": "WhatsAppController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('WHATSAPP:MANAGE','WHATSAPP_MANAGE')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/whatsapp/subscription",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppController.java",
+   "handler": "subscription",
+   "declaredIn": "WhatsAppController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('WHATSAPP:MANAGE','WHATSAPP_MANAGE')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Object>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/whatsapp/subscription",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppController.java",
+   "handler": "subscribe",
+   "declaredIn": "WhatsAppController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('WHATSAPP:MANAGE','WHATSAPP_MANAGE')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Object>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/whatsapp/templates",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppController.java",
+   "handler": "templates",
+   "declaredIn": "WhatsAppController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('WHATSAPP:MANAGE','WHATSAPP_MANAGE')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.communication.whatsapp.WhatsAppTemplate>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/whatsapp/templates",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppController.java",
+   "handler": "create",
+   "declaredIn": "WhatsAppController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('WHATSAPP:MANAGE','WHATSAPP_MANAGE')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppService.TemplateRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.communication.whatsapp.WhatsAppTemplate>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/whatsapp/templates/defaults",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppController.java",
+   "handler": "defaults",
+   "declaredIn": "WhatsAppController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('WHATSAPP:MANAGE','WHATSAPP_MANAGE')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.communication.whatsapp.WhatsAppTemplate>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/whatsapp/templates/sync",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppController.java",
+   "handler": "sync",
+   "declaredIn": "WhatsAppController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('WHATSAPP:MANAGE','WHATSAPP_MANAGE')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.communication.whatsapp.WhatsAppTemplate>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/whatsapp/test",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppController.java",
+   "handler": "test",
+   "declaredIn": "WhatsAppController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('WHATSAPP:MANAGE','WHATSAPP_MANAGE')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppController.TestRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessageSender.Result>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/webhooks/infobip/whatsapp",
+   "package": "core.communication.whatsapp",
+   "controller": "WhatsAppWebhookController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/whatsapp/WhatsAppWebhookController.java",
+   "handler": "receive",
+   "declaredIn": "WhatsAppWebhookController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "String",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "header",
+     "name": "X-Hub-Signature",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
   }
  ],
  "schemas": {
@@ -1574,6 +1778,234 @@
      "format": "int64"
     }
    }
+  },
+  "WhatsAppMessage": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "messageId": {
+     "type": "string"
+    },
+    "toPhone": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string"
+    },
+    "purpose": {
+     "type": "string"
+    },
+    "templateName": {
+     "type": "string"
+    },
+    "content": {
+     "type": "string"
+    },
+    "reference": {
+     "type": "string"
+    },
+    "statusGroup": {
+     "type": "string"
+    },
+    "statusName": {
+     "type": "string"
+    },
+    "error": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "notificationNumber": {
+     "type": "string"
+    },
+    "statusDescription": {
+     "type": "string"
+    },
+    "sentAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "doneAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "seenAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checkedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "WhatsAppTemplate": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "purpose": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "language": {
+     "type": "string"
+    },
+    "category": {
+     "type": "string"
+    },
+    "bodyText": {
+     "type": "string"
+    },
+    "examples": {
+     "type": "string"
+    },
+    "placeholders": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "status": {
+     "type": "string"
+    },
+    "statusDetail": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "syncedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "footerText": {
+     "type": "string"
+    },
+    "buttonType": {
+     "type": "string"
+    },
+    "buttonText": {
+     "type": "string"
+    },
+    "buttonUrl": {
+     "type": "string"
+    },
+    "buttonExample": {
+     "type": "string"
+    },
+    "codeExpirationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "WhatsAppService.TemplateRequest": {
+   "type": "object",
+   "properties": {
+    "purpose": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "language": {
+     "type": "string"
+    },
+    "category": {
+     "type": "string"
+    },
+    "text": {
+     "type": "string"
+    },
+    "examples": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "footer": {
+     "type": "string"
+    },
+    "button": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.communication.whatsapp.WhatsAppService.Button"
+    },
+    "codeExpirationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "WhatsAppMessageSender.Result": {
+   "type": "object",
+   "properties": {
+    "messageId": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string"
+    },
+    "templateName": {
+     "type": "string"
+    },
+    "statusGroup": {
+     "type": "string"
+    },
+    "statusName": {
+     "type": "string"
+    }
+   }
+  },
+  "WhatsAppController.TestRequest": {
+   "type": "object",
+   "properties": {
+    "phone": {
+     "type": "string"
+    },
+    "purpose": {
+     "type": "string"
+    },
+    "placeholders": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "text": {
+     "type": "string"
+    }
+   }
+  },
+  "WhatsAppService.Button": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "text": {
+     "type": "string"
+    },
+    "url": {
+     "type": "string"
+    },
+    "example": {
+     "type": "string"
+    }
+   }
   }
  },
  "enums": {
@@ -1620,6 +2052,12 @@
   "MemberPurgeService.BatchPurgeReport": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.BatchPurgeReport",
   "MemberPurgeController.BatchPurgeRequest": "com.sni.bokaticowork.core.maintenance.MemberPurgeController.BatchPurgeRequest",
   "MemberPurgeService.MemberCandidate": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.MemberCandidate",
-  "MemberPurgeService.PurgeReport": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.PurgeReport"
+  "MemberPurgeService.PurgeReport": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.PurgeReport",
+  "WhatsAppMessage": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessage",
+  "WhatsAppTemplate": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppTemplate",
+  "WhatsAppService.TemplateRequest": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppService.TemplateRequest",
+  "WhatsAppMessageSender.Result": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessageSender.Result",
+  "WhatsAppController.TestRequest": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppController.TestRequest",
+  "WhatsAppService.Button": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppService.Button"
  }
 }

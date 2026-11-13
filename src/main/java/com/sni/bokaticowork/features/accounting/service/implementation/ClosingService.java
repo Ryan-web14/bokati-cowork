@@ -640,6 +640,104 @@ public class ClosingService {
         return year;
     }
 
+    // ================================================================== balance avant et apres inventaire
+
+    /** Types de piece des ecritures d'inventaire (dotations, depreciations, provisions, constatations d'avance, estimations, impot). */
+    static final String INVENTORY_SOURCES = "FIXED_ASSET_DEPRECIATION,FIXED_ASSET_DEROGATORY,FIXED_ASSET_IMPAIRMENT,IMPAIRMENT_REVERSAL,"
+            + "RECEIVABLE_IMPAIRMENT_ADJUSTED,RECEIVABLE_IMPAIRMENT_RELEASED,RECEIVABLE_IMPAIRMENT_RECLASS,RISK_PROVISION_POSTED,RISK_PROVISION_RELEASED,"
+            + "RISK_PROVISION_RECLASS,STOCK_IMPAIRMENT,TREASURY_IMPAIRMENT,STAFF_ADVANCE_IMPAIRMENT,DEPOSIT_IMPAIRMENT,DISPOSAL_RECEIVABLE_IMPAIRMENT,"
+            + "REVENUE_DEFERRAL_ADJUSTED,EXPENSE_DEFERRAL_ADJUSTED,ACCRUED_REVENUE_POSTED,ACCRUED_EXPENSE_POSTED,TAX_RESULT";
+
+    public record InventoryRow(String accountNumber, String label, BigDecimal beforeDebit, BigDecimal beforeCredit, BigDecimal inventoryDebit,
+                               BigDecimal inventoryCredit, BigDecimal afterDebit, BigDecimal afterCredit) {
+    }
+
+    public record InventoryEntry(String entryNumber, LocalDate date, String journal, String sourceType, String label, BigDecimal amount) {
+    }
+
+    public record InventoryBalance(String fiscalYear, LocalDate date, List<InventoryRow> rows, List<InventoryEntry> entries, BigDecimal resultBefore,
+                                   BigDecimal resultAfter) {
+    }
+
+    /**
+     * Balance avant et apres inventaire : les ecritures d'inventaire sont celles de type cloture,
+     * ou dont le type de piece figure dans {@code accounting.closing.inventory-sources}.
+     */
+    @Transactional(readOnly = true)
+    public InventoryBalance inventoryBalance(String yearCode) {
+        statements.require(FinancialStatementService.READ, "ACCOUNTING_REPORT:READ");
+        AccFiscalYear year = statements.year(yearCode);
+        LocalDate end = year.getEndDate();
+        List<String> sources = AccountingPeriodService.split(settings.text("accounting.closing.inventory-sources", INVENTORY_SOURCES));
+        String inventory = "(e.origin = 'CLOSING' OR e.source_type IN (" + (sources.isEmpty() ? "''"
+                : sources.stream().map(item -> "'" + item.replace("'", "") + "'").collect(Collectors.joining(","))) + "))";
+        Map<String, BigDecimal[]> moves = new TreeMap<>();
+        jdbc.query("SELECT l.account_number, COALESCE(SUM(l.debit), 0), COALESCE(SUM(l.credit), 0) FROM acc_entry_line l JOIN acc_entry e ON e.id = l.entry_id "
+                        + "WHERE e.status IN ('VALIDATED', 'REVERSED') AND e.entry_date BETWEEN ? AND ? AND " + inventory + " GROUP BY l.account_number",
+                rs -> {
+                    moves.put(rs.getString(1), new BigDecimal[]{rs.getBigDecimal(2), rs.getBigDecimal(3)});
+                }, year.getStartDate(), end);
+        Map<String, BigDecimal> after = new TreeMap<>();
+        statements.balances(statements.scopeStart(end), end).forEach((account, amount) -> {
+            if (FinancialStatementService.isBalanceSheet(account)) {
+                after.put(account, amount);
+            }
+        });
+        statements.balances(year.getStartDate(), end).forEach((account, amount) -> {
+            if (FinancialStatementService.isIncome(account)) {
+                after.put(account, amount);
+            }
+        });
+        Map<String, AccAccount> chart = accountRepository.findAllByOrderByNumberAsc().stream()
+                .collect(Collectors.toMap(AccAccount::getNumber, item -> item, (a, b) -> a));
+        java.util.Set<String> numbers = new java.util.TreeSet<>(after.keySet());
+        numbers.addAll(moves.keySet());
+        List<InventoryRow> rows = new ArrayList<>();
+        BigDecimal resultBefore = BigDecimal.ZERO;
+        BigDecimal resultAfter = BigDecimal.ZERO;
+        for (String number : numbers) {
+            if (number.startsWith("9")) {
+                continue;
+            }
+            BigDecimal[] move = moves.getOrDefault(number, new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+            BigDecimal closing = after.getOrDefault(number, BigDecimal.ZERO);
+            BigDecimal opening = closing.subtract(move[0]).add(move[1]);
+            if (closing.signum() == 0 && opening.signum() == 0 && move[0].signum() == 0 && move[1].signum() == 0) {
+                continue;
+            }
+            if (FinancialStatementService.isIncome(number)) {
+                resultBefore = resultBefore.subtract(opening);
+                resultAfter = resultAfter.subtract(closing);
+            }
+            rows.add(new InventoryRow(number, chart.containsKey(number) ? chart.get(number).getLabel() : null, opening.max(BigDecimal.ZERO),
+                    opening.min(BigDecimal.ZERO).negate(), move[0], move[1], closing.max(BigDecimal.ZERO), closing.min(BigDecimal.ZERO).negate()));
+        }
+        List<InventoryEntry> list = new ArrayList<>();
+        jdbc.query("SELECT COALESCE(e.entry_number, e.provisional_number), e.entry_date, e.journal_code, e.source_type, e.label, e.total_debit "
+                        + "FROM acc_entry e WHERE e.status IN ('VALIDATED', 'REVERSED') AND e.entry_date BETWEEN ? AND ? AND " + inventory
+                        + " ORDER BY e.entry_date, e.id",
+                rs -> {
+                    list.add(new InventoryEntry(rs.getString(1), rs.getDate(2).toLocalDate(), rs.getString(3), rs.getString(4), rs.getString(5),
+                            rs.getBigDecimal(6)));
+                }, year.getStartDate(), end);
+        return new InventoryBalance(year.getCode(), end, rows, list, resultBefore, resultAfter);
+    }
+
+    public FixedAssetReportService.Table inventoryTable(InventoryBalance balance) {
+        List<List<Object>> rows = new ArrayList<>();
+        for (InventoryRow row : balance.rows()) {
+            rows.add(List.of(row.accountNumber(), row.label() == null ? "" : row.label(), row.beforeDebit(), row.beforeCredit(), row.inventoryDebit(),
+                    row.inventoryCredit(), row.afterDebit(), row.afterCredit()));
+        }
+        Map<String, Object> totals = new LinkedHashMap<>();
+        totals.put("Resultat avant inventaire", balance.resultBefore());
+        totals.put("Resultat apres inventaire", balance.resultAfter());
+        totals.put("Ecritures d'inventaire", balance.entries().size());
+        return new FixedAssetReportService.Table("balance-inventaire-" + balance.fiscalYear(), "Balance avant et apres inventaire " + balance.fiscalYear(),
+                List.of("Compte", "Libelle", "Avant D", "Avant C", "Inventaire D", "Inventaire C", "Apres D", "Apres C"),
+                List.of(false, false, true, true, true, true, true, true), rows, totals);
+    }
+
     // ================================================================== editions definitives
 
     public static final List<String> FINAL_REPORTS = List.of(FinancialStatementService.BALANCE_SHEET, FinancialStatementService.INCOME_STATEMENT,

@@ -128,4 +128,8 @@ public class NotificationMessage {
     public void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    /** Numero du destinataire (canal WHATSAPP). */
+    @Column(name = "recipient_phone", length = 30)
+    private String recipientPhone;
 }

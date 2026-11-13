@@ -63,6 +63,9 @@ public class BalanceJustificationService {
     private final ObjectMapper objectMapper;
     private final ObjectProvider<DeferralService> deferrals;
     private final ObjectProvider<FixedAssetReportService> fixedAssets;
+    private final ObjectProvider<com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender> mailer;
+    private final ObjectProvider<com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessageSender> whatsappSender;
+    private final ObjectProvider<com.sni.bokaticowork.core.identity.OperatorIdentityService> operator;
 
     // ================================================================== justificatif d'un tiers
 
@@ -388,30 +391,138 @@ public class BalanceJustificationService {
         return confirmations.findAllByOrderByCreatedAtDesc();
     }
 
-    /** Envoi (ou relance) : la lettre est imprimee ou envoyee, le suivi date l'envoi. */
-    public AccConfirmationRequest send(String number, boolean reminder) {
+    public static final List<String> CHANNELS = List.of("EMAIL", "WHATSAPP", "PRINT");
+
+    /** Resultat d'un envoi : la confirmation suivie, le canal, l'adresse ou le numero. */
+    public record SendResult(AccConfirmationRequest confirmation, String channel, String recipient) {
+    }
+
+    /**
+     * Envoi (ou relance) d'une confirmation, sans aucune ouverture vers l'exterieur : la lettre PDF
+     * part par courriel ou par WhatsApp (envoi par l'operateur de messagerie, Infobip), ou la lettre
+     * est imprimee. Le tiers repond par retour de courriel, par WhatsApp ou par courrier ; le comptable
+     * saisit la reponse.
+     *
+     * @param channel   {@code EMAIL} (defaut), {@code WHATSAPP} ou {@code PRINT}
+     * @param recipient adresse ou numero ; a defaut, ceux du tiers
+     */
+    public SendResult send(String number, boolean reminder, String channel, String recipient) {
         statements.require(PREPARE);
         AccConfirmationRequest request = confirmation(number);
+        String mode = StringUtils.hasText(channel) ? channel.trim().toUpperCase(Locale.ROOT) : "EMAIL";
+        if (!CHANNELS.contains(mode)) {
+            throw new BadRequestException("Canal EMAIL, WHATSAPP ou PRINT");
+        }
         if (List.of("AGREED", "DISPUTED", "RECONCILED").contains(request.getStatus())) {
             throw new BadRequestException("La confirmation " + number + " a deja sa reponse");
         }
-        if (reminder) {
-            if (request.getSentAt() == null) {
-                throw new BadRequestException("Envoyez la confirmation avant de la relancer");
+        if (reminder && request.getSentAt() == null) {
+            throw new BadRequestException("Envoyez la confirmation avant de la relancer");
+        }
+        String target = StringUtils.hasText(recipient) ? recipient.trim() : null;
+        if ("EMAIL".equals(mode)) {
+            target = target != null ? target : emailOf(request.getThirdPartyCode())
+                    .orElseThrow(() -> new BadRequestException("Aucune adresse de courriel pour " + request.getThirdPartyCode()
+                            + " : indiquez-la, ou choisissez WhatsApp ou l'impression"));
+            mail(request, target, reminder);
+        } else if ("WHATSAPP".equals(mode)) {
+            target = target != null ? target : whatsappOf(request.getThirdPartyCode())
+                    .orElseThrow(() -> new BadRequestException("Aucun numero WhatsApp pour " + request.getThirdPartyCode()
+                            + " : indiquez-le, ou choisissez le courriel ou l'impression"));
+            if (target.replaceAll("[^0-9]", "").length() < 8) {
+                throw new BadRequestException("Numero WhatsApp invalide : " + target);
             }
+            var sender = whatsappSender.getIfAvailable();
+            if (sender == null) {
+                throw new BadRequestException("L'envoi WhatsApp n'est pas configure (Infobip) : choisissez le courriel ou l'impression");
+            }
+            // Texte seul : le modele approuve BALANCE_CONFIRMATION, ou le texte libre si le parametre l'admet.
+            sender.send(target, "BALANCE_CONFIRMATION", List.of(company(),
+                    request.getBalanceDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                    String.format(Locale.FRANCE, "%,d", request.getBalance().abs().setScale(0, java.math.RoundingMode.HALF_UP).longValue()).replace('\u202f', ' ').replace('\u00a0', ' '),
+                    request.getBalance().signum() >= 0 ? "en notre faveur" : "en votre faveur", request.getNumber()),
+                    message(request, reminder), request.getNumber());
+        }
+        if (reminder) {
             request.setStatus("REMINDED");
             request.setRemindedAt(Instant.now());
         } else {
             request.setStatus("SENT");
             request.setSentAt(Instant.now());
         }
-        return confirmations.save(request);
+        request.setSentChannel(mode);
+        request.setRecipient(target);
+        return new SendResult(confirmations.save(request), mode, target);
+    }
+
+    /** Adresse du tiers : client (facturation d'abord), membre du client, organisation, fournisseur. */
+    Optional<String> emailOf(String thirdParty) {
+        return first(thirdParty, List.of(
+                "SELECT COALESCE(NULLIF(billing_email, ''), email) FROM customer WHERE customer_id = ?",
+                "SELECT m.email FROM member m JOIN customer c ON c.id = m.customer_id WHERE c.customer_id = ?",
+                "SELECT email FROM business_entity WHERE entity_code = ?",
+                "SELECT email FROM acc_supplier WHERE code = ?",
+                "SELECT email FROM inventory_supplier WHERE supplier_code = ?"));
+    }
+
+    /** Numero WhatsApp du tiers : client, puis membre du client. */
+    Optional<String> whatsappOf(String thirdParty) {
+        return first(thirdParty, List.of(
+                "SELECT whatsapp_phone FROM customer WHERE customer_id = ?",
+                "SELECT m.whatsapp_phone FROM member m JOIN customer c ON c.id = m.customer_id WHERE c.customer_id = ?"));
+    }
+
+    private Optional<String> first(String thirdParty, List<String> queries) {
+        for (String query : queries) {
+            Optional<String> found = jdbc.queryForList(query, String.class, thirdParty).stream().filter(StringUtils::hasText).findFirst();
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private String company() {
+        var service = operator.getIfAvailable();
+        return service == null ? com.sni.bokaticowork.core.identity.OperatorIdentity.DEFAULT_NAME : service.current().name();
+    }
+
+    /** Texte de la demande, commun au courriel et a WhatsApp. */
+    private String message(AccConfirmationRequest request, boolean reminder) {
+        return (reminder ? "Relance. " : "") + "Confirmation de solde " + request.getNumber() + " : dans nos livres, le solde de votre compte au "
+                + request.getBalanceDate() + " est de " + plain(request.getBalance()) + " XAF " + (request.getBalance().signum() >= 0 ? "en notre faveur" : "en votre faveur")
+                + ". Merci de nous confirmer ce solde, ou de nous indiquer le votre avec le detail de l'ecart, en rappelant la reference "
+                + request.getNumber() + ".";
+    }
+
+    private void mail(AccConfirmationRequest request, String recipient, boolean reminder) {
+        var sender = mailer.getIfAvailable();
+        if (sender == null) {
+            throw new BadRequestException("L'envoi de courriels n'est pas disponible");
+        }
+        String subject = (reminder ? "Relance : " : "") + "confirmation de solde " + request.getNumber();
+        String body = "<p>Madame, Monsieur,</p><p>" + message(request, reminder) + "</p><p>Le detail des pieces ouvertes et le coupon-reponse sont joints. "
+                + "Vous pouvez repondre a ce courriel.</p><p>Avec nos remerciements.</p>";
+        try {
+            FixedAssetReportService renderer = fixedAssets.getIfAvailable();
+            byte[] pdf = renderer == null ? null : renderer.pdf(letterTable(request));
+            if (pdf == null) {
+                sender.sendHtmlEmail(recipient, subject, body);
+            } else {
+                sender.sendHtmlEmailWithPdfAttachment(recipient, subject, body, request.getNumber() + ".pdf", pdf);
+            }
+        } catch (Exception exception) {
+            throw new BadRequestException("Courriel de confirmation non envoye a " + recipient + " : " + exception.getMessage());
+        }
     }
 
     /** Reponse du tiers : conforme si le solde confirme egale le solde envoye, sinon en ecart. */
     public AccConfirmationRequest reply(String number, ReplyRequest reply) {
         statements.require(PREPARE);
-        AccConfirmationRequest request = confirmation(number);
+        return record(confirmation(number), reply);
+    }
+
+    private AccConfirmationRequest record(AccConfirmationRequest request, ReplyRequest reply) {
         if (reply == null || reply.confirmedBalance() == null) {
             throw new BadRequestException("Indiquez le solde confirme par le tiers");
         }
@@ -446,7 +557,10 @@ public class BalanceJustificationService {
     @Transactional(readOnly = true)
     public FixedAssetReportService.Table letter(String number) {
         statements.require(FinancialStatementService.READ, PREPARE);
-        AccConfirmationRequest request = confirmation(number);
+        return letterTable(confirmation(number));
+    }
+
+    private FixedAssetReportService.Table letterTable(AccConfirmationRequest request) {
         Justification justification = compute(request.getAccountNumber(), request.getThirdPartyCode(), request.getBalanceDate());
         List<List<Object>> rows = new ArrayList<>();
         for (OpenItem item : justification.items()) {

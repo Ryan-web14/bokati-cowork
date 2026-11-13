@@ -151,7 +151,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `email` | string (email) | oui | longueur min `1` |
 | `password` | texte | oui | longueur min `1` |
-| `space` | texte | non | `BACK_OFFICE` depuis l'écran du back-office : refuse un compte sans rôle d'équipe (`403 BACK_OFFICE_ACCESS_DENIED`) ; absent depuis le portail client |
+| `space` | texte |  |  |
 
 <a id="m-CurrentUserResponse"></a>
 #### CurrentUserResponse

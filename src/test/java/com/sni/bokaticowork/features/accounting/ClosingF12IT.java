@@ -136,7 +136,8 @@ class ClosingF12IT extends PostgresIntegrationTestBase {
         post("2020-05-01", "Loyer " + code, line("622", null, 300_000, 0, null), line("401", supplier, 0, 300_000, "LOY-" + code));
         // Avance d'un client sans facture : client crediteur, reclasse au passif.
         post("2020-06-01", "Avance " + code, line("521", null, 100_000, 0, null), line("411", advance, 0, 100_000, "AV-" + code));
-        post("2020-12-31", "Dotation " + code, line("6813", null, 480_000, 0, null), line("2844", null, 0, 480_000, null));
+        entries.create(new AccountingRequests.Entry("OD", LocalDate.parse("2020-12-31"), null, "Dotation " + code, "FIXED_ASSET_DEPRECIATION", code,
+                List.of(line("6813", null, 480_000, 0, null), line("2844", null, 0, 480_000, null)), true));
         letter("411", customer, lineId("Facture A " + code, "411"), lineId("Reglement A " + code, "411"));
         // Reglement de la facture B en 2021, lettre avant la cloture : le lettrage passera sur la ligne d'a-nouveau.
         post("2021-01-15", "Reglement B " + code, line("521", null, 590_000, 0, null), line("411", customer, 0, 590_000, "FAC-B-" + code));
@@ -175,6 +176,21 @@ class ClosingF12IT extends PostgresIntegrationTestBase {
         assertThat(flows.checks()).allMatch(FinancialStatementService.Check::ok);
         assertThat(statements.table(balance).rows()).isNotEmpty();
 
+        // Balance avant et apres inventaire : la dotation est une ecriture d'inventaire.
+        ClosingService.InventoryBalance inventory = closing.inventoryBalance("2020");
+        assertThat(inventory.resultBefore()).isEqualByComparingTo("1200000");
+        assertThat(inventory.resultAfter()).isEqualByComparingTo("720000");
+        assertThat(inventory.entries()).singleElement().satisfies(item -> assertThat(item.sourceType()).isEqualTo("FIXED_ASSET_DEPRECIATION"));
+
+        // Code de flux porte par la piece : la tresorerie de l'achat du mobilier alimente directement FG.
+        String furniture = jdbc.queryForObject("SELECT entry_number FROM acc_entry WHERE label = 'Mobilier' AND fiscal_year_code = '2020' "
+                + "ORDER BY id DESC LIMIT 1", String.class);
+        statements.setEntryFlowCode(furniture, "FG");
+        assertThatThrownBy(() -> statements.setEntryFlowCode(furniture, "ZZ")).isInstanceOf(BadRequestException.class);
+        FinancialStatementService.Statement coded = statements.cashFlow("2020");
+        assertThat(coded.net("FG")).isEqualByComparingTo("2400000");
+        assertThat(coded.checks()).allMatch(FinancialStatementService.Check::ok);
+
         // Notes annexes : montants repris, texte redige puis valide.
         assertThat(closing.notes("2020")).anyMatch(note -> note.code().equals("7") && note.total().compareTo(new BigDecimal("490000")) == 0);
         closing.saveNote("2020", "2", new ClosingService.NoteRequest("Comptes etablis selon le SYSCOHADA revise, systeme normal.", false));
@@ -202,7 +218,12 @@ class ClosingF12IT extends PostgresIntegrationTestBase {
         assertThat(justifications.select(new BalanceJustificationService.SelectionRequest("411", yearEnd, 20, null, null))).isEmpty();
         var invoiced = requests.stream().filter(item -> customer.equals(item.getThirdPartyCode())).findFirst().orElseThrow();
         var advanced = requests.stream().filter(item -> advance.equals(item.getThirdPartyCode())).findFirst().orElseThrow();
-        justifications.send(invoiced.getNumber(), false);
+        // Envoi sans ouverture vers l'exterieur : impression ; WhatsApp refuse tant qu'Infobip n'est pas configure ; courriel refuse sans adresse.
+        assertThat(justifications.send(invoiced.getNumber(), false, "PRINT", null).confirmation().getStatus()).isEqualTo("SENT");
+        assertThat(justifications.send(invoiced.getNumber(), true, "PRINT", null).confirmation().getSentChannel()).isEqualTo("PRINT");
+        assertThatThrownBy(() -> justifications.send(advanced.getNumber(), false, "WHATSAPP", "+242 06 123 45 67"))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("pas configure");
+        assertThatThrownBy(() -> justifications.send(advanced.getNumber(), false, "EMAIL", null)).isInstanceOf(BadRequestException.class);
         assertThat(justifications.reply(invoiced.getNumber(), new BalanceJustificationService.ReplyRequest("MAIL", new BigDecimal("590000"), null))
                 .getStatus()).isEqualTo("AGREED");
         assertThat(justifications.reply(advanced.getNumber(), new BalanceJustificationService.ReplyRequest("PORTAL", new BigDecimal("-90000"), "Avance de 90 000"))
