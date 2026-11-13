@@ -35,6 +35,25 @@ public class BillingLifecycleSupport {
         }
     }
 
+    /**
+     * Un avoir se fait sur une facture, une rectificative ou une note de debit (et une proforma, tant
+     * qu'elle est encaissable). A distinguer de {@link #ensureCanPay}, reserve aux encaissements :
+     * l'annulation d'une rectificative payee echouait sur « Payments can only be allocated to invoices ».
+     */
+    public void ensureCanCredit(BillingDocument document) {
+        if (document.getDocumentType() != BillingDocumentType.INVOICE
+                && document.getDocumentType() != BillingDocumentType.CORRECTIVE_INVOICE
+                && document.getDocumentType() != BillingDocumentType.DEBIT_NOTE
+                && document.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+            throw new BadRequestException("Un avoir se fait sur une facture, une rectificative ou une note de débit");
+        }
+        if (document.getStatus() == BillingDocumentStatus.CANCELLED
+                || document.getStatus() == BillingDocumentStatus.VOIDED
+                || document.getStatus() == BillingDocumentStatus.REFUNDED) {
+            throw new BadRequestException("Aucun avoir possible sur un document au statut " + document.getStatus());
+        }
+    }
+
     public void ensureQuoteCanConvert(BillingDocument quote) {
         if (quote.getDocumentType() != BillingDocumentType.QUOTE) {
             throw new BadRequestException("Billing document is not a quote");

@@ -88,4 +88,8 @@ public class BillingDocumentSignature {
     public void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    /** Revision du devis presentee au signataire : une revision ulterieure rend la demande caduque. */
+    @Column(name = "document_revision")
+    private Integer documentRevision;
 }

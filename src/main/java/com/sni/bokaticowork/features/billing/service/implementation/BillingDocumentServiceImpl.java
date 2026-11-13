@@ -390,6 +390,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             if (!remainingLines.isEmpty()) {
                 List<CreateBillingDocumentLineRequest> lineRequests = remainingLines.stream()
                         .map(this::toCreateLineRequest).toList();
+                // Memes conditions qu'a la creation : une organisation exoneree reste facturee hors TVA,
+                // y compris sur les lignes ajoutees par cette mise a jour.
+                if (customerSnapshotResolver.organizationOf(document.getCustomerType(), document.getCustomerCode())
+                        .map(organization -> organization.vatExempt()).orElse(false)) {
+                    lineRequests = calculationService.exempted(lineRequests);
+                }
                 // Sans remises dans la demande, celles en base restent · le recalcul les compte,
                 // sinon le total ignorait des remises toujours affichees sur le document.
                 List<CreateBillingDocumentDiscountRequest> effectiveDiscounts = request.discounts() != null
@@ -1356,7 +1362,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocumentResponse createCreditNote(String invoiceNumber, CreateCreditNoteRequest request) {
         BillingDocument invoice = serviceByNumber(invoiceNumber);
-        lifecycleSupport.ensureCanPay(invoice);
+        lifecycleSupport.ensureCanCredit(invoice);
         BigDecimal amount = request.amount() == null ? invoice.getBalanceDue() : request.amount();
         if (amount.signum() <= 0 || amount.compareTo(invoice.getTotalAmount()) > 0) {
             throw new BadRequestException("Invalid credit note amount");

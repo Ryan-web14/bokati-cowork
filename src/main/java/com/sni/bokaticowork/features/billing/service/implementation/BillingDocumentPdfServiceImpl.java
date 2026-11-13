@@ -673,6 +673,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
                 case PENDING -> "En attente de signature";
                 case SIGNED -> "Signé";
                 case EXPIRED -> "Expiré";
+                case CANCELLED -> "Annulée (devis modifié ou sorti du circuit)";
             };
         }
 

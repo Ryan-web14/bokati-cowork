@@ -55,6 +55,19 @@ public class BillingCustomerSnapshotResolver {
         );
     }
 
+    /**
+     * Conditions de l'organisation d'un client deja facture (exoneration, encours), pour qu'un
+     * recalcul applique les memes regles que la creation. Vide si le client n'est plus trouve.
+     */
+    public java.util.Optional<com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms> organizationOf(String customerType,
+                                                                                                                                   String customerCode) {
+        try {
+            return java.util.Optional.ofNullable(resolveKnownCustomer(customerType, customerCode).organization());
+        } catch (RuntimeException exception) {
+            return java.util.Optional.empty();
+        }
+    }
+
     private CustomerSnapshot resolveKnownCustomer(String customerType, String customerCode) {
         if (!StringUtils.hasText(customerType) || !StringUtils.hasText(customerCode)) {
             return CustomerSnapshot.empty();

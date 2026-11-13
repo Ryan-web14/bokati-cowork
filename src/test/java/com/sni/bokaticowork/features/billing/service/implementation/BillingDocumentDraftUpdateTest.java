@@ -62,6 +62,7 @@ class BillingDocumentDraftUpdateTest {
     @Mock private com.sni.bokaticowork.features.billing.service.support.BillingDocumentVersionService versionService;
     @Mock private com.sni.bokaticowork.features.billing.service.support.BillingEventWriter eventWriter;
     @Mock private com.sni.bokaticowork.features.billing.mapper.interfaces.BillingDocumentMapper mapper;
+    @Mock private com.sni.bokaticowork.features.billing.service.support.BillingCustomerSnapshotResolver customerSnapshotResolver;
 
     @InjectMocks
     private BillingDocumentServiceImpl service;
@@ -96,6 +97,7 @@ class BillingDocumentDraftUpdateTest {
                 .taxable(true)
                 .build();
         when(documentRepository.findByDocumentNumber("INV-100")).thenReturn(Optional.of(document));
+        when(customerSnapshotResolver.organizationOf(any(), any())).thenReturn(Optional.empty());
         when(documentRepository.save(any(BillingDocument.class))).thenAnswer(i -> i.getArgument(0));
         when(lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document)).thenReturn(List.of(line));
 
@@ -144,6 +146,27 @@ class BillingDocumentDraftUpdateTest {
         // Le montant enregistre de la remise suit le recalcul
         assertThat(stored.getAmount()).isEqualByComparingTo("10000");
         verify(lineRepository, never()).save(any(BillingDocumentLine.class));
+    }
+
+    @Test
+    void shouldKeepAnExemptOrganizationOutOfVatWhenTheDraftIsRecalculated() {
+        // Lot B0 : l'exoneration n'etait appliquee qu'a la creation ; une ligne ajoutee a la mise a
+        // jour d'une facture d'organisation exoneree prenait la TVA.
+        var terms = mock(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms.class);
+        when(terms.vatExempt()).thenReturn(true);
+        when(customerSnapshotResolver.organizationOf(any(), any())).thenReturn(Optional.of(terms));
+        when(calculationService.exempted(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.update("INV-100", request(null, null));
+
+        verify(calculationService).exempted(anyList());
+    }
+
+    @Test
+    void shouldNotExemptAnOrdinaryCustomer() {
+        service.update("INV-100", request(null, null));
+
+        verify(calculationService, never()).exempted(anyList());
     }
 
     private static UpdateBillingDocumentRequest request(List<CreateBillingDocumentDiscountRequest> discounts,
