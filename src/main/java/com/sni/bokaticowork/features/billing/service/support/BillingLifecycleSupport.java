@@ -37,8 +37,8 @@ public class BillingLifecycleSupport {
     }
 
     public void ensureCanPay(BillingDocument document) {
-        if (document.getDocumentType() != BillingDocumentType.INVOICE
-                && document.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+        // Lot B5 : une proforma ne s'encaisse pas directement ; son paiement devient un acompte du devis.
+        if (document.getDocumentType() != BillingDocumentType.INVOICE) {
             throw new BadRequestException("Payments can only be allocated to invoices");
         }
         if (document.getStatus() == BillingDocumentStatus.CANCELLED
@@ -55,8 +55,7 @@ public class BillingLifecycleSupport {
     public void ensureCanCredit(BillingDocument document) {
         if (document.getDocumentType() != BillingDocumentType.INVOICE
                 && document.getDocumentType() != BillingDocumentType.CORRECTIVE_INVOICE
-                && document.getDocumentType() != BillingDocumentType.DEBIT_NOTE
-                && document.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+                && document.getDocumentType() != BillingDocumentType.DEBIT_NOTE) {
             throw new BadRequestException("Un avoir se fait sur une facture, une rectificative ou une note de débit");
         }
         if (document.getStatus() == BillingDocumentStatus.CANCELLED
@@ -89,8 +88,8 @@ public class BillingLifecycleSupport {
         if (document.getDocumentType() != BillingDocumentType.INVOICE
                 && document.getDocumentType() != BillingDocumentType.CREDIT_NOTE
                 && document.getDocumentType() != BillingDocumentType.CORRECTIVE_INVOICE
-                && document.getDocumentType() != BillingDocumentType.DEBIT_NOTE
-                && document.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+                && document.getDocumentType() != BillingDocumentType.DEBIT_NOTE) {
+            // Lot B5 : une proforma n'est pas une piece fiscale, elle ne se scelle pas.
             throw new BadRequestException("Seules les factures, avoirs, rectificatives et notes de débit peuvent être validés");
         }
         if (Boolean.TRUE.equals(document.getLocked())) {

@@ -272,19 +272,19 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     @Query(nativeQuery = true, value = """
             SELECT
               COALESCE(SUM(total_amount) FILTER (
-                  WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+                  WHERE document_type IN ('INVOICE')
                     AND status NOT IN ('DRAFT','CANCELLED','VOIDED','REJECTED','EXPIRED','CONVERTED')), 0),
               COALESCE(SUM(paid_amount) FILTER (
-                  WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+                  WHERE document_type IN ('INVOICE')
                     AND status NOT IN ('DRAFT','CANCELLED','VOIDED','REJECTED','EXPIRED','CONVERTED')), 0),
               COALESCE(SUM(balance_due) FILTER (
-                  WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+                  WHERE document_type IN ('INVOICE')
                     AND status NOT IN ('DRAFT','CANCELLED','VOIDED','REJECTED','EXPIRED','CONVERTED')
                     AND status NOT IN ('PAID','REFUNDED','WRITTEN_OFF')), 0),
               COALESCE(SUM(total_amount) FILTER (
                   WHERE document_type = 'CREDIT_NOTE' AND status = 'VALIDATED'), 0),
               COALESCE(SUM(total_amount) FILTER (
-                  WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE') AND status = 'DRAFT'), 0)
+                  WHERE document_type IN ('INVOICE') AND status = 'DRAFT'), 0)
             FROM billing_document
             WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
               AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
@@ -297,7 +297,7 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
             FROM billing_document
             WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
               AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
-              AND document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+              AND document_type IN ('INVOICE')
               AND status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
               AND balance_due > 0
             ORDER BY created_at ASC
@@ -311,7 +311,7 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                     SELECT DISTINCT bd.*
                     FROM billing_document bd
                     LEFT JOIN billing_document_line bdl ON bdl.document_id = bd.id
-                    WHERE bd.document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+                    WHERE bd.document_type IN ('INVOICE')
                       AND bd.status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
                       AND bd.balance_due > 0
                       AND (:documentType IS NULL OR bd.document_type = CAST(:documentType AS VARCHAR))
@@ -336,7 +336,7 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                     SELECT COUNT(DISTINCT bd.id)
                     FROM billing_document bd
                     LEFT JOIN billing_document_line bdl ON bdl.document_id = bd.id
-                    WHERE bd.document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+                    WHERE bd.document_type IN ('INVOICE')
                       AND bd.status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
                       AND bd.balance_due > 0
                       AND (:documentType IS NULL OR bd.document_type = CAST(:documentType AS VARCHAR))
@@ -368,7 +368,7 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM billing_document
-            WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+            WHERE document_type IN ('INVOICE')
               AND status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
               AND balance_due > 0
               AND (:customerType IS NULL OR UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR))))
@@ -397,7 +397,7 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     @Query(nativeQuery = true, value = """
             UPDATE billing_document
             SET status = 'OVERDUE', updated_at = NOW()
-            WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+            WHERE document_type IN ('INVOICE')
               AND status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID')
               AND due_date IS NOT NULL
               AND due_date < CURRENT_DATE
@@ -449,7 +449,7 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM billing_document
-            WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+            WHERE document_type IN ('INVOICE')
               AND status = 'OVERDUE'
               AND balance_due > 0
               AND due_date IS NOT NULL
@@ -475,7 +475,7 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM billing_document
-            WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+            WHERE document_type IN ('INVOICE')
               AND status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
               AND balance_due > 0
               AND due_date IS NOT NULL
@@ -493,4 +493,14 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
 
     /** Lot B11 : pieces d'une affaire. */
     java.util.List<com.sni.bokaticowork.features.billing.model.BillingDocument> findByDealCodeOrderByCreatedAtAsc(String dealCode);
+
+    /** Lot B5 : proformas envoyees dont la date de validite est passee. */
+    @Query(nativeQuery = true, value = """
+            UPDATE billing_document
+            SET status = 'EXPIRED', updated_at = NOW()
+            WHERE document_type = 'PROFORMA_INVOICE' AND deleted_at IS NULL
+              AND status IN ('ISSUED', 'SENT') AND due_date IS NOT NULL AND due_date < CURRENT_DATE
+            """)
+    @org.springframework.data.jpa.repository.Modifying
+    int expireProformas();
 }

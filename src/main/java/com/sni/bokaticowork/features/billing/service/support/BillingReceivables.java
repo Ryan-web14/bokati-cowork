@@ -28,9 +28,11 @@ import java.util.Set;
  */
 public final class BillingReceivables {
 
-    /** Les types qui peuvent constituer une creance · un avoir n'en est pas un. */
-    public static final Set<BillingDocumentType> RECEIVABLE_TYPES =
-            EnumSet.of(BillingDocumentType.INVOICE, BillingDocumentType.PROFORMA_INVOICE);
+    /**
+     * Les types qui peuvent constituer une creance · un avoir n'en est pas un, une proforma non plus
+     * (lot B5 : document sans valeur fiscale, son paiement devient un acompte du devis).
+     */
+    public static final Set<BillingDocumentType> RECEIVABLE_TYPES = EnumSet.of(BillingDocumentType.INVOICE);
 
     /**
      * Les etats ou rien n'est reclamable · avant emission, ou apres abandon.

@@ -564,6 +564,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request) {
         BillingDocument document = serviceByNumber(documentNumber);
         lifecycleSupport.ensureNotLocked(document);
+        if (document.getDocumentType() == BillingDocumentType.PROFORMA_INVOICE && document.getStatus() != BillingDocumentStatus.DRAFT) {
+            return editProforma(document, request);
+        }
         if (document.getDocumentType() == BillingDocumentType.QUOTE && document.getStatus() != BillingDocumentStatus.DRAFT
                 && NEGOTIABLE_QUOTE.contains(document.getStatus())) {
             // Lot B2 (ecart E9) : un devis envoye, vu, en negociation ou accepte se modifie en entier,
@@ -922,6 +925,98 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         eventWriter.write(result, "INVOICE_REPLACED_BY_CORRECTIVE", java.util.Map.of("originalDocumentNumber", original.getDocumentNumber(),
                 "reason", reason));
         return result;
+    }
+
+    // ------------------------------------------------------------------ lot B5 : proforma
+
+    /** D9 : une proforma se modifie quel que soit son statut, par versions, sans effet sur le devis issu d'elle. */
+    private BillingDocumentResponse editProforma(BillingDocument proforma, UpdateBillingDocumentRequest request) {
+        versionService.archive(proforma, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(proforma), "PROFORMA_EDIT");
+        stampAuthor(proforma, false);
+        if (request.dueDate() != null) {
+            proforma.setDueDate(request.dueDate());
+        }
+        if (StringUtils.hasText(request.terms())) {
+            proforma.setTerms(request.terms().trim());
+        }
+        if (StringUtils.hasText(request.paymentInstructions())) {
+            proforma.setPaymentInstructions(request.paymentInstructions().trim());
+        }
+        if (request.internalNotes() != null) {
+            proforma.setInternalNotes(StringUtils.hasText(request.internalNotes()) ? request.internalNotes().trim() : null);
+        }
+        applyFullEdit(proforma, request);
+        if (proforma.getStatus() == BillingDocumentStatus.EXPIRED && proforma.getDueDate() != null
+                && !proforma.getDueDate().isBefore(LocalDate.now())) {
+            proforma.setStatus(BillingDocumentStatus.SENT);
+        }
+        BillingDocument saved = documentRepository.save(proforma);
+        eventWriter.write(saved, "PROFORMA_UPDATED", java.util.Map.of("revision", versionService.currentRevision(saved)));
+        return mapper.toResponse(saved);
+    }
+
+    @Override
+    public BillingDocumentResponse proformaFromQuote(String quoteNumber) {
+        BillingDocument quote = quote(quoteNumber);
+        BillingDocumentResponse proforma = create(copyRequest(quote, BillingDocumentType.PROFORMA_INVOICE, "QUOTE"));
+        eventWriter.write(quote, "QUOTE_PROFORMA_CREATED", java.util.Map.of("proformaNumber", proforma.documentNumber()));
+        return proforma;
+    }
+
+    /**
+     * A l'accord du client (ou a son paiement) : la proforma devient un devis accepte, memes lignes,
+     * lien garde ; la proforma passe en CONVERTED et reste modifiable sans effet sur le devis.
+     */
+    @Override
+    public BillingDocumentResponse proformaToQuote(String proformaNumber) {
+        BillingDocument proforma = serviceByNumber(proformaNumber);
+        if (proforma.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+            throw new BadRequestException("Le document " + proformaNumber + " n'est pas une proforma");
+        }
+        if (StringUtils.hasText(proforma.getConvertedToDocumentNumber())) {
+            throw new BadRequestException("Cette proforma est déjà transformée en devis " + proforma.getConvertedToDocumentNumber());
+        }
+        BillingDocumentResponse created = create(copyRequest(proforma, BillingDocumentType.QUOTE, "PROFORMA"));
+        issue(created.documentNumber(), null);
+        BillingDocumentResponse quote = acceptQuote(created.documentNumber());
+        proforma.setConvertedToDocumentNumber(quote.documentNumber());
+        proforma.setStatus(BillingDocumentStatus.CONVERTED);
+        documentRepository.save(proforma);
+        eventWriter.write(proforma, "PROFORMA_CONVERTED_TO_QUOTE", java.util.Map.of("quoteNumber", quote.documentNumber()));
+        return get(quote.documentNumber());
+    }
+
+    /**
+     * D2 : un paiement recu sur une proforma devient un acompte du devis issu d'elle (cree et accepte
+     * au besoin). Le paiement s'impute sur la facture d'acompte, qui est rendue a l'appelant.
+     */
+    private BillingDocument proformaPayment(BillingDocument proforma, BigDecimal amount) {
+        String quoteNumber = StringUtils.hasText(proforma.getConvertedToDocumentNumber()) ? proforma.getConvertedToDocumentNumber()
+                : proformaToQuote(proforma.getDocumentNumber()).documentNumber();
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService == null) {
+            throw new BadRequestException("Une proforma ne s'encaisse pas directement");
+        }
+        List<com.sni.bokaticowork.features.billing.dto.response.DepositResponse> planned = depositService.plan(quoteNumber,
+                new com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest(List.of(
+                        new com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest.Deposit("Paiement reçu sur la proforma "
+                                + proforma.getDocumentNumber(), com.sni.bokaticowork.features.billing.enums.BillingDepositMode.AMOUNT,
+                                amount, null, LocalDate.now(), true))));
+        return applyPayment(planned.get(0).depositInvoiceNumber(), amount);
+    }
+
+    /** Copie d'une piece commerciale (devis, proforma) en une autre, lien garde par la provenance. */
+    private CreateBillingDocumentRequest copyRequest(BillingDocument source, BillingDocumentType type, String sourceType) {
+        BillingDocumentResponse view = mapper.toResponse(source);
+        return new CreateBillingDocumentRequest(type, source.getCustomerType(), source.getCustomerCode(), source.getCustomerName(),
+                source.getCustomerEmail(), source.getCustomerPhone(), source.getBillingAddressJson(), sourceType, source.getDocumentNumber(),
+                source.getTitle(), source.getDescription(), source.getTerms(), source.getCurrency(), LocalDate.now(), source.getDueDate(),
+                source.getMetadataJson(), view.lines().stream().map(this::toCreateLineRequest).toList(),
+                view.discounts().stream().map(this::toCreateDiscountRequest).toList(),
+                view.clauses().stream().map(this::toCreateClauseRequest).toList(), source.getPaymentReference(), source.getPaymentInstructions(),
+                source.getBankDetailsJson(), null, source.getCustomerReference(), source.getPoNumber(), source.getProjectCode(),
+                source.getSalespersonCode(), source.getDeliveryAddressJson(), source.getLanguage(), source.getExchangeRate(), null,
+                source.getCompanyCustomerCode() == null ? CreateBillingDocumentRequest.NO_COMPANY : source.getCompanyCustomerCode());
     }
 
     private long revisionValidityDays() {
@@ -1649,7 +1744,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                     null, "reason=" + override);
         }
 
-        document.setStatus(document.getDocumentType() == BillingDocumentType.QUOTE ? BillingDocumentStatus.SENT : BillingDocumentStatus.ISSUED);
+        document.setStatus(document.getDocumentType() == BillingDocumentType.QUOTE || document.getDocumentType() == BillingDocumentType.PROFORMA_INVOICE
+                ? BillingDocumentStatus.SENT : BillingDocumentStatus.ISSUED);
         document.setIssuedAt(Instant.now());
         // Identite du vendeur figee a l'emission · la reimpression reste identique meme si la
         // fiche exploitant change ensuite.
@@ -1684,7 +1780,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         lifecycleSupport.ensureCanSend(document);
         // Lot B1 : l'envoi se trace (date, version transmise) sans ecraser le statut ; une facture
         // payee envoyee reste PAID. Seul un devis emis passe a SENT.
-        if (document.getDocumentType() == BillingDocumentType.QUOTE && document.getStatus() == BillingDocumentStatus.ISSUED) {
+        if ((document.getDocumentType() == BillingDocumentType.QUOTE || document.getDocumentType() == BillingDocumentType.PROFORMA_INVOICE)
+                && document.getStatus() == BillingDocumentStatus.ISSUED) {
             document.setStatus(BillingDocumentStatus.SENT);
         }
         document.setSentAt(Instant.now());
@@ -2179,6 +2276,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             documentRepository.findExpiringQuoteNumbers().forEach(number -> documentRepository.findByDocumentNumber(number)
                     .ifPresent(quote -> depositService.dropUnpaidQuoteDeposits(quote, "Devis expiré")));
         }
+        documentRepository.expireProformas();
         return documentRepository.expireQuotes();
     }
 
@@ -2285,6 +2383,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocument applyPayment(String documentNumber, BigDecimal amount) {
         if (amount == null || amount.signum() <= 0) {
             throw new BadRequestException("Payment amount must be positive");
+        }
+        BillingDocument target = serviceByNumber(documentNumber);
+        if (target.getDocumentType() == BillingDocumentType.PROFORMA_INVOICE) {
+            return proformaPayment(target, amount);
         }
         BillingDocument document = lockedByNumber(documentNumber);
         lifecycleSupport.ensureCanPay(document);
@@ -2419,7 +2521,6 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             return false;
         }
         if (document.getDocumentType() != BillingDocumentType.INVOICE
-                && document.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE
                 && document.getDocumentType() != BillingDocumentType.CORRECTIVE_INVOICE) {
             return false;
         }
@@ -2532,9 +2633,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (!creditNote.getCustomerCode().equals(targetInvoice.getCustomerCode())) {
             throw new BadRequestException("L'avoir et la facture cible doivent appartenir au même client");
         }
-        if (targetInvoice.getDocumentType() != BillingDocumentType.INVOICE
-                && targetInvoice.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
-            throw new BadRequestException("La cible doit être une facture ou une facture proforma");
+        if (targetInvoice.getDocumentType() != BillingDocumentType.INVOICE) {
+            throw new BadRequestException("La cible doit être une facture");
         }
 
         applyPayment(targetInvoiceNumber, creditNote.getTotalAmount());
@@ -2558,8 +2658,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                                                            CreateManualBillingDocumentRequest request) {
         BillingDocument original = serviceByNumber(originalInvoiceNumber);
 
-        if (original.getDocumentType() != BillingDocumentType.INVOICE
-                && original.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+        if (original.getDocumentType() != BillingDocumentType.INVOICE) {
             throw new BadRequestException("Seules les factures peuvent faire l'objet d'une facture rectificative");
         }
         if (!Boolean.TRUE.equals(original.getLocked())) {

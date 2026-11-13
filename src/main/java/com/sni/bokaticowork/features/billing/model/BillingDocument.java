@@ -422,4 +422,8 @@ public class BillingDocument {
     /** Lot B11 : affaire a laquelle la piece appartient. */
     @Column(name = "deal_code", length = 40)
     private String dealCode;
+
+    /** Lot B5 : devis issu de cette proforma. */
+    @Column(name = "converted_to_document_number", length = 60)
+    private String convertedToDocumentNumber;
 }

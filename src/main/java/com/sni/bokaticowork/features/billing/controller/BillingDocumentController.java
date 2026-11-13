@@ -215,6 +215,34 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.send(documentNumber));
     }
 
+    /** Lot B5 : proforma creee directement (document sans valeur fiscale). */
+    @PostMapping("/proformas")
+    public ResponseEntity<BillingDocumentResponse> createProforma(
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest request) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(billingDocumentService.create(
+                new com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest(
+                        com.sni.bokaticowork.features.billing.enums.BillingDocumentType.PROFORMA_INVOICE, request.customerType(),
+                        request.customerCode(), request.customerName(), request.customerEmail(), request.customerPhone(),
+                        request.billingAddressJson(), request.sourceType(), request.sourceCode(), request.title(), request.description(),
+                        request.terms(), request.currency(), request.issueDate(), request.dueDate(), request.metadataJson(), request.lines(),
+                        request.discounts(), request.clauses(), request.paymentReference(), request.paymentInstructions(),
+                        request.bankDetailsJson(), null, request.customerReference(), request.poNumber(), request.projectCode(),
+                        request.salespersonCode(), request.deliveryAddressJson(), request.language(), request.exchangeRate(), null,
+                        request.companyCustomerCode())));
+    }
+
+    /** Lot B5 : proforma depuis un devis. */
+    @PostMapping("/quotes/{quoteNumber}/proforma")
+    public ResponseEntity<BillingDocumentResponse> proformaFromQuote(@PathVariable String quoteNumber) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(billingDocumentService.proformaFromQuote(quoteNumber));
+    }
+
+    /** Lot B5 : la proforma acceptee devient un devis accepte. */
+    @PostMapping("/proformas/{proformaNumber}/to-quote")
+    public ResponseEntity<BillingDocumentResponse> proformaToQuote(@PathVariable String proformaNumber) {
+        return ResponseEntity.ok(billingDocumentService.proformaToQuote(proformaNumber));
+    }
+
     /** Lot B2 : revision d'un devis (prix, quantites, remises, lignes) avec motif et origine. */
     @PutMapping("/quotes/{quoteNumber}")
     public ResponseEntity<BillingDocumentResponse> reviseQuote(@PathVariable String quoteNumber,
