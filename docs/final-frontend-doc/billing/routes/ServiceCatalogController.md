@@ -18,6 +18,7 @@ Module [billing](../README.md) · 14 route(s).
 | --- | --- | --- | --- | --- |
 | `active` | requête | `Boolean` |  |  |
 | `category` | requête | `String` |  |  |
+| `subcategory` | requête | `String` |  |  |
 | `q` | requête | `String` |  |  |
 | `page, size, sort` | requête (pagination) | `Pageable` |  | size=20, sort=displayOrder,ASC |
 
@@ -148,6 +149,8 @@ Module [billing](../README.md) · 14 route(s).
 | `itemCode` | chemin | `String` | oui |  |
 | `segment` | requête | `String` |  |  |
 | `date` | requête | `LocalDate` |  |  |
+| `customerType` | requête | `String` |  |  |
+| `customerCode` | requête | `String` |  |  |
 
 <a id="r-get-sni-api-v1-billing-catalog-itemcode-prices"></a>
 ### GET /sni/api/v1/billing/catalog/{itemCode}/prices
@@ -215,6 +218,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validFrom` | date AAAA-MM-JJ |  |  |
 | `validUntil` | date AAAA-MM-JJ |  |  |
 | `currentlyValid` | booléen |  |  |
+| `categoryLabel` | texte |  |  |
+| `subcategoryLabel` | texte |  |  |
+| `unitLabel` | texte |  |  |
+| `taxRule` | [CatalogReferenceDtos.TaxRuleSummary](#m-CatalogReferenceDtos-TaxRuleSummary) |  |  |
+| `referenceWarnings` | texte[] |  |  |
+| `securityDeposit` | booléen |  |  |
 
 <a id="m-CreateServiceCatalogItemRequest"></a>
 #### CreateServiceCatalogItemRequest
@@ -357,3 +366,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `unitPrice` | nombre décimal | oui |  |
 | `validFrom` | date AAAA-MM-JJ |  |  |
 | `reason` | texte |  | longueur min `0`, longueur max `500` |
+
+<a id="m-CatalogReferenceDtos-TaxRuleSummary"></a>
+#### CatalogReferenceDtos.TaxRuleSummary
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `code` | texte |  |  |
+| `name` | texte |  |  |
+| `rate` | nombre décimal |  |  |
+| `treatment` | texte |  |  |
+| `labelOnDocument` | texte |  |  |

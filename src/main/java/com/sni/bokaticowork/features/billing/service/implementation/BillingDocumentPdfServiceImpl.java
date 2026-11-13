@@ -88,6 +88,34 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     @Value("${app.verify-base-url:http://localhost:8080}")
     private String verifyBaseUrl;
 
+    /** Lot C1 : lignes et regles de taxe, pour les mentions d'exoneration (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sni.bokaticowork.features.billing.repository.BillingDocumentLineRepository lineRepository;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sni.bokaticowork.features.billing.service.support.BillingTaxRuleResolver taxRuleResolver;
+
+    /** Mention d'exoneration imprimee sous le tableau des lignes (lot C1). */
+    public record TaxExemptionView(String label, String reason) {
+    }
+
+    /** Une mention par regle exoneree ou hors champ appliquee aux lignes, a la date de la piece. */
+    java.util.List<TaxExemptionView> taxExemptions(com.sni.bokaticowork.features.billing.model.BillingDocument entity) {
+        if (lineRepository == null || taxRuleResolver == null) {
+            return java.util.List.of();
+        }
+        java.time.LocalDate date = entity.getIssueDate() != null ? entity.getIssueDate() : java.time.LocalDate.now();
+        return lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(entity).stream()
+                .map(com.sni.bokaticowork.features.billing.model.BillingDocumentLine::getTaxRuleCode)
+                .filter(org.springframework.util.StringUtils::hasText)
+                .distinct()
+                .map(code -> taxRuleResolver.ruleFor(code, date).orElse(null))
+                .filter(com.sni.bokaticowork.features.billing.service.support.BillingTaxRuleResolver::zeroRated)
+                .map(rule -> new TaxExemptionView(rule.getLabelOnDocument() != null ? rule.getLabelOnDocument() : rule.getName(),
+                        rule.getExemptionReason()))
+                .distinct()
+                .toList();
+    }
+
     /**
      * Rend le PDF du document · fige a la volee la version canonique d'un document scelle.
      *
@@ -337,6 +365,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             putFrozenOperator(context, entity);
             context.setVariable("customerIdentifiers", identifierLines(entity.getCustomerIdentifiersJson(), entity.getCustomerNiu()));
             context.setVariable("customerVatExemptionNote", entity.getCustomerVatExemptionNote());
+            context.setVariable("taxExemptions", taxExemptions(entity));
             context.setVariable("usageAnnex", usageAnnex(entity.getUsageAnnexJson(), document.documentNumber()));
             context.setVariable("visa", visaOf(entity));
             // Lot B3 : facture d'acompte titree comme telle ; facture finale avec ses acomptes deduits.

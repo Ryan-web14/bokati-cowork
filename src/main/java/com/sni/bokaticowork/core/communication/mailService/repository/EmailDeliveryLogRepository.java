@@ -11,6 +11,10 @@ public interface EmailDeliveryLogRepository extends JpaRepository<EmailDeliveryL
 
     Optional<EmailDeliveryLog> findByEmailNumber(String emailNumber);
 
+    /** Lot C5 (facturation) : dernier courriel d'un objet, cree depuis l'instant donne. */
+    Optional<EmailDeliveryLog> findFirstByRelatedTypeAndRelatedCodeAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+            String relatedType, String relatedCode, java.time.Instant from);
+
     /**
      * Courriels enregistres mais jamais pris par un consommateur · un consommateur qui prend un
      * courriel le passe SENDING aussitot, donc un QUEUED qui vieillit n'est jamais arrive au broker.

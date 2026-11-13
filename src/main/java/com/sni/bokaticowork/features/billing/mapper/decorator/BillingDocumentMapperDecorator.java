@@ -198,7 +198,8 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 line.getOptional(),
                 line.getServiceStart(),
                 line.getServiceEnd(),
-                BillingDocumentLineResponse.period(line.getServiceStart(), line.getServiceEnd())
+                BillingDocumentLineResponse.period(line.getServiceStart(), line.getServiceEnd()),
+                line.getTaxRuleCode()
         );
     }
 

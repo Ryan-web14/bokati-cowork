@@ -189,4 +189,9 @@ public class ServiceCatalogItem {
     /** Lot B10 : compte de produit propre a l'article, prioritaire sur le compte par type de ligne. */
     @Column(name = "revenue_account", length = 20)
     private String revenueAccount;
+
+    /** Lot C7 : article de caution (depot de garantie) : ligne non taxable, portee au compte 165. */
+    @Column(name = "security_deposit", nullable = false)
+    @Builder.Default
+    private Boolean securityDeposit = Boolean.FALSE;
 }

@@ -15,6 +15,11 @@ public interface ServiceCatalogService {
 
     Page<ServiceCatalogItemResponse> list(Boolean active, String category, String searchText, Pageable pageable);
 
+    /** Lot C0 : liste filtree aussi par sous-famille (code). */
+    default Page<ServiceCatalogItemResponse> list(Boolean active, String category, String subcategory, String searchText, Pageable pageable) {
+        return list(active, category, searchText, pageable);
+    }
+
     ServiceCatalogItemResponse update(String itemCode, UpdateServiceCatalogItemRequest request);
 
     ServiceCatalogItemResponse activate(String itemCode);

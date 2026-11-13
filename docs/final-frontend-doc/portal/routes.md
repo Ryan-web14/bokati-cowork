@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-193 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+203 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -128,6 +128,16 @@
 | GET | `/sni/api/v1/client/profile` | membre | [ClientProfileController](routes/ClientProfileController.md#r-get-sni-api-v1-client-profile) |
 | PUT | `/sni/api/v1/client/profile` | membre | [ClientProfileController](routes/ClientProfileController.md#r-put-sni-api-v1-client-profile) |
 | POST | `/sni/api/v1/client/profile/change-password` | membre | [ClientProfileController](routes/ClientProfileController.md#r-post-sni-api-v1-client-profile-change-password) |
+| GET | `/sni/api/v1/client/billing/claim-reasons` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-get-sni-api-v1-client-billing-claim-reasons) |
+| GET | `/sni/api/v1/client/billing/claims` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-get-sni-api-v1-client-billing-claims) |
+| POST | `/sni/api/v1/client/billing/claims/{claimNumber}/withdraw` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-post-sni-api-v1-client-billing-claims-claimnumber-withdraw) |
+| POST | `/sni/api/v1/client/billing/invoices/{documentNumber}/claims` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-post-sni-api-v1-client-billing-invoices-documentnumber-claims) |
+| POST | `/sni/api/v1/client/billing/proformas/{documentNumber}/pay/mobile-money` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-post-sni-api-v1-client-billing-proformas-documentnumber-pay-mobile-money) |
+| GET | `/sni/api/v1/client/billing/quotes` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-get-sni-api-v1-client-billing-quotes) |
+| GET | `/sni/api/v1/client/billing/quotes/{documentNumber}` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-get-sni-api-v1-client-billing-quotes-documentnumber) |
+| POST | `/sni/api/v1/client/billing/quotes/{documentNumber}/accept` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-post-sni-api-v1-client-billing-quotes-documentnumber-accept) |
+| GET | `/sni/api/v1/client/billing/quotes/{documentNumber}/pdf` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-get-sni-api-v1-client-billing-quotes-documentnumber-pdf) |
+| POST | `/sni/api/v1/client/billing/quotes/{documentNumber}/reject` | membre | [ClientQuoteController](routes/ClientQuoteController.md#r-post-sni-api-v1-client-billing-quotes-documentnumber-reject) |
 | GET | `/sni/api/v1/client/resources` | membre | [ClientResourceController](routes/ClientResourceController.md#r-get-sni-api-v1-client-resources) |
 | GET | `/sni/api/v1/client/resources/{code}` | membre | [ClientResourceController](routes/ClientResourceController.md#r-get-sni-api-v1-client-resources-code) |
 | GET | `/sni/api/v1/client/resources/{code}/calendar` | membre | [ClientResourceController](routes/ClientResourceController.md#r-get-sni-api-v1-client-resources-code-calendar) |

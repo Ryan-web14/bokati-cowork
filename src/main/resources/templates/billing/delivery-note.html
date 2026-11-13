@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${'Bon de livraison ' + note.noteNumber()}">Bon de livraison</title>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
+    <style>
+        @page {
+            size: A4;
+            margin: 14mm 10mm 14mm 10mm;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-family: Helvetica, Arial, sans-serif;
+                font-size: 7.6px;
+                color: #1f1430;
+            }
+        }
+        * { box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #1f1430; font-size: 9px; line-height: 1.35; margin: 0; }
+        .doc-type { font-size: 20px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-align: right; }
+        .doc-sub { font-size: 8.6px; text-align: right; margin-top: 3px; }
+        .dbr-letterhead { margin-bottom: 10px; }
+        .label { font-size: 7.4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;
+                 border-bottom: 1px solid #e6ddea; padding-bottom: 3px; margin: 12px 0 6px; }
+        .who { font-size: 11px; font-weight: 700; }
+        .muted { color: #6b5f78; }
+        table.grid { width: 100%; border-collapse: collapse; }
+        table.grid th { background: #f6f2f8; font-size: 7.4px; text-transform: uppercase; letter-spacing: 0.6px;
+                        text-align: left; padding: 4px 5px; border-bottom: 1px solid #e6ddea; }
+        table.grid td { padding: 4px 5px; border-bottom: 1px solid #f0eaf3; vertical-align: top; }
+        .num { text-align: right; white-space: nowrap; }
+        .signatures { width: 100%; border-collapse: collapse; margin-top: 22px; }
+        .signatures td { width: 50%; border: 1px solid #e6ddea; padding: 8px; height: 70px; vertical-align: top; }
+        .cancelled { border: 1px solid #b3261e; color: #b3261e; padding: 5px 7px; margin-top: 6px; font-weight: 700; }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/document-brand :: letterhead(~{::#note-aside})}">
+    <div id="note-aside">
+        <div class="doc-type">Bon de livraison</div>
+        <div class="doc-sub">
+            N° <span th:text="${note.noteNumber()}"></span>
+            · <span th:text="${sourceLabel}"></span> <span th:text="${note.sourceDocumentNumber()}"></span>
+        </div>
+        <div class="doc-sub" th:if="${deliveredOn != null}">Livré le <span th:text="${deliveredOn}"></span></div>
+    </div>
+</div>
+
+<div class="cancelled" th:if="${note.status() == 'CANCELLED'}">
+    Bon annulé<span th:if="${note.cancelReason() != null}"> : <span th:text="${note.cancelReason()}"></span></span>
+</div>
+
+<div class="label">Client</div>
+<div class="who" th:text="${note.customerName()}">Client</div>
+<div class="muted" th:if="${address != null}" th:text="${address}"></div>
+
+<div class="label">Marchandises et prestations livrées</div>
+<table class="grid">
+    <thead>
+    <tr>
+        <th style="width:7%">Ligne</th>
+        <th>Désignation</th>
+        <th class="num" style="width:12%">Quantité</th>
+        <th style="width:12%">Unité</th>
+        <th class="num" style="width:15%" th:if="${note.showPrices()}">Prix unitaire</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="line : ${lines}">
+        <td th:text="${line.lineOrder()}">1</td>
+        <td><span th:text="${line.description()}"></span><span class="muted" th:if="${line.itemCode() != null}"> (<span th:text="${line.itemCode()}"></span>)</span></td>
+        <td class="num" th:text="${line.quantity()}">1</td>
+        <td th:text="${line.unit()}"></td>
+        <td class="num" th:if="${note.showPrices()}" th:text="${line.unitPrice()}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="label" th:if="${note.notes() != null}">Observations</div>
+<div th:if="${note.notes() != null}" th:text="${note.notes()}"></div>
+
+<table class="signatures">
+    <tr>
+        <td><strong>Remis par</strong><br><span class="muted" th:text="${operator.name()}"></span></td>
+        <td><strong>Reçu par le client</strong> (nom, date, signature)<br><span th:if="${note.receivedBy() != null}" th:text="${note.receivedBy()}"></span></td>
+    </tr>
+</table>
+</body>
+</html>

@@ -103,3 +103,10 @@ Le reste des routes `/approvals` est ouvert au back-office : le moteur contrôle
 - Deux écrans distincts, « Centre d'approbation de la facturation » et « Centre d'approbation de la caisse », sur les mêmes routes avec `center` différent : onglets À approuver, Mes demandes, Historique.
 - Sur chaque demande : la frise (qui, quand, décision, commentaire, montant avant et après), le bouton Approuver (avec réduction possible pour la caisse), Refuser, Renvoyer ; masquer les boutons si `canDecide = false`.
 - Un écran Organigramme (hiérarchie), un écran Circuits et un écran Délégations.
+
+## Dérogation de remise (lot C3 de la facturation)
+
+- Type `DISCOUNT_OVERRIDE` du centre `BILLING` (circuit `BILLING_DISCOUNT_OVERRIDE`, N+1). Une remise ou un prix hors limites à l'émission (ou à la révision d'un devis) fait partir une demande ; l'émission répond 409 `DEROGATION_EN_ATTENTE` avec le numéro de la demande.
+- L'accord vaut pour l'offre approuvée : le demandeur émet ensuite normalement. Une offre modifiée relance une demande. Refus : la pièce reste en brouillon avec le commentaire (`DEROGATION_REFUSEE`), un nouveau motif relance une demande.
+- Le titulaire du droit `BILLING:DISCOUNT_OVERRIDE` passe outre directement avec un motif. Paramètre `billing.discount.override-mode` : `APPROVAL` (défaut) ou `PERMISSION`.
+

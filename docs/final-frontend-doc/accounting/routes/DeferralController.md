@@ -342,7 +342,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `id` | entier int64 ⚠ |  |  |
 | `document` | [BillingDocument](#m-BillingDocument) |  |  |
 | `lineOrder` | entier |  |  |
-| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT` |  |  |
+| `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT`, `DISBURSEMENT` |  |  |
 | `itemCode` | texte |  |  |
 | `category` | texte |  |  |
 | `description` | texte |  |  |
@@ -366,6 +366,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `notes` | texte |  |  |
 | `optional` | booléen |  |  |
 | `sourceType` | texte |  |  |
+| `taxRuleCode` | texte |  |  |
 | `sourceCode` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
@@ -471,6 +472,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `discountOverrideReason` | texte |  |  |
 | `discountOverrideBy` | texte |  |  |
 | `discountOverrideAt` | date-heure ISO 8601 UTC |  |  |
+| `discountApprovalNumber` | texte |  |  |
+| `discountApprovalStatus` | texte |  |  |
+| `discountApprovalFingerprint` | texte |  |  |
+| `discountApprovalReason` | texte |  |  |
+| `discountApprovalComment` | texte |  |  |
+| `discountApprovedBy` | texte |  |  |
 | `pdfStorageProvider` | texte |  |  |
 | `pdfStoragePath` | texte |  |  |
 | `pdfSha256` | texte |  |  |

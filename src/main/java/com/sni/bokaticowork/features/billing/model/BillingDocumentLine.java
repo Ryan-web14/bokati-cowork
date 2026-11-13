@@ -127,6 +127,10 @@ public class BillingDocumentLine {
     @Column(name = "source_type", length = 80)
     private String sourceType;
 
+    /** Lot C1 : regle de taxe de l'article appliquee a la ligne (code de base), pour la mention d'exoneration. */
+    @Column(name = "tax_rule_code", length = 120)
+    private String taxRuleCode;
+
     @Column(name = "source_code", length = 120)
     private String sourceCode;
 

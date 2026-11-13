@@ -22,3 +22,9 @@ Un article du catalogue (`itemCode`) porte prix, unité, coût, plancher, marge 
 - `GET /catalog/margins?search=&category=` : prix, coût, marge, taux de marge, plancher, remise maximale, liens.
 - `GET /catalog/export` : CSV (séparateur point-virgule), colonnes `itemCode;name;category;subcategory;unit;unitPrice;currency;costPrice;floorPrice;maxDiscountRate;inventoryItemCode;revenueAccount;active`.
 - `POST /catalog/import` (corps `text/csv`, même en-tête) : met à jour les articles existants par leur code, crée les autres ; réponse `created`, `updated`, `errors` (une erreur par ligne, « Ligne N : ... »).
+
+## Compléments (lots C0, C7, C8, C14)
+
+- Familles, sous-familles, unités et taxes : listes tenues dans le backend, voir [listes de référence](listes-reference.md). Réponse de l'article : `categoryLabel`, `subcategoryLabel`, `unitLabel`, `taxRule`, `referenceWarnings`, `securityDeposit`.
+- Article de caution : voir [cautions](cautions.md). Prix négociés : voir [tarifs clients](tarifs-clients.md). Articles composés : voir [devis types](devis-types.md).
+

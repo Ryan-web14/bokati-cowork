@@ -3185,6 +3185,237 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/client/billing/claim-reasons",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "claimReasons",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ReasonView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/billing/claims",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "claims",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/billing/claims/{claimNumber}/withdraw",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "withdraw",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "claimNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/billing/invoices/{documentNumber}/claims",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "openClaim",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.OpenRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/billing/proformas/{documentNumber}/pay/mobile-money",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "payProforma",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.portal.billing.dto.request.ClientInitiateMobileMoneyPaymentRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/billing/quotes",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "list",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "type",
+     "required": false,
+     "default": "QUOTE",
+     "type": "com.sni.bokaticowork.features.billing.enums.BillingDocumentType"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.portal.billing.dto.response.ClientInvoiceSummaryResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/billing/quotes/{documentNumber}",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "get",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.portal.billing.dto.response.ClientInvoiceResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/billing/quotes/{documentNumber}/accept",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "accept",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.portal.billing.dto.response.ClientInvoiceResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/billing/quotes/{documentNumber}/pdf",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "pdf",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/billing/quotes/{documentNumber}/reject",
+   "package": "features.portal.billing.controller",
+   "controller": "ClientQuoteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/billing/controller/ClientQuoteController.java",
+   "handler": "reject",
+   "declaredIn": "ClientQuoteController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.portal.billing.dto.response.ClientInvoiceResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/client/resources",
    "package": "features.portal.resource.controller",
    "controller": "ClientResourceController",
@@ -8153,6 +8384,118 @@
     }
    }
   },
+  "ClaimDtos.ReasonView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ClaimDtos.ClaimView": {
+   "type": "object",
+   "properties": {
+    "claimNumber": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "reasonCode": {
+     "type": "string"
+    },
+    "reasonLabel": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "lineOrders": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "requestedAmount": {
+     "type": "number"
+    },
+    "status": {
+     "type": "string"
+    },
+    "channel": {
+     "type": "string"
+    },
+    "openedBy": {
+     "type": "string"
+    },
+    "grantedAmount": {
+     "type": "number"
+    },
+    "creditNoteNumber": {
+     "type": "string"
+    },
+    "decisionComment": {
+     "type": "string"
+    },
+    "decidedBy": {
+     "type": "string"
+    },
+    "decidedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ClaimDtos.OpenRequest": {
+   "required": [
+    "reasonCode"
+   ],
+   "type": "object",
+   "properties": {
+    "reasonCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "maxLength": 4000,
+     "minLength": 0,
+     "type": "string"
+    },
+    "lineOrders": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "requestedAmount": {
+     "minimum": 0,
+     "exclusiveMinimum": false,
+     "type": "number"
+    }
+   }
+  },
   "ClientResourceSummaryResponse": {
    "type": "object",
    "properties": {
@@ -9675,7 +10018,8 @@
       "OVERAGE",
       "PENALTY",
       "WALLET",
-      "ADJUSTMENT"
+      "ADJUSTMENT",
+      "DISBURSEMENT"
      ]
     },
     "itemCode": {
@@ -9759,6 +10103,9 @@
      "format": "date"
     },
     "servicePeriod": {
+     "type": "string"
+    },
+    "taxRuleCode": {
      "type": "string"
     }
    }
@@ -11492,6 +11839,14 @@
    "CANCELLED",
    "SUSPENDED"
   ],
+  "BillingDocumentType": [
+   "QUOTE",
+   "PROFORMA_INVOICE",
+   "INVOICE",
+   "CREDIT_NOTE",
+   "CORRECTIVE_INVOICE",
+   "DEBIT_NOTE"
+  ],
   "SubscriptionStatus": [
    "DRAFT",
    "PENDING_ACTIVATION",
@@ -11581,6 +11936,10 @@
   "ClientProfileResponse": "com.sni.bokaticowork.features.portal.profile.dto.response.ClientProfileResponse",
   "OnboardingStatusResponse": "com.sni.bokaticowork.features.portal.profile.dto.response.OnboardingStatusResponse",
   "ClientUpdateProfileRequest": "com.sni.bokaticowork.features.portal.profile.dto.request.ClientUpdateProfileRequest",
+  "ClaimDtos.ReasonView": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.ReasonView",
+  "ClaimDtos.ClaimView": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.ClaimView",
+  "ClaimDtos.OpenRequest": "com.sni.bokaticowork.features.billing.dto.ClaimDtos.OpenRequest",
+  "BillingDocumentType": "com.sni.bokaticowork.features.billing.enums.BillingDocumentType",
   "ClientResourceSummaryResponse": "com.sni.bokaticowork.features.portal.resource.dto.response.ClientResourceSummaryResponse",
   "ClientResourceDetailResponse": "com.sni.bokaticowork.features.portal.resource.dto.response.ClientResourceDetailResponse",
   "PublicResourceCalendarResponse": "com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse",

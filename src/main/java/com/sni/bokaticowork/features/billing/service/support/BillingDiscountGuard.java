@@ -231,7 +231,8 @@ public class BillingDiscountGuard {
         };
     }
 
-    private boolean hasOverridePermission() {
+    /** Lot C3 : le titulaire du droit de derogation passe outre sans circuit, avec un motif. */
+    public boolean hasOverridePermission() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return false;

@@ -31,4 +31,15 @@ public interface TaxRuleRepository extends JpaRepository<TaxRule, Long> {
             ORDER BY id ASC
             """)
     List<TaxRule> findActiveRules(@Param("countryCode") String countryCode, @Param("date") LocalDate date);
+
+    /** Lot C0 : toutes les versions, dans l'ordre d'affichage. */
+    @Query("SELECT t FROM TaxRule t ORDER BY t.displayOrder, t.baseCode, t.validFrom")
+    List<TaxRule> findAllOrdered();
+
+    @Query("SELECT t FROM TaxRule t WHERE lower(t.baseCode) = lower(:baseCode) ORDER BY t.validFrom")
+    List<TaxRule> findVersions(@Param("baseCode") String baseCode);
+
+    Optional<TaxRule> findByCode(String code);
+
+    boolean existsByCode(String code);
 }

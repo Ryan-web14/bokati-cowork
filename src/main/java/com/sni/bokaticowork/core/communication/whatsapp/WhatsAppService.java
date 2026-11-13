@@ -89,7 +89,23 @@ public class WhatsAppService implements WhatsAppMessageSender {
                     "Bonjour {{1}}, nous avons bien reçu votre paiement de {{2}} XAF : la facture {{3}} de ELLE A OSE est soldée. "
                             + "Vous pouvez la télécharger dans votre espace client.",
                     List.of("Awa", "150 000", "FAC-2026-00012"), "ELLE A OSE",
-                    new Button("URL", "Télécharger ma facture", PORTAL + "/{{1}}", PORTAL + "/factures"), null));
+                    new Button("URL", "Télécharger ma facture", PORTAL + "/{{1}}", PORTAL + "/factures"), null),
+            // Lot C2 (facturation) : un devis, une proforma ou un avoir ne part plus avec le texte d'une facture a regler.
+            new DefaultTemplate("QUOTE_AVAILABLE", "devis_disponible", "UTILITY",
+                    "Bonjour {{1}}, votre devis {{2}} de ELLE A OSE, d'un montant de {{3}} XAF, est disponible. "
+                            + "Il est valable jusqu'au {{4}}. Vous pouvez le consulter et l'accepter depuis votre espace client.",
+                    List.of("Awa", "DEV-2026-00087", "450 000", "15/12/2026"), "ELLE A OSE",
+                    new Button("URL", "Voir mon devis", PORTAL + "/{{1}}", PORTAL + "/devis"), null),
+            new DefaultTemplate("PROFORMA_AVAILABLE", "proforma_disponible", "UTILITY",
+                    "Bonjour {{1}}, la facture proforma {{2}} de ELLE A OSE, d'un montant de {{3}} XAF, est disponible. "
+                            + "Elle est valable jusqu'au {{4}} et n'a pas valeur de facture. Retrouvez-la dans votre espace client.",
+                    List.of("Awa", "PRF-2026-00014", "450 000", "15/12/2026"), "ELLE A OSE",
+                    new Button("URL", "Voir ma proforma", PORTAL + "/{{1}}", PORTAL + "/factures"), null),
+            new DefaultTemplate("CREDIT_NOTE_ISSUED", "avoir_emis", "UTILITY",
+                    "Bonjour {{1}}, ELLE A OSE a émis l'avoir {{2}} d'un montant de {{3}} XAF sur la facture {{4}}. "
+                            + "Vous pouvez le télécharger dans votre espace client.",
+                    List.of("Awa", "AV-2026-00005", "25 000", "FAC-2026-00012"), "ELLE A OSE",
+                    new Button("URL", "Voir mon avoir", PORTAL + "/{{1}}", PORTAL + "/factures"), null));
 
     public record TemplateRequest(String purpose, String name, String language, String category, String text, List<String> examples, String footer,
                                   Button button, Integer codeExpirationMinutes) {

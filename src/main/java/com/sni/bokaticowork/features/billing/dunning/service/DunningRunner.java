@@ -109,6 +109,13 @@ public class DunningRunner {
     private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.ReceivableRiskQuery> receivableRisk;
 
     /** Lot F19 : creances a risque ; facultatif, sans comptabilite rien ne change. */
+    private org.springframework.beans.factory.ObjectProvider<DunningHold> dunningHolds;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setDunningHolds(org.springframework.beans.factory.ObjectProvider<DunningHold> dunningHolds) {
+        this.dunningHolds = dunningHolds;
+    }
+
     @org.springframework.beans.factory.annotation.Autowired
     void setReceivableRisk(org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.ReceivableRiskQuery> receivableRisk) {
         this.receivableRisk = receivableRisk;
@@ -125,6 +132,17 @@ public class DunningRunner {
                     .customerType(document.getCustomerType()).customerCode(document.getCustomerCode())
                     .balanceDue(document.getBalanceDue()).outcome(DunningNotice.Outcome.SKIPPED)
                     .detail("Facture contestee : relance suspendue pendant le litige").executedAt(java.time.Instant.now()).build());
+        }
+        // Lots C11 et C12 : reclamation en cours ou promesse de paiement non echue.
+        java.util.Optional<String> held = dunningHolds == null ? java.util.Optional.empty()
+                : dunningHolds.orderedStream().map(hold -> hold.holdReason(document.getDocumentNumber()))
+                .flatMap(java.util.Optional::stream).findFirst();
+        if (held.isPresent()) {
+            return noticeRepository.save(DunningNotice.builder()
+                    .documentNumber(document.getDocumentNumber()).step(step).policyCode(step.getPolicy().getPolicyCode()).action(step.getAction())
+                    .customerType(document.getCustomerType()).customerCode(document.getCustomerCode())
+                    .balanceDue(document.getBalanceDue()).outcome(DunningNotice.Outcome.SKIPPED)
+                    .detail(held.get()).executedAt(java.time.Instant.now()).build());
         }
         Subscription subscription = subscriptionBehind(document).orElse(null);
         DunningNotice.Outcome outcome = DunningNotice.Outcome.SENT;
@@ -221,6 +239,9 @@ public class DunningRunner {
     }
 
     private boolean notify(BillingDocument document, DunningStep step, Map<String, String> vars, Subscription subscription) {
+        if (step.getChannel() == DunningStep.Channel.WHATSAPP) {
+            return notifyByWhatsApp(document);
+        }
         String email = document.getCustomerEmail();
         if (!StringUtils.hasText(email) && subscription != null) {
             email = SubscriptionGraceService.recipientEmail(subscription);
@@ -257,6 +278,33 @@ public class DunningRunner {
             }
         }
         return delivered;
+    }
+
+    private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessageSender> whatsApp;
+
+    @Autowired(required = false)
+    void setWhatsApp(org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessageSender> whatsApp) {
+        this.whatsApp = whatsApp;
+    }
+
+    /**
+     * Lot C12 : palier WhatsApp. Modele rappel_paiement (ou facture_payee si tout est regle entre-temps)
+     * au numero de la facture ; sans numero, sans service WhatsApp ou sans modele approuve, rien ne part.
+     */
+    private boolean notifyByWhatsApp(BillingDocument document) {
+        com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessageSender sender = whatsApp == null ? null : whatsApp.getIfAvailable();
+        if (sender == null || !StringUtils.hasText(document.getCustomerPhone())) {
+            return false;
+        }
+        com.sni.bokaticowork.features.billing.service.implementation.BillingSendingService.WhatsAppContent content =
+                com.sni.bokaticowork.features.billing.service.implementation.BillingSendingService.whatsAppContent(document);
+        try {
+            sender.send(document.getCustomerPhone(), content.purpose(), content.values(), null, document.getDocumentNumber(), content.portalPath());
+            return true;
+        } catch (RuntimeException ex) {
+            log.warn("Relance WhatsApp impossible pour {} : {}", document.getDocumentNumber(), ex.getMessage());
+            return false;
+        }
     }
 
     /** Le courriel de facturation de l'organisation reliee a la facture, s'il y en a une. */

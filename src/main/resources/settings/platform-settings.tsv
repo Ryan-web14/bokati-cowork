@@ -154,10 +154,13 @@ accounting.revenue.deferred-account	ACCOUNTING	TEXT	LIVE	477	Compte des produits
 accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
 accounting.sales.client-account	ACCOUNTING	TEXT	LIVE	411	Compte collectif des clients
 accounting.sales.deposit-account	ACCOUNTING	TEXT	LIVE	4191	Compte des acomptes recus des clients (factures d'acompte, soldé par la facture finale)
+accounting.sales.deposit-retention-account	ACCOUNTING	TEXT	LIVE	758	Compte de produit d'une caution retenue (dégâts, impayés)
+accounting.sales.disbursement-account	ACCOUNTING	TEXT	LIVE	4718	Compte des débours refacturés aux clients (frais avancés pour leur compte, hors TVA et hors chiffre d'affaires)
 accounting.sales.discount-account	ACCOUNTING	TEXT	LIVE	709	Compte des remises accordees sur facture
 accounting.sales.extra-tax-account	ACCOUNTING	TEXT	LIVE	4431	Compte du centime additionnel facture
 accounting.sales.journal	ACCOUNTING	TEXT	LIVE	VT	Journal des factures et avoirs
 accounting.sales.payment-delay-minutes	ACCOUNTING	INTEGER	LIVE	5	Delai avant comptabilisation d'un paiement, le temps de son imputation sur les factures (minutes)
+accounting.sales.security-deposit-account	ACCOUNTING	TEXT	LIVE	165	Compte des dépôts et cautionnements reçus des clients (cautions facturées)
 accounting.sales.unallocated-account	ACCOUNTING	TEXT	LIVE	4719	Compte de liaison des encaissements non imputes et du portefeuille
 accounting.sales.vat-account	ACCOUNTING	TEXT	LIVE	4431	Compte de TVA facturee
 accounting.start-date	ACCOUNTING	TEXT	LIVE	2026-01-01	Date de bascule : les faits anterieurs ne sont comptabilises que par la reprise
@@ -278,9 +281,12 @@ app.verify-base-url	ENVIRONMENT	TEXT	LIVE	https://api.elleaose.com	Adresse de v�
 approval.escalation-hours	PAYMENT	INTEGER	LIVE	72	Heures d'attente d'un niveau avant escalade au supérieur du décideur
 approval.reminder-hours	PAYMENT	INTEGER	LIVE	24	Heures d'attente d'un niveau avant rappel aux décideurs (puis à chaque intervalle)
 approval.worker-cron	PAYMENT	CRON	LIVE	0 0 8-18 * * *	Planification des rappels et escalades des centres d'approbation
+billing.catalog.reference-lists.strict	BILLING	BOOLEAN	LIVE	false	Catalogue : refuser une famille, sous-famille, unité ou taxe absente des listes (sinon elle est ajoutée à la liste, et un code de taxe inconnu est gardé tel quel)
+billing.collection.plan-approval-months	BILLING	INTEGER	LIVE	3	Recouvrement : au-delà de ce nombre de mois, un plan de règlement demande le droit d'approbation de la facturation (responsable N+1)
 billing.deal.auto-create	BILLING	BOOLEAN	LIVE	true	Affaires : le premier devis d'un client sans affaire ouverte en crée une (sinon il rejoint son unique affaire ouverte)
+billing.discount.override-mode	BILLING	ENUM	LIVE	APPROVAL	Remise ou prix hors limites : APPROVAL (demande au responsable N+1 par le centre d'approbation, l'émission attend son accord) ou PERMISSION (droit de dérogation et motif, sans circuit)
 billing.quote.revision-validity-days	BILLING	INTEGER	LIVE	30	Devis : jours de validité garantis après une révision (la date de validité est prolongée si besoin)
-billing.stock.issue-on	BILLING	ENUM	LIVE	INVOICE	Sortie de stock des articles vendus : INVOICE (a l'emission de la facture) ou NONE (aucune sortie automatique)
+billing.stock.issue-on	BILLING	ENUM	LIVE	INVOICE	Sortie de stock des articles vendus : INVOICE (à l'émission de la facture), DELIVERY (à la livraison de chaque bon de livraison, la facture ne sort plus rien) ou NONE (aucune sortie automatique)
 bokati.billing.default-currency	BILLING	TEXT	LIVE	XAF	Devise par défaut
 bokati.billing.dunning.batch-size	BILLING	INTEGER	LIVE	200	Taille de lot des relances
 bokati.billing.dunning.cron	BILLING	CRON	LIVE	0 30 8 * * *	Planification des relances

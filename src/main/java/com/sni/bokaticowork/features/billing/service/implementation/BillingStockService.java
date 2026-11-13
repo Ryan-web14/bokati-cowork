@@ -120,7 +120,7 @@ public class BillingStockService {
         }
         String quoteNumber = "QUOTE".equalsIgnoreCase(invoice.getSourceType()) ? invoice.getSourceCode() : null;
         List<BillingStockReservation> reserved = quoteNumber == null ? List.of() : reservations.findByDocumentNumberAndStatus(quoteNumber, "ACTIVE");
-        for (BillingDocumentLine line : lines.findAllByDocumentOrderByLineOrderAscIdAsc(invoice)) {
+        for (BillingDocumentLine line : expand(lines.findAllByDocumentOrderByLineOrderAscIdAsc(invoice))) {
             InventoryItem item = trackedItem(line);
             if (item == null) {
                 continue;
@@ -138,7 +138,7 @@ public class BillingStockService {
                 needed = needed.subtract(reservation.getQuantity());
             }
             if (needed.signum() > 0) {
-                issueRemainder(invoice, item, needed);
+                issueRemainder(invoice.getDocumentNumber(), "Vente, facture " + invoice.getDocumentNumber(), item, needed);
             }
         }
         // Ce qui reste reserve au devis (lignes retirees de la facture) est libere.
@@ -147,7 +147,7 @@ public class BillingStockService {
         }
     }
 
-    private void issueRemainder(BillingDocument invoice, InventoryItem item, BigDecimal quantity) {
+    private void issueRemainder(String reference, String details, InventoryItem item, BigDecimal quantity) {
         BigDecimal left = quantity;
         List<StockLevel> available = levels.findAllByItemAndQuantityAvailableGreaterThanOrderByQuantityAvailableDesc(item, BigDecimal.ZERO);
         for (StockLevel level : available) {
@@ -155,7 +155,7 @@ public class BillingStockService {
                 break;
             }
             BigDecimal take = left.min(level.getQuantityAvailable());
-            stock.issue(out(invoice, item, level.getLocation().getLocationCode(), take, false));
+            stock.issue(out(reference, details, item, level.getLocation().getLocationCode(), take, false));
             left = left.subtract(take);
         }
         if (left.signum() > 0) {
@@ -166,22 +166,120 @@ public class BillingStockService {
             if (any.isEmpty()) {
                 throw new BadRequestException("Aucun emplacement de stock pour " + item.getName());
             }
-            stock.issue(out(invoice, item, any.get(any.size() - 1).getLocation().getLocationCode(), left, true));
+            stock.issue(out(reference, details, item, any.get(any.size() - 1).getLocation().getLocationCode(), left, true));
         }
     }
 
-    private static StockOutRequest out(BillingDocument invoice, InventoryItem item, String location, BigDecimal quantity, boolean negative) {
+    private static StockOutRequest out(String reference, String details, InventoryItem item, String location, BigDecimal quantity, boolean negative) {
         StockOutRequest request = new StockOutRequest();
         request.setItemCode(item.getItemCode());
         request.setLocationCode(location);
         request.setQuantity(quantity);
         request.setReasonCode(StockOutReasonCode.OTHER);
         request.setReferenceType(StockReferenceType.OTHER);
-        request.setReferenceCode(invoice.getDocumentNumber());
-        request.setReasonDetails("Vente, facture " + invoice.getDocumentNumber());
+        request.setReferenceCode(reference);
+        request.setReasonDetails(details);
         request.setAllowNegativeOverride(negative);
         request.setPerformedBy("FACTURATION");
         return request;
+    }
+
+    /** Mode de sortie du stock : INVOICE (defaut), DELIVERY (lot C4) ou NONE. */
+    public String issueMode() {
+        String mode = platformSettings == null ? "INVOICE" : platformSettings.text(ISSUE_ON_KEY, "INVOICE");
+        return mode == null ? "INVOICE" : mode.trim().toUpperCase(java.util.Locale.ROOT);
+    }
+
+    /**
+     * Lot C4 : bon livre, en mode DELIVERY. Les reservations du devis d'origine sont consommees
+     * d'abord, puis le reste sort du stock. Rend vrai si au moins une ligne a sorti du stock.
+     */
+    public boolean issueForDelivery(String noteNumber, String quoteNumber, List<BillingDocumentLine> delivered) {
+        if (!"DELIVERY".equals(issueMode())) {
+            return false;
+        }
+        List<BillingStockReservation> reserved = quoteNumber == null ? List.of() : reservations.findByDocumentNumberAndStatus(quoteNumber, "ACTIVE");
+        boolean issued = false;
+        for (BillingDocumentLine line : expand(delivered)) {
+            InventoryItem item = trackedItem(line);
+            if (item == null) {
+                continue;
+            }
+            BigDecimal needed = line.getQuantity() == null ? BigDecimal.ONE : line.getQuantity();
+            for (BillingStockReservation reservation : reserved) {
+                if (needed.signum() <= 0 || !"ACTIVE".equals(reservation.getStatus()) || !reservation.getItemCode().equals(item.getItemCode())
+                        || reservation.getQuantity().compareTo(needed) > 0) {
+                    continue;
+                }
+                stock.consumeReservation(reservation.getReservationCode(), "LIVRAISON " + noteNumber);
+                reservation.setStatus("CONSUMED");
+                reservation.setClosedBy(noteNumber);
+                reservation.setClosedAt(Instant.now());
+                reservations.save(reservation);
+                needed = needed.subtract(reservation.getQuantity());
+            }
+            if (needed.signum() > 0) {
+                issueRemainder(noteNumber, "Livraison, bon " + noteNumber, item, needed);
+            }
+            issued = true;
+        }
+        return issued;
+    }
+
+    /** Lot C4 : bon livre puis annule. La marchandise revient en stock, a l'emplacement le plus fourni. */
+    public void returnForDelivery(String noteNumber, List<BillingDocumentLine> delivered) {
+        for (BillingDocumentLine line : expand(delivered)) {
+            InventoryItem item = trackedItem(line);
+            if (item == null) {
+                continue;
+            }
+            List<StockLevel> any = levels.findAllByItemIdOrderByQuantityAvailableAsc(item.getId());
+            if (any.isEmpty()) {
+                throw new BadRequestException("Aucun emplacement de stock pour " + item.getName());
+            }
+            com.sni.bokaticowork.features.inventory.stock.dto.request.StockInRequest in =
+                    new com.sni.bokaticowork.features.inventory.stock.dto.request.StockInRequest();
+            in.setItemCode(item.getItemCode());
+            in.setLocationCode(any.get(any.size() - 1).getLocation().getLocationCode());
+            in.setQuantity(line.getQuantity());
+            in.setReferenceType(StockReferenceType.OTHER);
+            in.setReferenceCode(noteNumber);
+            in.setReason("Retour, bon de livraison annulé " + noteNumber);
+            in.setPerformedBy("FACTURATION");
+            stock.receive(in);
+        }
+    }
+
+    /** Lot C14 : composants d'inventaire d'un article compose (facultatif). */
+    @Autowired(required = false)
+    private com.sni.bokaticowork.features.billing.repository.CatalogComponentRepository components;
+
+    /**
+     * Lot C14 : une ligne d'article compose devient une ligne par composant d'inventaire, a la
+     * quantite du composant fois celle de la ligne ; les autres lignes passent telles quelles.
+     */
+    List<BillingDocumentLine> expand(List<BillingDocumentLine> source) {
+        if (components == null) {
+            return source;
+        }
+        List<BillingDocumentLine> result = new java.util.ArrayList<>();
+        for (BillingDocumentLine line : source) {
+            List<com.sni.bokaticowork.features.billing.model.CatalogComponent> parts = StringUtils.hasText(line.getItemCode())
+                    ? components.findByParentItemCodeOrderByDisplayOrderAsc(line.getItemCode().trim()) : List.of();
+            if (parts.isEmpty() || Boolean.TRUE.equals(line.getOptional())) {
+                result.add(line);
+                continue;
+            }
+            BigDecimal quantity = line.getQuantity() == null ? BigDecimal.ONE : line.getQuantity();
+            for (var part : parts) {
+                if ("INVENTORY_ITEM".equals(part.getComponentSource())) {
+                    result.add(BillingDocumentLine.builder().lineOrder(line.getLineOrder()).itemCode(part.getComponentCode())
+                            .sourceType("INVENTORY_ITEM").lineType(com.sni.bokaticowork.features.billing.enums.BillingLineType.PRODUCT)
+                            .description(line.getDescription()).quantity(quantity.multiply(part.getQuantity())).optional(false).build());
+                }
+            }
+        }
+        return result;
     }
 
     private InventoryItem trackedItem(BillingDocumentLine line) {

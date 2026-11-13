@@ -167,6 +167,31 @@ class SalesAccountingF4IT extends PostgresIntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Lot C1 : une ligne exoneree reste en produit, pas en remise ; l'ecriture est equilibree")
+    void exemptLineStaysInRevenue() {
+        BillingDocument invoice = invoice("FAC-EXO-" + code, BillingDocumentType.INVOICE, "10000", "1800", null);
+        invoice.setSubtotalAmount(new BigDecimal("15000"));
+        invoice.setTotalAmount(new BigDecimal("16800"));
+        invoice.setBalanceDue(new BigDecimal("16800"));
+        documents.save(invoice);
+        documentLines.save(BillingDocumentLine.builder().document(invoice).lineOrder(2).lineType(BillingLineType.SERVICE)
+                .description("Domiciliation (exonérée)").quantity(BigDecimal.ONE).unitPrice(new BigDecimal("5000")).discountAmount(BigDecimal.ZERO)
+                .taxable(false).subtotalAmount(new BigDecimal("5000")).taxableAmount(BigDecimal.ZERO).vatAmount(BigDecimal.ZERO)
+                .additionalCentAmount(BigDecimal.ZERO).taxAmount(BigDecimal.ZERO).totalAmount(new BigDecimal("5000")).build());
+
+        run();
+
+        assertThat(posted("INVOICE_ISSUED", invoice.getDocumentNumber())).isTrue();
+        List<com.sni.bokaticowork.features.accounting.model.AccEntryLine> entryLines =
+                lines.findByEntryIdInOrderByEntryIdAscLineNoAsc(entriesOf("INVOICE_ISSUED", invoice.getDocumentNumber()));
+        BigDecimal debit = entryLines.stream().map(line -> line.getDebit()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal credit = entryLines.stream().map(line -> line.getCredit()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(debit).isEqualByComparingTo("16800");
+        assertThat(credit).isEqualByComparingTo("16800");
+        assertThat(entryLines).noneMatch(line -> line.getAccountNumber().startsWith("709") && line.getDebit().signum() > 0);
+    }
+
+    @Test
     @DisplayName("Un rechargement de portefeuille par mobile money credite le 4191 du client ; le compte de liaison est solde")
     void walletTopUp() {
         PaymentTransaction topUp = payment("TXN-W-" + code, PaymentMethod.MOBILE_MONEY, "5000", null);

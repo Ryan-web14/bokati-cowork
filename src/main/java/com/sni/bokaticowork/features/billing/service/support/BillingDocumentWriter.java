@@ -237,7 +237,11 @@ public class BillingDocumentWriter {
     }
 
     private void saveTaxes(BillingDocument document, BillingCalculationService.CalculatedDocument calculation) {
-        if (calculation.vatAmount().signum() > 0) {
+        List<BillingDocumentTax> byRate = vatByRate(document, calculation);
+        if (!byRate.isEmpty()) {
+            // Lot C1 : plusieurs taux sur la piece, une ligne de TVA par taux.
+            byRate.forEach(taxRepository::save);
+        } else if (calculation.vatAmount().signum() > 0) {
             taxRepository.save(BillingDocumentTax.builder()
                     .document(document)
                     .taxCode("VAT")
@@ -259,6 +263,58 @@ public class BillingDocumentWriter {
                     .taxAmount(calculation.additionalCentAmount())
                     .build());
         }
+    }
+
+    /**
+     * Lot C1 : ventilation de la TVA par taux quand les lignes taxables en portent plusieurs. Les
+     * bases et montants de chaque taux sont repartis au prorata des lignes, puis l'arrondi est
+     * reporte sur le taux le plus lourd pour que la somme egale exactement les totaux de la piece
+     * (remise globale comprise). Un seul taux : liste vide, la ligne unique habituelle s'applique.
+     */
+    static List<BillingDocumentTax> vatByRate(BillingDocument document, BillingCalculationService.CalculatedDocument calculation) {
+        java.util.Map<BigDecimal, BigDecimal[]> sums = new java.util.TreeMap<>();
+        for (BillingDocumentLine line : calculation.lines()) {
+            if (!Boolean.TRUE.equals(line.getTaxable()) || line.getVatRate() == null || line.getVatRate().signum() <= 0
+                    || Boolean.TRUE.equals(line.getOptional())) {
+                continue;
+            }
+            BigDecimal[] acc = sums.computeIfAbsent(line.getVatRate().stripTrailingZeros(), rate -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+            acc[0] = acc[0].add(line.getTaxableAmount() == null ? BigDecimal.ZERO : line.getTaxableAmount());
+            acc[1] = acc[1].add(line.getVatAmount() == null ? BigDecimal.ZERO : line.getVatAmount());
+        }
+        if (sums.size() < 2 || calculation.vatAmount().signum() <= 0) {
+            return List.of();
+        }
+        BigDecimal lineBase = sums.values().stream().map(a -> a[0]).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal lineVat = sums.values().stream().map(a -> a[1]).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (lineBase.signum() == 0 || lineVat.signum() == 0) {
+            return List.of();
+        }
+        List<BillingDocumentTax> rows = new java.util.ArrayList<>();
+        BigDecimal baseLeft = calculation.taxableAmount();
+        BigDecimal vatLeft = calculation.vatAmount();
+        BillingDocumentTax heaviest = null;
+        for (java.util.Map.Entry<BigDecimal, BigDecimal[]> entry : sums.entrySet()) {
+            BigDecimal base = calculation.taxableAmount().multiply(entry.getValue()[0]).divide(lineBase, 2, RoundingMode.HALF_UP);
+            BigDecimal vat = calculation.vatAmount().multiply(entry.getValue()[1]).divide(lineVat, 2, RoundingMode.HALF_UP);
+            baseLeft = baseLeft.subtract(base);
+            vatLeft = vatLeft.subtract(vat);
+            BillingDocumentTax row = BillingDocumentTax.builder()
+                    .document(document)
+                    .taxCode("VAT")
+                    .taxName("TVA " + entry.getKey().toPlainString() + " %")
+                    .rate(entry.getKey().setScale(4, RoundingMode.HALF_UP))
+                    .taxableAmount(base)
+                    .taxAmount(vat)
+                    .build();
+            rows.add(row);
+            if (heaviest == null || row.getTaxAmount().compareTo(heaviest.getTaxAmount()) > 0) {
+                heaviest = row;
+            }
+        }
+        heaviest.setTaxableAmount(heaviest.getTaxableAmount().add(baseLeft));
+        heaviest.setTaxAmount(heaviest.getTaxAmount().add(vatLeft));
+        return rows;
     }
 
     private void saveClauses(BillingDocument document, List<CreateBillingDocumentClauseRequest> clauses) {

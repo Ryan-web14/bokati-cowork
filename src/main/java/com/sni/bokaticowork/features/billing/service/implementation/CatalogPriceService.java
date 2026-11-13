@@ -42,6 +42,13 @@ public class CatalogPriceService {
     private final ServiceCatalogItemRepository items;
     private final ServiceCatalogPriceRepository prices;
     private final InventoryItemRepository inventory;
+    /** Lot C8 : tarifs negocies par client (facultatif pour les tests unitaires). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private CustomerPriceService customerPrices;
+
+    /** Lot C0 : listes de reference (facultatif pour les tests unitaires). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private CatalogReferenceService references;
 
     // ------------------------------------------------------------------ prix dates
 
@@ -74,6 +81,23 @@ public class CatalogPriceService {
         item(itemCode);
         return prices.findByItemCodeOrderByValidFromDescIdDesc(itemCode).stream()
                 .map(price -> view(price, "ALL".equals(price.getSegment()) ? "ALL" : "SEGMENT")).toList();
+    }
+
+    /**
+     * Lot C8 : prix applicable a un client. Son contrat d'abord (prix fixe, ou taux de remise sur le
+     * prix du segment), puis le prix du segment, puis celui de la fiche (decision CD8).
+     */
+    @Transactional(readOnly = true)
+    public CatalogPriceResponse price(String itemCode, String segment, LocalDate date, String customerType, String customerCode) {
+        CatalogPriceResponse base = price(itemCode, segment, date);
+        if (customerPrices == null) {
+            return base;
+        }
+        return customerPrices.contractPrice(customerType, customerCode, base.itemCode(), date, base.unitPrice())
+                .map(contract -> new CatalogPriceResponse(base.itemCode(), base.segment(), contract.unitPrice(), contract.price().getValidFrom(),
+                        contract.price().getValidUntil(), contract.price().getContractReference(), contract.price().getCreatedBy(),
+                        contract.price().getCreatedAt(), "CONTRACT"))
+                .orElse(base);
     }
 
     /** Prix applicable : celui du segment a la date, sinon le prix date commun, sinon celui de la fiche. */
@@ -171,9 +195,21 @@ public class CatalogPriceService {
                 ServiceCatalogItem item = existing.orElseGet(() -> ServiceCatalogItem.builder().itemCode(cells[0].trim()).build());
                 BigDecimal previous = item.getUnitPrice();
                 item.setName(cells[1].trim());
-                item.setCategory(text(cells, 2));
-                item.setSubcategory(text(cells, 3));
-                item.setUnit(text(cells, 4));
+                String category = text(cells, 2);
+                String subcategory = text(cells, 3);
+                String unit = text(cells, 4);
+                if (references != null) {
+                    // Lot C0 : memes controles que l'ecran (mode souple ou strict).
+                    CatalogReferenceService.Resolved refs = references.resolveForItem(
+                            new CatalogReferenceService.ItemReferences(category, subcategory, unit, null),
+                            new CatalogReferenceService.ItemReferences(item.getCategory(), item.getSubcategory(), item.getUnit(), null));
+                    category = refs.category();
+                    subcategory = refs.subcategory();
+                    unit = refs.unit();
+                }
+                item.setCategory(category);
+                item.setSubcategory(subcategory);
+                item.setUnit(unit);
                 item.setUnitPrice(decimal(cells, 5));
                 if (text(cells, 6) != null) {
                     item.setCurrency(text(cells, 6));

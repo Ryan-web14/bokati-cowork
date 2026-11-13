@@ -1,6 +1,6 @@
 # billing : fonctionnement
 
-> Rédigé d'après le code (refonte devis et facturation, lots B0 à B15, 13/11/2026). Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code (refonte devis et facturation, lots B0 à B15, et compléments, lots C0 à C16, 13/11/2026). Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -26,6 +26,18 @@ Modules voisins : [approval](../approval/README.md) (centre d'approbation de la 
 | Stock | [stock.md](stock.md) | Disponibilités, réservation, sortie |
 | États clients | [etats-clients.md](etats-clients.md) | Relevé, balance âgée, échéanciers |
 | Catalogue | [catalogue.md](catalogue.md) | Prix par segment et datés, liens, CSV, marges |
+| Listes de référence | [listes-reference.md](listes-reference.md) | **Familles, sous-familles, unités, taxes chargées depuis le backend** (C0) |
+| Taxe de l'article, débours | [taxes-et-debours.md](taxes-et-debours.md) | Exonération par article, taux par ligne, débours hors TVA (C1, C10) |
+| Bons de livraison | [livraisons.md](livraisons.md) | Livraisons partielles, reste à livrer, stock à la livraison, facture des quantités livrées (C4) |
+| Retenues à la source | [retenues.md](retenues.md) | Retenue de TVA, précompte, attestations (C6) |
+| Cautions | [cautions.md](cautions.md) | Dépôts de garantie : registre, restitution, retenue, imputation (C7) |
+| Tarifs clients | [tarifs-clients.md](tarifs-clients.md) | Prix négociés par contrat (C8) |
+| Paiements en attente | [paiements-en-attente.md](paiements-en-attente.md) | Affectation des sommes non imputées (C9) |
+| Réclamations | [reclamations.md](reclamations.md) | Réclamation sur facture, avoir ou refus motivé (C11) |
+| Recouvrement | [recouvrement.md](recouvrement.md) | Promesses de paiement, plans de règlement, relance WhatsApp (C12) |
+| Facturation groupée | [facturation-groupee.md](facturation-groupee.md) | Une facture par client sur une période (C13) |
+| Devis types, lots | [devis-types.md](devis-types.md) | Modèles de devis, articles composés (C14) |
+| Tableau de bord | [tableau-de-bord.md](tableau-de-bord.md) | Indicateurs commerciaux (C15) |
 | Erreurs | [erreurs.md](erreurs.md) | Codes stables `reason`, routes dépréciées |
 
 ## Notions
