@@ -166,6 +166,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
     private final com.sni.bokaticowork.features.billing.service.support.BillingStockGuard stockGuard;
     private final com.sni.bokaticowork.features.billing.repository.BillingDocumentSignatureRepository signatureRepository;
+    /** Lot B3 : acomptes (resolus a l'usage, le service des acomptes dependant de celui-ci). */
+    private final org.springframework.beans.factory.ObjectProvider<DepositService> depositServices;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -1545,6 +1547,13 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // fiche exploitant change ensuite.
         freezeSeller(document);
         BillingDocument saved = documentRepository.save(document);
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService != null && saved.getDocumentType() == BillingDocumentType.INVOICE
+                && !StringUtils.hasText(saved.getDepositForDocumentNumber())) {
+            // Lot B3 : la facture finale deduit chaque acompte encaisse et ne reclame que le reste.
+            depositService.deductOnFinalInvoice(saved);
+            saved = serviceByNumber(saved.getDocumentNumber());
+        }
         eventWriter.write(saved, "BILLING_DOCUMENT_ISSUED", null);
         memberInAppNotifier.notify("BILLING_DOCUMENT_ISSUED", "BILLING_DOCUMENT", saved.getDocumentNumber(),
                 saved.getCustomerEmail(), saved.getCustomerName(), saved.getCustomerCode(),
@@ -1750,6 +1759,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         quote.setStatus(BillingDocumentStatus.REJECTED);
         quote.setBalanceDue(BigDecimal.ZERO);
         cancelPendingAdvance(quote);
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService != null) {
+            depositService.dropUnpaidQuoteDeposits(quote, "Devis refusé");
+        }
         BillingDocument saved = documentRepository.save(quote);
         eventWriter.write(saved, "QUOTE_REJECTED", null);
         return mapper.toResponse(saved);
@@ -1806,6 +1819,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         );
 
         BillingDocumentResponse invoice = create(request);
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService != null) {
+            // Lot B3 : les acomptes du devis seront deduits a l'emission de la facture.
+            depositService.transferQuoteDeposits(quote, invoice.documentNumber());
+        }
 
         // Apply deposit as pre-payment on the invoice
         if (depositPaid) {
@@ -2046,6 +2064,13 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // Lot B1 : un devis dont la date de validite est passee sans reponse expire ; l'acompte
         // encore attendu est abandonne. Un devis accepte ou dont l'acompte est encaisse n'expire pas.
         documentRepository.cancelPendingAdvancesOfExpiringQuotes();
+        DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
+        if (depositService != null) {
+            // Lot B3 : les acomptes non encaisses tombent avec le devis ; un devis dont un acompte est
+            // encaisse n'expire pas (remboursement, avoir ou reactivation, D4).
+            documentRepository.findExpiringQuoteNumbers().forEach(number -> documentRepository.findByDocumentNumber(number)
+                    .ifPresent(quote -> depositService.dropUnpaidQuoteDeposits(quote, "Devis expiré")));
+        }
         return documentRepository.expireQuotes();
     }
 
@@ -2165,7 +2190,17 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             document.setStatus(BillingDocumentStatus.PARTIALLY_PAID);
         }
         syncAdvance(document);
-        return documentRepository.save(document);
+        BillingDocument saved = documentRepository.save(document);
+        depositHook(saved);
+        return saved;
+    }
+
+    /** Lot B3 : une facture d'acompte encaissee fait avancer son acompte et son devis. */
+    private void depositHook(BillingDocument document) {
+        DepositService deposits = depositServices == null ? null : depositServices.getIfAvailable();
+        if (deposits != null && StringUtils.hasText(document.getDepositForDocumentNumber())) {
+            deposits.onDepositInvoicePayment(document);
+        }
     }
 
     /**
@@ -2217,7 +2252,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             document.setStatus(BillingDocumentStatus.PARTIALLY_PAID);
         }
         syncAdvance(document);
-        return documentRepository.save(document);
+        BillingDocument saved = documentRepository.save(document);
+        depositHook(saved);
+        return saved;
     }
 
     @Override

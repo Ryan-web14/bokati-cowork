@@ -417,9 +417,21 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
               AND due_date < CURRENT_DATE
               AND NOT EXISTS (SELECT 1 FROM billing_document_advance a WHERE a.document_id = billing_document.id
                               AND a.status IN ('PAID', 'PARTIALLY_PAID'))
+              AND NOT EXISTS (SELECT 1 FROM billing_deposit dp WHERE dp.document_id = billing_document.id
+                              AND dp.status IN ('PAID', 'PARTIALLY_PAID'))
             """)
     @org.springframework.data.jpa.repository.Modifying
     int expireQuotes();
+
+    /** Devis que {@link #expireQuotes()} va faire expirer (lot B3 : leurs acomptes non encaisses tombent). */
+    @Query(nativeQuery = true, value = """
+            SELECT d.document_number FROM billing_document d
+            WHERE d.document_type = 'QUOTE' AND d.deleted_at IS NULL
+              AND d.status IN ('ISSUED', 'SENT', 'VIEWED', 'NEGOTIATION', 'DEPOSIT_REQUESTED')
+              AND d.due_date IS NOT NULL AND d.due_date < CURRENT_DATE
+              AND NOT EXISTS (SELECT 1 FROM billing_deposit dp WHERE dp.document_id = d.id AND dp.status IN ('PAID', 'PARTIALLY_PAID'))
+            """)
+    java.util.List<String> findExpiringQuoteNumbers();
 
     /** Acomptes encore attendus sur les devis que {@link #expireQuotes()} va faire expirer. */
     @Query(nativeQuery = true, value = """

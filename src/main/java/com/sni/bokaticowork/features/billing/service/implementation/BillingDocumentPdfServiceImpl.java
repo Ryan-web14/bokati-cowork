@@ -74,6 +74,11 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private final BrandLogo brandLogo;
     private final com.sni.bokaticowork.core.identity.OperatorIdentityService operatorIdentityService;
     private final com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
+    private final com.sni.bokaticowork.features.billing.repository.BillingDepositRepository depositRepository;
+
+    /** Ligne « Acompte n° ... du ... » d'une facture finale (lot B3). */
+    public record DepositLine(String label, java.math.BigDecimal amount) {
+    }
 
     /** Visa imprime (lot B12) : auteur de la version, sa fonction, la date et sa signature si elle existe. */
     public record VisaView(String name, String title, java.time.LocalDate date, String signature) {
@@ -319,6 +324,16 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             context.setVariable("customerVatExemptionNote", entity.getCustomerVatExemptionNote());
             context.setVariable("usageAnnex", usageAnnex(entity.getUsageAnnexJson(), document.documentNumber()));
             context.setVariable("visa", visaOf(entity));
+            // Lot B3 : facture d'acompte titree comme telle ; facture finale avec ses acomptes deduits.
+            context.setVariable("depositFor", entity.getDepositForDocumentNumber());
+            context.setVariable("deposits", depositRepository == null ? java.util.List.of()
+                    : depositRepository.findByFinalDocumentNumberOrderByRankAsc(entity.getDocumentNumber()).stream()
+                    .filter(deposit -> deposit.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingDepositStatus.DEDUCTED)
+                    .map(deposit -> new DepositLine("Acompte n° " + deposit.getRank() + " du "
+                            + java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy").format(java.time.LocalDate.ofInstant(
+                                    deposit.getCreatedAt(), java.time.ZoneId.of("Africa/Brazzaville")))
+                            + " (" + deposit.getDepositInvoiceNumber() + ")", deposit.getDeductedAmount()))
+                    .toList());
             // Organisation reliee des l'emission · imprimee en tete. Une facture reliee apres coup
             // (ATTACHED) ne change pas : son document emis ne portait pas l'organisation.
             if ("AT_ISSUE".equals(entity.getCompanyLinkSource()) && StringUtils.hasText(entity.getCompanyName())) {

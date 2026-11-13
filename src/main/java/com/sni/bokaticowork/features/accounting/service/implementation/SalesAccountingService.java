@@ -137,6 +137,14 @@ public class SalesAccountingService {
                     + "ORDER BY d.cancelled_at LIMIT ?", String.class, batch)
                     .forEach(number -> counter.run(number, () -> feedCancellation(number)));
         }
+        if (settings.familyEnabled("SALES")) {
+            // Lot B3 : acomptes deduits d'une facture finale deja comptabilisee, une piece par acompte.
+            jdbc.queryForList("SELECT dp.deposit_invoice_number FROM billing_deposit dp WHERE dp.status = 'DEDUCTED' AND dp.deposit_invoice_number IS NOT NULL "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_ISSUED' AND e.reference = dp.deducted_on) "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'DEPOSIT_APPLIED' AND e.reference = dp.deposit_invoice_number) "
+                    + "ORDER BY dp.deducted_at LIMIT ?", String.class, batch)
+                    .forEach(number -> counter.run(number, () -> feedDepositApplied(number)));
+        }
         if (settings.familyEnabled("PAYMENT")) {
             Instant settled = Instant.now().minusSeconds(60L * Math.max(0, settings.paymentDelayMinutes()));
             jdbc.queryForList("SELECT t.transaction_number FROM payment_transaction t WHERE t.status IN ('SUCCEEDED', 'REFUNDED', 'REVERSED') "
@@ -220,6 +228,9 @@ public class SalesAccountingService {
             data.put("foreignTotal", money(document.getTotalAmount()));
         }
         data.put("dueDate", document.getDueDate() == null ? null : document.getDueDate().toString());
+        // Lot B3 : facture d'acompte, au credit du 4191 (schema SALES_DEPOSIT_INVOICE).
+        data.put("depositFor", document.getDepositForDocumentNumber());
+        data.put("depositAccount", settings.text("accounting.sales.deposit-account", "4191"));
         data.put("letteringReference", creditNote && StringUtils.hasText(document.getOriginalDocumentNumber())
                 ? document.getOriginalDocumentNumber() : document.getDocumentNumber());
         data.put("originalDocumentNumber", document.getOriginalDocumentNumber());
@@ -238,6 +249,28 @@ public class SalesAccountingService {
             }
         }
         engine.receive(creditNote ? CREDIT_NOTE_ISSUED : INVOICE_ISSUED, number, "SALES", date, json(data), replay(date));
+    }
+
+    /** Acompte deduit de la facture finale : D 4191 / C 411, TVA en attente liberee au prorata (lot B3). */
+    void feedDepositApplied(String depositInvoiceNumber) {
+        Map<String, Object> deposit = jdbc.queryForMap("SELECT dp.deducted_on, dp.deducted_amount, dp.deducted_at FROM billing_deposit dp "
+                + "WHERE dp.deposit_invoice_number = ?", depositInvoiceNumber);
+        String finalNumber = (String) deposit.get("deducted_on");
+        BillingDocument document = documentRepository.findByDocumentNumber(finalNumber).orElseThrow();
+        LocalDate date = date(deposit.get("deducted_at") instanceof java.sql.Timestamp at ? at.toInstant() : Instant.now());
+        Conversion fx = conversion(document.getCurrency(), document.getExchangeRate(), date);
+        BigDecimal value = money((BigDecimal) deposit.get("deducted_amount"));
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("documentNumber", finalNumber);
+        data.put("depositInvoiceNumber", depositInvoiceNumber);
+        data.put("customerCode", customerCode(document));
+        data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
+        data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
+        data.put("depositAccount", settings.text("accounting.sales.deposit-account", "4191"));
+        data.put("amount", fx.apply(value));
+        data.put("vatTransfers", paymentRegime() ? vatTransfers(finalNumber, value, false) : List.of());
+        data.put("vatPendingAccount", settings.text("accounting.vat.pending-account", "4438"));
+        engine.receive("DEPOSIT_APPLIED", depositInvoiceNumber, "SALES", date, json(data), replay(date));
     }
 
     void feedCancellation(String number) {

@@ -153,6 +153,7 @@ accounting.revenue.deferral	ACCOUNTING	ENUM	LIVE	MONTHLY	Produits constates d'av
 accounting.revenue.deferred-account	ACCOUNTING	TEXT	LIVE	477	Compte des produits constates d'avance
 accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
 accounting.sales.client-account	ACCOUNTING	TEXT	LIVE	411	Compte collectif des clients
+accounting.sales.deposit-account	ACCOUNTING	TEXT	LIVE	4191	Compte des acomptes recus des clients (factures d'acompte, soldé par la facture finale)
 accounting.sales.discount-account	ACCOUNTING	TEXT	LIVE	709	Compte des remises accordees sur facture
 accounting.sales.extra-tax-account	ACCOUNTING	TEXT	LIVE	4431	Compte du centime additionnel facture
 accounting.sales.journal	ACCOUNTING	TEXT	LIVE	VT	Journal des factures et avoirs

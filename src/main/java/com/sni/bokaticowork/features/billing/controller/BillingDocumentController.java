@@ -61,6 +61,7 @@ import java.time.LocalDate;
 public class BillingDocumentController {
 
     private final com.sni.bokaticowork.features.billing.service.implementation.InvoiceChangeService invoiceChangeService;
+    private final com.sni.bokaticowork.features.billing.service.implementation.DepositService depositService;
 
     private final BillingDocumentService billingDocumentService;
     private final BillingDocumentPdfService billingDocumentPdfService;
@@ -247,6 +248,45 @@ public class BillingDocumentController {
     @PatchMapping("/invoices/change-requests/{id}/cancel")
     public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.InvoiceChangeResponse> cancelInvoiceChange(@PathVariable Long id) {
         return ResponseEntity.ok(invoiceChangeService.cancel(id));
+    }
+
+    /** Lot B3 : un ou plusieurs acomptes (montant ou pourcentage, echeances) sur un devis. */
+    @PostMapping("/quotes/{quoteNumber}/deposits")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.DepositResponse>> planQuoteDeposits(
+            @PathVariable String quoteNumber,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest request) {
+        return ResponseEntity.ok(depositService.plan(quoteNumber, request));
+    }
+
+    /** Lot B3 : acomptes sur une facture en preparation (non pris sur le devis). */
+    @PostMapping("/invoices/{invoiceNumber}/deposits")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.DepositResponse>> planInvoiceDeposits(
+            @PathVariable String invoiceNumber,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest request) {
+        return ResponseEntity.ok(depositService.plan(invoiceNumber, request));
+    }
+
+    @GetMapping("/documents/{documentNumber}/deposits")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.DepositResponse>> deposits(@PathVariable String documentNumber) {
+        return ResponseEntity.ok(depositService.list(documentNumber));
+    }
+
+    @PatchMapping("/deposits/{id}/invoice")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.DepositResponse> invoiceDeposit(@PathVariable Long id) {
+        return ResponseEntity.ok(depositService.invoice(id));
+    }
+
+    @PatchMapping("/deposits/{id}/cancel")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.DepositResponse> cancelDeposit(@PathVariable Long id,
+                                                                                                         @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(depositService.cancel(id, reason));
+    }
+
+    /** Decision D4 : acompte encaisse d'un devis refuse ou expire, rembourse ou garde en avoir. */
+    @PatchMapping("/deposits/{id}/settle")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.DepositResponse> settleDeposit(@PathVariable Long id,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.DepositSettlementRequest request) {
+        return ResponseEntity.ok(depositService.settle(id, request));
     }
 
     @PatchMapping("/quotes/{quoteNumber}/mark-viewed")

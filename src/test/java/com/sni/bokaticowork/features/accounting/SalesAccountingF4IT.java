@@ -108,6 +108,7 @@ class SalesAccountingF4IT extends PostgresIntegrationTestBase {
     @Autowired private AccPostingEventRepository events;
     @Autowired private AccEntryRepository entries;
     @Autowired private AccEntryLineRepository lines;
+    @Autowired private com.sni.bokaticowork.features.billing.repository.BillingDepositRepository depositRepository;
     @Autowired private ExchangeRateService rates;
     @Autowired private com.sni.bokaticowork.features.accounting.repository.CashExchangeRateRepository rateRepository;
     @MockitoBean private AccountingSettings settings;
@@ -298,6 +299,51 @@ class SalesAccountingF4IT extends PostgresIntegrationTestBase {
         rate.setSetBy("TEST");
         rate.setSource("MANUAL");
         rateRepository.save(rate);
+    }
+
+    @Test
+    @DisplayName("Lot B3 : deux factures d'acompte creditent le 4191 ; la facture finale les deduit, le 4191 est solde, le 411 ne garde que le reste")
+    void depositsAreSettledByTheFinalInvoice() {
+        BillingDocument quote = invoice("DEV-F4-" + code, BillingDocumentType.QUOTE, "1000000", "0", null);
+        BillingDocument first = depositInvoice("ACO1-F4-" + code, "300000", quote);
+        BillingDocument second = depositInvoice("ACO2-F4-" + code, "200000", quote);
+        CashSession session = cashSession();
+        PaymentTransaction pay1 = payment("TXN-A1-" + code, PaymentMethod.CASH, "300000", session.getSessionNumber());
+        allocations.save(PaymentAllocation.builder().paymentTransaction(pay1).billingDocumentNumber(first.getDocumentNumber())
+                .allocatedAmount(new BigDecimal("300000")).allocatedAt(Instant.now()).build());
+        PaymentTransaction pay2 = payment("TXN-A2-" + code, PaymentMethod.CASH, "200000", session.getSessionNumber());
+        allocations.save(PaymentAllocation.builder().paymentTransaction(pay2).billingDocumentNumber(second.getDocumentNumber())
+                .allocatedAmount(new BigDecimal("200000")).allocatedAt(Instant.now()).build());
+        BillingDocument finalInvoice = invoice("FAC-FIN-" + code, BillingDocumentType.INVOICE, "1000000", "0", null);
+        int rank = 0;
+        for (BillingDocument deposit : List.of(first, second)) {
+            depositRepository.save(com.sni.bokaticowork.features.billing.model.BillingDeposit.builder().documentId(quote.getId())
+                    .documentNumber(quote.getDocumentNumber()).finalDocumentNumber(finalInvoice.getDocumentNumber()).rank(++rank)
+                    .mode(com.sni.bokaticowork.features.billing.enums.BillingDepositMode.AMOUNT).value(deposit.getTotalAmount())
+                    .amount(deposit.getTotalAmount()).status(com.sni.bokaticowork.features.billing.enums.BillingDepositStatus.DEDUCTED)
+                    .depositInvoiceNumber(deposit.getDocumentNumber()).paidAmount(deposit.getTotalAmount()).deductedAmount(deposit.getTotalAmount())
+                    .deductedOn(finalInvoice.getDocumentNumber()).deductedAt(Instant.now()).build());
+        }
+
+        run();
+
+        assertThat(posted("INVOICE_ISSUED", first.getDocumentNumber())).isTrue();
+        assertThat(events.findByEventTypeAndReference("INVOICE_ISSUED", first.getDocumentNumber()).orElseThrow().getRuleCode())
+                .isEqualTo("SALES_DEPOSIT_INVOICE");
+        assertThat(posted("DEPOSIT_APPLIED", first.getDocumentNumber())).isTrue();
+        assertThat(posted("DEPOSIT_APPLIED", second.getDocumentNumber())).isTrue();
+        BigDecimal deposits = lines.findPosted("4191", customer, LocalDate.of(2000, 1, 1), LocalDate.of(2100, 1, 1), List.of(EntryStatus.VALIDATED))
+                .stream().map(line -> line.getCredit().subtract(line.getDebit())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(deposits).isEqualByComparingTo("0");
+        BigDecimal receivable = lines.findPosted("411", customer, LocalDate.of(2000, 1, 1), LocalDate.of(2100, 1, 1), List.of(EntryStatus.VALIDATED))
+                .stream().map(line -> line.getDebit().subtract(line.getCredit())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(receivable).isEqualByComparingTo("500000");
+    }
+
+    private BillingDocument depositInvoice(String number, String amount, BillingDocument quote) {
+        BillingDocument document = invoice(number, BillingDocumentType.INVOICE, amount, "0", null);
+        document.setDepositForDocumentNumber(quote.getDocumentNumber());
+        return documents.save(document);
     }
 
     private void run() {

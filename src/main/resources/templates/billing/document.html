@@ -193,7 +193,7 @@
                             <span th:case="'CREDIT_NOTE'">AVOIR</span>
                             <span th:case="'DEBIT_NOTE'">NOTE DE DÉBIT</span>
                             <span th:case="'CORRECTIVE_INVOICE'" style="font-size:18px;">FACTURE RECTIFICATIVE</span>
-                            <span th:case="*">FACTURE</span>
+                            <span th:case="*" th:text="${depositFor != null ? 'FACTURE D''ACOMPTE' : 'FACTURE'}" th:style="${depositFor != null ? 'font-size:18px;' : ''}">FACTURE</span>
                         </div>
                         <div class="doc-number"
                              th:text="${document.locked() != null and document.locked() and document.fiscalNumber() != null ? document.fiscalNumber() : document.documentNumber()}">INV-000001</div>
@@ -450,7 +450,11 @@
                         </td>
                         <td class="val num" style="color:#1f1430;" th:text="${fmt.money(document.advance().computedAmount())}">0</td>
                     </tr>
-                    <tr><td class="lbl">Montant réglé</td><td class="val num" th:text="${fmt.money(document.paidAmount())}">0</td></tr>
+                    <tr th:each="dp : ${deposits}" th:if="${deposits != null}">
+                        <td class="lbl" th:text="${dp.label()}">Acompte n° 1</td>
+                        <td class="val num" th:text="|- ${fmt.money(dp.amount())}|">0</td>
+                    </tr>
+                    <tr><td class="lbl" th:text="${deposits != null and not #lists.isEmpty(deposits) ? 'Montant réglé (acomptes compris)' : 'Montant réglé'}">Montant réglé</td><td class="val num" th:text="${fmt.money(document.paidAmount())}">0</td></tr>
                     <tr th:if="${payments != null and not #lists.isEmpty(payments)}">
                         <td class="lbl">Mode de paiement</td>
                         <td class="val" style="font-size:9px; letter-spacing:0.3px;">

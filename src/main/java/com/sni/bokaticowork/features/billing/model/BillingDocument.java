@@ -414,4 +414,8 @@ public class BillingDocument {
     /** Lot B14 (D8) : rectificative qui remplace cette facture, presentee comme sa nouvelle version. */
     @Column(name = "replaced_by_document_number", length = 60)
     private String replacedByDocumentNumber;
+
+    /** Lot B3 : facture d'acompte, rattachee au devis ou a la facture dont elle est un acompte. */
+    @Column(name = "deposit_for_document_number", length = 60)
+    private String depositForDocumentNumber;
 }

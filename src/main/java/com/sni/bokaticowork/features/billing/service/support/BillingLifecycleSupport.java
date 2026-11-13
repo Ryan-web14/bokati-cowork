@@ -69,9 +69,12 @@ public class BillingLifecycleSupport {
         if (quote.getDocumentType() != BillingDocumentType.QUOTE) {
             throw new BadRequestException("Billing document is not a quote");
         }
+        // Lot B3 : un devis dont les acomptes sont demandes se convertit aussi ; la facture deduira ce
+        // qui est encaisse et reclamera le reste.
         if (quote.getStatus() != BillingDocumentStatus.ACCEPTED
+                && quote.getStatus() != BillingDocumentStatus.DEPOSIT_REQUESTED
                 && quote.getStatus() != BillingDocumentStatus.DEPOSIT_PAID) {
-            throw new BadRequestException("Quote must be accepted or have its deposit paid before conversion");
+            throw new BadRequestException("Un devis se convertit une fois accepté");
         }
     }
 
