@@ -103,6 +103,21 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         BillingDocumentResponse document = billingDocumentService.get(documentNumber);
 
         byte[] canonical = storedPdf(documentNumber);
+        java.time.Instant corrected = documentRepository.findByDocumentNumber(documentNumber)
+                .map(com.sni.bokaticowork.features.billing.model.BillingDocument::getRecipientCorrectedAt).orElse(null);
+        if (canonical != null && corrected != null && Boolean.TRUE.equals(document.locked())) {
+            // Lot B4 (E15) : destinataire corrige apres scellement. L'original scelle reste la
+            // reference (empreinte inchangee) ; on envoie un duplicata date, au destinataire corrige.
+            byte[] duplicate = com.sni.bokaticowork.core.utils.pdf.PdfCopies.stamp(render(document),
+                    "DUPLICATA DU " + java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy").format(java.time.LocalDate.now())
+                            + " (DESTINATAIRE CORRIGÉ)");
+            String duplicateWatermark = resolveWatermark(document.status(), document.locked());
+            try {
+                return duplicateWatermark == null ? duplicate : addWatermark(duplicate, duplicateWatermark);
+            } catch (Exception ex) {
+                throw new BadRequestException("Unable to watermark billing document PDF", ex);
+            }
+        }
         if (canonical == null) {
             canonical = render(document);
             if (Boolean.TRUE.equals(document.locked())) {

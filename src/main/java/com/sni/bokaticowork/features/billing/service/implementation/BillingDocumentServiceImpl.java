@@ -1146,6 +1146,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         auditPayload.put("before", before);
         auditPayload.put("after", recipientSnapshot(saved));
         auditPayload.put("reason", request.reason());
+        if (Boolean.TRUE.equals(saved.getLocked())) {
+            // Lot B4 (E15) : la piece scellee ne change pas ; les envois suivants partent en duplicata date.
+            saved.setRecipientCorrectedAt(Instant.now());
+            saved = documentRepository.save(saved);
+        }
         editHistoryRepository.save(BillingDocumentEditHistory.builder()
                 .document(saved)
                 .editType("RECIPIENT_UPDATED")

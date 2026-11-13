@@ -426,4 +426,8 @@ public class BillingDocument {
     /** Lot B5 : devis issu de cette proforma. */
     @Column(name = "converted_to_document_number", length = 60)
     private String convertedToDocumentNumber;
+
+    /** Lot B4 (E15) : destinataire corrige apres scellement ; le PDF envoye devient un duplicata date. */
+    @Column(name = "recipient_corrected_at")
+    private java.time.Instant recipientCorrectedAt;
 }

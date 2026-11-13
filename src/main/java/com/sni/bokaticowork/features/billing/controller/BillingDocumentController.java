@@ -62,6 +62,7 @@ public class BillingDocumentController {
 
     private final com.sni.bokaticowork.features.billing.service.implementation.InvoiceChangeService invoiceChangeService;
     private final com.sni.bokaticowork.features.billing.service.implementation.DepositService depositService;
+    private final com.sni.bokaticowork.features.billing.service.implementation.BillingSendingService sendingService;
 
     private final BillingDocumentService billingDocumentService;
     private final BillingDocumentPdfService billingDocumentPdfService;
@@ -208,6 +209,37 @@ public class BillingDocumentController {
     @PatchMapping("/documents/{documentNumber}/validate")
     public ResponseEntity<BillingDocumentResponse> validate(@PathVariable String documentNumber) {
         return ResponseEntity.ok(billingDocumentService.validate(documentNumber));
+    }
+
+    /**
+     * Lot B4 : envoi aux destinataires choisis (principaux, copie, copie cachee) par courriel (PDF
+     * joint) et/ou WhatsApp ; chaque envoi est trace, le statut de la piece ne change pas.
+     */
+    @PostMapping("/documents/{documentNumber}/send")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.BillingSendingResponse>> sendTo(
+            @PathVariable String documentNumber,
+            @jakarta.validation.Valid @RequestBody(required = false) com.sni.bokaticowork.features.billing.dto.request.SendDocumentRequest request) {
+        return ResponseEntity.ok(sendingService.send(documentNumber, request));
+    }
+
+    @GetMapping("/documents/{documentNumber}/sendings")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.dto.response.BillingSendingResponse>> sendings(
+            @PathVariable String documentNumber) {
+        return ResponseEntity.ok(sendingService.sendings(documentNumber));
+    }
+
+    /** Lot B4 : destinataires habituels d'un client et adresses connues a proposer. */
+    @GetMapping("/customers/{customerType}/{customerCode}/billing-recipients")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.BillingRecipientsResponse> billingRecipients(
+            @PathVariable String customerType, @PathVariable String customerCode) {
+        return ResponseEntity.ok(sendingService.recipients(customerType, customerCode));
+    }
+
+    @PutMapping("/customers/{customerType}/{customerCode}/billing-recipients")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.BillingRecipientsResponse> saveBillingRecipients(
+            @PathVariable String customerType, @PathVariable String customerCode,
+            @RequestBody com.sni.bokaticowork.features.billing.dto.request.BillingRecipientPreferenceRequest request) {
+        return ResponseEntity.ok(sendingService.saveRecipients(customerType, customerCode, request));
     }
 
     @PatchMapping("/documents/{documentNumber}/send")

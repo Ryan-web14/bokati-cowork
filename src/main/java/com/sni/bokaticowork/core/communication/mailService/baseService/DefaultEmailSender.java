@@ -400,9 +400,17 @@ public class DefaultEmailSender {
         message.setBody(body);
 
         // Un champ peut porter plusieurs adresses separees par des virgules (courriel de facturation
-        // d'une entreprise) · une adresse par destinataire, sinon Graph refuse l'envoi.
-        List<String> addresses = com.sni.bokaticowork.core.utils.validation.EmailAddresses.split(to);
-        message.setToRecipients((addresses.isEmpty() ? List.of(to) : addresses).stream().map(this::recipient).toList());
+        // d'une entreprise) · une adresse par destinataire, sinon Graph refuse l'envoi. Lot B4 : la
+        // copie et la copie cachee suivent, encodees par EmailRecipients.
+        com.sni.bokaticowork.core.utils.validation.EmailRecipients recipients = com.sni.bokaticowork.core.utils.validation.EmailRecipients.parse(to);
+        List<String> addresses = com.sni.bokaticowork.core.utils.validation.EmailAddresses.split(recipients.to());
+        message.setToRecipients((addresses.isEmpty() ? List.of(recipients.to()) : addresses).stream().map(this::recipient).toList());
+        if (!recipients.cc().isEmpty()) {
+            message.setCcRecipients(recipients.cc().stream().map(this::recipient).toList());
+        }
+        if (!recipients.bcc().isEmpty()) {
+            message.setBccRecipients(recipients.bcc().stream().map(this::recipient).toList());
+        }
         return message;
     }
 
