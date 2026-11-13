@@ -51,22 +51,27 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
     /** Lot B10 : historique des prix (facultatif pour les tests unitaires). */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private CatalogPriceService catalogPrices;
+    /** Lot C0 : listes de reference (facultatif pour les tests unitaires). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private CatalogReferenceService references;
 
     @Override
     @Transactional
     public ServiceCatalogItemResponse create(CreateServiceCatalogItemRequest request) {
         validateBounds(request.minQuantity(), request.maxQuantity(),
                 request.floorPrice(), request.unitPrice());
+        CatalogReferenceService.Resolved refs = resolve(new CatalogReferenceService.ItemReferences(
+                request.category(), request.subcategory(), request.unit(), request.taxRuleCode()), null);
         String itemCode = sequenceGenerator.next("service_catalog_item");
         ServiceCatalogItem item = ServiceCatalogItem.builder()
                 .itemCode(itemCode)
                 .name(request.name())
                 .description(request.description())
-                .category(request.category())
-                .unit(request.unit())
+                .category(refs.category())
+                .unit(refs.unit())
                 .unitPrice(request.unitPrice())
                 .currency(request.currency() != null ? request.currency() : "XAF")
-                .taxRuleCode(request.taxRuleCode())
+                .taxRuleCode(refs.taxRuleCode())
                 .displayOrder(request.displayOrder() != null ? request.displayOrder() : 0)
                 .active(true)
                 .costPrice(request.costPrice())
@@ -82,21 +87,44 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
                 .minQuantity(request.minQuantity())
                 .maxQuantity(request.maxQuantity())
                 .taxableByDefault(request.taxableByDefault())
-                .subcategory(request.subcategory())
+                .subcategory(refs.subcategory())
                 .tags(toJson(request.tags()))
                 .externalReference(request.externalReference())
                 .validFrom(request.validFrom())
                 .validUntil(request.validUntil())
                 .build();
-        return toResponse(catalogItemRepository.save(item));
+        return toResponse(catalogItemRepository.save(item), snapshot(), refs.warnings());
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ServiceCatalogItemResponse> list(Boolean active, String category, String searchText, Pageable pageable) {
+        return list(active, category, null, searchText, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ServiceCatalogItemResponse> list(Boolean active, String category, String subcategory, String searchText, Pageable pageable) {
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        return catalogItemRepository.search(active, category, searchText, unsortedPageable)
-                .map(this::toResponse);
+        CatalogReferenceService.Snapshot labels = snapshot();
+        Page<ServiceCatalogItem> page = subcategory == null || subcategory.isBlank()
+                ? catalogItemRepository.search(active, category, searchText, unsortedPageable)
+                : catalogItemRepository.searchBySubcategory(active, category, subcategory.trim(), searchText, unsortedPageable);
+        return page.map(item -> toResponse(item, labels, List.of()));
+    }
+
+    /** Lot C0 : controle des references ; sans le service (tests unitaires), valeurs inchangees. */
+    private CatalogReferenceService.Resolved resolve(CatalogReferenceService.ItemReferences requested,
+                                                     CatalogReferenceService.ItemReferences current) {
+        if (references == null) {
+            return new CatalogReferenceService.Resolved(requested.category(), requested.subcategory(), requested.unit(),
+                    requested.taxRuleCode(), List.of());
+        }
+        return references.resolveForItem(requested, current);
+    }
+
+    private CatalogReferenceService.Snapshot snapshot() {
+        return references == null ? CatalogReferenceService.Snapshot.EMPTY : references.snapshot();
     }
 
     @Override
@@ -104,13 +132,16 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
     public ServiceCatalogItemResponse update(String itemCode, UpdateServiceCatalogItemRequest request) {
         ServiceCatalogItem item = findByCode(itemCode);
         java.math.BigDecimal previousPrice = item.getUnitPrice();
+        CatalogReferenceService.Resolved refs = resolve(
+                new CatalogReferenceService.ItemReferences(request.category(), request.subcategory(), request.unit(), request.taxRuleCode()),
+                new CatalogReferenceService.ItemReferences(item.getCategory(), item.getSubcategory(), item.getUnit(), item.getTaxRuleCode()));
         if (request.name() != null) item.setName(request.name());
         if (request.description() != null) item.setDescription(request.description());
-        if (request.category() != null) item.setCategory(request.category());
-        if (request.unit() != null) item.setUnit(request.unit());
+        if (request.category() != null) item.setCategory(refs.category());
+        if (request.unit() != null) item.setUnit(refs.unit());
         if (request.unitPrice() != null) item.setUnitPrice(request.unitPrice());
         if (request.currency() != null) item.setCurrency(request.currency());
-        if (request.taxRuleCode() != null) item.setTaxRuleCode(request.taxRuleCode());
+        if (request.taxRuleCode() != null) item.setTaxRuleCode(refs.taxRuleCode());
         if (request.displayOrder() != null) item.setDisplayOrder(request.displayOrder());
 
         if (request.costPrice() != null) item.setCostPrice(request.costPrice());
@@ -126,7 +157,7 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
         if (request.minQuantity() != null) item.setMinQuantity(request.minQuantity());
         if (request.maxQuantity() != null) item.setMaxQuantity(request.maxQuantity());
         if (request.taxableByDefault() != null) item.setTaxableByDefault(request.taxableByDefault());
-        if (request.subcategory() != null) item.setSubcategory(request.subcategory());
+        if (request.subcategory() != null) item.setSubcategory(refs.subcategory());
         if (request.tags() != null) item.setTags(toJson(request.tags()));
         if (request.externalReference() != null) item.setExternalReference(request.externalReference());
         if (request.validFrom() != null) item.setValidFrom(request.validFrom());
@@ -142,7 +173,7 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
         if (catalogPrices != null) {
             catalogPrices.recordCatalogPriceChange(item, previousPrice);
         }
-        return toResponse(catalogItemRepository.save(item));
+        return toResponse(catalogItemRepository.save(item), snapshot(), refs.warnings());
     }
 
     private void applyClearFields(ServiceCatalogItem item, List<String> fields) {
@@ -310,6 +341,10 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
     }
 
     private ServiceCatalogItemResponse toResponse(ServiceCatalogItem item) {
+        return toResponse(item, snapshot(), List.of());
+    }
+
+    private ServiceCatalogItemResponse toResponse(ServiceCatalogItem item, CatalogReferenceService.Snapshot labels, List<String> warnings) {
         return new ServiceCatalogItemResponse(
                 item.getItemCode(),
                 item.getName(),
@@ -346,7 +381,13 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
                 item.getExternalReference(),
                 item.getValidFrom(),
                 item.getValidUntil(),
-                currentlyValid(item)
+                currentlyValid(item),
+
+                labels.familyLabel(item.getCategory()),
+                labels.subcategoryLabel(item.getCategory(), item.getSubcategory()),
+                labels.unitLabel(item.getUnit()),
+                labels.tax(item.getTaxRuleCode()),
+                warnings
         );
     }
 

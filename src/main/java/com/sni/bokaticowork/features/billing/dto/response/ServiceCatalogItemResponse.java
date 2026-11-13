@@ -53,6 +53,15 @@ public record ServiceCatalogItemResponse(
         String externalReference,
         LocalDate validFrom,
         LocalDate validUntil,
-        Boolean currentlyValid
+        Boolean currentlyValid,
+
+        /* Lot C0 : libelles des listes de reference (category, subcategory, unit portent les codes). */
+        String categoryLabel,
+        String subcategoryLabel,
+        String unitLabel,
+        /* Lot C0 : regle de taxe en vigueur pour taxRuleCode, nulle si le code est inconnu. */
+        com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleSummary taxRule,
+        /* Lot C0 : avertissements de l'enregistrement (code de taxe inconnu garde tel quel). */
+        List<String> referenceWarnings
 ) {
 }

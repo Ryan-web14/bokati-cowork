@@ -278,6 +278,7 @@ app.verify-base-url	ENVIRONMENT	TEXT	LIVE	https://api.elleaose.com	Adresse de v�
 approval.escalation-hours	PAYMENT	INTEGER	LIVE	72	Heures d'attente d'un niveau avant escalade au supérieur du décideur
 approval.reminder-hours	PAYMENT	INTEGER	LIVE	24	Heures d'attente d'un niveau avant rappel aux décideurs (puis à chaque intervalle)
 approval.worker-cron	PAYMENT	CRON	LIVE	0 0 8-18 * * *	Planification des rappels et escalades des centres d'approbation
+billing.catalog.reference-lists.strict	BILLING	BOOLEAN	LIVE	false	Catalogue : refuser une famille, sous-famille, unité ou taxe absente des listes (sinon elle est ajoutée à la liste, et un code de taxe inconnu est gardé tel quel)
 billing.deal.auto-create	BILLING	BOOLEAN	LIVE	true	Affaires : le premier devis d'un client sans affaire ouverte en crée une (sinon il rejoint son unique affaire ouverte)
 billing.quote.revision-validity-days	BILLING	INTEGER	LIVE	30	Devis : jours de validité garantis après une révision (la date de validité est prolongée si besoin)
 billing.stock.issue-on	BILLING	ENUM	LIVE	INVOICE	Sortie de stock des articles vendus : INVOICE (a l'emission de la facture) ou NONE (aucune sortie automatique)

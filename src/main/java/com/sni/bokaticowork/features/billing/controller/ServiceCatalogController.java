@@ -45,10 +45,11 @@ public class ServiceCatalogController {
     public ResponseEntity<PaginatedResponse<ServiceCatalogItemResponse>> list(
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) String subcategory,
             @RequestParam(required = false) String q,
             @PageableDefault(size = 20, sort = "displayOrder", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        return ResponseEntity.ok(new PaginatedResponse<>(serviceCatalogService.list(active, category, q, pageable)));
+        return ResponseEntity.ok(new PaginatedResponse<>(serviceCatalogService.list(active, category, subcategory, q, pageable)));
     }
 
     @PutMapping("/{itemCode}")

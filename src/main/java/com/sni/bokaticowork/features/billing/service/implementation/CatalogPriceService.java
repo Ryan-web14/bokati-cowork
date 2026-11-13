@@ -42,6 +42,9 @@ public class CatalogPriceService {
     private final ServiceCatalogItemRepository items;
     private final ServiceCatalogPriceRepository prices;
     private final InventoryItemRepository inventory;
+    /** Lot C0 : listes de reference (facultatif pour les tests unitaires). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private CatalogReferenceService references;
 
     // ------------------------------------------------------------------ prix dates
 
@@ -171,9 +174,21 @@ public class CatalogPriceService {
                 ServiceCatalogItem item = existing.orElseGet(() -> ServiceCatalogItem.builder().itemCode(cells[0].trim()).build());
                 BigDecimal previous = item.getUnitPrice();
                 item.setName(cells[1].trim());
-                item.setCategory(text(cells, 2));
-                item.setSubcategory(text(cells, 3));
-                item.setUnit(text(cells, 4));
+                String category = text(cells, 2);
+                String subcategory = text(cells, 3);
+                String unit = text(cells, 4);
+                if (references != null) {
+                    // Lot C0 : memes controles que l'ecran (mode souple ou strict).
+                    CatalogReferenceService.Resolved refs = references.resolveForItem(
+                            new CatalogReferenceService.ItemReferences(category, subcategory, unit, null),
+                            new CatalogReferenceService.ItemReferences(item.getCategory(), item.getSubcategory(), item.getUnit(), null));
+                    category = refs.category();
+                    subcategory = refs.subcategory();
+                    unit = refs.unit();
+                }
+                item.setCategory(category);
+                item.setSubcategory(subcategory);
+                item.setUnit(unit);
                 item.setUnitPrice(decimal(cells, 5));
                 if (text(cells, 6) != null) {
                     item.setCurrency(text(cells, 6));
