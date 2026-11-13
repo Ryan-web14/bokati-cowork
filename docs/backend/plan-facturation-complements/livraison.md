@@ -182,5 +182,6 @@ Dev `V338__listes_reference_catalogue.sql`, prod `V332__listes_reference_catalog
 ### Hors lot, livré en même temps
 
 - **Procfile :** tas porté à 600 Mo. Le démarrage en production dépassait 90 secondes depuis la fusion de la facturation ; aussi sur `hotfix/demarrage-memoire`.
+- **Procfile, jeune génération :** `-Xmn120m` agrandit la vieille génération à tas constant. Mesure locale avec les lots C0 à C16 : sans ce réglage, 54 s, 15 collectes complètes et 361 Mo vivants après le démarrage pour 400 Mo de vieille génération ; avec, 48 s, 5 collectes complètes, 480 Mo de vieille génération ; mémoire engagée inchangée (948 Mo pour un dyno de 1 Go).
 - **Écriture des factures :** une ligne non taxable (article exonéré, organisation exonérée, caution) reste en produit au lieu d'être comptée en remise ; l'écriture redevient équilibrée (test `SalesAccountingF4IT.exemptLineStaysInRevenue`).
 - **Alertes d'administration :** une alerte émise avant la connexion au courtier de messages (premières secondes après un démarrage) attend la connexion au lieu d'être perdue (`AdminInAppNotifier`, test `AdminInAppNotifierBrokerTest`).
