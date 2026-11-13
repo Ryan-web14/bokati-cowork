@@ -73,6 +73,11 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private final Locale appLocale;
     private final BrandLogo brandLogo;
     private final com.sni.bokaticowork.core.identity.OperatorIdentityService operatorIdentityService;
+    private final com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
+
+    /** Visa imprime (lot B12) : auteur de la version, sa fonction, la date et sa signature si elle existe. */
+    public record VisaView(String name, String title, java.time.LocalDate date, String signature) {
+    }
     private final com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer qrCodeRenderer;
 
     @Value("${app.verify-base-url:http://localhost:8080}")
@@ -313,6 +318,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             context.setVariable("customerIdentifiers", identifierLines(entity.getCustomerIdentifiersJson(), entity.getCustomerNiu()));
             context.setVariable("customerVatExemptionNote", entity.getCustomerVatExemptionNote());
             context.setVariable("usageAnnex", usageAnnex(entity.getUsageAnnexJson(), document.documentNumber()));
+            context.setVariable("visa", visaOf(entity));
             // Organisation reliee des l'emission · imprimee en tete. Une facture reliee apres coup
             // (ATTACHED) ne change pas : son document emis ne portait pas l'organisation.
             if ("AT_ISSUE".equals(entity.getCompanyLinkSource()) && StringUtils.hasText(entity.getCompanyName())) {
@@ -321,6 +327,20 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             }
         });
         return templateEngine.process("billing/document", context);
+    }
+
+    /** Auteur de la version imprimee ; a defaut (pieces anterieures au lot B12), l'auteur de la piece. */
+    private VisaView visaOf(com.sni.bokaticowork.features.billing.model.BillingDocument entity) {
+        String login = StringUtils.hasText(entity.getVersionAuthor()) ? entity.getVersionAuthor() : entity.getCreatedBy();
+        String name = StringUtils.hasText(entity.getVersionAuthorName()) ? entity.getVersionAuthorName() : entity.getCreatedByName();
+        String title = StringUtils.hasText(entity.getVersionAuthorName()) ? entity.getVersionAuthorTitle() : entity.getCreatedByTitle();
+        if (!StringUtils.hasText(name) || "SYSTEM".equals(login)) {
+            return null;
+        }
+        java.time.LocalDate date = entity.getIssueDate() != null ? entity.getIssueDate()
+                : entity.getCreatedAt() != null ? java.time.LocalDate.ofInstant(entity.getCreatedAt(), java.time.ZoneId.systemDefault()) : null;
+        String signature = staffProfileService == null ? null : staffProfileService.signatureOf(login).orElse(null);
+        return new VisaView(name, title, date, signature);
     }
 
     /** Identite courante de l'exploitant · celle par defaut si le service manque (tests). */

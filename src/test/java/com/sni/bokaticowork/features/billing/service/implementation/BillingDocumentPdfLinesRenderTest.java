@@ -86,7 +86,7 @@ class BillingDocumentPdfLinesRenderTest {
                 null, null, null,
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT),
                 BillingReceivables.customerImpact(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT, total, total),
-                null, null, null);
+                null, null, null, null);
 
         Context context = new Context(Locale.FRANCE);
         context.setVariable("document", document);

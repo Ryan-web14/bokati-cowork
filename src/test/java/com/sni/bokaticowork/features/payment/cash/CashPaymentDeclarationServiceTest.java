@@ -157,7 +157,7 @@ class CashPaymentDeclarationServiceTest {
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, status), // receivable
                 BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, balanceDue, balanceDue), // customerImpact
                 null, null, null // organisation reliee
-        );
+        , null);
     }
 
     private CashPaymentDeclaration declaration(CashDeclarationStatus status) {

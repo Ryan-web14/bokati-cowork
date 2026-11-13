@@ -156,6 +156,10 @@ public class BillingDocumentVersionService {
         snapshot.put("additionalCentAmount", asText(document.getAdditionalCentAmount()));
         snapshot.put("taxAmount", asText(document.getTaxAmount()));
         snapshot.put("totalAmount", asText(document.getTotalAmount()));
+        // Lot B12 : chaque version garde son auteur (celui qui l'a etablie).
+        snapshot.put("versionAuthor", document.getVersionAuthor());
+        snapshot.put("versionAuthorName", document.getVersionAuthorName());
+        snapshot.put("versionAuthorTitle", document.getVersionAuthorTitle());
 
         List<Map<String, Object>> lineSnapshots = new ArrayList<>();
         if (lines != null) {

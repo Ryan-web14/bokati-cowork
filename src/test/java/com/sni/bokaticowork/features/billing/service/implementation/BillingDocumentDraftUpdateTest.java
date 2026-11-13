@@ -63,6 +63,7 @@ class BillingDocumentDraftUpdateTest {
     @Mock private com.sni.bokaticowork.features.billing.service.support.BillingEventWriter eventWriter;
     @Mock private com.sni.bokaticowork.features.billing.mapper.interfaces.BillingDocumentMapper mapper;
     @Mock private com.sni.bokaticowork.features.billing.service.support.BillingCustomerSnapshotResolver customerSnapshotResolver;
+    @Mock private com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
 
     @InjectMocks
     private BillingDocumentServiceImpl service;
@@ -167,6 +168,20 @@ class BillingDocumentDraftUpdateTest {
         service.update("INV-100", request(null, null));
 
         verify(calculationService, never()).exempted(anyList());
+    }
+
+    @Test
+    void shouldStampTheConnectedUserAsAuthorOfTheNewVersion() {
+        // Lot B12 : la version modifiee porte le nom et la fonction de l'utilisateur connecte.
+        document.setCreatedByName("Paul Ngoma");
+        when(staffProfileService.currentAuthor()).thenReturn(
+                new com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService.Author("awa@elleaose.com", "Awa Mbemba", "Commerciale"));
+
+        service.update("INV-100", request(null, null));
+
+        assertThat(document.getVersionAuthorName()).isEqualTo("Awa Mbemba");
+        assertThat(document.getVersionAuthorTitle()).isEqualTo("Commerciale");
+        assertThat(document.getCreatedByName()).isEqualTo("Paul Ngoma");
     }
 
     private static UpdateBillingDocumentRequest request(List<CreateBillingDocumentDiscountRequest> discounts,

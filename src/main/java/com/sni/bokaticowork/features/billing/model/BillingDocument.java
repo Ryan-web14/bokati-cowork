@@ -381,4 +381,25 @@ public class BillingDocument {
     public void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    // -- Lot B12 : auteur de la piece et de la version courante, repris du jeton ---------------
+    /** Identifiant de connexion de l'auteur, fige a la creation. */
+    @Column(name = "created_by", length = 180)
+    private String createdBy;
+
+    @Column(name = "created_by_name")
+    private String createdByName;
+
+    @Column(name = "created_by_title", length = 160)
+    private String createdByTitle;
+
+    /** Auteur de la version courante : « Etabli par » et visa de la piece imprimee. */
+    @Column(name = "version_author", length = 180)
+    private String versionAuthor;
+
+    @Column(name = "version_author_name")
+    private String versionAuthorName;
+
+    @Column(name = "version_author_title", length = 160)
+    private String versionAuthorTitle;
 }

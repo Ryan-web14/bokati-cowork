@@ -73,7 +73,7 @@ class BillingDocumentOnePageTest {
                 null, null, null,
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT),
                 BillingReceivables.customerImpact(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT, total, total),
-                null, null, null);
+                null, null, null, null);
 
         FileTemplateResolver resolver = new FileTemplateResolver();
         resolver.setPrefix("src/main/resources/templates/");

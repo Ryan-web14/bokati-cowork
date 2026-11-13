@@ -127,6 +127,6 @@ class BillingEmailPreferencesTest {
                 null, null, null,
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, status),
                 BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, total, total),
-                null, null, null);
+                null, null, null, null);
     }
 }

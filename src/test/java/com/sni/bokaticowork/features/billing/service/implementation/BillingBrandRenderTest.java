@@ -113,6 +113,33 @@ class BillingBrandRenderTest {
         assertThat(PdfRenderer.render(html)).isNotEmpty();
     }
 
+    @Test
+    @DisplayName("Lot B12 · « Établi par » et visa portent l'auteur, sa fonction, la date et sa signature")
+    void invoicePrintsAuthorAndVisa() throws Exception {
+        String png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+        Context context = context();
+        context.setVariable("document", document(BillingDocumentType.INVOICE));
+        context.setVariable("qrCode", null);
+        context.setVariable("payments", List.of());
+        context.setVariable("usageAnnex", null);
+        context.setVariable("operator", OPERATOR);
+        context.setVariable("visa", new BillingDocumentPdfServiceImpl.VisaView("Awa Mbemba", "Commerciale", LocalDate.of(2026, 11, 13), png));
+        String html = engine().process("billing/document", context);
+
+        assertThat(html).contains("Établi par").contains("Awa Mbemba, Commerciale").contains(png).contains("13/11/2026");
+        try (PDDocument pdf = PDDocument.load(PdfRenderer.render(html))) {
+            assertThat(pdf.getNumberOfPages()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    @DisplayName("Lot B12 · sans auteur connu (pièce ancienne), ni « Établi par » ni nom dans le visa")
+    void invoiceWithoutAuthorKeepsAnEmptyVisa() {
+        String html = renderDocument(BillingDocumentType.INVOICE, OPERATOR);
+
+        assertThat(html).doesNotContain("Établi par").doesNotContain("class=\"visa-signer\"");
+    }
+
     private String renderDocument(BillingDocumentType type, OperatorIdentity operator) {
         Context context = context();
         context.setVariable("document", document(type));
@@ -181,6 +208,6 @@ class BillingBrandRenderTest {
                 null, null, null,
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT),
                 BillingReceivables.customerImpact(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT, total, total),
-                null, null, null);
+                null, null, null, null);
     }
 }

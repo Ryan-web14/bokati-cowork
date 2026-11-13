@@ -170,6 +170,11 @@
         .visa-box th { background: #f3eef6; color: #1f1430; font-size: 8px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
                        text-align: center; padding: 4px 6px; border: 1.2px solid #1f1430; }
         .visa-box td.stamp { height: 4.5cm; border: 1.2px solid #1f1430; padding: 0; }
+        .visa-signer { text-align: center; padding: 6px 6px 0; }
+        .visa-signature { max-width: 4.2cm; max-height: 2.4cm; }
+        .visa-name { font-size: 8px; font-weight: 700; color: #1f1430; margin-top: 3px; }
+        .visa-title { font-size: 7.4px; color: #1f1430; }
+        .visa-date { font-size: 7.2px; color: #6f6478; }
         .visa-box td.legend { font-size: 7.2px; color: #6f6478; text-align: center; padding: 2px 6px; border: 1.2px solid #1f1430; }
         .doc-footer { margin-top: 8px; padding: 8px 0 9px; border-top: 1px solid #e6ddea; font-size: 7.8px; color: #1f1430; text-align: center; }
         .doc-footer .made-by { font-size: 7.4px; color: #1f1430; font-weight: 700; letter-spacing: 0.5px; margin-top: 3px; text-transform: uppercase; }
@@ -255,6 +260,7 @@
                          mieux vaut ne pas imprimer la ligne. -->
                     <tr th:if="${document.dueDate() != null}"><td class="lbl" th:text="${document.documentType().name() == 'QUOTE' ? 'Valable jusqu''au' : 'Date d''échéance'}">Date d'échéance</td><td class="val" th:text="${fmt.date(document.dueDate())}"></td></tr>
                     <tr><td class="lbl">Devise</td><td class="val" th:text="${document.currency()}">XAF</td></tr>
+                    <tr th:if="${visa != null}"><td class="lbl">Établi par</td><td class="val" th:text="${visa.title() != null ? visa.name() + ', ' + visa.title() : visa.name()}">Awa Mbemba, Commerciale</td></tr>
                     <tr>
                         <td class="lbl" th:text="${document.locked() != null and document.locked() and document.fiscalNumber() != null ? 'N° de certification' : 'N° de document'}">N° de document</td>
                         <td class="val" style="font-family:'Courier New',monospace; color:#1f1430;"
@@ -559,7 +565,14 @@
             <td class="holder">
                 <table class="visa-box">
                     <tr><th th:text="|Visa ${operator != null ? operator.name() : 'ELLE A OSE'}|">Visa ELLE A OSE</th></tr>
-                    <tr><td class="stamp"></td></tr>
+                    <tr><td class="stamp">
+                        <div th:if="${visa != null}" class="visa-signer">
+                            <img th:if="${visa.signature() != null}" class="visa-signature" th:src="${visa.signature()}" alt="Signature"/>
+                            <div class="visa-name" th:text="${visa.name()}">Awa Mbemba</div>
+                            <div class="visa-title" th:if="${visa.title() != null}" th:text="${visa.title()}">Commerciale</div>
+                            <div class="visa-date" th:if="${visa.date() != null}" th:text="|Le ${fmt.date(visa.date())}|">Le 13/11/2026</div>
+                        </div>
+                    </td></tr>
                     <tr><td class="legend">Cachet et signature</td></tr>
                 </table>
             </td>

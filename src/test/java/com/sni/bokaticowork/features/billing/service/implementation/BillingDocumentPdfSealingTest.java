@@ -37,6 +37,7 @@ class BillingDocumentPdfSealingTest {
             java.util.Locale.FRANCE,
             new com.sni.bokaticowork.core.utils.BrandLogo(),
             null,
+            null,
             new com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer());
 
     @Test

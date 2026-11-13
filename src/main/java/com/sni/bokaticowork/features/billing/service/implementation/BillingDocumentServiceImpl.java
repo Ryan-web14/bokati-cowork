@@ -163,6 +163,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.billing.service.support.InvoiceAnnexProvider> annexProviders;
     /** Instantane vendeur · peut etre absent dans les tests qui construisent le service a la main. */
     private final com.sni.bokaticowork.features.billing.service.support.BillingSellerSnapshot sellerSnapshot;
+    private final com.sni.bokaticowork.security.admin.user.service.interfaces.StaffProfileService staffProfileService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -251,6 +252,28 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     }
 
     /** Auteur d'une derogation · le nom du principal, ou SYSTEM hors contexte authentifie. */
+    /**
+     * Auteur repris du jeton (lot B12) : nom et fonction de l'utilisateur connecte, sans saisie.
+     * A la creation, il est aussi l'auteur de la piece ; ensuite, seulement de la version.
+     */
+    private void stampAuthor(BillingDocument document, boolean creation) {
+        if (staffProfileService == null) {
+            return;
+        }
+        var author = staffProfileService.currentAuthor();
+        if (author == null) {
+            return;
+        }
+        if (creation) {
+            document.setCreatedBy(author.login());
+            document.setCreatedByName(author.name());
+            document.setCreatedByTitle(author.title());
+        }
+        document.setVersionAuthor(author.login());
+        document.setVersionAuthorName(author.name());
+        document.setVersionAuthorTitle(author.title());
+    }
+
     private String currentUserName() {
         var authentication = org.springframework.security.core.context.SecurityContextHolder
                 .getContext().getAuthentication();
@@ -312,6 +335,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             ensureWithinCreditLimit(companyTerms, calculation.totalAmount());
         }
         BillingDocument document = buildDocument(request, customer, calculation);
+        stampAuthor(document, true);
         if (billingCompany != null) {
             // L'organisation est imprimee en tete du destinataire, figee comme le reste.
             document.setCompanyCustomerId(billingCompany.getId());
@@ -345,6 +369,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         versionService.archive(document,
                 lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document),
                 isDraft ? "FULL_EDIT" : "RESTRICTED_EDIT");
+        // La nouvelle version est celle de l'utilisateur connecte (lot B12).
+        stampAuthor(document, false);
 
         // Internal notes and restricted fields are always editable when status allows modification
         if (StringUtils.hasText(request.internalNotes())) {
