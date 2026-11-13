@@ -418,4 +418,8 @@ public class BillingDocument {
     /** Lot B3 : facture d'acompte, rattachee au devis ou a la facture dont elle est un acompte. */
     @Column(name = "deposit_for_document_number", length = 60)
     private String depositForDocumentNumber;
+
+    /** Lot B11 : affaire a laquelle la piece appartient. */
+    @Column(name = "deal_code", length = 40)
+    private String dealCode;
 }

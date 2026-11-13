@@ -168,6 +168,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final com.sni.bokaticowork.features.billing.repository.BillingDocumentSignatureRepository signatureRepository;
     /** Lot B3 : acomptes (resolus a l'usage, le service des acomptes dependant de celui-ci). */
     private final org.springframework.beans.factory.ObjectProvider<DepositService> depositServices;
+    /** Lot B11 : affaires. */
+    private final org.springframework.beans.factory.ObjectProvider<DealService> dealServices;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -549,6 +551,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
         BillingDocument saved = documentWriter.save(document, calculation, request.discounts(), request.clauses(), request.advance());
         documentWriter.saveEarlyPaymentDiscount(saved, request.earlyPaymentDiscount());
+        DealService dealService = dealServices == null ? null : dealServices.getIfAvailable();
+        if (dealService != null) {
+            // Lot B11 : la piece rejoint l'affaire de la piece dont elle derive, ou celle du client.
+            dealService.onDocumentCreated(saved);
+        }
         eventWriter.write(saved, "BILLING_DOCUMENT_CREATED", null);
         return mapper.toResponse(saved);
     }

@@ -490,4 +490,7 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
             SELECT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.reference = :number AND e.event_type = 'INVOICE_ISSUED')
             """)
     boolean salePosted(@Param("number") String number);
+
+    /** Lot B11 : pieces d'une affaire. */
+    java.util.List<com.sni.bokaticowork.features.billing.model.BillingDocument> findByDealCodeOrderByCreatedAtAsc(String dealCode);
 }
