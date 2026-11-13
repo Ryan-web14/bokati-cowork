@@ -63,10 +63,11 @@ public class BillingStockGuard {
                 continue;
             }
             boolean block = type != null && MOVES_GOODS.contains(type) && !Boolean.TRUE.equals(item.getAllowNegativeStock());
+            BigDecimal missing = line.quantity().subtract(available.max(BigDecimal.ZERO));
             alerts.add(new StockAlert(line.index(), item.getItemCode(), line.description(), line.quantity(), available,
                     block ? "BLOCK" : "WARN",
                     "Stock insuffisant pour " + item.getName() + " : " + plain(line.quantity()) + " demandé(s), " + plain(available)
-                            + " disponible(s)" + (block ? ". La facture ne peut pas être émise." : ".")));
+                            + " disponible(s), " + plain(missing) + " manquant(s)" + (block ? ". La facture ne peut pas être émise." : ".")));
         }
         return alerts;
     }
@@ -86,5 +87,39 @@ public class BillingStockGuard {
 
     private static String plain(BigDecimal value) {
         return value.stripTrailingZeros().toPlainString();
+    }
+
+    /** Etat du stock d'une ligne d'article suivi (lot B7) ; vide pour un service ou un article non suivi. */
+    public Optional<StockView> view(Line line) {
+        if (!inventoryLine(line)) {
+            return Optional.empty();
+        }
+        Optional<InventoryItem> found = items.findByItemCode(line.itemCode().trim());
+        if (found.isEmpty()) {
+            return Optional.empty();
+        }
+        InventoryItem item = found.get();
+        boolean active = Boolean.TRUE.equals(item.getActive());
+        BigDecimal requested = line.quantity() == null ? BigDecimal.ONE : line.quantity();
+        if (!tracked(item)) {
+            return Optional.of(new StockView(item.getItemCode(), item.getName(), active, requested, null, BigDecimal.ZERO,
+                    Boolean.TRUE.equals(item.getAllowNegativeStock())));
+        }
+        BigDecimal available = Optional.ofNullable(levels.sumAvailable(item.getId())).orElse(BigDecimal.ZERO);
+        return Optional.of(new StockView(item.getItemCode(), item.getName(), active, requested, available,
+                requested.subtract(available.max(BigDecimal.ZERO)).max(BigDecimal.ZERO), Boolean.TRUE.equals(item.getAllowNegativeStock())));
+    }
+
+    public record StockView(String itemCode, String itemName, boolean active, BigDecimal requested, BigDecimal available, BigDecimal missing,
+                            boolean negativeStockAllowed) {
+    }
+
+    /** Article suivi en stock (pour la reservation et la sortie). */
+    public boolean trackedItem(String itemCode) {
+        return StringUtils.hasText(itemCode) && items.findByItemCode(itemCode.trim()).map(BillingStockGuard::tracked).orElse(false);
+    }
+
+    public static boolean isInventoryLine(Line line) {
+        return inventoryLine(line);
     }
 }

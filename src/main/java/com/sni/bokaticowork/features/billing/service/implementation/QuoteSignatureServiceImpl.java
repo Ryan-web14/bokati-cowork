@@ -151,6 +151,10 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
         BillingDocument quote = sig.getDocument();
         if (quote.getStatus() != BillingDocumentStatus.ACCEPTED) {
             quote.setStatus(BillingDocumentStatus.ACCEPTED);
+            if (billingDocumentService instanceof BillingDocumentServiceImpl impl) {
+                // Lot B7 : l'acceptation par signature reserve le stock, comme l'acceptation au guichet.
+                impl.reserveQuoteStock(quote);
+            }
             eventWriter.write(quote, "QUOTE_SIGNED_AND_ACCEPTED",
                     Map.of("signerName", request.signerName(), "signerEmail", sig.getSignerEmail()));
         }

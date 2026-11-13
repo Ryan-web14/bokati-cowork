@@ -32,6 +32,10 @@ public interface BillingDocumentService {
      */
     SimulateBillingDocumentResponse simulate(SimulateBillingDocumentRequest request);
 
+    /** Lot B7 : stock, article actif, prix plancher, ressources aux dates demandees ; rien n'est cree. */
+    com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse checkAvailability(
+            com.sni.bokaticowork.features.billing.dto.request.CheckAvailabilityRequest request);
+
     /** Lot B8 : un total saisi (TTC ou HT) ventile sur les lignes au franc pres, sans rien creer. */
     com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse allocateAmount(
             com.sni.bokaticowork.features.billing.dto.request.AllocateAmountRequest request);

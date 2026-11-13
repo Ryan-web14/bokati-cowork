@@ -86,6 +86,13 @@ public class BillingDocumentController {
      * de sorte qu'il n'y ait plus a chercher un montant a la calculatrice ni a creer un brouillon
      * pour connaitre un total.
      */
+    /** Lot B7 : disponibilites et alertes des lignes (stock, article actif, prix, ressources). */
+    @PostMapping("/documents/check-availability")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse> checkAvailability(
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.CheckAvailabilityRequest request) {
+        return ResponseEntity.ok(billingDocumentService.checkAvailability(request));
+    }
+
     /** Lot B8 : saisie d'un total (TTC ou HT) ventile par le systeme sur les lignes, au franc pres. */
     @PostMapping("/documents/allocate-amount")
     public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.AllocateAmountResponse> allocateAmount(

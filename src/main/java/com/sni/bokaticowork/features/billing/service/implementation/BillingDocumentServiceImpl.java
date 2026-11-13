@@ -170,6 +170,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final org.springframework.beans.factory.ObjectProvider<DepositService> depositServices;
     /** Lot B11 : affaires. */
     private final org.springframework.beans.factory.ObjectProvider<DealService> dealServices;
+    /** Lot B7 : reservation et sortie de stock. */
+    private final org.springframework.beans.factory.ObjectProvider<BillingStockService> stockServices;
+    /** Lot B7 : disponibilite des ressources. */
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.booking.service.interfaces.BookingAvailabilityService> bookingAvailability;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -372,6 +376,79 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     private static BigDecimal rate(BigDecimal percent) {
         return percent == null ? BigDecimal.ZERO : percent.divide(new BigDecimal("100"), 8, java.math.RoundingMode.HALF_UP);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse checkAvailability(
+            com.sni.bokaticowork.features.billing.dto.request.CheckAvailabilityRequest request) {
+        // Lot B7 : stock, article actif, prix plancher et remise maximale, ressources aux dates demandees.
+        List<CreateBillingDocumentLineRequest> lines = request.lines() == null ? List.of() : request.lines();
+        BillingDocumentType type = request.documentType() == null ? BillingDocumentType.QUOTE : request.documentType();
+        List<SimulateBillingDocumentResponse.Alert> alerts = new ArrayList<>();
+        List<com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Stock> stockViews = new ArrayList<>();
+        if (!lines.isEmpty()) {
+            SimulateBillingDocumentResponse simulation = simulate(new SimulateBillingDocumentRequest(type, null, null, lines, null));
+            alerts.addAll(simulation.alerts());
+            if (stockGuard != null) {
+                List<com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line> stockLines = stockLines(lines);
+                for (com.sni.bokaticowork.features.billing.service.support.BillingStockGuard.Line line : stockLines) {
+                    stockGuard.view(line).ifPresent(view -> {
+                        stockViews.add(new com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Stock(line.index(),
+                                view.itemCode(), view.itemName(), view.active(), view.requested(), view.available(), view.missing(),
+                                view.negativeStockAllowed()));
+                        if (!view.active()) {
+                            alerts.add(new SimulateBillingDocumentResponse.Alert(line.index(), "INACTIVE_ITEM", "BLOCK",
+                                    "L'article " + view.itemName() + " n'est plus actif"));
+                        }
+                    });
+                }
+            }
+        }
+        List<com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Resource> resources = new ArrayList<>();
+        var availability = bookingAvailability == null ? null : bookingAvailability.getIfAvailable();
+        if (request.resources() != null && availability != null) {
+            for (var resource : request.resources()) {
+                try {
+                    var checked = availability.check(new com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest(
+                            resource.resourceCode(), null, null, null, null, null, null, null, null, null, null, resource.startAt(),
+                            resource.endAt(), resource.quantity() == null ? 1 : resource.quantity(), null));
+                    resources.add(new com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Resource(resource.lineIndex(),
+                            checked.resourceCode(), checked.resourceName(), checked.available(), checked.remainingCapacity(), checked.message()));
+                    if (!checked.available()) {
+                        alerts.add(new SimulateBillingDocumentResponse.Alert(resource.lineIndex(), "RESOURCE_UNAVAILABLE", "WARN",
+                                (checked.resourceName() == null ? resource.resourceCode() : checked.resourceName()) + " n'est pas disponible du "
+                                        + resource.startAt() + " au " + resource.endAt() + (checked.message() == null ? "" : " : " + checked.message())));
+                    }
+                } catch (RuntimeException exception) {
+                    resources.add(new com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse.Resource(resource.lineIndex(),
+                            resource.resourceCode(), null, false, null, exception.getMessage()));
+                    alerts.add(new SimulateBillingDocumentResponse.Alert(resource.lineIndex(), "RESOURCE_UNAVAILABLE", "WARN", exception.getMessage()));
+                }
+            }
+        }
+        return new com.sni.bokaticowork.features.billing.dto.response.CheckAvailabilityResponse(
+                alerts.stream().anyMatch(alert -> "BLOCK".equals(alert.severity())), alerts, stockViews, resources);
+    }
+
+    /** Lot B7 : reserve le stock d'un devis accepte (sans bloquer l'acceptation). */
+    void reserveQuoteStock(BillingDocument quote) {
+        BillingStockService stockService = stockServices == null ? null : stockServices.getIfAvailable();
+        if (stockService == null) {
+            return;
+        }
+        BigDecimal missing = stockService.reserveForQuote(quote);
+        if (missing.signum() > 0) {
+            eventWriter.write(quote, "QUOTE_STOCK_SHORTAGE", java.util.Map.of("missing", missing.stripTrailingZeros().toPlainString()));
+        }
+    }
+
+    /** Lot B7 : libere les reservations d'un devis. */
+    void releaseQuoteStock(String quoteNumber) {
+        BillingStockService stockService = stockServices == null ? null : stockServices.getIfAvailable();
+        if (stockService != null) {
+            stockService.releaseForQuote(quoteNumber);
+        }
     }
 
     /** Rang de la ligne visee par une alerte de remise (article et libelle), ou vide. */
@@ -737,6 +814,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 // D1 : le devis accepte revise repasse en negociation ; l'acceptation et la signature
                 // tombent, le client accepte de nouveau la nouvelle version.
                 cancelQuoteSignatures(quote);
+                releaseQuoteStock(quote.getDocumentNumber());
             }
             quote.setStatus(BillingDocumentStatus.NEGOTIATION);
         }
@@ -1843,6 +1921,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             depositService.deductOnFinalInvoice(saved);
             saved = serviceByNumber(saved.getDocumentNumber());
         }
+        BillingStockService stockService = stockServices == null ? null : stockServices.getIfAvailable();
+        if (stockService != null && saved.getDocumentType() == BillingDocumentType.INVOICE) {
+            // Lot B7 : la facture sort le stock (reservations du devis consommees, reste sorti).
+            stockService.issueForInvoice(saved);
+        }
         eventWriter.write(saved, "BILLING_DOCUMENT_ISSUED", null);
         memberInAppNotifier.notify("BILLING_DOCUMENT_ISSUED", "BILLING_DOCUMENT", saved.getDocumentNumber(),
                 saved.getCustomerEmail(), saved.getCustomerName(), saved.getCustomerCode(),
@@ -2035,6 +2118,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             throw new BadRequestException("Only draft, sent, viewed or negotiation quotes can be accepted");
         }
         quote.setStatus(BillingDocumentStatus.ACCEPTED);
+        reserveQuoteStock(quote);
         BillingDocument saved = documentRepository.save(quote);
         eventWriter.write(saved, "QUOTE_ACCEPTED", null);
         return mapper.toResponse(saved);
@@ -2049,6 +2133,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         quote.setStatus(BillingDocumentStatus.REJECTED);
         quote.setBalanceDue(BigDecimal.ZERO);
         cancelPendingAdvance(quote);
+        releaseQuoteStock(quote.getDocumentNumber());
         DepositService depositService = depositServices == null ? null : depositServices.getIfAvailable();
         if (depositService != null) {
             depositService.dropUnpaidQuoteDeposits(quote, "Devis refusé");
@@ -2361,6 +2446,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             documentRepository.findExpiringQuoteNumbers().forEach(number -> documentRepository.findByDocumentNumber(number)
                     .ifPresent(quote -> depositService.dropUnpaidQuoteDeposits(quote, "Devis expiré")));
         }
+        if (stockServices != null && stockServices.getIfAvailable() != null) {
+            documentRepository.findExpiringQuoteNumbers().forEach(this::releaseQuoteStock);
+        }
         documentRepository.expireProformas();
         return documentRepository.expireQuotes();
     }
@@ -2560,6 +2648,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocument cancelAndArchive(String documentNumber, String reason) {
         BillingDocument document = serviceByNumber(documentNumber);
+        if (document.getDocumentType() == BillingDocumentType.QUOTE) {
+            releaseQuoteStock(documentNumber);
+        }
 
         if (document.getDocumentType() == BillingDocumentType.CREDIT_NOTE) {
             // Un avoir ne s'annule jamais par un avoir · il faut d'abord defaire son imputation.
