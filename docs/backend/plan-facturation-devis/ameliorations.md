@@ -29,11 +29,13 @@ Principe commun : **une pièce scellée (SEFC) ne se modifie jamais**. Toute cor
 
 **À faire**
 - **Côté devis** :
-  - plusieurs acomptes (échéances : 30 % à la commande, 40 % à mi-parcours…) ;
+  - un acompte se demande à tout moment sur un devis déjà créé, **en montant ou en pourcentage** (du total, ou de lignes choisies) ;
+  - **plan d'acomptes** : plusieurs acomptes réglés d'un coup (par exemple 30 % à la commande, 40 % à mi-parcours, avec leur date d'échéance), modifiable tant qu'aucun n'est encaissé ;
   - chaque acompte demandé produit une **facture d'acompte** numérotée, envoyée au client, encaissable par tous les moyens (caisse, mobile money, virement, portefeuille) ;
   - l'encaissement passe le devis en DEPOSIT_PAID quand l'acompte exigé est couvert.
 - **Côté facture** :
-  - un acompte non pris pendant le devis se demande sur la facture finale (facture d'acompte rattachée), ou on en prend acte au paiement partiel ;
+  - les mêmes possibilités que sur le devis : un ou plusieurs acomptes, en montant ou en pourcentage, avec un plan d'acomptes ;
+  - un acompte qui n'a pas été pris pendant le devis se demande ainsi sur la facture (facture d'acompte rattachée) ;
   - la facture finale déduit chaque acompte facturé (ligne « Acompte n° ... du ... ») et ne réclame que le reste.
 - **Annulation** : un acompte demandé puis abandonné passe en CANCELLED. Un acompte encaissé sur un devis refusé se rembourse ou se garde en avoir, selon la décision prise.
 - **Comptabilité** : facture d'acompte au crédit du `4191` (clients, avances et acomptes reçus) ; la facture finale solde le `4191` contre le `411`. La TVA sur les acomptes suit le régime choisi (décision D3).
@@ -70,6 +72,7 @@ Principe commun : **une pièce scellée (SEFC) ne se modifie jamais**. Toute cor
 **À faire**
 - **Une proforma n'est pas une pièce fiscale** : pas de scellement, pas d'écriture comptable, pas d'encaissement direct.
 - **Création** : directement, ou depuis un devis (accepté ou non) ; date de validité.
+- **Modifiable quel que soit son statut** (décision de l'exploitant) : chaque modification crée une version ; une proforma déjà transformée en devis reste modifiable, sans effet sur le devis.
 - **Statuts** : DRAFT, SENT, ACCEPTED, EXPIRED, CONVERTED.
 - **Paiement d'avance sur une proforma** : il crée une facture d'acompte (lot B3), ou convertit la proforma en facture si le paiement couvre le total (décision D2).
 - **Conversion en facture** : une seule fois, avec le lien entre les deux documents.
@@ -154,3 +157,75 @@ Principe commun : **une pièce scellée (SEFC) ne se modifie jamais**. Toute cor
 **Routes** : une seule famille `/quotes/...` ; `/quotations/...` dépréciées six mois puis retirées (E18).
 
 **Messages** : en français accentué, avec un code d'erreur stable (E19).
+
+## B11. Gestion des affaires
+
+Une **affaire** regroupe tout ce qui concerne une vente à un client : devis et leurs versions, proformas, acomptes, factures, avoirs, paiements, échanges et pièces jointes.
+
+- **Fiche d'affaire** : client, intitulé, responsable commercial, montant prévu, probabilité, étape (prospection, proposition, négociation, gagnée, perdue avec motif), dates.
+- **Création** : à la main, depuis une opportunité du CRM, ou automatiquement au premier devis d'un client.
+- **Tableau de l'affaire** : total devisé, accepté, facturé, encaissé, reste à facturer, reste à encaisser, acomptes, marge prévue et réalisée.
+- **Liens** : chaque document porte son affaire ; la conversion d'un devis en facture garde l'affaire.
+- **Liste des affaires** : filtres par étape, responsable, client, période ; export.
+- **Analytique** : l'affaire peut être une section analytique (lot F9), pour sa rentabilité.
+- **Routes** : `GET`, `POST`, `PUT /billing/deals`, `GET /billing/deals/{code}` (tableau), `PATCH /billing/deals/{code}/stage`.
+
+**Critère** : une affaire avec deux devis (un refusé, un accepté), un acompte et une facture partiellement payée affiche les bons totaux à chaque étape.
+
+## B12. Auteur de la pièce et visa
+
+- **L'utilisateur connecté** est repris du jeton à la création : son nom et sa fonction remplissent « Établi par » sur la pièce.
+- **Le visa** de la facture (case à côté des mentions légales) affiche le même nom, la fonction et la date ; une signature enregistrée sur la fiche de l'utilisateur s'y imprime si elle existe.
+- **Chaque version** garde son auteur ; la pièce imprimée montre l'auteur de la version imprimée.
+- Plus aucun champ « auteur » n'est pris dans le corps de la requête (écart E14).
+
+**Critère** : une facture créée par un commercial porte son nom dans « Établi par » et dans le visa, sans saisie.
+
+## B13. Simulation interactive et descriptions
+
+- **Simulation ligne par ligne** : à chaque saisie (quantité, prix, remise, taxe, total saisi), le serveur renvoie le calcul de la ligne et du document : HT, remises, TVA, centimes additionnels, TTC, contrôles (prix plancher, remise maximale, stock, plafond d'encours), avec les alertes ligne par ligne.
+- **Même calcul** que la création (écart E17) ; la route ne crée rien : `POST /billing/documents/simulate-line` (une ligne et le contexte du document) et `POST /billing/documents/simulate` (tout le document).
+- **Descriptions plus larges** : description et description détaillée de ligne en texte long (jusqu'à 4 000 caractères), avec retours à la ligne gardés à l'impression ; même chose pour les notes et conditions du document.
+
+**Critère** : changer la quantité d'une ligne met à jour la ligne et les totaux à l'écran en moins d'une seconde ; une description de 2 000 caractères s'imprime entière sur le PDF.
+
+## B14. Modification d'une facture non payée, avec versions et approbation
+
+- **Une facture se modifie tant qu'elle n'est pas payée** (aucun encaissement imputé). Après le premier paiement, la correction passe par un avoir ou une rectificative.
+- **Aucune suppression** : chaque modification crée une version ; les versions précédentes restent consultables et comparables, avec leur auteur et leur motif.
+- **Approbation** : la modification d'une facture émise passe par le centre d'approbation de la facturation (lot B15) : un responsable ou un administrateur l'accepte ou la refuse. Tant qu'elle est en attente, la facture garde sa version en vigueur.
+- **Facture déjà scellée (SEFC)** : la pièce scellée ne peut pas changer (intégrité fiscale). La modification approuvée produit alors une **facture rectificative**, présentée à l'écran comme la nouvelle version de la facture (décision D8).
+- **Comptabilité** : la nouvelle version, ou la rectificative, corrige les écritures (contre-passation et nouvelle écriture).
+
+**Critère** : une facture émise non payée est modifiée ; la demande attend l'approbation ; une fois approuvée, la version 2 est en vigueur, la version 1 reste consultable, et rien n'a été supprimé.
+
+## B15. Centres d'approbation et hiérarchie
+
+**Des centres distincts sur un même modèle de données** (décision de l'exploitant) : le centre de la facturation (modifications de factures, dérogations de prix et de remise) et celui de la caisse (demandes de fonds) sont deux écrans séparés, avec leurs droits et leurs files. Ils partagent les mêmes tables (demande d'approbation, étapes, décisions, hiérarchie, circuits) et le même moteur, ce qui donne partout la même hiérarchie, la même validation en avance et le même historique. Un nouveau centre (achats, ressources humaines…) se branche sur ce modèle sans nouvelle table.
+
+**Hiérarchie**
+- Chaque utilisateur a un **responsable direct (N+1)** ; la chaîne remonte jusqu'à la direction (N+2, N+3…).
+- Écran d'organigramme : rattachements, intérims, délégations datées.
+
+**Circuits**
+- Un circuit par type de demande : niveaux requis selon le montant ou l'objet (par exemple facture modifiée sous 500 000 : N+1 ; au-delà : N+1 puis N+2).
+- **Un niveau supérieur peut valider en avance** : si le N+2 approuve avant le N+1, la demande passe directement à « approuvée » ; le niveau sauté est noté « approuvé par le N+2 ».
+- Refus à n'importe quel niveau : la demande est refusée, avec motif ; renvoi pour correction possible.
+- On ne valide jamais sa propre demande.
+
+**Suivi et historique**
+- **Mes demandes** : où en est chacune, qui doit agir, depuis quand.
+- **À approuver** : les demandes qui m'attendent, par moi-même ou par délégation.
+- **Historique** : toutes les demandes et décisions passées, filtrables (type, demandeur, approbateur, période, issue), avec la frise de chaque demande (qui, quand, décision, commentaire, montant avant et après).
+- Notifications à chaque étape (application, courriel, WhatsApp), relances et escalade au niveau suivant après un délai.
+
+**Reprise des demandes de fonds**
+- Le module caisse a déjà une file « À valider », une frise par demande, des délégations, des relances et l'escalade. Ses niveaux viennent du **montant** (droits `APPROVE_L1` à `L3`), pas d'une hiérarchie, et un niveau supérieur ne peut pas valider en avance.
+- Les demandes de fonds passent sur le modèle commun : même hiérarchie, validation en avance par un N+, même historique. Le centre de la caisse garde son écran et ses routes, branchés sur le moteur commun.
+
+**Routes**
+- Communes : `GET`, `PUT /approvals/hierarchy` (rattachements), `GET`, `POST /approvals/circuits` ;
+- Par centre (`{center}` = `billing`, `cash`…) : `GET /approvals/{center}/mine`, `/to-approve`, `/history` ;
+- `PATCH /approvals/{id}/approve`, `/reject`, `/send-back`.
+
+**Critère** : une demande à deux niveaux approuvée d'abord par le N+2 passe à « approuvée », la frise montre le niveau 1 « approuvé par le N+2 », et elle apparaît dans l'historique des deux approbateurs.

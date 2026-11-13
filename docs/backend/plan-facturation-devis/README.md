@@ -48,8 +48,13 @@ Demandé par l'exploitant le 13/11/2026 : d'abord corriger les écarts relevés,
 | **B8. Montant ventilé** | Saisie d'un total, ventilation des taxes et des lignes, remise implicite, simulation fidèle | E17 | Voir [B8](ameliorations.md#b8-saisie-dun-montant-et-ventilation-par-le-système) |
 | **B9. États clients** | Relevé complet et exportable, balance âgée par devise, échéanciers | E11, E12, E13 | Voir [B9](ameliorations.md#b9-relevé-client-balance-âgée-et-échéanciers) |
 | **B10. Catalogue, routes, messages** | Catalogue complet, routes uniques, messages | E18, E19 | Voir [B10](ameliorations.md#b10-catalogue-routes-et-messages) |
+| **B11. Affaires** | Regroupement des devis, proformas, acomptes, factures et paiements par affaire, tableau de l'affaire | | Voir [B11](ameliorations.md#b11-gestion-des-affaires) |
+| **B12. Auteur et visa** | Utilisateur connecté dans « Établi par » et dans le visa | E14 | Voir [B12](ameliorations.md#b12-auteur-de-la-pièce-et-visa) |
+| **B13. Simulation interactive** | Calcul ligne par ligne à chaque saisie, descriptions longues | E17 | Voir [B13](ameliorations.md#b13-simulation-interactive-et-descriptions) |
+| **B14. Facture modifiable avant paiement** | Versions sans suppression, approbation, rectificative si scellée | | Voir [B14](ameliorations.md#b14-modification-dune-facture-non-payée-avec-versions-et-approbation) |
+| **B15. Centres d'approbation** | Centres distincts (facturation, caisse) sur un même modèle : hiérarchie N+1, N+2, circuits, validation en avance par un N+, suivi et historique | | Voir [B15](ameliorations.md#b15-centres-dapprobation-et-hiérarchie) |
 
-Ordre conseillé : B0 et B1 d'abord, puisqu'ils corrigent des défauts existants, dont un de sécurité. Ensuite B2, B3 et B8, le cœur du devis et de la facture ; puis B4, B5, B6 et B7 ; enfin B9 et B10. Les écrans suivent chaque lot, et la doc frontend finale (`docs/final-frontend-doc/billing`) est mise à jour à la fin de chaque lot.
+Ordre conseillé : B0 et B1 d'abord, puisqu'ils corrigent des défauts existants, dont un de sécurité. Puis B12 et B15, sur lesquels s'appuient les modifications approuvées ; ensuite le cœur du devis et de la facture (B2, B3, B8, B13, B14) ; puis B11, B5, B4, B6 et B7 ; enfin B9 et B10. Les écrans suivent chaque lot, et la doc frontend finale (`docs/final-frontend-doc/billing`) est mise à jour à la fin de chaque lot.
 
 ## 5. Décisions
 
@@ -64,3 +69,4 @@ Tranchées le 13/11/2026 : voir [realisation.md](realisation.md#1-décisions-ret
 | D5 | Stock insuffisant sur un devis | Avertissement ou blocage ? | Avertissement sur le devis, blocage à la facturation (paramètre) |
 | D6 | Changement de client d'une facture payée | Refusé, ou paiements reportés en avoir ? | Paiements du client d'origine reportés en avoir à rembourser ou imputer |
 | D7 | Statut VOIDED | Le garder (distinct de CANCELLED), ou le retirer ? | Le retirer : CANCELLED suffit, l'avoir porte la trace |
+| D8 | Facture scellée non payée modifiée | Nouvelle version de la même pièce, ou facture rectificative ? | Rectificative, montrée comme nouvelle version : une pièce scellée (SEFC) ne change pas |
