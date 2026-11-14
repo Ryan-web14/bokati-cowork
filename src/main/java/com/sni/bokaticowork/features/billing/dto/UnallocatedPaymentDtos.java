@@ -1,7 +1,6 @@
 package com.sni.bokaticowork.features.billing.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -28,7 +27,16 @@ public final class UnallocatedPaymentDtos {
     public record Allocation(@NotBlank String documentNumber, @NotNull BigDecimal amount) {
     }
 
-    public record AllocateRequest(@NotEmpty List<Allocation> allocations) {
+    /**
+     * Affectation a un element (lot R3) : ses factures ouvertes recoivent le montant, echeance la plus
+     * ancienne d'abord. {@code activationMode} : {@code FULL_SETTLEMENT} (au solde, par defaut) ou
+     * {@code FIRST_PAYMENT} (des le premier paiement), selon ce qui a ete convenu avec le client.
+     */
+    public record ElementAllocation(@NotBlank String type, @NotBlank String code, @NotNull BigDecimal amount, String activationMode) {
+    }
+
+    /** Factures designees par leur numero, elements designes par leur type et leur code, ou les deux. */
+    public record AllocateRequest(List<Allocation> allocations, List<ElementAllocation> elements) {
     }
 
     public record AllocationResult(String transactionNumber, BigDecimal allocated, BigDecimal stillPending, List<String> documentNumbers) {
