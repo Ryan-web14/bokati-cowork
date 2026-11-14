@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-192 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+201 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -84,6 +84,15 @@
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/revalidate` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-revalidate) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/select-options` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-select-options) |
 | PATCH | `/sni/api/v1/billing/quotes/{quoteNumber}/start-negotiation` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-quotes-quotenumber-start-negotiation) |
+| POST | `/sni/api/v1/billing/allocations/{allocationId}/cancel` | BILLING:CANCEL | [BillingElementController](routes/BillingElementController.md#r-post-sni-api-v1-billing-allocations-allocationid-cancel) |
+| GET | `/sni/api/v1/billing/documents/{documentNumber}/elements` | BILLING:READ | [BillingElementController](routes/BillingElementController.md#r-get-sni-api-v1-billing-documents-documentnumber-elements) |
+| POST | `/sni/api/v1/billing/documents/{documentNumber}/elements` | BILLING:CREATE | [BillingElementController](routes/BillingElementController.md#r-post-sni-api-v1-billing-documents-documentnumber-elements) |
+| DELETE | `/sni/api/v1/billing/documents/{documentNumber}/elements/{type}/{code}` | BILLING:CANCEL | [BillingElementController](routes/BillingElementController.md#r-delete-sni-api-v1-billing-documents-documentnumber-elements-type-code) |
+| GET | `/sni/api/v1/billing/elements` | BILLING:READ | [BillingElementController](routes/BillingElementController.md#r-get-sni-api-v1-billing-elements) |
+| GET | `/sni/api/v1/billing/elements/search` | BILLING:READ | [BillingElementController](routes/BillingElementController.md#r-get-sni-api-v1-billing-elements-search) |
+| GET | `/sni/api/v1/billing/elements/{type}/{code}` | BILLING:READ | [BillingElementController](routes/BillingElementController.md#r-get-sni-api-v1-billing-elements-type-code) |
+| GET | `/sni/api/v1/billing/elements/{type}/{code}/invoices` | BILLING:READ | [BillingElementController](routes/BillingElementController.md#r-get-sni-api-v1-billing-elements-type-code-invoices) |
+| GET | `/sni/api/v1/billing/transactions/{transactionNumber}/allocations` | BILLING:READ | [BillingElementController](routes/BillingElementController.md#r-get-sni-api-v1-billing-transactions-transactionnumber-allocations) |
 | GET | `/sni/api/v1/billing/catalog/categories` | BILLING:READ | [CatalogReferenceController](routes/CatalogReferenceController.md#r-get-sni-api-v1-billing-catalog-categories) |
 | POST | `/sni/api/v1/billing/catalog/categories` | BILLING:CREATE | [CatalogReferenceController](routes/CatalogReferenceController.md#r-post-sni-api-v1-billing-catalog-categories) |
 | DELETE | `/sni/api/v1/billing/catalog/categories/{code}` | BILLING:CANCEL | [CatalogReferenceController](routes/CatalogReferenceController.md#r-delete-sni-api-v1-billing-catalog-categories-code) |

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-186 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+205 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -31,6 +31,14 @@
 | POST | `/sni/api/v1/documents/{code}/unlock` | DOCUMENT:UPLOAD | [DocumentController](routes/DocumentController.md#r-post-sni-api-v1-documents-code-unlock) |
 | GET | `/sni/api/v1/documents/{code}/versions` | DOCUMENT:READ | [DocumentController](routes/DocumentController.md#r-get-sni-api-v1-documents-code-versions) |
 | POST | `/sni/api/v1/documents/{code}/versions/{versionNumber}/restore` | DOCUMENT:REVIEW | [DocumentController](routes/DocumentController.md#r-post-sni-api-v1-documents-code-versions-versionnumber-restore) |
+| GET | `/sni/api/v1/cash-registers/movements/{number}/fields` | CASH:READ | [DocumentFieldController](routes/DocumentFieldController.md#r-get-sni-api-v1-cash-registers-movements-number-fields) |
+| PUT | `/sni/api/v1/cash-registers/movements/{number}/fields` | CASH_MOVEMENT:CREATE | [DocumentFieldController](routes/DocumentFieldController.md#r-put-sni-api-v1-cash-registers-movements-number-fields) |
+| GET | `/sni/api/v1/fund-needs/{number}/fields` | FUND_REQUEST:CREATE | [DocumentFieldController](routes/DocumentFieldController.md#r-get-sni-api-v1-fund-needs-number-fields) |
+| PUT | `/sni/api/v1/fund-needs/{number}/fields` | FUND_REQUEST:CREATE | [DocumentFieldController](routes/DocumentFieldController.md#r-put-sni-api-v1-fund-needs-number-fields) |
+| GET | `/sni/api/v1/fund-requests/{number}/disbursements/{movement}/fields` | FUND_REQUEST:CREATE | [DocumentFieldController](routes/DocumentFieldController.md#r-get-sni-api-v1-fund-requests-number-disbursements-movement-fields) |
+| PUT | `/sni/api/v1/fund-requests/{number}/disbursements/{movement}/fields` | FUND_REQUEST:CREATE | [DocumentFieldController](routes/DocumentFieldController.md#r-put-sni-api-v1-fund-requests-number-disbursements-movement-fields) |
+| GET | `/sni/api/v1/fund-requests/{number}/fields` | FUND_REQUEST:CREATE | [DocumentFieldController](routes/DocumentFieldController.md#r-get-sni-api-v1-fund-requests-number-fields) |
+| PUT | `/sni/api/v1/fund-requests/{number}/fields` | FUND_REQUEST:CREATE | [DocumentFieldController](routes/DocumentFieldController.md#r-put-sni-api-v1-fund-requests-number-fields) |
 | POST | `/sni/api/v1/document-folders` | ADMIN:ACCESS | [DocumentFolderController](routes/DocumentFolderController.md#r-post-sni-api-v1-document-folders) |
 | GET | `/sni/api/v1/document-folders/roots` | ADMIN:ACCESS | [DocumentFolderController](routes/DocumentFolderController.md#r-get-sni-api-v1-document-folders-roots) |
 | DELETE | `/sni/api/v1/document-folders/{code}` | ADMIN:ACCESS | [DocumentFolderController](routes/DocumentFolderController.md#r-delete-sni-api-v1-document-folders-code) |
@@ -97,6 +105,17 @@
 | GET | `/sni/api/v1/documents/{code}/tags` | DOCUMENT:READ | [DocumentTagController](routes/DocumentTagController.md#r-get-sni-api-v1-documents-code-tags) |
 | POST | `/sni/api/v1/documents/{code}/tags` | DOCUMENT:UPLOAD | [DocumentTagController](routes/DocumentTagController.md#r-post-sni-api-v1-documents-code-tags) |
 | DELETE | `/sni/api/v1/documents/{code}/tags/{tagCode}` | DOCUMENT:READ | [DocumentTagController](routes/DocumentTagController.md#r-delete-sni-api-v1-documents-code-tags-tagcode) |
+| GET | `/sni/api/v1/document-templates` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-get-sni-api-v1-document-templates) |
+| GET | `/sni/api/v1/document-templates/{code}` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-get-sni-api-v1-document-templates-code) |
+| DELETE | `/sni/api/v1/document-templates/{code}/draft` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-delete-sni-api-v1-document-templates-code-draft) |
+| PUT | `/sni/api/v1/document-templates/{code}/draft` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-put-sni-api-v1-document-templates-code-draft) |
+| GET | `/sni/api/v1/document-templates/{code}/fields/catalog` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-get-sni-api-v1-document-templates-code-fields-catalog) |
+| POST | `/sni/api/v1/document-templates/{code}/preview` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-post-sni-api-v1-document-templates-code-preview) |
+| POST | `/sni/api/v1/document-templates/{code}/preview-email` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-post-sni-api-v1-document-templates-code-preview-email) |
+| POST | `/sni/api/v1/document-templates/{code}/publish` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-post-sni-api-v1-document-templates-code-publish) |
+| POST | `/sni/api/v1/document-templates/{code}/reset` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-post-sni-api-v1-document-templates-code-reset) |
+| POST | `/sni/api/v1/document-templates/{code}/restore/{version}` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-post-sni-api-v1-document-templates-code-restore-version) |
+| POST | `/sni/api/v1/document-templates/{code}/test-send` | SYSTEM:DOCUMENT_TEMPLATES | [DocumentTemplateController](routes/DocumentTemplateController.md#r-post-sni-api-v1-document-templates-code-test-send) |
 | GET | `/sni/api/v1/document-types` | SYSTEM:SETTINGS | [DocumentTypeController](routes/DocumentTypeController.md#r-get-sni-api-v1-document-types) |
 | POST | `/sni/api/v1/document-types` | SYSTEM:SETTINGS | [DocumentTypeController](routes/DocumentTypeController.md#r-post-sni-api-v1-document-types) |
 | DELETE | `/sni/api/v1/document-types/{code}` | SYSTEM:SETTINGS | [DocumentTypeController](routes/DocumentTypeController.md#r-delete-sni-api-v1-document-types-code) |

@@ -850,6 +850,240 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/movements/{number}/fields",
+   "package": "features.document.template.controller",
+   "controller": "DocumentFieldController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentFieldController.java",
+   "handler": "cash",
+   "declaredIn": "DocumentFieldController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFields>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/cash-registers/movements/{number}/fields",
+   "package": "features.document.template.controller",
+   "controller": "DocumentFieldController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentFieldController.java",
+   "handler": "saveCash",
+   "declaredIn": "DocumentFieldController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_MOVEMENT:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFieldsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFields>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}/fields",
+   "package": "features.document.template.controller",
+   "controller": "DocumentFieldController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentFieldController.java",
+   "handler": "need",
+   "declaredIn": "DocumentFieldController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFields>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/fund-needs/{number}/fields",
+   "package": "features.document.template.controller",
+   "controller": "DocumentFieldController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentFieldController.java",
+   "handler": "saveNeed",
+   "declaredIn": "DocumentFieldController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFieldsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFields>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/disbursements/{movement}/fields",
+   "package": "features.document.template.controller",
+   "controller": "DocumentFieldController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentFieldController.java",
+   "handler": "disbursement",
+   "declaredIn": "DocumentFieldController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "movement",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFields>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/disbursements/{movement}/fields",
+   "package": "features.document.template.controller",
+   "controller": "DocumentFieldController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentFieldController.java",
+   "handler": "saveDisbursement",
+   "declaredIn": "DocumentFieldController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFieldsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "movement",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFields>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/fields",
+   "package": "features.document.template.controller",
+   "controller": "DocumentFieldController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentFieldController.java",
+   "handler": "request",
+   "declaredIn": "DocumentFieldController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "template",
+     "required": false,
+     "default": "FUND_REQUEST",
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFields>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/fund-requests/{number}/fields",
+   "package": "features.document.template.controller",
+   "controller": "DocumentFieldController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentFieldController.java",
+   "handler": "saveRequest",
+   "declaredIn": "DocumentFieldController",
+   "access": {
+    "kind": "admin",
+    "permission": "FUND_REQUEST:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFieldsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "template",
+     "required": false,
+     "default": "FUND_REQUEST",
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFields>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/document-folders",
@@ -2742,6 +2976,297 @@
     }
    ],
    "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-templates",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "list",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Summary>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "get",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Detail>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}/draft",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "deleteDraft",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}/draft",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "saveDraft",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Content",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Version>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}/fields/catalog",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "catalog",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Catalog>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}/preview",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "preview",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "produces": [
+    "application/pdf"
+   ],
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Content",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "number",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}/preview-email",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "previewEmail",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "produces": [
+    "text/html"
+   ],
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Content",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<String>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}/publish",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "publish",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Version>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}/reset",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "reset",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Detail>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}/restore/{version}",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "restore",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "version",
+     "required": true,
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Version>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-templates/{code}/test-send",
+   "package": "features.document.template.controller",
+   "controller": "DocumentTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/template/controller/DocumentTemplateController.java",
+   "handler": "testSend",
+   "declaredIn": "DocumentTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:DOCUMENT_TEMPLATES"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Content",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, String>>"
   },
   {
    "methods": [
@@ -5980,6 +6505,44 @@
     }
    }
   },
+  "DocumentTemplateDtos.PieceFields": {
+   "type": "object",
+   "properties": {
+    "templateCode": {
+     "type": "string"
+    },
+    "publishedVersion": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "fields": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceField"
+     }
+    },
+    "missingRequired": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "DocumentTemplateDtos.PieceFieldsRequest": {
+   "type": "object",
+   "properties": {
+    "values": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     }
+    }
+   }
+  },
   "FolderDetailResponse": {
    "type": "object",
    "properties": {
@@ -6881,6 +7444,250 @@
      "items": {
       "type": "string"
      }
+    }
+   }
+  },
+  "DocumentTemplateDtos.Summary": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "family": {
+     "type": "string"
+    },
+    "domain": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "publishedVersion": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "publishedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "hasDraft": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DocumentTemplateDtos.Detail": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "family": {
+     "type": "string"
+    },
+    "domain": {
+     "type": "string"
+    },
+    "fallbackTemplate": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "published": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Version"
+    },
+    "draft": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Version"
+    },
+    "versions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.VersionSummary"
+     }
+    }
+   }
+  },
+  "DocumentTemplateDtos.Version": {
+   "type": "object",
+   "properties": {
+    "versionNumber": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "status": {
+     "type": "string"
+    },
+    "pageFormat": {
+     "type": "string"
+    },
+    "copies": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "object"
+      }
+     }
+    },
+    "style": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     }
+    },
+    "blocks": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "object"
+      }
+     }
+    },
+    "fields": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "object"
+      }
+     }
+    },
+    "note": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "publishedBy": {
+     "type": "string"
+    },
+    "publishedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "archivedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DocumentTemplateDtos.Content": {
+   "type": "object",
+   "properties": {
+    "pageFormat": {
+     "type": "string"
+    },
+    "copies": {
+     "maxItems": 4,
+     "minItems": 0,
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "object"
+      }
+     }
+    },
+    "style": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     }
+    },
+    "blocks": {
+     "maxItems": 40,
+     "minItems": 0,
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "object"
+      }
+     }
+    },
+    "fields": {
+     "maxItems": 20,
+     "minItems": 0,
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "object"
+      }
+     }
+    },
+    "note": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "DocumentTemplateDtos.Catalog": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "fields": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.FieldEntry"
+     }
+    },
+    "tables": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.TableEntry"
+     }
+    },
+    "signers": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.SignerEntry"
+     }
+    },
+    "commonTokens": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "blockTypes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "pageFormats": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "realPreview": {
+     "type": "boolean"
+    },
+    "previewNumberHint": {
+     "type": "string"
     }
    }
   },
@@ -8794,6 +9601,123 @@
     }
    }
   },
+  "DocumentTemplateDtos.PieceField": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "type": "string"
+    },
+    "blockKey": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string"
+    },
+    "mode": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "options": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "help": {
+     "type": "string"
+    },
+    "value": {
+     "type": "string"
+    },
+    "enteredBy": {
+     "type": "string"
+    },
+    "enteredAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DocumentTemplateDtos.VersionSummary": {
+   "type": "object",
+   "properties": {
+    "versionNumber": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "status": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "publishedBy": {
+     "type": "string"
+    },
+    "publishedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "archivedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DocumentTemplateDtos.FieldEntry": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "sample": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentTemplateDtos.TableEntry": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "columns": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.ColumnEntry"
+     }
+    }
+   }
+  },
+  "DocumentTemplateDtos.SignerEntry": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "type": "string"
+    },
+    "role": {
+     "type": "string"
+    }
+   }
+  },
   "WorkflowResponse.StepResponse": {
    "type": "object",
    "properties": {
@@ -9137,6 +10061,20 @@
      "type": "string"
     }
    }
+  },
+  "DocumentTemplateDtos.ColumnEntry": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "numeric": {
+     "type": "boolean"
+    }
+   }
   }
  },
  "enums": {
@@ -9203,6 +10141,8 @@
   "DocumentReviewDecisionRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentReviewDecisionRequest",
   "DocumentCorrectionRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentCorrectionRequest",
   "DocumentVersionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse",
+  "DocumentTemplateDtos.PieceFields": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFields",
+  "DocumentTemplateDtos.PieceFieldsRequest": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceFieldsRequest",
   "FolderDetailResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.FolderDetailResponse",
   "CreateFolderRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateFolderRequest",
   "UpdateFolderRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.UpdateFolderRequest",
@@ -9229,6 +10169,11 @@
   "DocumentTagRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTagRequest",
   "DocumentTagUpdateRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTagUpdateRequest",
   "DocumentTagAssignRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTagAssignRequest",
+  "DocumentTemplateDtos.Summary": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Summary",
+  "DocumentTemplateDtos.Detail": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Detail",
+  "DocumentTemplateDtos.Version": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Version",
+  "DocumentTemplateDtos.Content": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Content",
+  "DocumentTemplateDtos.Catalog": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Catalog",
   "DocumentTypeResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse",
   "DocumentTypeRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTypeRequest",
   "DocumentUploadConfigResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentUploadConfigResponse",
@@ -9293,6 +10238,11 @@
   "DocumentFolderResponse.SpaceFolder": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderResponse.SpaceFolder",
   "ZipImportResponse.ZipImportItem": "com.sni.bokaticowork.features.document.documentMaster.dto.response.ZipImportResponse.ZipImportItem",
   "DocumentBulkItemResult": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentBulkItemResult",
+  "DocumentTemplateDtos.PieceField": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.PieceField",
+  "DocumentTemplateDtos.VersionSummary": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.VersionSummary",
+  "DocumentTemplateDtos.FieldEntry": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.FieldEntry",
+  "DocumentTemplateDtos.TableEntry": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.TableEntry",
+  "DocumentTemplateDtos.SignerEntry": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.SignerEntry",
   "WorkflowResponse.StepResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowResponse.StepResponse",
   "CreateWorkflowRequest.WorkflowStepRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateWorkflowRequest.WorkflowStepRequest",
   "WorkflowInstanceResponse.ActionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse.ActionResponse",
@@ -9308,6 +10258,7 @@
   "KycDashboardResponse.OwnerTypeMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.OwnerTypeMetrics",
   "KycDashboardResponse.ActivityMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.ActivityMetrics",
   "KycBulkItemResult": "com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkItemResult",
-  "KycBulkRejectItemRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectItemRequest"
+  "KycBulkRejectItemRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectItemRequest",
+  "DocumentTemplateDtos.ColumnEntry": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.ColumnEntry"
  }
 }

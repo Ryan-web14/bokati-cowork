@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-354 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+357 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -53,6 +53,9 @@
 | POST | `/sni/api/v1/accounting/imports/compare` | ACCOUNTING_SETTINGS:MANAGE | [AccountingExchangeController](routes/AccountingExchangeController.md#r-post-sni-api-v1-accounting-imports-compare) |
 | POST | `/sni/api/v1/accounting/imports/entries` | ACCOUNTING_SETTINGS:MANAGE | [AccountingExchangeController](routes/AccountingExchangeController.md#r-post-sni-api-v1-accounting-imports-entries) |
 | POST | `/sni/api/v1/accounting/imports/opening/{year}` | ACCOUNTING_SETTINGS:MANAGE | [AccountingExchangeController](routes/AccountingExchangeController.md#r-post-sni-api-v1-accounting-imports-opening-year) |
+| GET | `/sni/api/v1/accounting/deposit-slips/{number}/pdf` | ACCOUNTING_REPORT:READ | [AccountingPrintController](routes/AccountingPrintController.md#r-get-sni-api-v1-accounting-deposit-slips-number-pdf) |
+| GET | `/sni/api/v1/accounting/partners/{code}/statement/pdf` | FINANCING:READ | [AccountingPrintController](routes/AccountingPrintController.md#r-get-sni-api-v1-accounting-partners-code-statement-pdf) |
+| GET | `/sni/api/v1/accounting/purchases/suppliers/{code}/statement/pdf` | PURCHASE:READ | [AccountingPrintController](routes/AccountingPrintController.md#r-get-sni-api-v1-accounting-purchases-suppliers-code-statement-pdf) |
 | GET | `/sni/api/v1/accounting/analytic/axes` | ANALYTIC_REPORT:READ | [AnalyticController](routes/AnalyticController.md#r-get-sni-api-v1-accounting-analytic-axes) |
 | POST | `/sni/api/v1/accounting/analytic/axes` | ANALYTIC_SETTINGS:MANAGE | [AnalyticController](routes/AnalyticController.md#r-post-sni-api-v1-accounting-analytic-axes) |
 | GET | `/sni/api/v1/accounting/analytic/axes/{axis}/sections` | ANALYTIC_REPORT:READ | [AnalyticController](routes/AnalyticController.md#r-get-sni-api-v1-accounting-analytic-axes-axis-sections) |

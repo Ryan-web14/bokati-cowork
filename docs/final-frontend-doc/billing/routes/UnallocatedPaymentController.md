@@ -68,7 +68,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `allocations` | [UnallocatedPaymentDtos.Allocation](#m-UnallocatedPaymentDtos-Allocation)[] | oui | éléments min `1` |
+| `allocations` | [UnallocatedPaymentDtos.Allocation](#m-UnallocatedPaymentDtos-Allocation)[] |  |  |
+| `elements` | [UnallocatedPaymentDtos.ElementAllocation](#m-UnallocatedPaymentDtos-ElementAllocation)[] |  |  |
 
 <a id="m-UnallocatedPaymentDtos-Candidate"></a>
 #### UnallocatedPaymentDtos.Candidate
@@ -90,3 +91,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `documentNumber` | texte | oui | longueur min `1` |
 | `amount` | nombre décimal | oui |  |
+
+<a id="m-UnallocatedPaymentDtos-ElementAllocation"></a>
+#### UnallocatedPaymentDtos.ElementAllocation
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `type` | texte | oui | longueur min `1` |
+| `code` | texte | oui | longueur min `1` |
+| `amount` | nombre décimal | oui |  |
+| `activationMode` | texte |  |  |

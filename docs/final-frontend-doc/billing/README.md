@@ -33,6 +33,7 @@ Modules voisins : [approval](../approval/README.md) (centre d'approbation de la 
 | Cautions | [cautions.md](cautions.md) | Dépôts de garantie : registre, restitution, retenue, imputation (C7) |
 | Tarifs clients | [tarifs-clients.md](tarifs-clients.md) | Prix négociés par contrat (C8) |
 | Paiements en attente | [paiements-en-attente.md](paiements-en-attente.md) | Affectation des sommes non imputées (C9) |
+| Rattachement aux éléments | [rattachement-paiements.md](rattachement-paiements.md) | Paiement ou facture vers abonnement, pass, réservation, domiciliation ; effets ; annulation d'une affectation (R1 à R4) |
 | Réclamations | [reclamations.md](reclamations.md) | Réclamation sur facture, avoir ou refus motivé (C11) |
 | Recouvrement | [recouvrement.md](recouvrement.md) | Promesses de paiement, plans de règlement, relance WhatsApp (C12) |
 | Facturation groupée | [facturation-groupee.md](facturation-groupee.md) | Une facture par client sur une période (C13) |
