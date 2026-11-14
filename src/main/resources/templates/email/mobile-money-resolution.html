@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Paiement mobile money tranché')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Un paiement mobile money a été tranché à la main.'}">Un paiement mobile money a été tranché à la main.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('alert')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Paiement mobile money tranché à la main</div>
+      <div class="em-intro">Un paiement mobile money a été tranché à la main, sans confirmation de l'opérateur.</div>
+      <table role="presentation" class="rows">
+        <tr><td class="r-key">Décision</td><td class="r-val" th:text="${action}">Décision</td></tr>
+        <tr><td class="r-key">Par</td><td class="r-val" th:text="${actor}">Par</td></tr>
+        <tr><td class="r-key">Motif</td><td class="r-val" th:text="${reason}">Motif</td></tr>
+        <tr><td class="r-key">Référence opérateur</td><td class="r-val mono" th:text="${providerTransactionId}">Référence</td></tr>
+        <tr><td class="r-key">Paiement</td><td class="r-val mono" th:text="${depositId}">Paiement</td></tr>
+        <tr><td class="r-key">Intention</td><td class="r-val mono" th:text="${intentNumber}">Intention</td></tr>
+        <tr><td class="r-key">Client</td><td class="r-val mono" th:text="${customerCode}">Client</td></tr>
+        <tr><td class="r-key">Montant</td><td class="r-val" th:text="${amount}">Montant</td></tr>
+        <tr><td class="r-key">Opérateur</td><td class="r-val" th:text="${provider}">Opérateur</td></tr>
+      </table>
+      <div class="em-note alert">Si vous ne reconnaissez pas cette décision, vérifiez le paiement chez PawaPay avant toute autre action.</div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

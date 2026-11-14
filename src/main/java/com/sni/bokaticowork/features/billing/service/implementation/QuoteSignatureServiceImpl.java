@@ -44,6 +44,13 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
     private final BillingEventWriter eventWriter;
     private final BillingDocumentMapper mapper;
     private final DefaultEmailSender emailSender;
+    private org.thymeleaf.spring6.SpringTemplateEngine templateEngine;
+
+    /** Gabarit email/quote-signature-request (modifiable en modele de courriel) ; absent, le texte de repli sert. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setTemplateEngine(org.thymeleaf.spring6.SpringTemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
+    }
     private final com.sni.bokaticowork.features.billing.service.support.BillingDocumentVersionService versionService;
 
     /** Statuts d'un devis qui admettent encore une signature. */
@@ -174,6 +181,14 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
     }
 
     private String buildSignatureEmailHtml(String signerName, String quoteNumber, String url, String customMessage) {
+        if (templateEngine != null) {
+            org.thymeleaf.context.Context context = new org.thymeleaf.context.Context(java.util.Locale.FRENCH);
+            context.setVariable("signerName", signerName);
+            context.setVariable("quoteNumber", quoteNumber);
+            context.setVariable("signatureUrl", url);
+            context.setVariable("customMessage", customMessage);
+            return templateEngine.process("email/quote-signature-request", context);
+        }
         String msg = StringUtils.hasText(customMessage)
                 ? "<p style='color:#5c4f6e;font-size:13px;line-height:1.7'>" + escapeHtml(customMessage) + "</p>"
                 : "";

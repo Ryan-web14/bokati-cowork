@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Lien de paiement')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre lien de paiement sécurisé.'}">Votre lien de paiement sécurisé.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Lien de paiement</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, vous pouvez régler votre paiement en cliquant sur le lien sécurisé ci-dessous.
+      </div>
+      <div class="amount"><span th:text="${amount}">0</span> <small th:text="${currency}">XAF</small></div>
+      <div class="section-lbl">Paiement</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${intentNumber}">PI-000</td>
+        </tr>
+      </table>
+      <a class="cta" th:href="${checkoutUrl}" href="https://espace.elleaose.com">Régler maintenant</a>
+      <div class="em-note">Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur : <span th:text="${checkoutUrl}">lien</span>. Ce lien de paiement expirera prochainement.</div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

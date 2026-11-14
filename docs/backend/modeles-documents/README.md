@@ -107,8 +107,8 @@ Droits : nouvelle permission `SYSTEM:DOCUMENT_TEMPLATES` (lecture, modification,
 | D3, champs ajoutés | Champs `PRINTED_BLANK` et `CAPTURED`, saisie sur les pièces, contrôle des champs obligatoires, valeurs imprimées | Fait, voir [lot-d3-champs.md](lot-d3-champs.md) |
 | D4, autres pièces de fonds et d'achats | Bon de décaissement, fiche de justification, bon de commande, demande de caisse, rapport de clôture, déclaration de TVA, état de rapprochement, tableau d'emprunt ; bordereau de remise en banque (nouveau PDF) ; relevés fournisseur et partenaire imprimables | Fait, voir [lot-d4-autres-pieces.md](lot-d4-autres-pieces.md) |
 | D5, pièces clients | Reçu de paiement, reçu de portefeuille, relevé de portefeuille, avoir, confirmation de réservation ; facture en dernier, avec la version figée par pièce. Contrats : ils gardent `contract_template`, mais reçoivent l'en-tête commun | Fait, voir [lot-d5-pieces-clients.md](lot-d5-pieces-clients.md) |
-| E1, courriels : socle | Blocs de courriel, catalogue de jetons, aperçu HTML et envoi de test, repli sur le gabarit Thymeleaf ; rapprochement avec `notification_template` | À faire |
-| E2, courriels : reprise | Tous les courriels de l'inventaire, famille par famille (facturation, paiement, réservation, abonnements, portefeuille, domiciliation, sécurité...) ; gabarits de repli pour les courriels écrits en Java | À faire |
+| E1, courriels : socle | Blocs de courriel, catalogue de jetons, aperçu HTML et envoi de test, repli sur le gabarit Thymeleaf ; rapprochement avec `notification_template` | Fait, voir [lot-e1-courriels.md](lot-e1-courriels.md) |
+| E2, courriels : reprise | Tous les courriels de l'inventaire, famille par famille (facturation, paiement, réservation, abonnements, portefeuille, domiciliation, sécurité...) ; gabarits de repli pour les courriels écrits en Java | Fait, voir [lot-e2-courriels.md](lot-e2-courriels.md) |
 | D6, nettoyage | Suppression des gabarits morts seulement (les gabarits utilisés restent comme repli), doc frontend finale | À faire |
 
 Les migrations vont dans `db/migration` et `db/migration-prod`, à la suite du chantier finance.

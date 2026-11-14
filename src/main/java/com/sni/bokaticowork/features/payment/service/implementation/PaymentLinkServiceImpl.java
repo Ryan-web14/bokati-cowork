@@ -42,6 +42,13 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     private final PaymentIntentRepository intentRepository;
     private final PaymentMapper mapper;
     private final DefaultEmailSender emailSender;
+    private org.thymeleaf.spring6.SpringTemplateEngine templateEngine;
+
+    /** Gabarit email/payment-link (modifiable en modele de courriel) ; absent, le texte de repli sert. */
+    @Autowired(required = false)
+    void setTemplateEngine(org.thymeleaf.spring6.SpringTemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
+    }
 
     /** L'adresse publique du serveur · le lien mene a la page de paiement qu'il sert. */
     @org.springframework.beans.factory.annotation.Value("${app.api-base-url:}")
@@ -133,7 +140,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
                                           BigDecimal amount,
                                           String checkoutUrl) {
         String subject = "Lien de paiement · " + intent.getIntentNumber();
-        String html = buildEmailHtml(recipientName, amount, intent.getCurrency(), checkoutUrl);
+        String html = buildEmailHtml(recipientName, amount, intent.getCurrency(), checkoutUrl, intent.getIntentNumber());
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
@@ -155,9 +162,19 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
         }
     }
 
-    private String buildEmailHtml(String recipientName, BigDecimal amount, String currency, String checkoutUrl) {
+    private String buildEmailHtml(String recipientName, BigDecimal amount, String currency, String checkoutUrl, String intentNumber) {
         String name = StringUtils.hasText(recipientName) ? recipientName : "client";
         String formattedAmount = amount.stripTrailingZeros().toPlainString();
+        if (templateEngine != null) {
+            org.thymeleaf.context.Context context = new org.thymeleaf.context.Context(java.util.Locale.FRENCH);
+            context.setVariable("recipientName", name);
+            context.setVariable("amount", formattedAmount);
+            context.setVariable("currency", currency);
+            context.setVariable("checkoutUrl", checkoutUrl);
+            context.setVariable("intentNumber", intentNumber);
+            return templateEngine.process("email/payment-link", context);
+        }
+        name = org.springframework.web.util.HtmlUtils.htmlEscape(name);
         return "<p>Bonjour " + name + ",</p>"
                 + "<p>Vous pouvez régler votre paiement d'un montant de <strong>"
                 + formattedAmount + " " + currency + "</strong> en cliquant sur le lien sécurisé ci-dessous :</p>"

@@ -25,6 +25,13 @@ public class MobileMoneyResolutionNotifier {
 
     private final MobileMoneyAlertRecipients alertRecipients;
     private final DefaultEmailSender emailSender;
+    private org.thymeleaf.spring6.SpringTemplateEngine templateEngine;
+
+    /** Gabarit email/mobile-money-resolution (modifiable en modele de courriel) ; absent, le texte de repli sert. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setTemplateEngine(org.thymeleaf.spring6.SpringTemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
+    }
 
     public void resolved(PawapayDeposit deposit, String action, String reason, String providerTransactionId, String actor) {
         List<String> recipients = alertRecipients.recipientsWithSuperAdmins();
@@ -32,7 +39,8 @@ public class MobileMoneyResolutionNotifier {
             return;
         }
         String subject = "Bokati · paiement mobile money tranché à la main : " + deposit.getDepositId();
-        String html = html(deposit, action, reason, providerTransactionId, actor);
+        String html = templateEngine == null ? html(deposit, action, reason, providerTransactionId, actor)
+                : templated(deposit, action, reason, providerTransactionId, actor);
         Runnable send = () -> recipients.forEach(recipient -> {
             try {
                 emailSender.sendHtmlEmail(recipient, subject, html);
@@ -67,6 +75,21 @@ public class MobileMoneyResolutionNotifier {
                 + row("Opérateur", deposit.getProvider())
                 + "</table>"
                 + "<p>Si vous ne reconnaissez pas cette décision, vérifiez le paiement chez PawaPay avant toute autre action.</p>";
+    }
+
+    private String templated(PawapayDeposit deposit, String action, String reason, String providerTransactionId, String actor) {
+        org.thymeleaf.context.Context context = new org.thymeleaf.context.Context(java.util.Locale.FRENCH);
+        context.setVariable("action", action);
+        context.setVariable("actor", actor);
+        context.setVariable("reason", reason);
+        context.setVariable("providerTransactionId", providerTransactionId);
+        context.setVariable("depositId", deposit.getDepositId());
+        context.setVariable("intentNumber", deposit.getIntentNumber());
+        context.setVariable("customerCode", deposit.getCustomerCode());
+        context.setVariable("amount", (deposit.getAmount() == null ? "" : deposit.getAmount().stripTrailingZeros().toPlainString())
+                + " " + (deposit.getCurrency() == null ? "" : deposit.getCurrency()));
+        context.setVariable("provider", deposit.getProvider() == null ? null : String.valueOf(deposit.getProvider()));
+        return templateEngine.process("email/mobile-money-resolution", context);
     }
 
     private static String row(String label, String value) {
