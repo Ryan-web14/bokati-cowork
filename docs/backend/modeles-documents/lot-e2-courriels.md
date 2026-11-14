@@ -36,7 +36,7 @@ Les gabarits du code de connexion et de la confirmation d'adresse n'affichaient 
 
 ## Gabarits non inscrits
 
-Sept gabarits de `templates/email` ne sont appelés nulle part (ni code, ni migration, ni autre gabarit) et ne sont pas inscrits : `billing-reminder`, `booking-confirmation-v3`, `booking-reminder-email`, `booking-reminder`, `member-created`, `subscription-expiry-reminder`, `welcome-email-v2`. Leur suppression relève du lot D6.
+Sept gabarits de `templates/email` ne sont appelés nulle part (ni code, ni migration, ni autre gabarit) et ne sont pas inscrits : `billing-reminder`, `booking-confirmation-v3`, `booking-reminder-email`, `booking-reminder`, `member-created`, `subscription-expiry-reminder`, `welcome-email-v2`. Supprimés au lot D6 ([lot-d6-nettoyage.md](lot-d6-nettoyage.md)).
 
 ## Tests
 
