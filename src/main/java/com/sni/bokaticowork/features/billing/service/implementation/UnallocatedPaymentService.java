@@ -50,6 +50,67 @@ public class UnallocatedPaymentService {
     private final BillingDocumentRepository documents;
     private final StaffProfileService staffProfiles;
     private final ObjectProvider<BillingDocumentServiceImpl> billingServices;
+    private com.sni.bokaticowork.features.billing.element.service.BillingElementResolver elementResolver;
+    private com.sni.bokaticowork.features.billing.element.service.BillingElementLinkService elementLinks;
+
+    /** Lot R3 : affectation a un element (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setElements(com.sni.bokaticowork.features.billing.element.service.BillingElementResolver elementResolver,
+                     com.sni.bokaticowork.features.billing.element.service.BillingElementLinkService elementLinks) {
+        this.elementResolver = elementResolver;
+        this.elementLinks = elementLinks;
+    }
+
+    /**
+     * Affectation a des factures et a des elements en un geste (lots C9 et R3). Chaque element recoit
+     * son montant sur ses factures ouvertes, echeance la plus ancienne d'abord, sans depasser leur
+     * reste du : le reliquat reste en attente.
+     */
+    public UnallocatedPaymentDtos.AllocationResult allocate(String transactionNumber, UnallocatedPaymentDtos.AllocateRequest request) {
+        List<UnallocatedPaymentDtos.Allocation> wanted = new ArrayList<>(request == null || request.allocations() == null ? List.of() : request.allocations());
+        List<UnallocatedPaymentDtos.ElementAllocation> elements = request == null || request.elements() == null ? List.of() : request.elements();
+        Map<String, java.util.Map.Entry<com.sni.bokaticowork.features.billing.element.model.ElementRef, String>> modes = new java.util.LinkedHashMap<>();
+        for (UnallocatedPaymentDtos.ElementAllocation element : elements) {
+            if (elementResolver == null) {
+                throw BadRequestException.coded("AFFECTATION_INVALIDE", "L'affectation à un élément n'est pas disponible.");
+            }
+            com.sni.bokaticowork.features.billing.element.model.ElementRef ref =
+                    com.sni.bokaticowork.features.billing.element.model.ElementRef.of(element.type(), element.code());
+            String mode = com.sni.bokaticowork.features.billing.element.model.ElementRef.mode(element.activationMode());
+            elementLinks.assertOpen(ref);
+            if (element.amount() == null || element.amount().signum() <= 0) {
+                throw BadRequestException.coded("AFFECTATION_MONTANT", "Chaque montant affecté est positif.");
+            }
+            BigDecimal left = element.amount();
+            List<com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Invoice> open = elementResolver.openInvoices(ref);
+            if (open.isEmpty()) {
+                throw BadRequestException.coded("ELEMENT_SANS_FACTURE", ref.type() + " " + ref.code()
+                        + " n'a aucune facture à régler : rattachez-lui une facture ou émettez la sienne.");
+            }
+            for (com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Invoice invoice : open) {
+                if (left.signum() <= 0) {
+                    break;
+                }
+                BigDecimal already = wanted.stream().filter(a -> a.documentNumber().equals(invoice.documentNumber()))
+                        .map(UnallocatedPaymentDtos.Allocation::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal room = invoice.balanceDue().subtract(already);
+                if (room.signum() <= 0) {
+                    continue;
+                }
+                BigDecimal part = left.min(room);
+                wanted.add(new UnallocatedPaymentDtos.Allocation(invoice.documentNumber(), part));
+                modes.put(invoice.documentNumber() + "|" + ref.type() + "|" + ref.code(), java.util.Map.entry(ref, mode));
+                left = left.subtract(part);
+            }
+        }
+        // Le mode choisi est pose avant le paiement : l'annonce de reglement le lit.
+        modes.forEach((key, entry) -> {
+            if (com.sni.bokaticowork.features.billing.element.model.ElementRef.FIRST_PAYMENT.equals(entry.getValue())) {
+                elementLinks.setMode(key.substring(0, key.indexOf('|')), entry.getKey(), entry.getValue());
+            }
+        });
+        return allocate(transactionNumber, wanted);
+    }
 
     /** Sommes en attente, chacune avec ses factures candidates les mieux notees d'abord. */
     @Transactional(readOnly = true)
@@ -96,6 +157,10 @@ public class UnallocatedPaymentService {
         }
         PaymentTransaction transaction = transactions.findByTransactionNumber(transactionNumber.trim())
                 .orElseThrow(() -> new ResourceNotFoundException("Paiement introuvable : " + transactionNumber));
+        if (transaction.getStatus() != com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.SUCCEEDED) {
+            throw BadRequestException.coded("PAIEMENT_NON_REUSSI", "Le paiement " + transactionNumber + " est " + transaction.getStatus()
+                    + " : seul un paiement réussi, non remboursé, s'affecte.");
+        }
         BigDecimal pending = transaction.getAmount().subtract(allocations.findAllByPaymentTransactionId(transaction.getId()).stream()
                 .map(PaymentAllocation::getAllocatedAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
         BigDecimal total = wanted.stream().map(UnallocatedPaymentDtos.Allocation::amount).reduce(BigDecimal.ZERO, BigDecimal::add);

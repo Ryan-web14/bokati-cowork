@@ -49,7 +49,8 @@ class UnallocatedPaymentC9Test {
         when(staff.currentAuthor()).thenReturn(new StaffProfileService.Author("compta@elleaose.com", "Comptabilité", null));
         PaymentIntent intent = PaymentIntent.builder().customerType("CUSTOMER").customerCode("ORG-3").build();
         when(transactions.findByTransactionNumber("TXN-9")).thenReturn(Optional.of(PaymentTransaction.builder().id(9L).transactionNumber("TXN-9")
-                .paymentIntent(intent).amount(new BigDecimal("700000")).build()));
+                .paymentIntent(intent).amount(new BigDecimal("700000"))
+                .status(com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.SUCCEEDED).build()));
         when(allocations.findAllByPaymentTransactionId(9L)).thenReturn(List.of());
         when(documents.findByDocumentNumber("FAC-50")).thenReturn(Optional.of(invoice("FAC-50", "ORG-3", "590000")));
         when(documents.findByDocumentNumber("FAC-51")).thenReturn(Optional.of(invoice("FAC-51", "ORG-4", "100000")));

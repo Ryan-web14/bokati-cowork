@@ -2128,6 +2128,274 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/allocations/{allocationId}/cancel",
+   "package": "features.billing.element.controller",
+   "controller": "BillingElementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/element/controller/BillingElementController.java",
+   "handler": "cancelAllocation",
+   "declaredIn": "BillingElementController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CANCEL"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.element.service.AllocationReversalService.CancelRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "allocationId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.element.service.AllocationReversalService.Result>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/elements",
+   "package": "features.billing.element.controller",
+   "controller": "BillingElementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/element/controller/BillingElementController.java",
+   "handler": "elementsOfInvoice",
+   "declaredIn": "BillingElementController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Settled>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/elements",
+   "package": "features.billing.element.controller",
+   "controller": "BillingElementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/element/controller/BillingElementController.java",
+   "handler": "link",
+   "declaredIn": "BillingElementController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.billing.element.dto.ElementDtos.LinkRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Settled>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/elements/{type}/{code}",
+   "package": "features.billing.element.controller",
+   "controller": "BillingElementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/element/controller/BillingElementController.java",
+   "handler": "unlink",
+   "declaredIn": "BillingElementController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CANCEL"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "type",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/elements",
+   "package": "features.billing.element.controller",
+   "controller": "BillingElementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/element/controller/BillingElementController.java",
+   "handler": "elementsOf",
+   "declaredIn": "BillingElementController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "partyType",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "partyCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Element>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/elements/search",
+   "package": "features.billing.element.controller",
+   "controller": "BillingElementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/element/controller/BillingElementController.java",
+   "handler": "search",
+   "declaredIn": "BillingElementController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "10",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Party>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/elements/{type}/{code}",
+   "package": "features.billing.element.controller",
+   "controller": "BillingElementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/element/controller/BillingElementController.java",
+   "handler": "element",
+   "declaredIn": "BillingElementController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "type",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Element>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/elements/{type}/{code}/invoices",
+   "package": "features.billing.element.controller",
+   "controller": "BillingElementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/element/controller/BillingElementController.java",
+   "handler": "invoices",
+   "declaredIn": "BillingElementController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "type",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "openOnly",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Invoice>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/billing/transactions/{transactionNumber}/allocations",
+   "package": "features.billing.element.controller",
+   "controller": "BillingElementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/element/controller/BillingElementController.java",
+   "handler": "allocations",
+   "declaredIn": "BillingElementController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "transactionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Allocations>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/billing/catalog/categories",
@@ -7382,6 +7650,209 @@
     }
    }
   },
+  "AllocationReversalService.Result": {
+   "type": "object",
+   "properties": {
+    "allocationId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "transactionNumber": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "invoiceOutcome": {
+     "type": "string"
+    },
+    "elementsReverted": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "accountingRequired": {
+     "type": "boolean"
+    }
+   }
+  },
+  "AllocationReversalService.CancelRequest": {
+   "type": "object",
+   "properties": {
+    "invoiceOutcome": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "ElementDtos.Settled": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "origin": {
+     "type": "string"
+    },
+    "activationMode": {
+     "type": "string"
+    }
+   }
+  },
+  "ElementDtos.LinkRequest": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "activationMode": {
+     "type": "string"
+    },
+    "replaceOwnInvoice": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ElementDtos.Element": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "holderType": {
+     "type": "string"
+    },
+    "holderCode": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "totalAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "ElementDtos.Party": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "external": {
+     "type": "boolean"
+    },
+    "elements": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Element"
+     }
+    }
+   }
+  },
+  "ElementDtos.Invoice": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "documentType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "dueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "origin": {
+     "type": "string"
+    },
+    "activationMode": {
+     "type": "string"
+    }
+   }
+  },
+  "ElementDtos.Allocations": {
+   "type": "object",
+   "properties": {
+    "transactionNumber": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "pending": {
+     "type": "number"
+    },
+    "current": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Allocation"
+     }
+    },
+    "reversed": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Reversal"
+     }
+    }
+   }
+  },
   "CatalogReferenceDtos.CategoryResponse": {
    "type": "object",
    "properties": {
@@ -9792,16 +10263,18 @@
    }
   },
   "UnallocatedPaymentDtos.AllocateRequest": {
-   "required": [
-    "allocations"
-   ],
    "type": "object",
    "properties": {
     "allocations": {
-     "minItems": 1,
      "type": "array",
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.Allocation"
+     }
+    },
+    "elements": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.ElementAllocation"
      }
     }
    }
@@ -11267,6 +11740,66 @@
     }
    }
   },
+  "ElementDtos.Allocation": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "mode": {
+     "type": "string"
+    },
+    "allocatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "allocatedBy": {
+     "type": "string"
+    }
+   }
+  },
+  "ElementDtos.Reversal": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "allocationId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "invoiceOutcome": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "reversedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "reversedBy": {
+     "type": "string"
+    },
+    "elementsReverted": {
+     "type": "string"
+    }
+   }
+  },
   "PaymentScheduleInstallmentResponse": {
    "type": "object",
    "properties": {
@@ -11624,6 +12157,30 @@
     }
    }
   },
+  "UnallocatedPaymentDtos.ElementAllocation": {
+   "required": [
+    "amount",
+    "code",
+    "type"
+   ],
+   "type": "object",
+   "properties": {
+    "type": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "code": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "activationMode": {
+     "type": "string"
+    }
+   }
+  },
   "billing.dto.response.BillingAgingReportResponse.AgingBucket": {
    "type": "object",
    "properties": {
@@ -11762,6 +12319,14 @@
   "RequestSignatureRequest": "com.sni.bokaticowork.features.billing.dto.request.RequestSignatureRequest",
   "RevalidateQuoteRequest": "com.sni.bokaticowork.features.billing.dto.request.RevalidateQuoteRequest",
   "SelectQuoteOptionsRequest": "com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest",
+  "AllocationReversalService.Result": "com.sni.bokaticowork.features.billing.element.service.AllocationReversalService.Result",
+  "AllocationReversalService.CancelRequest": "com.sni.bokaticowork.features.billing.element.service.AllocationReversalService.CancelRequest",
+  "ElementDtos.Settled": "com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Settled",
+  "ElementDtos.LinkRequest": "com.sni.bokaticowork.features.billing.element.dto.ElementDtos.LinkRequest",
+  "ElementDtos.Element": "com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Element",
+  "ElementDtos.Party": "com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Party",
+  "ElementDtos.Invoice": "com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Invoice",
+  "ElementDtos.Allocations": "com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Allocations",
   "CatalogReferenceDtos.CategoryResponse": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryResponse",
   "CatalogReferenceDtos.CategoryRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryRequest",
   "CatalogReferenceDtos.CategoryUpdateRequest": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.CategoryUpdateRequest",
@@ -11870,6 +12435,8 @@
   "PaymentTransactionResponse": "com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse",
   "DepositPlanRequest.Deposit": "com.sni.bokaticowork.features.billing.dto.request.DepositPlanRequest.Deposit",
   "QuoteNegotiationResponse.Round": "com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.Round",
+  "ElementDtos.Allocation": "com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Allocation",
+  "ElementDtos.Reversal": "com.sni.bokaticowork.features.billing.element.dto.ElementDtos.Reversal",
   "PaymentScheduleInstallmentResponse": "com.sni.bokaticowork.features.billing.dto.response.PaymentScheduleInstallmentResponse",
   "DealDashboardResponse.Document": "com.sni.bokaticowork.features.billing.dto.response.DealDashboardResponse.Document",
   "DeliveryNoteDtos.NoteLine": "com.sni.bokaticowork.features.billing.dto.DeliveryNoteDtos.NoteLine",
@@ -11883,6 +12450,7 @@
   "CatalogReferenceDtos.TaxRuleSummary": "com.sni.bokaticowork.features.billing.dto.CatalogReferenceDtos.TaxRuleSummary",
   "UnallocatedPaymentDtos.Candidate": "com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.Candidate",
   "UnallocatedPaymentDtos.Allocation": "com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.Allocation",
+  "UnallocatedPaymentDtos.ElementAllocation": "com.sni.bokaticowork.features.billing.dto.UnallocatedPaymentDtos.ElementAllocation",
   "billing.dto.response.BillingAgingReportResponse.AgingBucket": "com.sni.bokaticowork.features.billing.dto.response.BillingAgingReportResponse.AgingBucket",
   "QuoteNegotiationResponse.LineChange": "com.sni.bokaticowork.features.billing.dto.response.QuoteNegotiationResponse.LineChange"
  }

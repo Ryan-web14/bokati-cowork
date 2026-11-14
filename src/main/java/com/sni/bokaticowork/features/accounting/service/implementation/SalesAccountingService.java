@@ -190,6 +190,13 @@ public class SalesAccountingService {
                     .forEach(id -> counter.run("ALLOC-" + id, () -> feedLateAllocation(id)));
         }
         if (settings.familyEnabled("PAYMENT")) {
+            // Lot R4 : affectation annulee alors qu'elle etait comptabilisee, la somme revient en attente.
+            jdbc.queryForList("SELECT r.id FROM payment_allocation_reversal r WHERE r.accounting_required "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'ALLOCATION_REVERSAL' AND e.reference = CONCAT('UNALLOC-', r.id)) "
+                    + "ORDER BY r.reversed_at LIMIT ?", Long.class, batch)
+                    .forEach(id -> counter.run("UNALLOC-" + id, () -> feedAllocationReversal(id)));
+        }
+        if (settings.familyEnabled("PAYMENT")) {
             Instant settled = Instant.now().minusSeconds(60L * Math.max(0, settings.paymentDelayMinutes()));
             jdbc.queryForList("SELECT t.transaction_number FROM payment_transaction t WHERE t.status IN ('SUCCEEDED', 'REFUNDED', 'REVERSED') "
                     + "AND COALESCE(t.paid_at, t.created_at) <= ? AND NOT EXISTS (SELECT 1 FROM acc_posting_event e "
@@ -400,6 +407,24 @@ public class SalesAccountingService {
         data.put("unallocatedAccount", settings.text("accounting.sales.unallocated-account", "4719"));
         data.put("amount", fx.apply(money((BigDecimal) row.get("allocated_amount"))));
         engine.receive("LATE_ALLOCATION", "ALLOC-" + allocationId, "SALES", date, json(data), replay(date));
+    }
+
+    /** Lot R4 : affectation annulee, D 411 du client (la facture redevient due) / C 4719. */
+    void feedAllocationReversal(Long reversalId) {
+        Map<String, Object> row = jdbc.queryForMap("SELECT transaction_number, document_number, amount, reversed_at "
+                + "FROM payment_allocation_reversal WHERE id = ?", reversalId);
+        BillingDocument document = documentRepository.findByDocumentNumber((String) row.get("document_number")).orElseThrow();
+        LocalDate date = date(row.get("reversed_at") instanceof java.sql.Timestamp at ? at.toInstant() : Instant.now());
+        Conversion fx = conversion(document.getCurrency(), document.getExchangeRate(), date);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("transactionNumber", row.get("transaction_number"));
+        data.put("documentNumber", document.getDocumentNumber());
+        data.put("customerCode", customerCode(document));
+        data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
+        data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
+        data.put("unallocatedAccount", settings.text("accounting.sales.unallocated-account", "4719"));
+        data.put("amount", fx.apply(money((BigDecimal) row.get("amount"))));
+        engine.receive("ALLOCATION_REVERSAL", "UNALLOC-" + reversalId, "SALES", date, json(data), replay(date));
     }
 
     /** Lot C6 : retenue a la source, D compte de la retenue / C 411 du client (lettre avec la facture). */

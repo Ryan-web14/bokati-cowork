@@ -44,6 +44,12 @@ public interface BookingService {
 
     BookingResponse confirm(String bookingNumber, BookingStatusChangeRequest request);
 
+    /**
+     * Retour arriere d'une confirmation obtenue par un paiement dont l'affectation est annulee (lot R4) :
+     * la reservation confirmee, non commencee, repasse en attente de paiement et libere ses creneaux.
+     */
+    BookingResponse revertConfirmation(String bookingNumber, String reason);
+
     BookingResponse approve(String bookingNumber, BookingApprovalRequest request);
 
     BookingResponse reject(String bookingNumber, BookingApprovalRequest request);

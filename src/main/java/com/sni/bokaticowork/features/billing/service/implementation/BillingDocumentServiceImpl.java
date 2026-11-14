@@ -170,6 +170,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private SecurityDepositService securityDeposits;
 
+    /** Lot R2 : un paiement recu annonce le reglement des elements de la facture (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sni.bokaticowork.features.billing.element.service.ElementSettlementPublisher elementSettlements;
+
     /** Lot C3 : derogations de remise par le centre d'approbation (facultatif dans les tests). */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private DiscountApprovalService discountApprovals;
@@ -2621,6 +2625,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         syncAdvance(document);
         BillingDocument saved = documentRepository.save(document);
         depositHook(saved);
+        if (elementSettlements != null) {
+            // Abonnement, pass, reservation ou domiciliation regles par cette facture : leurs effets
+            // suivent, que le paiement soit direct ou affecte apres coup.
+            elementSettlements.publish(saved.getDocumentNumber(), "Paiement de " + amount.stripTrailingZeros().toPlainString()
+                    + " sur " + saved.getDocumentNumber());
+        }
         return saved;
     }
 

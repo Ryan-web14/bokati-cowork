@@ -36,6 +36,6 @@ public class UnallocatedPaymentController {
     @PostMapping("/{transactionNumber}/allocate")
     public ResponseEntity<UnallocatedPaymentDtos.AllocationResult> allocate(@PathVariable String transactionNumber,
                                                                            @Valid @RequestBody UnallocatedPaymentDtos.AllocateRequest request) {
-        return ResponseEntity.ok(unallocated.allocate(transactionNumber, request.allocations()));
+        return ResponseEntity.ok(unallocated.allocate(transactionNumber, request));
     }
 }
