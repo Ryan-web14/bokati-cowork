@@ -129,7 +129,7 @@ Route à utiliser : `POST /sni/api/v1/members/admin/create` ([détail](routes/Me
 
 ### Modifier un membre
 
-1. `PATCH /sni/api/v1/members/{memberId}` avec seulement les champs à changer parmi `firstname`, `lastname`, `email`, `phone`, `phoneCountry`, `whatsappPhone`. Réponse `204`.
+1. `PATCH /sni/api/v1/members/{memberId}` avec seulement les champs à changer parmi `firstname`, `lastname`, `email`, `phone`, `phoneCountry`, `whatsappPhone`. La fiche lue peut aussi être renvoyée telle quelle : ses champs en lecture seule (`memberId`, `customerId`, `userId`, `fullname`, `status`, `portalAccess`, `createdAt`, `updatedAt`) sont ignorés ; toute autre clé inconnue reste refusée (`400 VALIDATION_FAILED`). Réponse `204`.
 2. Le nouveau courriel et les nouveaux prénom et nom sont recopiés sur le compte utilisateur (le courriel sert d'identifiant de connexion : prévenir l'utilisateur). La fiche client n'est pas modifiée.
 3. Un changement de téléphone est signalé au module de conformité.
 
