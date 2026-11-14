@@ -5,14 +5,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/**
- * Les champs en lecture seule de la fiche membre ({@code MemberResponse}) sont ignores : renvoyer la
- * fiche lue, modifiee, ne doit pas etre refuse. Une cle vraiment inconnue reste refusee.
- */
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties(value = {"memberId", "customerId", "userId", "fullname", "status", "portalAccess",
-        "createdAt", "updatedAt"})
 @Data
 public class UpdateMemberRequest {
+
+    private String memberId;
+
+    private String customerId;
+
+    private String userId;
+
+    private String fullname;
 
     @Size(max = 350)
     private String firstname;
@@ -35,5 +37,12 @@ public class UpdateMemberRequest {
 
     @Size(max = 30)
     private String whatsappPhone;
+
+    private String status;
+
+    private Boolean portalAccess;
+
+    private String createdAt;
+    private String updatedAt;
 
 }
