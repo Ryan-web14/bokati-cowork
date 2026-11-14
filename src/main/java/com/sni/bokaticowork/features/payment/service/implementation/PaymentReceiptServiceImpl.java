@@ -308,7 +308,30 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
         return new PartySnapshot(clean(business.getName()), clean(business.getEmail()), clean(business.getPhone()), null);
     }
 
+    /** Modeles de documents (lot D5), facultatif dans les tests. */
+    @Autowired(required = false)
+    private com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter templatePrinter;
+
+    /** Donnees d'un recu pour l'apercu d'un modele (lot D5), sans rien ecrire. */
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.document.template.render.DocumentData templateData(String receiptNumber) {
+        return receiptData(toResponse(serviceTransactionByReceipt(receiptNumber)));
+    }
+
+    private com.sni.bokaticowork.features.document.template.render.DocumentData receiptData(PaymentReceiptResponse receipt) {
+        ZoneId zone = memberContact == null ? MemberBillingContact.defaultZone()
+                : memberContact.zone(receipt.customerType(), receipt.customerCode());
+        return com.sni.bokaticowork.features.payment.service.support.PaymentReceiptDocumentData.from(receipt, zone, generateQrCode(receipt));
+    }
+
     private byte[] renderPdf(PaymentReceiptResponse receipt) {
+        if (templatePrinter != null) {
+            java.util.Optional<byte[]> printed = templatePrinter.tryRender(
+                    com.sni.bokaticowork.features.payment.service.support.PaymentReceiptDocumentData.CODE, receiptData(receipt));
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         String html = renderHtml(receipt);
         try {
             return PdfRenderer.render(html);

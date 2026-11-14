@@ -211,6 +211,13 @@ public class BillingDocument {
     @Column(name = "pdf_sealed_at")
     private Instant pdfSealedAt;
 
+    /**
+     * Version du modele de document ayant produit la piece scellee (lot D5) : 0 pour le gabarit
+     * d'origine, nul tant que la piece n'est pas scellee. Une reimpression garde cette version.
+     */
+    @Column(name = "template_version")
+    private Integer templateVersion;
+
     @Column(name = "customer_reference", length = 100)
     private String customerReference;
 

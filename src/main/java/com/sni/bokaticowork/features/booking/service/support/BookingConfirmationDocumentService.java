@@ -133,7 +133,43 @@ public class BookingConfirmationDocumentService {
         ctx.setVariable("paymentMode", booking.getPaymentMode() == null ? "" : booking.getPaymentMode().name());
         ctx.setVariable("verificationCode", booking.getCheckInToken());
         ctx.setVariable("qrDataUri", "data:image/png;base64," + Base64.getEncoder().encodeToString(qrBytes(booking)));
+        if (templatePrinter != null) {
+            com.sni.bokaticowork.features.document.template.render.DocumentData data = confirmationData(ctx, booking.getTotalAmount(), booking.getCurrency());
+            java.util.Optional<byte[]> printed = templatePrinter.tryRender("BOOKING_CONFIRMATION", data);
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         return renderPdf(templateEngine.process("booking/confirmation-pdf", ctx));
+    }
+
+    /** Modeles de documents (lot D5), facultatif dans les tests. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter templatePrinter;
+
+    /**
+     * Donnees de la confirmation de reservation (lot D5), tirees des variables du gabarit
+     * d'origine. Le QR est celui de l'enregistrement a l'arrivee.
+     */
+    public static com.sni.bokaticowork.features.document.template.render.DocumentData confirmationData(Context ctx, java.math.BigDecimal total,
+                                                                                                     String currency) {
+        String number = String.valueOf(ctx.getVariable("bookingNumber"));
+        com.sni.bokaticowork.features.document.template.render.DocumentData data =
+                new com.sni.bokaticowork.features.document.template.render.DocumentData("BOOKING_CONFIRMATION").title("Confirmation de réservation")
+                        .number(number).source(number).amount(total, currency)
+                        .verify(null, (String) ctx.getVariable("qrDataUri"))
+                        .fieldsFrom(ctx, "reservation", "Réservation", "bookingNumber", "client", "Au nom de", "recipientName",
+                                "espace", "Espace", "resourceName", "type_espace", "Type", "resourceType", "etat", "État", "status",
+                                "date", "Date", "bookingDate", "debut", "Début", "startTime", "fin", "Fin", "endTime", "duree", "Durée", "durationLabel",
+                                "places", "Places", "seatsLabel", "adresse", "Adresse", "address", "ville", "Ville", "city",
+                                "prix_ht", "Prix HT", "priceHT", "tva", "TVA", "priceTVA", "centimes_additionnels", "Centimes additionnels",
+                                "priceCentimeAdditionnel", "prix_ttc", "Prix TTC", "priceTTC", "mode_paiement", "Paiement", "paymentMode",
+                                "code_verification", "Code de vérification", "verificationCode");
+        data.section("Réservation", java.util.List.of("reservation", "client", "espace", "type_espace", "etat", "places"), null)
+                .section("Créneau", java.util.List.of("date", "debut", "fin", "duree", "adresse", "ville"), null)
+                .section("Prix", java.util.List.of("prix_ht", "tva", "centimes_additionnels", "prix_ttc", "mode_paiement"), null)
+                .section("Arrivée", java.util.List.of("code_verification"), null);
+        return data;
     }
 
     private byte[] renderPdf(String html) {

@@ -22,6 +22,9 @@ import com.sni.bokaticowork.features.payment.service.interfaces.CashDocumentPdfS
 import com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashRequestService;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashStatisticsService;
+import com.sni.bokaticowork.features.payment.service.support.CashReportDocumentData;
+import com.sni.bokaticowork.features.payment.service.support.CashVoucherDocumentData;
+import com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +56,49 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
     private final Locale appLocale;
     private final BrandLogo brandLogo;
     private final OperatorIdentityService operatorIdentityService;
+    private DocumentTemplatePrinter templatePrinter;
+
+    /** Facultatif · injecte par mutateur pour ne pas toucher au constructeur des tests. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setTemplatePrinter(DocumentTemplatePrinter templatePrinter) {
+        this.templatePrinter = templatePrinter;
+    }
+
+    private com.sni.bokaticowork.features.document.template.render.DocumentData requestData(CashRequestResponse request) {
+        return CashReportDocumentData.request(request, requestTypeLabel(request.requestType()), requestStatusLabel(request.status()));
+    }
+
+    private com.sni.bokaticowork.features.document.template.render.DocumentData closingData(CashSessionSummaryResponse summary,
+                                                                                           List<CashMovementResponse> movements, String reviewedBy) {
+        CashDocumentTemplateFormatter fmt = new CashDocumentTemplateFormatter(appLocale);
+        return CashReportDocumentData.closing(summary, movements, reviewedBy, movement -> fmt.movementTypeLabel(movement.movementType()));
+    }
+
+    @Override
+    public String templateCode(String movementNumber) {
+        return CashVoucherDocumentData.templateCode(cashRegisterMapper.toCashMovementResponse(movement(movementNumber)));
+    }
+
+    /** Donnees d'un mouvement pour l'apercu d'un modele de bon de caisse. */
+    @Override
+    public com.sni.bokaticowork.features.document.template.render.DocumentData previewData(String templateCode, String movementNumber) {
+        if (CashReportDocumentData.REQUEST.equals(templateCode)) {
+            return requestData(cashRequestService.get(movementNumber));
+        }
+        if (CashReportDocumentData.CLOSING.equals(templateCode)) {
+            CashSession session = session(movementNumber);
+            List<CashMovementResponse> movements = movementRepository.findByCashSession_IdOrderByCreatedAtAsc(session.getId()).stream()
+                    .map(cashRegisterMapper::toCashMovementResponse).toList();
+            return closingData(cashRegisterService.sessionSummary(movementNumber), movements, session.getReviewedBy());
+        }
+        CashMovement movement = movement(movementNumber);
+        CashMovementResponse response = cashRegisterMapper.toCashMovementResponse(movement);
+        if (!templateCode.equals(CashVoucherDocumentData.templateCode(response))) {
+            throw new BadRequestException("Le mouvement " + movementNumber + " ne relève pas de ce modèle");
+        }
+        return CashVoucherDocumentData.from(templateCode, response, documentTypeLabel(response.documentType(), response.movementType()),
+                false, null);
+    }
 
     @Override
     public byte[] generateMovementDocument(String movementNumber) {
@@ -67,8 +113,19 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         // Lot C4 : une piece deja imprimee ressort en DUPLICATA ; une piece contre-passee porte la
         // mention ANNULE PAR et le numero du mouvement inverse.
         context.setVariable("duplicate", movement.getPrintCount() != null && movement.getPrintCount() > 0);
-        context.setVariable("reversedBy", movement.getStatus() == com.sni.bokaticowork.features.payment.enums.CashMovementStatus.REVERSED
-                ? response.relatedMovementNumber() : null);
+        String reversedBy = movement.getStatus() == com.sni.bokaticowork.features.payment.enums.CashMovementStatus.REVERSED
+                ? response.relatedMovementNumber() : null;
+        context.setVariable("reversedBy", reversedBy);
+        // Modeles de documents (lot D2) : bon d'entree ou de sortie selon la version publiee de son
+        // modele ; sans version publiee, ou si son rendu echoue, le gabarit d'origine sert.
+        String templateCode = CashVoucherDocumentData.templateCode(response);
+        if (templatePrinter != null && templateCode != null) {
+            java.util.Optional<byte[]> printed = templatePrinter.tryRender(templateCode, CashVoucherDocumentData.from(templateCode, response,
+                    (String) context.getVariable("docTypeLabel"), Boolean.TRUE.equals(context.getVariable("duplicate")), reversedBy));
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         return renderToPdf(templateEngine.process("cash/movement-document", context));
     }
 
@@ -82,6 +139,12 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         context.setVariable("generatedAt", Instant.now());
         context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
         brand(context);
+        if (templatePrinter != null) {
+            java.util.Optional<byte[]> printed = templatePrinter.tryRender(CashReportDocumentData.REQUEST, requestData(request));
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         return renderToPdf(templateEngine.process("cash/request-document", context));
     }
 
@@ -103,6 +166,13 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         context.setVariable("generatedAt", Instant.now());
         context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
         brand(context);
+        if (templatePrinter != null) {
+            java.util.Optional<byte[]> printed = templatePrinter.tryRender(CashReportDocumentData.CLOSING,
+                    closingData(summary, movements, session.getReviewedBy()));
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         return renderToPdf(templateEngine.process("cash/session-closing-report", context));
     }
 
