@@ -49,23 +49,17 @@ Le tout avec recherche, chronologie par utilisateur et par élément, tableaux d
 
 Ordre conseillé : A0, puis A2 et A1 (le plus utile pour l'exploitant), A4, A3, A5, A6, A7, A8.
 
-## Questions à trancher
+## Décisions de l'exploitant (14/11/2026)
 
-1. **Durées de conservation.** Proposition :
-   - actions : 5 ans (pièces comptables liées) ;
-   - sécurité : 1 an ;
-   - requêtes une par une : 30 jours ;
-   - agrégats de trafic : 13 mois ;
-   - erreurs : 90 jours.
-2. **Journal des requêtes.** Toutes les requêtes une par une, ou seulement les lentes et les erreurs (proposition, plus sobre pour la base et le dyno) ?
-3. **Qui voit quoi.** Proposition :
-   - `AUDITOR` lit tout et exporte ;
-   - `ADMIN` lit les actions et la sécurité ;
-   - `SUPER_ADMIN` règle la rétention et les alertes.
-4. **Alertes.** Canaux par défaut (application, courriel, WhatsApp) et destinataires.
-5. **Avant / après.** Liste des entités à couvrir dès A1 (proposition ci-dessus) ou toutes d'un coup.
-6. **Géolocalisation des adresses IP** des connexions : à garder ou à retirer (données personnelles) ?
-7. **Outil externe.** Rester entièrement dans l'application (proposition), ou ajouter un service externe pour les erreurs techniques ?
+| Sujet | Décision |
+| --- | --- |
+| Conservation | Actions 5 ans, sécurité 1 an, requêtes une par une 30 jours, agrégats de trafic 13 mois, erreurs 90 jours ; modifiables dans les paramètres |
+| Journal des requêtes | Agrégats par minute toujours ; une par une seulement les requêtes lentes (seuil réglable) et en erreur 5xx |
+| Accès | Tous les administrateurs (`ADMIN`, `SUPER_ADMIN`, `AUDITOR`) voient tout le centre, trafic et erreurs compris ; consultations et exports tracés |
+| Canaux d'alerte | Dans l'application, par courriel et par WhatsApp (modèle WhatsApp d'alerte à faire approuver par Meta) |
+| Avant / après | Entités principales d'abord (facture, paiement, abonnement, réservation, membre, client, utilisateur, rôle et droits, paramètre, modèle), les autres ensuite |
+| Géolocalisation des IP | Gardée, avec la durée des événements de sécurité |
+| Outil externe | Non : tout reste dans l'application |
 
 ## Points liés relevés en chemin
 
