@@ -105,7 +105,37 @@ public class WhatsAppService implements WhatsAppMessageSender {
                     "Bonjour {{1}}, ELLE A OSE a émis l'avoir {{2}} d'un montant de {{3}} XAF sur la facture {{4}}. "
                             + "Vous pouvez le télécharger dans votre espace client.",
                     List.of("Awa", "AV-2026-00005", "25 000", "FAC-2026-00012"), "ELLE A OSE",
-                    new Button("URL", "Voir mon avoir", PORTAL + "/{{1}}", PORTAL + "/factures"), null));
+                    new Button("URL", "Voir mon avoir", PORTAL + "/{{1}}", PORTAL + "/factures"), null),
+            // Portefeuille : les memes evenements que les recus et alertes envoyes par courriel.
+            new DefaultTemplate("WALLET_TOPUP_COMPLETED", "portefeuille_recharge", "UTILITY",
+                    "Bonjour {{1}}, votre portefeuille ELLE A OSE a été rechargé de {{2}} XAF (référence {{3}}). "
+                            + "Votre solde disponible est de {{4}} XAF. Retrouvez le détail dans votre espace client.",
+                    List.of("Awa", "50 000", "TXN-2026-000123", "65 000"), "ELLE A OSE",
+                    new Button("URL", "Mon portefeuille", PORTAL + "/{{1}}", PORTAL + "/portefeuille"), null),
+            new DefaultTemplate("WALLET_TRANSFER_SENT", "portefeuille_transfert_envoye", "UTILITY",
+                    "Bonjour {{1}}, vous avez envoyé {{2}} XAF depuis votre portefeuille ELLE A OSE à {{3}} (référence {{4}}). "
+                            + "Votre solde disponible est de {{5}} XAF. Si vous n'êtes pas à l'origine de ce transfert, répondez à ce message.",
+                    List.of("Awa", "10 000", "Jean Mabiala", "TRF-2026-000045", "55 000"), "ELLE A OSE",
+                    new Button("URL", "Mon portefeuille", PORTAL + "/{{1}}", PORTAL + "/portefeuille"), null),
+            new DefaultTemplate("WALLET_TRANSFER_RECEIVED", "portefeuille_transfert_recu", "UTILITY",
+                    "Bonjour {{1}}, vous avez reçu {{2}} XAF de {{3}} sur votre portefeuille ELLE A OSE (référence {{4}}). "
+                            + "Votre solde disponible est de {{5}} XAF.",
+                    List.of("Jean", "10 000", "Awa Ngoma", "TRF-2026-000045", "30 000"), "ELLE A OSE",
+                    new Button("URL", "Mon portefeuille", PORTAL + "/{{1}}", PORTAL + "/portefeuille"), null),
+            new DefaultTemplate("WALLET_PAYMENT_REQUEST_RECEIVED", "portefeuille_demande_paiement", "UTILITY",
+                    "Bonjour {{1}}, {{2}} vous demande un paiement de {{3}} XAF par votre portefeuille ELLE A OSE. Motif : {{4}}. "
+                            + "Vous pouvez accepter ou refuser cette demande depuis votre espace client.",
+                    List.of("Awa", "Jean Mabiala", "15 000", "Déjeuner d'équipe"), "ELLE A OSE",
+                    new Button("URL", "Voir la demande", PORTAL + "/{{1}}", PORTAL + "/portefeuille"), null),
+            new DefaultTemplate("WALLET_LOW_BALANCE", "portefeuille_solde_bas", "UTILITY",
+                    "Bonjour {{1}}, le solde disponible de votre portefeuille ELLE A OSE est de {{2}} XAF, sous le seuil de {{3}} XAF que vous avez choisi. "
+                            + "Vous pouvez le recharger depuis votre espace client ou à l'accueil.",
+                    List.of("Awa", "4 500", "5 000"), "ELLE A OSE",
+                    new Button("URL", "Recharger", PORTAL + "/{{1}}", PORTAL + "/portefeuille"), null),
+            new DefaultTemplate("WALLET_SECURITY_ALERT", "portefeuille_alerte", "UTILITY",
+                    "Bonjour {{1}}, information importante sur votre portefeuille ELLE A OSE : {{2}}. "
+                            + "Si vous n'êtes pas à l'origine de cette opération, contactez-nous en répondant à ce message.",
+                    List.of("Awa", "votre portefeuille est suspendu"), "ELLE A OSE", null, null));
 
     public record TemplateRequest(String purpose, String name, String language, String category, String text, List<String> examples, String footer,
                                   Button button, Integer codeExpirationMinutes) {

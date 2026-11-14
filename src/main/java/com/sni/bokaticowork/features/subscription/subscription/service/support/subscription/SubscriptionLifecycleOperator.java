@@ -78,6 +78,24 @@ public class SubscriptionLifecycleOperator {
     private final @Lazy com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService billingDocumentService;
     private final KycCaseRepository kycCaseRepository;
     private final OutboxService outboxService;
+    private SubscriptionWhatsAppNotifier whatsAppNotifier;
+
+    /** WhatsApp abonnement_actif en plus du courriel ; absent, seul le courriel part. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setWhatsAppNotifier(SubscriptionWhatsAppNotifier whatsAppNotifier) {
+        this.whatsAppNotifier = whatsAppNotifier;
+    }
+
+    private void notifyWhatsApp(Subscription subscription, SubscriptionEventType eventType) {
+        if (whatsAppNotifier == null) {
+            return;
+        }
+        try {
+            whatsAppNotifier.notify(subscription, eventType);
+        } catch (Exception ex) {
+            log.warn("WhatsApp {} de l'abonnement {} non envoye : {}", eventType, subscription.getSubscriptionNumber(), ex.getMessage());
+        }
+    }
     private final @Lazy com.sni.bokaticowork.features.subscription.derivation.service.PlanDerivationService derivationService;
     private final @Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionFreezeService freezeService;
     private final @Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionDirectDebitService directDebitService;
@@ -124,6 +142,7 @@ public class SubscriptionLifecycleOperator {
             log.warn("Failed to send activation email for subscription {} · continuing",
                     subscription.getSubscriptionNumber(), ex);
         }
+        notifyWhatsApp(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
 
         if (!StringUtils.hasText(subscription.getContractCode())) {
             outboxService.publish(
@@ -631,6 +650,7 @@ public class SubscriptionLifecycleOperator {
             log.warn("Failed to send renewal email for subscription {} · continuing",
                     subscription.getSubscriptionNumber(), ex);
         }
+        notifyWhatsApp(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
     }
 
     private static void clearPendingRenewal(Subscription subscription) {

@@ -62,6 +62,15 @@ Modèles fournis (`WhatsAppService.DEFAULTS`), créés par `POST /admin/whatsapp
 | `SUBSCRIPTION_ACTIVATED` | `abonnement_actif` | UTILITY | Abonnement actif : prénom, formule, dates | Mon espace client |
 | `INVOICE_PAID` | `facture_payee` | UTILITY | Paiement reçu, facture soldée, à télécharger dans l'espace client | Télécharger ma facture |
 | `BALANCE_CONFIRMATION` | `confirmation_solde` | UTILITY | Confirmation de solde (lot F12) : exploitant, date, montant, sens, référence | aucun |
+| `QUOTE_AVAILABLE` | `devis_disponible` | UTILITY | Devis disponible : prénom, numéro, montant, validité | Voir mon devis |
+| `PROFORMA_AVAILABLE` | `proforma_disponible` | UTILITY | Proforma disponible : prénom, numéro, montant, validité | Voir ma proforma |
+| `CREDIT_NOTE_ISSUED` | `avoir_emis` | UTILITY | Avoir émis : prénom, numéro, montant, facture d'origine | Voir mon avoir |
+| `WALLET_TOPUP_COMPLETED` | `portefeuille_recharge` | UTILITY | Rechargement : prénom, montant, référence, solde disponible | Mon portefeuille |
+| `WALLET_TRANSFER_SENT` | `portefeuille_transfert_envoye` | UTILITY | Transfert envoyé : prénom, montant, bénéficiaire, référence, solde | Mon portefeuille |
+| `WALLET_TRANSFER_RECEIVED` | `portefeuille_transfert_recu` | UTILITY | Transfert reçu : prénom, montant, émetteur, référence, solde | Mon portefeuille |
+| `WALLET_PAYMENT_REQUEST_RECEIVED` | `portefeuille_demande_paiement` | UTILITY | Demande de paiement : prénom, demandeur, montant, motif | Voir la demande |
+| `WALLET_LOW_BALANCE` | `portefeuille_solde_bas` | UTILITY | Solde bas : prénom, solde, seuil choisi | Recharger |
+| `WALLET_SECURITY_ALERT` | `portefeuille_alerte` | UTILITY | Alerte : prénom, événement (portefeuille suspendu, réactivé, clôturé) | aucun |
 
 Règles :
 - les textes nomment l'entreprise et ne commencent ni ne finissent par une variable (règles de Meta) ;
@@ -77,6 +86,25 @@ Règles :
 - chaque envoi est journalisé, avec l'erreur s'il échoue.
 
 Le statut rendu à l'envoi est celui de la prise en charge (`PENDING`).
+
+## Messages automatiques
+
+En plus du courriel, le client reçoit un WhatsApp par modèle approuvé (`WhatsAppNotifier`) :
+
+| Événement | Objet | Déclencheur | Suffixe du bouton |
+| --- | --- | --- | --- |
+| Réservation confirmée | `BOOKING_CONFIRMED` | événement `BOOKING_CONFIRMED` de la boîte de sortie, si l'envoi au client est demandé (`sendEmail` absent ou vrai) | aucun |
+| Réservation modifiée | `BOOKING_UPDATED` | `BOOKING_RESCHEDULED`, `BOOKING_RESOURCE_CHANGED`, `BOOKING_TRANSFERRED` (même condition) | `reservations` |
+| Abonnement actif | `SUBSCRIPTION_ACTIVATED` | activation et renouvellement | `abonnements` |
+| Facture soldée | `INVOICE_PAID` | flux de paiement réussi, tous moyens confondus (guichet, Mobile Money, portefeuille), facture en XAF sans reste à payer ; un paiement partiel n'envoie rien | `factures` |
+| Portefeuille | `WALLET_*` | mêmes événements que les reçus et alertes du portefeuille par courriel, mêmes préférences (crédit, débit, « factures seulement ») ; portefeuille en XAF | `portefeuille` |
+
+Règles :
+- l'envoi part après la validation de la transaction, sur un autre fil ; un échec (Infobip absent, modèle non approuvé, numéro invalide) est seulement journalisé et ne bloque jamais l'opération ;
+- rien ne part si WhatsApp n'est pas configuré, ou si le paramètre `bokati.whatsapp.auto-notifications.enabled` (vrai par défaut, modifiable à chaud) est à faux ; les envois faits à la main depuis le back-office n'en dépendent pas ;
+- numéro : réservation, celui du contact puis celui du membre ; facture, le premier numéro WhatsApp des préférences d'envoi du client, puis le numéro WhatsApp ou le téléphone du client ou du membre, puis celui de la facture ; abonnement et portefeuille, le numéro WhatsApp puis le téléphone du titulaire ;
+- un membre qui a coupé un événement sur le canal `WHATSAPP` (préférences de notification) ne reçoit rien pour cet événement ;
+- chaque envoi apparaît dans le journal des messages WhatsApp avec sa référence (numéro de réservation, d'abonnement, de facture, de transaction ou de portefeuille).
 
 ## Suivi de remise et de lecture
 

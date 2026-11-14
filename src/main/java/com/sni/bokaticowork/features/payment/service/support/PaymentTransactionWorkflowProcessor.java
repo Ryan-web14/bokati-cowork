@@ -62,6 +62,13 @@ public class PaymentTransactionWorkflowProcessor {
     private final com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository allocationRepository;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService billingLinkService;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private com.sni.bokaticowork.features.billing.service.support.PaymentWhatsAppNotifier paymentWhatsApp;
+
+    /** WhatsApp facture_payee apres le paiement ; absent, seul le courriel part. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPaymentWhatsApp(com.sni.bokaticowork.features.billing.service.support.PaymentWhatsAppNotifier paymentWhatsApp) {
+        this.paymentWhatsApp = paymentWhatsApp;
+    }
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {
@@ -149,7 +156,9 @@ public class PaymentTransactionWorkflowProcessor {
         if (!BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(sourceType) && !MULTI_BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(sourceType)) {
             return;
         }
-        splitCodes(intent.getSourceCode()).forEach(documentNumber -> {
+        List<String> documentNumbers = splitCodes(intent.getSourceCode());
+        documentNumbers.forEach(documentNumber -> {
+            notifyPaidByWhatsApp(documentNumber, documentNumbers.size() == 1 ? transaction.getAmount() : null, transaction.getTransactionNumber());
             try {
                 // Envoi automatique apres paiement · se coupe si le membre a refuse la confirmation de paiement
                 if (billingEmailService.sendDocumentIfAllowed(documentNumber,
@@ -160,6 +169,18 @@ public class PaymentTransactionWorkflowProcessor {
                 log.warn("Failed to send billing document {} after payment {}", documentNumber, transaction.getTransactionNumber(), ex);
             }
         });
+    }
+
+    /** Facture soldee : WhatsApp au client, apres la validation de la transaction. */
+    private void notifyPaidByWhatsApp(String documentNumber, java.math.BigDecimal paid, String transactionNumber) {
+        if (paymentWhatsApp == null) {
+            return;
+        }
+        try {
+            paymentWhatsApp.notify(billingDocumentService.get(documentNumber), paid);
+        } catch (Exception ex) {
+            log.warn("WhatsApp de la facture {} apres le paiement {} non envoye : {}", documentNumber, transactionNumber, ex.getMessage());
+        }
     }
 
     private void sefcValidateDocument(String documentNumber, String transactionNumber) {

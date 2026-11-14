@@ -8,9 +8,11 @@ import com.sni.bokaticowork.features.booking.enums.BookingEventType;
 import com.sni.bokaticowork.features.booking.model.Booking;
 import com.sni.bokaticowork.features.booking.repository.BookingRepository;
 import com.sni.bokaticowork.features.booking.service.support.BookingEmailNotifier;
+import com.sni.bokaticowork.features.booking.service.support.BookingWhatsAppNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -22,6 +24,13 @@ public class BookingOutboxEventProcessor implements OutboxEventProcessor {
     private final ObjectMapper objectMapper;
     private final BookingRepository bookingRepository;
     private final ObjectProvider<BookingEmailNotifier> emailNotifierProvider;
+    private ObjectProvider<BookingWhatsAppNotifier> whatsAppNotifierProvider;
+
+    /** WhatsApp en plus du courriel (reservation confirmee ou modifiee) ; absent, seul le courriel part. */
+    @Autowired(required = false)
+    void setWhatsAppNotifierProvider(ObjectProvider<BookingWhatsAppNotifier> whatsAppNotifierProvider) {
+        this.whatsAppNotifierProvider = whatsAppNotifierProvider;
+    }
 
     @Override
     public boolean supports(OutboxEvent event) {
@@ -55,6 +64,14 @@ public class BookingOutboxEventProcessor implements OutboxEventProcessor {
             log.info("Booking email notification queued for booking={} event={}", bookingNumber, eventType);
         } catch (Exception ex) {
             log.warn("Failed to send booking email for booking={} event={}: {}", bookingNumber, eventType, ex.getMessage());
+        }
+        BookingWhatsAppNotifier whatsApp = whatsAppNotifierProvider == null ? null : whatsAppNotifierProvider.getIfAvailable();
+        if (whatsApp != null) {
+            try {
+                whatsApp.notify(booking, eventType);
+            } catch (Exception ex) {
+                log.warn("WhatsApp de la reservation {} ({}) non envoye : {}", bookingNumber, eventType, ex.getMessage());
+            }
         }
     }
 

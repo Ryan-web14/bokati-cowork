@@ -462,6 +462,7 @@ bokati.websocket.stomp.system-passcode	WEBSOCKET	SECRET	RESTART		Mot de passe sy
 bokati.websocket.stomp.use-tls	WEBSOCKET	BOOLEAN	RESTART	false	Relais chiffré
 bokati.websocket.stomp.virtual-host	WEBSOCKET	TEXT	RESTART	/	Hôte virtuel du relais
 bokati.websocket.use-stomp-relay	WEBSOCKET	BOOLEAN	RESTART	false	Relais de messages actif
+bokati.whatsapp.auto-notifications.enabled	NOTIFICATIONS	BOOLEAN	LIVE	true	Messages WhatsApp automatiques aux clients (réservation, abonnement, facture soldée, portefeuille)
 fund.advance.overdue-policy	PAYMENT	ENUM	LIVE	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
 fund.approval.level1-max	PAYMENT	INTEGER	LIVE	50000	Montant maximal valide par le seul chef de service (XAF)
 fund.approval.level2-max	PAYMENT	INTEGER	LIVE	500000	Montant maximal valide sans la direction (XAF)
