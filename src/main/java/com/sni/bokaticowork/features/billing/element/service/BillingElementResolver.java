@@ -221,7 +221,8 @@ public class BillingElementResolver {
 
     // ------------------------------------------------------------------ lectures
 
-    Optional<Map<String, Object>> document(String documentNumber) {
+    /** Ligne de la facture (numero, type, statut, client, montants), si elle existe et n'est pas supprimee. */
+    public Optional<Map<String, Object>> document(String documentNumber) {
         return jdbc.queryForList("SELECT " + INVOICE_COLUMNS + " FROM billing_document d WHERE d.document_number = ? AND d.deleted_at IS NULL",
                 documentNumber).stream().findFirst();
     }
