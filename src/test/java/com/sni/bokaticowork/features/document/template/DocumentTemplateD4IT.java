@@ -33,7 +33,7 @@ class DocumentTemplateD4IT extends PostgresIntegrationTestBase {
 
     @ParameterizedTest
     @ValueSource(strings = {"DISBURSEMENT_VOUCHER", "JUSTIFICATION_SHEET", "PURCHASE_ORDER", "VAT_RETURN", "BANK_RECONCILIATION", "LOAN_SCHEDULE",
-            "BANK_DEPOSIT_SLIP", "SUPPLIER_STATEMENT", "PARTNER_STATEMENT", "CASH_REQUEST", "CASH_CLOSING_REPORT"})
+            "BANK_DEPOSIT_SLIP", "SUPPLIER_STATEMENT", "PARTNER_STATEMENT", "CASH_CLOSING_REPORT"})
     void startingDraftRendersWithoutBeingPublished(String code) throws Exception {
         DocumentTemplateDtos.Detail detail = service.get(code);
         assertThat(detail.published()).isNull();
@@ -53,6 +53,15 @@ class DocumentTemplateD4IT extends PostgresIntegrationTestBase {
         if (sectionsBlock) {
             dataSources.sample(code).sections().forEach(section -> assertThat(text).contains(flat(section.title())));
         }
+    }
+
+    /** La demande de caisse est publiee par migration (V355, prod V349) : elle sort de son modele. */
+    @org.junit.jupiter.api.Test
+    void cashRequestIsPublishedByMigration() {
+        DocumentTemplateDtos.Detail detail = service.get("CASH_REQUEST");
+        assertThat(detail.published()).isNotNull();
+        assertThat(detail.draft()).isNull();
+        assertThat(printer.tryRender("CASH_REQUEST", dataSources.sample("CASH_REQUEST"))).isPresent();
     }
 
     private static String flat(String value) {
