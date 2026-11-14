@@ -22,6 +22,7 @@ Branche `feature/modeles-documents`. Migrations : dev `V352__modeles_documents_d
 
   Chacune a un **brouillon de départ** dans le style des pièces validées : en-tête commun, toutes les sections de la pièce, cases de signature. Le bon de décaissement sort en deux exemplaires (caisse et bénéficiaire).
 - **Rien ne change à l'impression tant qu'un brouillon n'est pas publié.** Aucune maquette n'a été validée pour ces pièces : elles sortent de leur gabarit d'origine jusqu'à ce que l'exploitant relise l'aperçu et publie depuis le back-office.
+- **Demande de caisse publiée** à la demande de l'exploitant le 14/11/2026 : migrations dev `V355__modeles_documents_demande_caisse_publiee.sql`, prod `V349`. Une version déjà publiée depuis le back-office est gardée.
 - **Nouveaux PDF :**
   - **bordereau de remise en banque** : il avait un numéro mais aucun PDF. Il imprime les espèces, la liste des chèques, les totaux et les cases du caissier, du déposant et de la banque. Une réimpression est marquée DUPLICATA ;
   - **relevés fournisseur et partenaire imprimables** : jusqu'ici en JSON seulement. Ils impriment la période, les écritures avec leur solde progressif, les soldes d'ouverture et de clôture, et les cases « pour accord ». Un relevé n'est pas une pièce comptable : il ne prend pas de numéro au registre et n'a pas de QR de vérification.

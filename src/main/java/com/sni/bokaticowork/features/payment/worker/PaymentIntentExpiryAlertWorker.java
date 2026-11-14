@@ -37,6 +37,14 @@ public class PaymentIntentExpiryAlertWorker implements SchedulingConfigurer {
         this.triggers = triggers;
     }
 
+    private org.thymeleaf.spring6.SpringTemplateEngine templateEngine;
+
+    /** Gabarit email/payment-expiry-reminder (modifiable en modele de courriel) ; absent, le texte de repli sert. */
+    @Autowired(required = false)
+    void setTemplateEngine(org.thymeleaf.spring6.SpringTemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
+    }
+
     @Autowired
     void setSelf(ObjectProvider<PaymentIntentExpiryAlertWorker> self) {
         this.self = self;
@@ -88,7 +96,17 @@ public class PaymentIntentExpiryAlertWorker implements SchedulingConfigurer {
             return;
         }
         String expiresAt = DISPLAY_FORMAT.format(intent.getExpiresAt());
-        String body = "<p>Bonjour " + document.getCustomerName() + ",</p>"
+        String amount = intent.getAmount().stripTrailingZeros().toPlainString();
+        String body;
+        if (templateEngine != null) {
+            org.thymeleaf.context.Context context = new org.thymeleaf.context.Context(java.util.Locale.FRENCH);
+            context.setVariable("customerName", document.getCustomerName());
+            context.setVariable("documentNumber", document.getDocumentNumber());
+            context.setVariable("amount", amount);
+            context.setVariable("currency", intent.getCurrency());
+            context.setVariable("expiresAt", expiresAt);
+            body = templateEngine.process("email/payment-expiry-reminder", context);
+        } else body = "<p>Bonjour " + org.springframework.web.util.HtmlUtils.htmlEscape(String.valueOf(document.getCustomerName())) + ",</p>"
                 + "<p>Votre intention de paiement pour la facture <strong>" + document.getDocumentNumber()
                 + "</strong> (montant : <strong>" + intent.getAmount().stripTrailingZeros().toPlainString()
                 + " " + intent.getCurrency() + "</strong>) expire le <strong>" + expiresAt + "</strong>.</p>"
