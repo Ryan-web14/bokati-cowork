@@ -250,3 +250,7 @@ Aucune notification dans l'application ni message WebSocket n'est émis par ce m
 20. **Rétention** : aucune route ne réactive une politique désactivée ; `PURGE_FLAG` est accepté mais sans effet (`DocumentRetentionServiceImpl.java:117`).
 21. **`reviewedBy`, `authorId` fournis par le client** : l'auteur d'une décision ou d'une note est celui que le corps déclare, pas le compte connecté (`DocumentReviewDecisionRequest`, `KycCaseNoteRequest`).
 22. Messages d'erreur majoritairement en anglais ; erreurs de taille de fichier et de conversion d'énumération sans traitement dédié dans `core/exception/GlobalExceptionHandler.java` (repli `500`).
+
+## Centre des modèles
+
+Les modèles de pièces imprimées et de courriels (`/document-templates`, saisie des champs ajoutés sur les pièces) ont leur propre dossier : [../modeles/README.md](../modeles/README.md). Leurs fiches de routes sont dans ce module : `routes/DocumentTemplateController.md` et `routes/DocumentFieldController.md`.
