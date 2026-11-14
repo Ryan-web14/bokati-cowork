@@ -36,6 +36,13 @@ public class WalletNotifier {
     private final TransactionContextResolver contextResolver;
 
     private MemberBillingContact memberContact;
+    private com.sni.bokaticowork.core.communication.whatsapp.WhatsAppNotifier whatsApp;
+
+    /** WhatsApp en plus du courriel ; absent, seul le courriel part. */
+    @Autowired(required = false)
+    void setWhatsApp(com.sni.bokaticowork.core.communication.whatsapp.WhatsAppNotifier whatsApp) {
+        this.whatsApp = whatsApp;
+    }
 
     /** Absent : un recu a chaque operation, a l'adresse du compte, comme avant les preferences. */
     @Autowired(required = false)
@@ -51,6 +58,8 @@ public class WalletNotifier {
                 .with("counterpartyWallet", target.getWalletNumber())
                 .with("counterpartyName", partyName(target))
                 .with("subject", "Transfert envoyé · " + plain(amount) + " " + source.getCurrency()));
+        whatsApp(source, "WALLET_TRANSFER_SENT", transferNumber,
+                money(amount), partyName(target), transferNumber, money(source.getAvailableBalance()));
     }
 
     public void transferReceived(WalletAccount target, WalletAccount source, BigDecimal amount, String transferNumber) {
@@ -61,6 +70,8 @@ public class WalletNotifier {
                 .with("counterpartyWallet", source.getWalletNumber())
                 .with("counterpartyName", partyName(source))
                 .with("subject", "Transfert reçu · " + plain(amount) + " " + target.getCurrency()));
+        whatsApp(target, "WALLET_TRANSFER_RECEIVED", transferNumber,
+                money(amount), partyName(source), transferNumber, money(target.getAvailableBalance()));
     }
 
     public void topUpCompleted(WalletAccount wallet, BigDecimal amount, String transactionNumber) {
@@ -69,6 +80,7 @@ public class WalletNotifier {
         }
         publishReceipt("WALLET_TOPUP_COMPLETED", wallet, transactionNumber, payload(wallet, amount)
                 .with("subject", "Rechargement effectué · " + plain(amount) + " " + wallet.getCurrency()));
+        whatsApp(wallet, "WALLET_TOPUP_COMPLETED", transactionNumber, money(amount), transactionNumber, money(wallet.getAvailableBalance()));
     }
 
     public void paymentRequestReceived(WalletAccount payer, WalletAccount requester, BigDecimal amount,
@@ -78,6 +90,7 @@ public class WalletNotifier {
                 .with("counterpartyName", partyName(requester))
                 .with("reason", reason)
                 .with("subject", "Demande de paiement · " + plain(amount) + " " + payer.getCurrency()));
+        whatsApp(payer, "WALLET_PAYMENT_REQUEST_RECEIVED", requestNumber, partyName(requester), money(amount), reason);
     }
 
     /** Ne se desactive pas · c'est le titulaire qui a fixe le seuil, l'alerte est ce qu'il a demande. */
@@ -85,6 +98,7 @@ public class WalletNotifier {
         publish("WALLET_LOW_BALANCE", wallet, wallet.getWalletNumber(), payload(wallet, wallet.getAvailableBalance())
                 .with("threshold", plain(wallet.getLowBalanceThreshold()))
                 .with("subject", "Solde bas · " + plain(wallet.getAvailableBalance()) + " " + wallet.getCurrency()));
+        whatsApp(wallet, "WALLET_LOW_BALANCE", wallet.getWalletNumber(), money(wallet.getAvailableBalance()), money(wallet.getLowBalanceThreshold()));
     }
 
     /** Ne se desactive pas non plus · destinee au cas ou ce n'est pas le titulaire qui opere. */
@@ -92,6 +106,10 @@ public class WalletNotifier {
         Payload payload = payload(wallet, null).with("subject", subject);
         details.forEach(payload::with);
         publish(eventType, wallet, wallet.getWalletNumber(), payload);
+        if (StringUtils.hasText(subject)) {
+            String text = subject.trim();
+            whatsApp(wallet, "WALLET_SECURITY_ALERT", wallet.getWalletNumber(), Character.toLowerCase(text.charAt(0)) + text.substring(1));
+        }
     }
 
     // -----------------------------------------------------------------------------------------
@@ -133,6 +151,37 @@ public class WalletNotifier {
                 .with("recipientCode", wallet.getOwnerCode())
                 .with("templateCode", eventType);
         outboxService.publish(eventType, AGGREGATE, aggregateId, payload.values);
+    }
+
+    /**
+     * WhatsApp au titulaire, apres la validation de la transaction : le prenom (ou la raison sociale)
+     * puis les variables donnees. Seulement pour un portefeuille en XAF, la devise des modeles.
+     */
+    private void whatsApp(WalletAccount wallet, String purpose, String reference, String... values) {
+        if (whatsApp == null || memberContact == null || !whatsApp.active()) {
+            return;
+        }
+        if (StringUtils.hasText(wallet.getCurrency()) && !"XAF".equalsIgnoreCase(wallet.getCurrency().trim())) {
+            return;
+        }
+        try {
+            memberContact.whatsAppPhone(wallet.getOwnerType(), wallet.getOwnerCode()).ifPresent(phone -> {
+                TransactionContextResolver.PartyView party = contextResolver.resolveParty(wallet.getOwnerType(), wallet.getOwnerCode());
+                String name = StringUtils.hasText(party.name()) ? party.name().trim().split("\\s+")[0] : "client";
+                java.util.List<String> all = new java.util.ArrayList<>();
+                all.add(name);
+                all.addAll(java.util.Arrays.asList(values));
+                whatsApp.notify(phone, purpose, all, reference, "portefeuille");
+            });
+        } catch (RuntimeException ex) {
+            log.warn("WhatsApp {} du portefeuille {} non envoye : {}", purpose, wallet.getWalletNumber(), ex.getMessage());
+        }
+    }
+
+    /** Montant en XAF avec separateur de milliers, sans decimales. */
+    private static String money(BigDecimal amount) {
+        return amount == null ? "0" : String.format(java.util.Locale.FRANCE, "%,d", amount.setScale(0, java.math.RoundingMode.HALF_UP).longValue())
+                .replace('\u202f', ' ').replace('\u00a0', ' ');
     }
 
     private Payload payload(WalletAccount wallet, BigDecimal amount) {

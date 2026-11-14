@@ -110,6 +110,49 @@ public class MemberBillingContact {
         return memberOf(partyType, partyCode).map(member -> allowsEmail(member, event)).orElse(true);
     }
 
+    /** Le membre accepte-t-il ce message WhatsApp ? Oui par defaut, et toujours pour un tiers sans membre. */
+    public boolean allowsWhatsApp(String partyType, String partyCode, EventType event) {
+        return memberOf(partyType, partyCode)
+                .map(member -> event == null || preferences.allows(member, event, NotificationChannel.WHATSAPP))
+                .orElse(true);
+    }
+
+    /**
+     * Le numero WhatsApp d'un tiers de facturation : son numero WhatsApp, sinon son telephone ; pour
+     * un client personne sans numero, celui de son membre. Vide si rien n'est connu.
+     */
+    public Optional<String> whatsAppPhone(String partyType, String partyCode) {
+        if (!StringUtils.hasText(partyType) || !StringUtils.hasText(partyCode)) {
+            return Optional.empty();
+        }
+        try {
+            String code = partyCode.trim();
+            return switch (partyType.trim().toUpperCase(Locale.ROOT)) {
+                case "MEMBER" -> memberRepository.findByMemberIdAndDeletedFalse(code).flatMap(MemberBillingContact::whatsAppPhone);
+                case "CUSTOMER" -> customerRepository.findByCustomerId(code)
+                        .flatMap(customer -> firstPhone(customer.getWhatsappPhone(), customer.getPhone())
+                                .or(() -> memberOf(customer).flatMap(MemberBillingContact::whatsAppPhone)));
+                default -> Optional.empty();
+            };
+        } catch (RuntimeException ex) {
+            log.debug("Numero WhatsApp de {} {} introuvable : {}", partyType, partyCode, ex.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<String> whatsAppPhone(Member member) {
+        return member == null ? Optional.empty() : firstPhone(member.getWhatsappPhone(), member.getPhone());
+    }
+
+    public static Optional<String> firstPhone(String... candidates) {
+        for (String candidate : candidates) {
+            if (StringUtils.hasText(candidate)) {
+                return Optional.of(candidate.trim());
+            }
+        }
+        return Optional.empty();
+    }
+
     /**
      * Le membre veut-il un recu par courriel a chaque operation de son portefeuille ? Oui par defaut ;
      * non s'il a choisi « factures seulement ». Toujours oui pour un tiers sans membre.
