@@ -35,6 +35,13 @@ public class BookingHoldServiceImpl implements BookingHoldService {
     private final BookingResourceGuard resourceGuard;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final BookingIdentityResolver identityResolver;
+    private com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride staffOverride;
+
+    /** Option posee par l'equipe : meme derogation que la reservation (preavis, debut passe). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setStaffOverride(com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride staffOverride) {
+        this.staffOverride = staffOverride;
+    }
 
     @Override
     public BookingHoldResponse create(CreateBookingHoldRequest request) {
@@ -47,7 +54,11 @@ public class BookingHoldServiceImpl implements BookingHoldService {
         Resource resource = resourceService.getResourceForService(request.resourceCode().trim());
         int quantity = request.quantity() == null ? 1 : request.quantity();
         BookingIdentityResolver.ResolvedBookingIdentity identity = identityResolver.resolve(request.identityLookup());
-        resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity);
+        // L'option suit la reservation : l'equipe (hors portail) pose une option hors preavis ou sur
+        // un debut deja passe, sauf si la politique de la ressource l'interdit. Sans cela, l'option
+        // refusait ce que la reservation accepte (« the requested start time is in the past »).
+        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getResourcePolicy()).isPresent();
+        resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity, staff);
         resourceGuard.validateNoSingleCapacityConflict(resource, request.startedAt(), request.endedAt(), null);
         if (holdRepository.existsActiveOverlap(resource.getId(), request.startedAt(), request.endedAt(), null)) {
             throw new ConflictException("booking hold", "resource already has an active hold for the requested range");
@@ -57,6 +68,7 @@ public class BookingHoldServiceImpl implements BookingHoldService {
                 .startedAt(request.startedAt())
                 .endedAt(request.endedAt())
                 .quantity(quantity)
+                .staffOverride(staff)
                 .build());
         BookingHold hold = holdRepository.save(BookingHold.builder()
                 .holdNumber(sequenceGenerator.next("booking_hold"))
