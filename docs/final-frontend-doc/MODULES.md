@@ -2,17 +2,17 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-2237 routes dans 242 contrôleurs.
+2259 routes dans 245 contrôleurs.
 
 | Module | Routes | Back-office | Portail membre | Publiques | Fonctionnement |
 | --- | --- | --- | --- | --- | --- |
-| [accounting](accounting/routes.md) | 354 | 354 | 0 | 0 | [README](accounting/README.md) |
+| [accounting](accounting/routes.md) | 357 | 357 | 0 | 0 | [README](accounting/README.md) |
 | [payment](payment/routes.md) | 208 | 198 | 0 | 10 | [README](payment/README.md) |
+| [document](document/routes.md) | 205 | 201 | 0 | 3 | [README](document/README.md) |
 | [portal](portal/routes.md) | 203 | 0 | 201 | 2 | [README](portal/README.md) |
 | [subscription](subscription/routes.md) | 196 | 185 | 9 | 2 | [README](subscription/README.md) |
 | [billing](billing/routes.md) | 192 | 190 | 0 | 2 | [README](billing/README.md) |
 | [inventory](inventory/routes.md) | 188 | 188 | 0 | 0 | [README](inventory/README.md) |
-| [document](document/routes.md) | 186 | 182 | 0 | 3 | [README](document/README.md) |
 | [ressource](ressource/routes.md) | 77 | 76 | 0 | 1 | [README](ressource/README.md) |
 | [contract](contract/routes.md) | 65 | 63 | 0 | 2 | [README](contract/README.md) |
 | [securite](securite/routes.md) | 59 | 44 | 0 | 13 | [README](securite/README.md) |

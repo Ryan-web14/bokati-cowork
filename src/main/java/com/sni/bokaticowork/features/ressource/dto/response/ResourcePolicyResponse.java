@@ -19,5 +19,7 @@ public class ResourcePolicyResponse {
     private Integer minBookingNoticeMinutes;
     private Integer cancellationNoticeMinutes;
     private Boolean allowCancellation;
+    /** L'equipe peut-elle reserver hors preavis et sur un debut passe ? Vrai par defaut. */
+    private Boolean staffOverrideAllowed;
     private Boolean active;
 }

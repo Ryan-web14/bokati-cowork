@@ -132,6 +132,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `minBookingNoticeMinutes` | entier |  |  |
 | `cancellationNoticeMinutes` | entier |  |  |
 | `allowCancellation` | booléen |  |  |
+| `staffOverrideAllowed` | booléen |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-CreateResourcePolicyRequest"></a>
@@ -146,6 +147,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `minBookingNoticeMinutes` | entier | oui |  |
 | `cancellationNoticeMinutes` | entier |  |  |
 | `allowCancellation` | booléen |  |  |
+| `staffOverrideAllowed` | booléen |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-UpdateResourcePolicyRequest"></a>
@@ -160,4 +162,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `minBookingNoticeMinutes` | entier |  |  |
 | `cancellationNoticeMinutes` | entier |  |  |
 | `allowCancellation` | booléen |  |  |
+| `staffOverrideAllowed` | booléen |  |  |
 | `active` | booléen |  |  |
