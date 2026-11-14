@@ -77,6 +77,14 @@ Règles :
 - les boutons de lien pointent sur `https://espace.elleaose.com/{{1}}` : le suffixe se donne à l'envoi (par exemple `factures/FAC-2026-00012`) ;
 - pour le code OTP, le code est la seule variable ; il sert aussi au bouton de copie.
 
+## Synchronisation des modèles
+
+Les modèles approuvés chez Infobip sont relus automatiquement (depuis le 14/11/2026) :
+- une minute après le démarrage, puis toutes les 24 heures ;
+- à l'envoi, quand aucun modèle approuvé de l'objet n'est en base, au plus une fois toutes les 10 minutes, puis l'envoi est retenté.
+
+Avant, une base où personne n'avait lancé `POST /admin/whatsapp/templates/sync` n'avait aucun modèle : chaque envoi échouait (« Aucun modèle WhatsApp approuvé »), sans trace dans le journal des envois. La route reste disponible pour forcer une relecture.
+
 ## Envoi
 
 `WhatsAppMessageSender.send(numéro, objet, variables, texte libre, référence[, suffixe du bouton])` :

@@ -97,4 +97,24 @@ class WhatsAppServiceTest {
         WhatsAppTemplate otp = WhatsAppTemplate.builder().name("code_verification").buttonType("COPY_CODE").build();
         assertThat(WhatsAppService.buttonParameter(otp, List.of("482913"), null)).isEqualTo("482913");
     }
+
+    /** Modele approuve chez Infobip mais absent de la base : relu une fois, puis l'envoi passe ; pas de relecture en rafale. */
+    @Test
+    void missingTemplateIsSyncedOnceFromInfobip() {
+        WhatsAppTemplate approved = WhatsAppTemplate.builder().name("reservation_confirmee").language("fr").placeholders(1).status("APPROVED").build();
+        when(templates.findFirstByPurposeAndLanguageAndStatusOrderByCreatedAtDesc("BOOKING_CONFIRMED", "fr", "APPROVED"))
+                .thenReturn(Optional.empty(), Optional.of(approved));
+        when(client.templates("242050000000")).thenReturn(List.of(new InfobipWhatsAppClient.RemoteTemplate("reservation_confirmee", "fr", "UTILITY", "APPROVED")));
+        when(templates.findByNameAndLanguage(anyString(), anyString())).thenReturn(Optional.empty());
+        when(client.sendTemplate(eq("242050000000"), eq("242061234567"), eq("reservation_confirmee"), eq("fr"), eq(List.of("Awa")), eq(null), anyString()))
+                .thenReturn(new InfobipWhatsAppClient.Sent("m2", "PENDING", "PENDING_ENROUTE", null));
+
+        assertThat(service.send("06 123 45 67", "BOOKING_CONFIRMED", List.of("Awa"), null, "BKG-1").templateName()).isEqualTo("reservation_confirmee");
+        verify(client).templates("242050000000");
+
+        // Une autre absence dans les dix minutes ne relit pas Infobip.
+        assertThatThrownBy(() -> service.send("06 123 45 67", "INVOICE_PAID", List.of("A", "B", "C"), null, "FAC-1"))
+                .isInstanceOf(BadRequestException.class);
+        verify(client, org.mockito.Mockito.times(1)).templates(anyString());
+    }
 }

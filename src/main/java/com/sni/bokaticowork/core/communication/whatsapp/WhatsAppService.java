@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
  * libre si autorise), journal des envois. Sans activation ({@code bokati.whatsapp.infobip.enabled}),
  * chaque envoi est refuse avec un message clair.
  */
+@lombok.extern.slf4j.Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -152,9 +153,7 @@ public class WhatsAppService implements WhatsAppMessageSender {
         InfobipWhatsAppClient infobip = available();
         String to = phones.normalize(phone, properties.getDefaultCountry()).replace("+", "");
         String messageId = UUID.randomUUID().toString();
-        Optional<WhatsAppTemplate> template = StringUtils.hasText(purpose)
-                ? templates.findFirstByPurposeAndLanguageAndStatusOrderByCreatedAtDesc(purpose, properties.getLanguage(), "APPROVED")
-                : Optional.empty();
+        Optional<WhatsAppTemplate> template = StringUtils.hasText(purpose) ? approvedTemplate(purpose) : Optional.empty();
         WhatsAppMessage log = WhatsAppMessage.builder().messageId(messageId).toPhone(to).purpose(purpose).reference(reference).createdBy(actor()).build();
         try {
             InfobipWhatsAppClient.Sent sent;
@@ -192,6 +191,34 @@ public class WhatsAppService implements WhatsAppMessageSender {
             }
             throw exception;
         }
+    }
+
+    /** Derniere synchronisation declenchee par un modele introuvable : une au plus toutes les 10 minutes. */
+    private final java.util.concurrent.atomic.AtomicReference<Instant> lastAutoSync = new java.util.concurrent.atomic.AtomicReference<>(Instant.EPOCH);
+    static final java.time.Duration AUTO_SYNC_INTERVAL = java.time.Duration.ofMinutes(10);
+
+    /**
+     * Modele approuve de cet objet. Absent de la base (modeles crees ou approuves chez Infobip sans
+     * synchronisation), les modeles sont relus chez Infobip, au plus une fois toutes les 10 minutes,
+     * puis cherches de nouveau.
+     */
+    Optional<WhatsAppTemplate> approvedTemplate(String purpose) {
+        Optional<WhatsAppTemplate> found = templates.findFirstByPurposeAndLanguageAndStatusOrderByCreatedAtDesc(purpose, properties.getLanguage(), "APPROVED");
+        if (found.isPresent()) {
+            return found;
+        }
+        Instant last = lastAutoSync.get();
+        Instant now = Instant.now();
+        if (last.plus(AUTO_SYNC_INTERVAL).isAfter(now) || !lastAutoSync.compareAndSet(last, now)) {
+            return found;
+        }
+        try {
+            sync();
+            log.info("Modeles WhatsApp relus chez Infobip : aucun modele approuve pour {} dans la base", purpose);
+        } catch (RuntimeException exception) {
+            log.warn("Relecture des modeles WhatsApp impossible : {}", exception.getMessage());
+        }
+        return templates.findFirstByPurposeAndLanguageAndStatusOrderByCreatedAtDesc(purpose, properties.getLanguage(), "APPROVED");
     }
 
     // ================================================================== suivi de remise et de lecture
