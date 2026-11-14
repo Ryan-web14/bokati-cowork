@@ -109,7 +109,7 @@ Droits : nouvelle permission `SYSTEM:DOCUMENT_TEMPLATES` (lecture, modification,
 | D5, pièces clients | Reçu de paiement, reçu de portefeuille, relevé de portefeuille, avoir, confirmation de réservation ; facture en dernier, avec la version figée par pièce. Contrats : ils gardent `contract_template`, mais reçoivent l'en-tête commun | Fait, voir [lot-d5-pieces-clients.md](lot-d5-pieces-clients.md) |
 | E1, courriels : socle | Blocs de courriel, catalogue de jetons, aperçu HTML et envoi de test, repli sur le gabarit Thymeleaf ; rapprochement avec `notification_template` | Fait, voir [lot-e1-courriels.md](lot-e1-courriels.md) |
 | E2, courriels : reprise | Tous les courriels de l'inventaire, famille par famille (facturation, paiement, réservation, abonnements, portefeuille, domiciliation, sécurité...) ; gabarits de repli pour les courriels écrits en Java | Fait, voir [lot-e2-courriels.md](lot-e2-courriels.md) |
-| D6, nettoyage | Suppression des gabarits morts seulement (les gabarits utilisés restent comme repli), doc frontend finale | À faire |
+| D6, nettoyage | Suppression des gabarits morts seulement (les gabarits utilisés restent comme repli), doc frontend finale | Doc frontend faite (`docs/final-frontend-doc/modeles/`) ; suppression des 7 gabarits de courriel morts à faire |
 
 Les migrations vont dans `db/migration` et `db/migration-prod`, à la suite du chantier finance.
 
