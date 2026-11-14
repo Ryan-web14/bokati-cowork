@@ -90,7 +90,7 @@ public class ElementSettlementService {
     }
 
     /** Toutes les factures emises de l'element sont soldees, et il en a au moins une. */
-    boolean fullySettled(ElementRef ref) {
+    public boolean fullySettled(ElementRef ref) {
         List<ElementDtos.Invoice> invoices = resolver.invoices(ref).stream()
                 .filter(invoice -> List.of("INVOICE", "CORRECTIVE_INVOICE", "DEBIT_NOTE").contains(invoice.documentType()))
                 .filter(invoice -> !List.of("DRAFT", "CANCELLED").contains(invoice.status()))

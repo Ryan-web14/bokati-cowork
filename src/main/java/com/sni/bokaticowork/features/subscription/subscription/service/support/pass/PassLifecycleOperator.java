@@ -82,6 +82,32 @@ public class PassLifecycleOperator {
         return pass;
     }
 
+    /**
+     * Retour arriere d'une activation obtenue par un paiement dont l'affectation est annulee (lot R4) :
+     * droits du pass retires, pass remis en attente d'activation ; l'historique garde la trace.
+     */
+    public Pass revertActivation(Pass pass, String reason) {
+        PassStatus previous = pass.getStatus();
+        pass.setStatus(PassStatus.PENDING_ACTIVATION);
+        passRepository.save(pass);
+        entitlementGrantRepository.findAllByOwnerTypeAndOwnerCodeAndStatus(pass.getOwnerType().name(), pass.getOwnerCode(), EntitlementGrantStatus.ACTIVE.name())
+                .stream()
+                .filter(grant -> grant.getPass() != null && grant.getPass().getId().equals(pass.getId()))
+                .forEach(grant -> {
+                    grant.setStatus(EntitlementGrantStatus.CANCELLED);
+                    entitlementGrantRepository.save(grant);
+                });
+        eventWriter.writeHistory(pass, previous, PassStatus.PENDING_ACTIVATION, reason, "SYSTEM");
+        passTransactionRepository.save(PassTransaction.builder()
+                .pass(pass)
+                .transactionType("ACTIVATION_REVERTED")
+                .referenceType("PASS")
+                .referenceId(pass.getPassNumber())
+                .payloadJson(StringUtils.hasText(reason) ? com.sni.bokaticowork.core.utils.json.JsonPayload.of("reason", reason.trim()) : null)
+                .build());
+        return pass;
+    }
+
     public Pass cancel(Pass pass, String reason) {
         pass.setStatus(PassStatus.CANCELLED);
         pass.setCancelledAt(Instant.now());

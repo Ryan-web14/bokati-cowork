@@ -717,6 +717,19 @@ public class SubscriptionLifecycleOperator {
         return request != null && StringUtils.hasText(request.changedBy()) ? request.changedBy().trim() : "SYSTEM";
     }
 
+    /**
+     * Retour arriere d'une activation obtenue par un paiement dont l'affectation est annulee (lot R4) :
+     * droits retires, contrat annule (ou resilie s'il etait actif), abonnement remis en attente
+     * d'activation. L'historique garde la trace. Les controles (droits deja utilises, renouvellement)
+     * sont faits par l'appelant.
+     */
+    public void revertActivation(Subscription subscription, String reason) {
+        revokeActiveGrants(subscription);
+        cancelAssociatedContract(subscription, reason);
+        statusManager.changeStatus(subscription, SubscriptionStatus.PENDING_ACTIVATION, reason, "SYSTEM");
+        subscriptionRepository.save(subscription);
+    }
+
     private void cancelAssociatedContract(Subscription subscription, String reason) {
         if (!StringUtils.hasText(subscription.getContractCode())) {
             return;

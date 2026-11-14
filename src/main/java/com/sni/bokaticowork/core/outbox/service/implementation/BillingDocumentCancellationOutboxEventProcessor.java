@@ -86,11 +86,31 @@ public class BillingDocumentCancellationOutboxEventProcessor implements OutboxEv
             if (booking.getStatus() == BookingStatus.CANCELLED) {
                 continue;
             }
+            if (settledElsewhere(booking.getBookingNumber(), documentNumber)) {
+                // Lot R3 : une facture rattachee par l'equipe remplace la facture propre de la
+                // reservation ; l'annulation de celle-ci ne doit pas emporter la reservation.
+                log.info("Booking {} gardee : reglee par une autre facture rattachee que {}", booking.getBookingNumber(), documentNumber);
+                continue;
+            }
             bookingService.systemCancel(booking.getBookingNumber(),
                     "Annulation de la facture " + documentNumber);
             log.info("Booking {} annulee a la suite de l'annulation de sa facture {}",
                     booking.getBookingNumber(), documentNumber);
         }
+    }
+
+    private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.billing.element.repository.BillingDocumentElementRepository> elementLinks;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setElementLinks(org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.billing.element.repository.BillingDocumentElementRepository> elementLinks) {
+        this.elementLinks = elementLinks;
+    }
+
+    /** La reservation est rattachee a une autre facture que celle annulee. */
+    boolean settledElsewhere(String bookingNumber, String cancelledDocument) {
+        var repository = elementLinks == null ? null : elementLinks.getIfAvailable();
+        return repository != null && repository.findByElementTypeAndElementCodeAndRemovedAtIsNullOrderByLinkedAtAsc("BOOKING", bookingNumber)
+                .stream().anyMatch(link -> !link.getDocumentNumber().equals(cancelledDocument));
     }
 
     /**

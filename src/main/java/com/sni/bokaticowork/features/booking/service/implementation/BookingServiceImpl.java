@@ -794,6 +794,22 @@ public class BookingServiceImpl implements BookingService {
         return booking;
     }
 
+    @Override
+    public BookingResponse revertConfirmation(String bookingNumber, String reason) {
+        Booking booking = getForService(bookingNumber);
+        requireStatus(booking, BookingStatus.CONFIRMED);
+        releaseResource(booking);
+        eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
+        if (booking.getPaymentMode().usesEntitlement()) {
+            entitlementBridge.release(booking);
+            eventWriter.write(booking, BookingEventType.ENTITLEMENT_RELEASED, "Entitlement released", "Booking entitlement reservation was released", null);
+        }
+        booking.setStatus(BookingStatus.PENDING_PAYMENT);
+        booking = bookingRepository.save(booking);
+        writeHistory(booking, BookingStatus.CONFIRMED, BookingStatus.PENDING_PAYMENT, "SYSTEM", reason);
+        return bookingMapper.toResponse(booking);
+    }
+
     private Booking cancelInternal(Booking booking, BookingStatusChangeRequest request, boolean systemOverride) {
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             return booking;

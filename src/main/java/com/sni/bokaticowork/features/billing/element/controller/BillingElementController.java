@@ -30,6 +30,9 @@ public class BillingElementController {
 
     private final BillingElementResolver resolver;
     private final BillingElementLinkService linkService;
+    private final com.sni.bokaticowork.features.billing.element.service.AllocationReversalService reversals;
+    private final com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository transactions;
+    private final com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository allocations;
 
     /** Tiers (membre, client, client externe, entite, contact de reservation) et leurs elements rattachables. */
     @GetMapping("/elements/search")
@@ -73,6 +76,35 @@ public class BillingElementController {
     public ResponseEntity<Void> unlink(@PathVariable String documentNumber, @PathVariable String type, @PathVariable String code) {
         linkService.unlink(documentNumber, type, code);
         return ResponseEntity.noContent().build();
+    }
+
+    /** Affectations d'un paiement : en cours (avec leur identifiant pour les annuler) et annulees. */
+    @GetMapping("/transactions/{transactionNumber}/allocations")
+    public ResponseEntity<ElementDtos.Allocations> allocations(@PathVariable String transactionNumber) {
+        var transaction = transactions.findByTransactionNumber(transactionNumber.trim())
+                .orElseThrow(() -> new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Paiement introuvable : " + transactionNumber));
+        List<ElementDtos.Allocation> current = allocations.findAllByPaymentTransactionId(transaction.getId()).stream()
+                .map(a -> new ElementDtos.Allocation(a.getId(), a.getBillingDocumentNumber(), a.getAllocatedAmount(), a.getAllocationMode(),
+                        a.getAllocatedAt(), a.getAllocatedBy())).toList();
+        java.math.BigDecimal used = current.stream().map(ElementDtos.Allocation::amount).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        List<ElementDtos.Reversal> reversed = reversals.ofTransaction(transaction.getTransactionNumber()).stream()
+                .map(r -> new ElementDtos.Reversal(r.getId(), r.getAllocationId(), r.getDocumentNumber(), r.getAmount(), r.getInvoiceOutcome(),
+                        r.getReason(), r.getReversedAt(), r.getReversedBy(), r.getElementsJson())).toList();
+        return ResponseEntity.ok(new ElementDtos.Allocations(transaction.getTransactionNumber(), transaction.getAmount(),
+                transaction.getAmount().subtract(used), current, reversed));
+    }
+
+    /**
+     * Annule une affectation (lot R4) : la somme revient en attente, la facture est rouverte
+     * ({@code REOPEN}) ou neutralisee ({@code NEUTRALIZE}), l'element qui n'est plus regle est remis en
+     * attente ; refus si l'element a deja ete consomme.
+     */
+    @PostMapping("/allocations/{allocationId}/cancel")
+    @Audited(module = "BILLING", action = "CANCEL_ALLOCATION", ressource = "payment_allocation")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.element.service.AllocationReversalService.Result> cancelAllocation(
+            @PathVariable Long allocationId,
+            @RequestBody com.sni.bokaticowork.features.billing.element.service.AllocationReversalService.CancelRequest request) {
+        return ResponseEntity.ok(reversals.cancel(allocationId, request));
     }
 
     /** Elements regles par une facture. */

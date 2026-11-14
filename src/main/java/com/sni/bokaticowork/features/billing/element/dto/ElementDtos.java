@@ -34,6 +34,19 @@ public final class ElementDtos {
     public record Party(String type, String code, String name, String email, String phone, boolean external, List<Element> elements) {
     }
 
+    /** Affectation en cours d'un paiement a une facture ; {@code id} sert a l'annuler. */
+    public record Allocation(Long id, String documentNumber, BigDecimal amount, String mode, java.time.Instant allocatedAt, String allocatedBy) {
+    }
+
+    /** Affectation annulee. */
+    public record Reversal(Long id, Long allocationId, String documentNumber, BigDecimal amount, String invoiceOutcome, String reason,
+                           java.time.Instant reversedAt, String reversedBy, String elementsReverted) {
+    }
+
+    /** Affectations d'un paiement : en cours et annulees, et ce qui reste en attente. */
+    public record Allocations(String transactionNumber, BigDecimal amount, BigDecimal pending, List<Allocation> current, List<Reversal> reversed) {
+    }
+
     /** Rattachement d'une facture a un element. */
     public record LinkRequest(String type, String code, String activationMode, Boolean replaceOwnInvoice) {
     }

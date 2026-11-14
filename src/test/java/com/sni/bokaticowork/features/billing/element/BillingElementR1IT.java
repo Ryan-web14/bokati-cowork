@@ -42,6 +42,16 @@ class BillingElementR1IT extends PostgresIntegrationTestBase {
         assertThatThrownBy(() -> resolver.search("z", 10)).isInstanceOf(BadRequestException.class);
     }
 
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbc;
+
+    /** Lot R4 : la trace des annulations et la regle de contrepassation D 411 / C 4719 passent la migration. */
+    @Test
+    void reversalTableAndPostingRuleExist() {
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM payment_allocation_reversal", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT event_type FROM acc_posting_rule WHERE code = 'SALES_ALLOCATION_REVERSAL'", String.class))
+                .isEqualTo("ALLOCATION_REVERSAL");
+    }
+
     @Test
     void aLinkSetsTheActivationModeOfItsElement() {
         links.save(BillingDocumentElement.builder().documentNumber("FAC-R1-1").elementType(ElementRef.BOOKING).elementCode("BKG-R1-1")
