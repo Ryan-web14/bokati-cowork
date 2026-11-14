@@ -100,7 +100,7 @@ Les mêmes champs servent à la vérification, au blocage, à la création et à
    - `DRAFT` : si `confirmImmediately: false`.
 4. Afficher `bookingNumber`, `paymentStatusLabel`, `seatsLabel` (« 2 places réservées sur 4 », « Espace entier · 3 participants (12 places) »), le QR (`checkInQrValue` dans une balise `<img>`), et le lien de visioconférence `virtualMeetingUrl` s'il existe.
 
-Réservation par l'équipe : un compte `ROLE_SUPER_ADMIN`, `ROLE_ADMIN`, `ROLE_MANAGER` ou `ROLE_OPERATIONS_AGENT`, hors routes du portail, réserve **sans préavis** et peut saisir un début passé jusqu'à 31 jours en arrière (réglage `bokati.booking.staff.max-backdate-days`), sauf si la politique de la ressource l'interdit. La durée minimale et maximale s'appliquent toujours, l'approbation est sautée. Un début déjà passé confirme la réservation sur-le-champ, quel que soit le mode de règlement.
+Réservation par l'équipe : un compte `ROLE_SUPER_ADMIN`, `ROLE_ADMIN`, `ROLE_MANAGER` ou `ROLE_OPERATIONS_AGENT`, hors routes du portail, réserve **sans préavis** et peut saisir un début passé jusqu'à 31 jours en arrière (réglage `bokati.booking.staff.max-backdate-days`), sauf si la politique de la ressource l'interdit. La durée minimale et maximale s'appliquent toujours, l'approbation est sautée. Un début déjà passé confirme la réservation sur-le-champ, quel que soit le mode de règlement. La pose d'option (`POST /bookings/holds`) suit la même règle : l'équipe pose une option sur un début passé ou hors préavis, le client non.
 
 ### Créer une série récurrente
 
