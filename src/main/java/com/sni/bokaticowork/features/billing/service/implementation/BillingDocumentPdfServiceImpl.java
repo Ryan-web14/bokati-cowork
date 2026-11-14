@@ -93,6 +93,9 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private com.sni.bokaticowork.features.billing.repository.BillingDocumentLineRepository lineRepository;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private com.sni.bokaticowork.features.billing.service.support.BillingTaxRuleResolver taxRuleResolver;
+    /** Modeles de documents (lot D5), facultatif dans les tests. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter templatePrinter;
 
     /** Mention d'exoneration imprimee sous le tableau des lignes (lot C1). */
     public record TaxExemptionView(String label, String reason) {
@@ -253,6 +256,10 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     }
 
     private byte[] render(BillingDocumentResponse document) {
+        byte[] fromTemplate = renderWithTemplate(document);
+        if (fromTemplate != null) {
+            return fromTemplate;
+        }
         String html = renderHtml(document);
         try {
             byte[] pdf = PdfRenderer.render(html);
@@ -262,6 +269,40 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         } catch (Exception ex) {
             throw new BadRequestException("Impossible de produire le PDF du document", ex);
         }
+    }
+
+    /**
+     * Modeles de documents (lot D5) : la piece sort avec la version publiee du modele INVOICE ou
+     * CREDIT_NOTE, ou avec la version figee a son scellement. Une piece verrouillee retient la
+     * version qui l'a produite (0 : gabarit d'origine) ; une reimpression garde donc son aspect meme
+     * apres la publication d'un nouveau modele. Nul quand le gabarit d'origine sert.
+     */
+    private byte[] renderWithTemplate(BillingDocumentResponse document) {
+        if (templatePrinter == null) {
+            return null;
+        }
+        com.sni.bokaticowork.features.billing.model.BillingDocument entity = documentRepository.findByDocumentNumber(document.documentNumber())
+                .orElse(null);
+        Integer pinned = entity == null ? null : entity.getTemplateVersion();
+        String code = com.sni.bokaticowork.features.billing.service.support.BillingDocumentData.templateCode(document.documentType());
+        BillingDocumentTemplateFormatter fmt = new BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale);
+        java.util.Optional<com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter.Printed> printed =
+                templatePrinter.tryRenderPinned(code, com.sni.bokaticowork.features.billing.service.support.BillingDocumentData.from(document, fmt,
+                        generateQrCode(document), entity == null ? null : entity.getCustomerVatExemptionNote()), pinned);
+        if (entity != null && pinned == null && Boolean.TRUE.equals(document.locked())) {
+            documentRepository.pinTemplateVersion(document.documentNumber(),
+                    printed.map(com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter.Printed::version).orElse(0));
+        }
+        return printed.map(com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter.Printed::pdf).orElse(null);
+    }
+
+    /** Preview des modeles (lot D5) : donnees d'une piece de facturation, sans rien ecrire. */
+    public com.sni.bokaticowork.features.document.template.render.DocumentData templateData(String documentNumber) {
+        BillingDocumentResponse document = billingDocumentService.get(documentNumber);
+        String exemption = documentRepository.findByDocumentNumber(documentNumber)
+                .map(com.sni.bokaticowork.features.billing.model.BillingDocument::getCustomerVatExemptionNote).orElse(null);
+        return com.sni.bokaticowork.features.billing.service.support.BillingDocumentData.from(document,
+                new BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale), generateQrCode(document), exemption);
     }
 
     /**

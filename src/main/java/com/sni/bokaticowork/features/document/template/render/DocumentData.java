@@ -122,6 +122,18 @@ public final class DocumentData {
         return this;
     }
 
+    /**
+     * Champs tires des variables d'un contexte Thymeleaf deja prepare pour le gabarit d'origine
+     * (lot D5) : triplets cle, libelle, nom de la variable. Une variable absente donne un champ vide.
+     */
+    public DocumentData fieldsFrom(org.thymeleaf.context.IContext context, String... triples) {
+        for (int index = 0; index + 2 < triples.length; index += 3) {
+            Object value = context.getVariable(triples[index + 2]);
+            field(triples[index], triples[index + 1], value);
+        }
+        return this;
+    }
+
     /** Ligne a remplir a la main. */
     public DocumentData blankField(String key, String label) {
         fields.put(key, new Field(label, null));

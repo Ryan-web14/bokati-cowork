@@ -144,6 +144,11 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
      *
      * @return 1 si ce document vient d'etre scelle, 0 s'il l'etait deja
      */
+    /** Fige la version du modele de la piece, une seule fois (lot D5). */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE BillingDocument d SET d.templateVersion = :version WHERE d.documentNumber = :documentNumber AND d.templateVersion IS NULL")
+    int pinTemplateVersion(@Param("documentNumber") String documentNumber, @Param("version") Integer version);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
             UPDATE BillingDocument d

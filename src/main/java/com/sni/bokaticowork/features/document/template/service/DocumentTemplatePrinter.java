@@ -88,6 +88,43 @@ public class DocumentTemplatePrinter {
         }
     }
 
+    /** PDF produit et numero de la version du modele qui l'a produit. */
+    public record Printed(byte[] pdf, int version) {
+    }
+
+    /**
+     * Rendu d'une piece dont la version de modele est figee (lot D5, factures) : {@code pinned}
+     * nul prend la version publiee ; {@code 0} veut dire « gabarit d'origine » (rien n'est rendu
+     * ici) ; un autre numero rend cette version, meme archivee. Vide quand le gabarit d'origine sert.
+     */
+    public Optional<Printed> tryRenderPinned(String templateCode, DocumentData data, Integer pinned) {
+        if (pinned != null && pinned == 0) {
+            return Optional.empty();
+        }
+        Optional<DocumentTemplateVersion> version;
+        try {
+            version = pinned == null
+                    ? templates.findByCode(templateCode).filter(template -> Boolean.TRUE.equals(template.getActive()))
+                    .flatMap(template -> versions.findFirstByTemplateCodeAndStatus(templateCode, "PUBLISHED"))
+                    : versions.findByTemplateCodeAndVersionNumber(templateCode, pinned).filter(found -> !"DRAFT".equals(found.getStatus()));
+        } catch (RuntimeException ex) {
+            log.warn("Modele {} illisible, gabarit d'origine utilise : {}", templateCode, ex.getMessage());
+            return Optional.empty();
+        }
+        if (version.isEmpty()) {
+            return Optional.empty();
+        }
+        TemplateContent content = content(version.get());
+        addFields(content, data, false);
+        try {
+            return Optional.of(new Printed(render(content, data), version.get().getVersionNumber()));
+        } catch (RuntimeException ex) {
+            log.warn("Rendu du modele {} v{} en echec pour la piece {}, gabarit d'origine utilise : {}", templateCode,
+                    version.get().getVersionNumber(), data.number(), ex.getMessage());
+            return Optional.empty();
+        }
+    }
+
     /** Rendu d'un contenu donne (apercu d'un brouillon) ; les erreurs remontent a l'appelant. */
     public byte[] render(TemplateContent content, DocumentData data) {
         return renderer.pdf(content, data, operatorIdentityService.current(), brandLogo.base64());

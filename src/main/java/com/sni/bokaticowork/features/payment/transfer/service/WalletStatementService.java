@@ -57,6 +57,10 @@ public class WalletStatementService {
                                 String credit, String debit, String balance) {
     }
 
+    /** Modeles de documents (lot D5), facultatif dans les tests. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter templatePrinter;
+
     @Transactional(readOnly = true)
     public byte[] statement(WalletAccount wallet, LocalDate from, LocalDate to) {
         if (from == null || to == null || to.isBefore(from)) {
@@ -109,6 +113,34 @@ public class WalletStatementService {
         context.setVariable("lines", lines);
         context.setVariable("lastHash", lastHash);
         brand(context);
+        if (templatePrinter != null) {
+            com.sni.bokaticowork.features.document.template.render.DocumentData data =
+                    new com.sni.bokaticowork.features.document.template.render.DocumentData("WALLET_STATEMENT").title("Relevé de portefeuille")
+                            .number(wallet.getWalletNumber() + "-" + DATE.format(to).replace("/", "")).source(wallet.getWalletNumber())
+                            .fieldsFrom(context, "portefeuille", "Portefeuille", "walletNumber", "titulaire", "Titulaire", "holderName",
+                                    "periode", "Période", "periodLabel", "devise", "Devise", "currency", "edite_le", "Édité le", "issuedAt",
+                                    "solde_ouverture", "Solde d'ouverture", "openingBalance", "total_credits", "Total des crédits", "totalCredits",
+                                    "total_debits", "Total des débits", "totalDebits", "solde_cloture", "Solde de clôture", "closingBalance",
+                                    "empreinte", "Empreinte du registre", "lastHash");
+            data.table("operations", new com.sni.bokaticowork.features.document.template.render.DocumentData.Table("Opérations", java.util.List.of(
+                    new com.sni.bokaticowork.features.document.template.render.DocumentData.Column("date", "Date", false),
+                    new com.sni.bokaticowork.features.document.template.render.DocumentData.Column("reference", "Référence", false),
+                    new com.sni.bokaticowork.features.document.template.render.DocumentData.Column("nature", "Nature", false),
+                    new com.sni.bokaticowork.features.document.template.render.DocumentData.Column("libelle", "Libellé", false),
+                    new com.sni.bokaticowork.features.document.template.render.DocumentData.Column("credit", "Crédit", true),
+                    new com.sni.bokaticowork.features.document.template.render.DocumentData.Column("debit", "Débit", true),
+                    new com.sni.bokaticowork.features.document.template.render.DocumentData.Column("solde", "Solde", true)),
+                    lines.stream().map(line -> java.util.List.of(line.date(), line.reference(), line.nature(), line.label(), line.credit(), line.debit(),
+                            line.balance())).toList()));
+            data.section("Portefeuille", java.util.List.of("portefeuille", "titulaire", "periode", "devise", "edite_le"), null)
+                    .section("Soldes", java.util.List.of("solde_ouverture", "total_credits", "total_debits", "solde_cloture"), null)
+                    .section("Opérations", java.util.List.of(), "operations")
+                    .section("Intégrité", java.util.List.of("empreinte"), null);
+            java.util.Optional<byte[]> printed = templatePrinter.tryRender("WALLET_STATEMENT", data);
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         return render(templateEngine.process("wallet/statement", context));
     }
 
@@ -140,6 +172,23 @@ public class WalletStatementService {
         context.setVariable("directionLabel",
                 entry.getDirection() == WalletEntryDirection.CREDIT ? "Montant reçu" : "Montant débité");
         brand(context);
+        if (templatePrinter != null) {
+            String number = StringUtils.hasText(entry.getTransactionNumber()) ? entry.getTransactionNumber() : entry.getEntryNumber();
+            com.sni.bokaticowork.features.document.template.render.DocumentData data =
+                    new com.sni.bokaticowork.features.document.template.render.DocumentData("WALLET_RECEIPT").title("Reçu d'opération")
+                            .number(number).source(number).amount(entry.getAmount(), wallet.getCurrency())
+                            .fieldsFrom(context, "titulaire", "Titulaire", "holderName", "date", "Date", "date", "nature", "Nature", "nature",
+                                    "sens", "Sens", "directionLabel", "montant", "Montant", "amount", "solde_apres", "Solde après l'opération",
+                                    "balanceAfter")
+                            .field("portefeuille", "Portefeuille", wallet.getWalletNumber())
+                            .field("reference", "Référence", entry.getReference());
+            data.section("Opération", java.util.List.of("portefeuille", "titulaire", "date", "nature", "sens", "reference", "montant", "solde_apres"),
+                    null);
+            java.util.Optional<byte[]> printed = templatePrinter.tryRender("WALLET_RECEIPT", data);
+            if (printed.isPresent()) {
+                return printed.get();
+            }
+        }
         return render(templateEngine.process("wallet/transaction-receipt", context));
     }
 

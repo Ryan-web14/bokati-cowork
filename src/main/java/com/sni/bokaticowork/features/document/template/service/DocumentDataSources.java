@@ -40,6 +40,8 @@ public class DocumentDataSources {
     private static final Set<String> FUND = Set.of("NEED_STATEMENT", "FUND_REQUEST", "DISBURSEMENT_VOUCHER", "JUSTIFICATION_SHEET");
     private static final Set<String> ACCOUNTING = Set.of("PURCHASE_ORDER", "VAT_RETURN", "BANK_RECONCILIATION", "LOAN_SCHEDULE",
             "BANK_DEPOSIT_SLIP", "SUPPLIER_STATEMENT", "PARTNER_STATEMENT");
+    private static final Set<String> CLIENT = Set.of("INVOICE", "CREDIT_NOTE", "PAYMENT_RECEIPT", "WALLET_STATEMENT", "WALLET_RECEIPT",
+            "BOOKING_CONFIRMATION");
     /** Numero attendu pour l'apercu avec une piece reelle. */
     private static final Map<String, String> HINTS = Map.ofEntries(
             Map.entry(CashVoucherDocumentData.CASH_OUT, "Numéro du mouvement de caisse (CSM-...)"),
@@ -56,7 +58,10 @@ public class DocumentDataSources {
             Map.entry("LOAN_SCHEDULE", "Code de l'emprunt"),
             Map.entry("BANK_DEPOSIT_SLIP", "Numéro du bordereau (BRB-...)"),
             Map.entry("SUPPLIER_STATEMENT", "Code du fournisseur"),
-            Map.entry("PARTNER_STATEMENT", "Code du partenaire"));
+            Map.entry("PARTNER_STATEMENT", "Code du partenaire"),
+            Map.entry("INVOICE", "Numéro de la pièce de facturation (INV-..., DEV-...)"),
+            Map.entry("CREDIT_NOTE", "Numéro de l'avoir"),
+            Map.entry("PAYMENT_RECEIPT", "Numéro du reçu (RCP-...)"));
 
     private final ObjectProvider<CashDocumentPdfService> cash;
     private final ObjectProvider<FundVoucherService> fund;
@@ -69,6 +74,16 @@ public class DocumentDataSources {
     private final ObjectProvider<ChequeService> cheques;
     private final ObjectProvider<StatementPrintService> statements;
     private final ObjectProvider<PlatformTransactionManager> transactions;
+    private ObjectProvider<com.sni.bokaticowork.features.billing.service.implementation.BillingDocumentPdfServiceImpl> invoices;
+    private ObjectProvider<com.sni.bokaticowork.features.payment.service.implementation.PaymentReceiptServiceImpl> receipts;
+
+    /** Pieces clients (lot D5) ; mutateur pour garder le constructeur des lots precedents. */
+    @org.springframework.beans.factory.annotation.Autowired
+    void setClientSources(ObjectProvider<com.sni.bokaticowork.features.billing.service.implementation.BillingDocumentPdfServiceImpl> invoices,
+                          ObjectProvider<com.sni.bokaticowork.features.payment.service.implementation.PaymentReceiptServiceImpl> receipts) {
+        this.invoices = invoices;
+        this.receipts = receipts;
+    }
 
     public DocumentDataSources(ObjectProvider<CashDocumentPdfService> cash, ObjectProvider<FundVoucherService> fund,
                                ObjectProvider<FundNeedService> needs, ObjectProvider<FundRequestService> requests,
@@ -112,7 +127,7 @@ public class DocumentDataSources {
     // ------------------------------------------------------------------ apercu
 
     public boolean supports(String code) {
-        return CASH.contains(code) || FUND.contains(code) || ACCOUNTING.contains(code);
+        return CASH.contains(code) || FUND.contains(code) || ACCOUNTING.contains(code) || CLIENT.contains(code);
     }
 
     public String hint(String code) {
@@ -135,6 +150,25 @@ public class DocumentDataSources {
         if (ACCOUNTING.contains(code)) {
             return FundVoucherSamples.accounting(code);
         }
+        switch (code) {
+            case "INVOICE", "CREDIT_NOTE" -> {
+                return com.sni.bokaticowork.features.billing.service.support.BillingDocumentData.sample(code);
+            }
+            case "PAYMENT_RECEIPT" -> {
+                return com.sni.bokaticowork.features.payment.service.support.PaymentReceiptDocumentData.sample();
+            }
+            case "WALLET_STATEMENT" -> {
+                return ClientDocumentSamples.walletStatement();
+            }
+            case "WALLET_RECEIPT" -> {
+                return ClientDocumentSamples.walletReceipt();
+            }
+            case "BOOKING_CONFIRMATION" -> {
+                return ClientDocumentSamples.bookingConfirmation();
+            }
+            default -> {
+            }
+        }
         throw BadRequestException.coded("APERCU_INDISPONIBLE", "Aucune donnée d'exemple pour le modèle " + code);
     }
 
@@ -154,6 +188,8 @@ public class DocumentDataSources {
             case "BANK_DEPOSIT_SLIP" -> capture(() -> cheques.getObject().slipPdf(key));
             case "SUPPLIER_STATEMENT" -> capture(() -> statements.getObject().supplierStatement(key, null, null));
             case "PARTNER_STATEMENT" -> capture(() -> statements.getObject().partnerStatement(key, null, null));
+            case "INVOICE", "CREDIT_NOTE" -> invoices.getObject().templateData(key);
+            case "PAYMENT_RECEIPT" -> receipts.getObject().templateData(key);
             default -> throw BadRequestException.coded("APERCU_INDISPONIBLE", "L'aperçu avec une pièce réelle n'existe pas pour le modèle " + code);
         };
     }
