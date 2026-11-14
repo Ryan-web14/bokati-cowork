@@ -76,6 +76,10 @@ public class DefaultEmailSender {
     // ─────────────────── Async methods → publish to RabbitMQ ───────────────────
 
     public CompletableFuture<Boolean> sendEmail(String to, String subject, String content) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         Queued queued = createDelivery(null, to, subject, content, false, null, null);
         if (!queued.duplicate()) {
             publishToRabbit(queued.emailNumber(), to, subject, content, EmailPriority.NORMAL,
@@ -85,10 +89,18 @@ public class DefaultEmailSender {
     }
 
     public CompletableFuture<Boolean> sendHtmlEmail(String to, String subject, String content) throws MessagingException {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return sendHtmlEmail(to, subject, content, EmailPriority.NORMAL);
     }
 
     public CompletableFuture<Boolean> sendHtmlEmail(String to, String subject, String content, EmailPriority priority) throws MessagingException {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         Queued queued = createDelivery(null, to, subject, content, true, null, null);
         if (!queued.duplicate()) {
             publishToRabbit(queued.emailNumber(), to, subject, content, priority,
@@ -102,6 +114,10 @@ public class DefaultEmailSender {
                                                                     String content,
                                                                     String contentId,
                                                                     byte[] imageBytes) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         Queued queued = createDelivery(null, to, subject, content, true, null, null);
         if (!queued.duplicate()) {
             publishToRabbit(queued.emailNumber(), to, subject, content, EmailPriority.NORMAL,
@@ -115,6 +131,10 @@ public class DefaultEmailSender {
                                                                      String content,
                                                                      String attachmentName,
                                                                      byte[] attachmentBytes) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return sendHtmlEmailWithPdfAttachment(to, subject, content, attachmentName, attachmentBytes, null, null);
     }
 
@@ -129,6 +149,10 @@ public class DefaultEmailSender {
                                                                      byte[] attachmentBytes,
                                                                      String relatedType,
                                                                      String relatedCode) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         Queued queued = createDelivery(null, to, subject, content, true, relatedType, relatedCode);
         if (!queued.duplicate()) {
             publishToRabbit(queued.emailNumber(), to, subject, content, EmailPriority.NORMAL,
@@ -138,6 +162,10 @@ public class DefaultEmailSender {
     }
 
     public EmailDeliveryResponse queueEmail(String to, String subject, String content, boolean html) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return queueEmail(to, subject, content, html, null, null);
     }
 
@@ -147,6 +175,10 @@ public class DefaultEmailSender {
                                             boolean html,
                                             String relatedType,
                                             String relatedCode) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return queueEmail(null, to, subject, content, html, relatedType, relatedCode);
     }
 
@@ -157,6 +189,10 @@ public class DefaultEmailSender {
                                             boolean html,
                                             String relatedType,
                                             String relatedCode) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         Queued queued = createDelivery(from, to, subject, content, html, relatedType, relatedCode);
         if (!queued.duplicate()) {
             publishToRabbit(from, queued.emailNumber(), to, subject, content, EmailPriority.NORMAL,
@@ -281,10 +317,18 @@ public class DefaultEmailSender {
     }
 
     public boolean sendHtmlEmailBlocking(String to, String subject, String content) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return sendHtmlEmailBlocking(null, to, subject, content);
     }
 
     public boolean sendHtmlEmailBlocking(String from, String to, String subject, String content) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return sendWithGraph(resolveSender(from), to, subject, content, true);
     }
 
@@ -293,6 +337,10 @@ public class DefaultEmailSender {
                                                           String content,
                                                           String attachmentName,
                                                           byte[] attachmentBytes) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return sendHtmlEmailWithPdfAttachmentBlocking(null, to, subject, content, attachmentName, attachmentBytes);
     }
 
@@ -302,6 +350,10 @@ public class DefaultEmailSender {
                                                           String content,
                                                           String attachmentName,
                                                           byte[] attachmentBytes) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return sendWithGraphPdfAttachment(resolveSender(from), to, subject, content, attachmentName, attachmentBytes);
     }
 
@@ -310,6 +362,10 @@ public class DefaultEmailSender {
                                                      String content,
                                                      String contentId,
                                                      byte[] imageBytes) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return sendWithGraphInlineImageBlocking(null, to, subject, content, contentId, imageBytes);
     }
 
@@ -319,6 +375,10 @@ public class DefaultEmailSender {
                                                      String content,
                                                      String contentId,
                                                      byte[] imageBytes) {
+        com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.Mail templated =
+                com.sni.bokaticowork.core.communication.mailService.support.EmailSubjectOverride.apply(subject, content);
+        subject = templated.subject();
+        content = templated.content();
         return sendWithGraphInlineImage(resolveSender(from), to, subject, content, contentId, imageBytes);
     }
 

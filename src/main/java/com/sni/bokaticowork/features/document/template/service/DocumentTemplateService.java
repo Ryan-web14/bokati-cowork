@@ -50,6 +50,9 @@ public class DocumentTemplateService {
     private final DocumentTemplateVersionRepository versions;
     private final DocumentTemplatePrinter printer;
     private final DocumentDataSources dataSources;
+    private final org.springframework.beans.factory.ObjectProvider<EmailTemplateRegistry> emailRegistry;
+    private final org.springframework.beans.factory.ObjectProvider<org.thymeleaf.spring6.SpringTemplateEngine> templateEngine;
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender> emailSender;
 
     @Transactional(readOnly = true)
     public List<Summary> list() {
@@ -80,7 +83,7 @@ public class DocumentTemplateService {
     /** Cree ou remplace le brouillon ; le contenu est controle avant d'etre enregistre. */
     public Version saveDraft(String code, Content request) {
         DocumentTemplate template = template(code);
-        TemplateContent content = content(request).validate();
+        TemplateContent content = checked(template, content(request));
         DocumentTemplateVersion draft = versions.findFirstByTemplateCodeAndStatus(template.getCode(), DRAFT).orElseGet(() ->
                 DocumentTemplateVersion.builder().templateCode(template.getCode()).versionNumber(versions.maxVersion(template.getCode()) + 1)
                         .status(DRAFT).createdBy(actor()).build());
@@ -101,9 +104,13 @@ public class DocumentTemplateService {
         DocumentTemplate template = template(code);
         DocumentTemplateVersion draft = versions.findFirstByTemplateCodeAndStatus(template.getCode(), DRAFT)
                 .orElseThrow(() -> BadRequestException.coded("BROUILLON_ABSENT", "Le modèle " + code + " n'a pas de brouillon à publier"));
-        TemplateContent content = DocumentTemplatePrinter.content(draft).validate();
+        TemplateContent content = checked(template, DocumentTemplatePrinter.content(draft));
+        if (isEmail(template)) {
+            // Un courriel qui ne se rend pas avec des valeurs d'exemple n'est pas publie.
+            emailHtml(template, content);
+        }
         // Un modele qui ne se rend pas avec les donnees d'exemple n'est pas publie.
-        if (dataSources.supports(template.getCode())) {
+        if (!isEmail(template) && dataSources.supports(template.getCode())) {
             try {
                 DocumentData sample = dataSources.sample(template.getCode());
                 printer.addFields(content, sample, true);
@@ -123,6 +130,7 @@ public class DocumentTemplateService {
         draft.setPublishedAt(now);
         DocumentTemplateVersion saved = versions.save(draft);
         printer.evict(template.getCode());
+        invalidateEmails();
         return view(saved);
     }
 
@@ -147,6 +155,7 @@ public class DocumentTemplateService {
         published.setArchivedAt(Instant.now());
         versions.save(published);
         printer.evict(template.getCode());
+        invalidateEmails();
         return get(code);
     }
 
@@ -179,9 +188,110 @@ public class DocumentTemplateService {
         }
     }
 
+    /**
+     * Apercu HTML d'un courriel (lot E1) : contenu fourni, sinon brouillon, sinon version publiee,
+     * rendu avec des valeurs d'exemple « ‹variable› ».
+     */
+    @Transactional(readOnly = true)
+    public String previewEmail(String code, Content request) {
+        DocumentTemplate template = template(code);
+        if (!isEmail(template)) {
+            throw BadRequestException.coded("APERCU_INDISPONIBLE", "L'aperçu HTML ne concerne que les courriels");
+        }
+        return emailHtml(template, emailContent(template, request));
+    }
+
+    /** Envoi d'essai a l'adresse de l'utilisateur connecte (lot E1) ; l'objet est celui du modele. */
+    @Transactional(readOnly = true)
+    public String testSend(String code, Content request) {
+        DocumentTemplate template = template(code);
+        if (!isEmail(template)) {
+            throw BadRequestException.coded("APERCU_INDISPONIBLE", "L'envoi d'essai ne concerne que les courriels");
+        }
+        String to = actor();
+        if (to == null || !to.contains("@")) {
+            throw BadRequestException.coded("ADRESSE_ABSENTE", "Aucune adresse de courriel pour l'utilisateur connecté");
+        }
+        String html = emailHtml(template, emailContent(template, request));
+        try {
+            emailSender.getObject().sendHtmlEmail(to, "[Essai] " + template.getLabel(), html);
+        } catch (jakarta.mail.MessagingException ex) {
+            throw BadRequestException.coded("ENVOI_IMPOSSIBLE", "Envoi d'essai impossible : " + ex.getMessage());
+        }
+        return to;
+    }
+
+    private TemplateContent emailContent(DocumentTemplate template, Content request) {
+        if (request != null && request.blocks() != null && !request.blocks().isEmpty()) {
+            return checked(template, content(request));
+        }
+        return versions.findFirstByTemplateCodeAndStatus(template.getCode(), DRAFT)
+                .or(() -> versions.findFirstByTemplateCodeAndStatus(template.getCode(), PUBLISHED))
+                .map(DocumentTemplatePrinter::content)
+                .orElseThrow(() -> BadRequestException.coded("AUCUN_CONTENU", "Le modèle " + template.getCode() + " n'a ni brouillon ni version publiée"));
+    }
+
+    /** Rendu du courriel genere avec des valeurs d'exemple ; une erreur refuse le modele. */
+    private String emailHtml(DocumentTemplate template, TemplateContent content) {
+        String source = com.sni.bokaticowork.features.document.template.render.EmailTemplates.generate(content.blocks(), content.style());
+        EmailTemplateRegistry registry = emailRegistry.getObject();
+        String name = registry.putPreview(source);
+        try {
+            org.thymeleaf.context.Context context = new org.thymeleaf.context.Context(java.util.Locale.FRENCH);
+            com.sni.bokaticowork.features.document.template.render.EmailTemplates.sampleVariables(emailVariables(template)).forEach(context::setVariable);
+            return templateEngine.getObject().process(name, context);
+        } catch (org.thymeleaf.exceptions.TemplateProcessingException ex) {
+            throw BadRequestException.coded("MODELE_INVALIDE", "Le courriel ne se rend pas : " + ex.getMessage());
+        } finally {
+            registry.dropPreview(name);
+        }
+    }
+
+    /** Variables lues par le courriel d'origine : les jetons permis. */
+    java.util.Set<String> emailVariables(DocumentTemplate template) {
+        if (template.getFallbackTemplate() == null) {
+            return java.util.Set.of();
+        }
+        String path = "templates/" + (template.getFallbackTemplate().startsWith("email/") ? "" : "email/") + template.getFallbackTemplate() + ".html";
+        try (java.io.InputStream in = new org.springframework.core.io.ClassPathResource(path).getInputStream()) {
+            return com.sni.bokaticowork.features.document.template.render.EmailTemplates.variables(
+                    new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+        } catch (java.io.IOException ex) {
+            return java.util.Set.of();
+        }
+    }
+
+    private static boolean isEmail(DocumentTemplate template) {
+        return "EMAIL".equals(template.getFamily());
+    }
+
+    /** Controle selon la famille : pieces PDF (blocs d'impression) ou courriels (blocs de message, jetons permis). */
+    private TemplateContent checked(DocumentTemplate template, TemplateContent content) {
+        if (!isEmail(template)) {
+            return content.validate();
+        }
+        java.util.List<String> required = template.getRequiredTokens() == null ? java.util.List.of()
+                : java.util.Arrays.stream(template.getRequiredTokens().split(",")).map(String::trim).filter(token -> !token.isEmpty()).toList();
+        com.sni.bokaticowork.features.document.template.render.EmailTemplates.validate(content.blocks(), content.style(), emailVariables(template), required);
+        return content;
+    }
+
+    private void invalidateEmails() {
+        EmailTemplateRegistry registry = emailRegistry.getIfAvailable();
+        if (registry != null) {
+            registry.invalidate();
+        }
+    }
+
     @Transactional(readOnly = true)
     public Catalog catalog(String code) {
         DocumentTemplate template = template(code);
+        if (isEmail(template)) {
+            List<FieldEntry> tokens = emailVariables(template).stream().map(variable -> new FieldEntry(variable, variable, "‹" + variable + "›")).toList();
+            return new Catalog(template.getCode(), tokens, List.of(), List.of(), List.of(),
+                    com.sni.bokaticowork.features.document.template.render.EmailTemplates.BLOCK_TYPES.stream().sorted().toList(), List.of(), false,
+                    template.getRequiredTokens() == null ? null : "Jetons obligatoires : " + template.getRequiredTokens());
+        }
         boolean supported = dataSources.supports(template.getCode());
         List<FieldEntry> fields = new ArrayList<>();
         List<TableEntry> tables = new ArrayList<>();

@@ -54,6 +54,10 @@ public class DocumentTemplate {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
+    /** Courriels (lot E1) : jetons qu'un modele doit garder, separes par des virgules (code, lien de securite...). */
+    @Column(name = "required_tokens", length = 300)
+    private String requiredTokens;
+
     @Column(name = "active", nullable = false)
     @Builder.Default
     private Boolean active = Boolean.TRUE;

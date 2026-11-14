@@ -80,6 +80,19 @@ public class DocumentTemplateController {
                 .body(pdf);
     }
 
+    /** Apercu HTML d'un courriel (lot E1) : contenu du corps, sinon brouillon, sinon version publiee ; valeurs d'exemple. */
+    @PostMapping(value = "/{code}/preview-email", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> previewEmail(@PathVariable String code, @RequestBody(required = false) Content request) {
+        return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(service.previewEmail(code, request));
+    }
+
+    /** Envoi d'essai d'un courriel a l'adresse de l'utilisateur connecte (lot E1). */
+    @PostMapping("/{code}/test-send")
+    @Audited(module = "DOCUMENT_TEMPLATE", action = "TEST_SEND", ressource = "document_template_version")
+    public ResponseEntity<java.util.Map<String, String>> testSend(@PathVariable String code, @RequestBody(required = false) Content request) {
+        return ResponseEntity.ok(java.util.Map.of("sentTo", service.testSend(code, request)));
+    }
+
     @PostMapping("/{code}/publish")
     @Audited(module = "DOCUMENT_TEMPLATE", action = "PUBLISH", ressource = "document_template_version")
     public ResponseEntity<Version> publish(@PathVariable String code) {
