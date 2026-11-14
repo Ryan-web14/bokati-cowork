@@ -1228,6 +1228,111 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/accounting/deposit-slips/{number}/pdf",
+   "package": "features.accounting.controller",
+   "controller": "AccountingPrintController",
+   "source": "src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingPrintController.java",
+   "handler": "depositSlip",
+   "declaredIn": "AccountingPrintController",
+   "access": {
+    "kind": "admin",
+    "permission": "ACCOUNTING_REPORT:READ"
+   },
+   "produces": [
+    "application/pdf"
+   ],
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/accounting/partners/{code}/statement/pdf",
+   "package": "features.accounting.controller",
+   "controller": "AccountingPrintController",
+   "source": "src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingPrintController.java",
+   "handler": "partnerStatement",
+   "declaredIn": "AccountingPrintController",
+   "access": {
+    "kind": "admin",
+    "permission": "FINANCING:READ"
+   },
+   "produces": [
+    "application/pdf"
+   ],
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/accounting/purchases/suppliers/{code}/statement/pdf",
+   "package": "features.accounting.controller",
+   "controller": "AccountingPrintController",
+   "source": "src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingPrintController.java",
+   "handler": "supplierStatement",
+   "declaredIn": "AccountingPrintController",
+   "access": {
+    "kind": "admin",
+    "permission": "PURCHASE:READ"
+   },
+   "produces": [
+    "application/pdf"
+   ],
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/accounting/analytic/axes",
    "package": "features.accounting.controller",
    "controller": "AnalyticController",
@@ -18723,6 +18828,10 @@
     "pdfSealedAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "templateVersion": {
+     "type": "integer",
+     "format": "int32"
     },
     "customerReference": {
      "type": "string"

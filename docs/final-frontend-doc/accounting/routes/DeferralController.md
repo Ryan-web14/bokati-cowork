@@ -482,6 +482,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `pdfStoragePath` | texte |  |  |
 | `pdfSha256` | texte |  |  |
 | `pdfSealedAt` | date-heure ISO 8601 UTC |  |  |
+| `templateVersion` | entier |  |  |
 | `customerReference` | texte |  |  |
 | `poNumber` | texte |  |  |
 | `projectCode` | texte |  |  |

@@ -3062,6 +3062,9 @@
     "allowCancellation": {
      "type": "boolean"
     },
+    "staffOverrideAllowed": {
+     "type": "boolean"
+    },
     "active": {
      "type": "boolean"
     }
@@ -3102,6 +3105,9 @@
     "allowCancellation": {
      "type": "boolean"
     },
+    "staffOverrideAllowed": {
+     "type": "boolean"
+    },
     "active": {
      "type": "boolean"
     }
@@ -3133,6 +3139,9 @@
      "format": "int32"
     },
     "allowCancellation": {
+     "type": "boolean"
+    },
+    "staffOverrideAllowed": {
      "type": "boolean"
     },
     "active": {

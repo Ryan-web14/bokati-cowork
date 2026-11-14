@@ -30,6 +30,9 @@ public abstract class ResourcePolicyMapperDecorator implements ResourcePolicyMap
         if (entity.getActive() == null) {
             entity.setActive(Boolean.TRUE);
         }
+        if (entity.getStaffOverrideAllowed() == null) {
+            entity.setStaffOverrideAllowed(Boolean.TRUE);
+        }
         return entity;
     }
 
