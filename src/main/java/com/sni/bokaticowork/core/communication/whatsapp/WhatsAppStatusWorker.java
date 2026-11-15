@@ -15,6 +15,24 @@ import org.springframework.stereotype.Component;
 public class WhatsAppStatusWorker {
 
     private final WhatsAppService whatsapp;
+    private final com.sni.bokaticowork.core.communication.whatsapp.infobip.InfobipWhatsAppProperties properties;
+
+    /**
+     * Modeles relus chez Infobip une minute apres le demarrage, puis toutes les 24 heures : un modele
+     * approuve par Meta devient utilisable sans geste manuel (sans effet si WhatsApp n'est pas active).
+     */
+    @Scheduled(fixedDelay = 86_400_000L, initialDelay = 60_000L)
+    public void syncTemplates() {
+        if (!properties.isEnabled()) {
+            return;
+        }
+        try {
+            int count = whatsapp.sync().size();
+            log.info("WhatsApp : {} modele(s) relu(s) chez Infobip", count);
+        } catch (RuntimeException exception) {
+            log.warn("Relecture des modeles WhatsApp impossible : {}", exception.getMessage());
+        }
+    }
 
     @Scheduled(fixedDelay = 600_000L, initialDelay = 180_000L)
     public void run() {
