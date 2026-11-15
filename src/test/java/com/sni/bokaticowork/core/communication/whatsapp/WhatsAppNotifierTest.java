@@ -109,4 +109,17 @@ class WhatsAppNotifierTest {
         assertThat(names).hasSize(WhatsAppService.DEFAULTS.size());
         WhatsAppService.DEFAULTS.forEach(template -> assertThat(template.name()).matches("[a-z0-9_]{1,512}"));
     }
+
+    /** La cle d'une page donne son adresse dans l'espace client, reglable a chaud ; un autre parametre passe tel quel. */
+    @Test
+    void portalPathsComeFromTheSettings() {
+        @SuppressWarnings("unchecked") ObjectProvider<PlatformSettings> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(settings);
+        when(settings.text(anyString(), anyString())).thenAnswer(invocation -> invocation.getArgument(1));
+        when(settings.text("bokati.whatsapp.portal-path.wallet", "client/wallet")).thenReturn("/client/wallet");
+        WhatsAppPortalPaths paths = new WhatsAppPortalPaths(provider);
+        assertThat(paths.resolve(WhatsAppPortalPaths.INVOICES)).isEqualTo("client/invoices");
+        assertThat(paths.resolve(WhatsAppPortalPaths.WALLET)).isEqualTo("client/wallet");
+        assertThat(paths.resolve("factures/FAC-1")).isEqualTo("factures/FAC-1");
+    }
 }

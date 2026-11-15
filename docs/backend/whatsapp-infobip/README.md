@@ -99,13 +99,23 @@ Le statut rendu à l'envoi est celui de la prise en charge (`PENDING`).
 
 En plus du courriel, le client reçoit un WhatsApp par modèle approuvé (`WhatsAppNotifier`) :
 
-| Événement | Objet | Déclencheur | Suffixe du bouton |
+| Événement | Objet | Déclencheur | Page du bouton (clé) |
 | --- | --- | --- | --- |
 | Réservation confirmée | `BOOKING_CONFIRMED` | événement `BOOKING_CONFIRMED` de la boîte de sortie, si l'envoi au client est demandé (`sendEmail` absent ou vrai) | aucun |
-| Réservation modifiée | `BOOKING_UPDATED` | `BOOKING_RESCHEDULED`, `BOOKING_RESOURCE_CHANGED`, `BOOKING_TRANSFERRED` (même condition) | `reservations` |
-| Abonnement actif | `SUBSCRIPTION_ACTIVATED` | activation et renouvellement | `abonnements` |
-| Facture soldée | `INVOICE_PAID` | flux de paiement réussi, tous moyens confondus (guichet, Mobile Money, portefeuille), facture en XAF sans reste à payer ; un paiement partiel n'envoie rien | `factures` |
-| Portefeuille | `WALLET_*` | mêmes événements que les reçus et alertes du portefeuille par courriel, mêmes préférences (crédit, débit, « factures seulement ») ; portefeuille en XAF | `portefeuille` |
+| Réservation modifiée | `BOOKING_UPDATED` | `BOOKING_RESCHEDULED`, `BOOKING_RESOURCE_CHANGED`, `BOOKING_TRANSFERRED` (même condition) | `bookings` |
+| Abonnement actif | `SUBSCRIPTION_ACTIVATED` | activation et renouvellement | `subscriptions` |
+| Facture soldée | `INVOICE_PAID` | flux de paiement réussi, tous moyens confondus (guichet, Mobile Money, portefeuille), facture en XAF sans reste à payer ; un paiement partiel n'envoie rien | `invoices` |
+| Portefeuille | `WALLET_*` | mêmes événements que les reçus et alertes du portefeuille par courriel, mêmes préférences (crédit, débit, « factures seulement ») ; portefeuille en XAF | `wallet` |
+
+Page du bouton : le lien du modèle est `https://espace.elleaose.com/{{1}}`, la fin de l'adresse est donnée à l'envoi par une clé, réglée à chaud dans les paramètres `bokati.whatsapp.portal-path.<clé>` (sans nouveau modèle) :
+
+| Clé | Défaut |
+| --- | --- |
+| `invoices` (factures, proformas, avoirs, relances) | `client/invoices` |
+| `quotes` (devis) | `client/quotes` |
+| `bookings` | `client/bookings` |
+| `subscriptions` | `client/subscriptions` |
+| `wallet` | `client/wallet` |
 
 Règles :
 - l'envoi part après la validation de la transaction, sur un autre fil ; un échec (Infobip absent, modèle non approuvé, numéro invalide) est seulement journalisé et ne bloque jamais l'opération ;

@@ -53,7 +53,7 @@ public class BillingSendingService {
     /** Lot C5 : journal des courriels du socle (absent dans les tests unitaires). */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private com.sni.bokaticowork.core.communication.mailService.repository.EmailDeliveryLogRepository emailLogs;
-    private static final String PORTAL_PATH = "factures";
+    private static final String PORTAL_PATH = com.sni.bokaticowork.core.communication.whatsapp.WhatsAppPortalPaths.INVOICES;
 
     private final BillingDocumentServiceImpl billing;
     private final BillingEmailService emails;
@@ -140,7 +140,7 @@ public class BillingSendingService {
         String until = document.getDueDate() == null ? "réception" : DateTimeFormatter.ofPattern("dd/MM/yyyy").format(document.getDueDate());
         BillingDocumentType type = document.getDocumentType();
         if (type == BillingDocumentType.QUOTE) {
-            return new WhatsAppContent("QUOTE_AVAILABLE", List.of(name, document.getDocumentNumber(), amount(document.getTotalAmount()), until), "devis");
+            return new WhatsAppContent("QUOTE_AVAILABLE", List.of(name, document.getDocumentNumber(), amount(document.getTotalAmount()), until), com.sni.bokaticowork.core.communication.whatsapp.WhatsAppPortalPaths.QUOTES);
         }
         if (type == BillingDocumentType.PROFORMA_INVOICE) {
             return new WhatsAppContent("PROFORMA_AVAILABLE", List.of(name, document.getDocumentNumber(), amount(document.getTotalAmount()), until), PORTAL_PATH);

@@ -43,6 +43,13 @@ public class WhatsAppService implements WhatsAppMessageSender {
     private final WhatsAppMessageRepository messages;
     private final PhoneNumberService phones;
     private final org.springframework.context.ApplicationEventPublisher events;
+    private WhatsAppPortalPaths portalPaths;
+
+    /** Pages de l'espace client des boutons, reglees dans les parametres (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPortalPaths(WhatsAppPortalPaths portalPaths) {
+        this.portalPaths = portalPaths;
+    }
 
     /** Bouton d'un modele : URL (lien, {{1}} en fin d'adresse pour un suffixe) ou COPY_CODE (code d'authentification). */
     public record Button(String type, String text, String url, String example) {
@@ -163,7 +170,7 @@ public class WhatsAppService implements WhatsAppMessageSender {
                     throw new BadRequestException("Le modele " + template.get().getName() + " attend " + template.get().getPlaceholders()
                             + " variable(s), " + values.size() + " fournie(s)");
                 }
-                String parameter = buttonParameter(template.get(), values, buttonParameter);
+                String parameter = buttonParameter(template.get(), values, portalPaths == null ? buttonParameter : portalPaths.resolve(buttonParameter));
                 log.setKind("TEMPLATE");
                 log.setTemplateName(template.get().getName());
                 log.setContent(String.join(" | ", values) + (parameter == null || "COPY_CODE".equals(template.get().getButtonType()) ? "" : " | " + parameter));

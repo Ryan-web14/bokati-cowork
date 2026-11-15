@@ -32,7 +32,7 @@ public class BookingWhatsAppNotifier {
 
     static final String CONFIRMED = "BOOKING_CONFIRMED";
     static final String UPDATED = "BOOKING_UPDATED";
-    static final String PORTAL_PATH = "reservations";
+    static final String PORTAL_PATH = com.sni.bokaticowork.core.communication.whatsapp.WhatsAppPortalPaths.BOOKINGS;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
 

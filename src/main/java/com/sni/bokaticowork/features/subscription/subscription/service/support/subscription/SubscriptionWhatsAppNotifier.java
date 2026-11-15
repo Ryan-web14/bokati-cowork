@@ -28,7 +28,7 @@ import java.util.Optional;
 public class SubscriptionWhatsAppNotifier {
 
     static final String PURPOSE = "SUBSCRIPTION_ACTIVATED";
-    static final String PORTAL_PATH = "abonnements";
+    static final String PORTAL_PATH = com.sni.bokaticowork.core.communication.whatsapp.WhatsAppPortalPaths.SUBSCRIPTIONS;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final WhatsAppNotifier whatsApp;

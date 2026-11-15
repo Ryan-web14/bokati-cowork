@@ -32,7 +32,7 @@ import java.util.Optional;
 public class PaymentWhatsAppNotifier {
 
     static final String PURPOSE = "INVOICE_PAID";
-    static final String PORTAL_PATH = "factures";
+    static final String PORTAL_PATH = com.sni.bokaticowork.core.communication.whatsapp.WhatsAppPortalPaths.INVOICES;
 
     private final WhatsAppNotifier whatsApp;
     private final MemberBillingContact memberContact;
