@@ -23,7 +23,7 @@ class BillingWhatsAppC2Test {
         BillingSendingService.WhatsAppContent content = BillingSendingService.whatsAppContent(quote);
         assertThat(content.purpose()).isEqualTo("QUOTE_AVAILABLE");
         assertThat(content.values()).containsExactly("Awa", "DEV-2026-00087", "450 000", "15/12/2026");
-        assertThat(content.portalPath()).isEqualTo("devis");
+        assertThat(content.portalPath()).isEqualTo("quotes");
 
         assertThat(BillingSendingService.whatsAppContent(document(BillingDocumentType.PROFORMA_INVOICE, "PRF-1", "100000", "100000")).purpose())
                 .isEqualTo("PROFORMA_AVAILABLE");

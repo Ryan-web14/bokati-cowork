@@ -171,7 +171,7 @@ public class WalletNotifier {
                 java.util.List<String> all = new java.util.ArrayList<>();
                 all.add(name);
                 all.addAll(java.util.Arrays.asList(values));
-                whatsApp.notify(phone, purpose, all, reference, "portefeuille");
+                whatsApp.notify(phone, purpose, all, reference, com.sni.bokaticowork.core.communication.whatsapp.WhatsAppPortalPaths.WALLET);
             });
         } catch (RuntimeException ex) {
             log.warn("WhatsApp {} du portefeuille {} non envoye : {}", purpose, wallet.getWalletNumber(), ex.getMessage());
