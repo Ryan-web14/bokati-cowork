@@ -362,14 +362,38 @@ public class PaymentServiceImpl implements PaymentService {
                 .payerPhone(details.payerPhone());
     }
 
+    private com.sni.bokaticowork.features.billing.service.support.MemberBillingContact partyContact;
+
+    /** Membre et client personne rattache : une meme personne (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPartyContact(com.sni.bokaticowork.features.billing.service.support.MemberBillingContact partyContact) {
+        this.partyContact = partyContact;
+    }
+
+    /**
+     * Le portefeuille appartient au client de l'intention : meme type et meme code, ou une meme personne
+     * vue comme membre d'un cote et comme son client personne de l'autre (portefeuille ouvert sous le
+     * code client, intention au nom du membre, ou l'inverse).
+     */
+    boolean sameParty(String walletType, String walletCode, String intentType, String intentCode) {
+        if (walletType.equalsIgnoreCase(intentType) && walletCode.equalsIgnoreCase(intentCode)) {
+            return true;
+        }
+        if (partyContact == null) {
+            return false;
+        }
+        var walletMember = partyContact.memberOf(walletType, walletCode);
+        var intentMember = partyContact.memberOf(intentType, intentCode);
+        return walletMember.isPresent() && intentMember.isPresent() && walletMember.get().getId().equals(intentMember.get().getId());
+    }
+
     @Override
     public PaymentTransactionResponse payWithWallet(String intentNumber, WalletPaymentRequest request) {
         PaymentIntent intent = pendingIntent(intentNumber);
         WalletAccount wallet = walletService.serviceWallet(request.walletNumber());
         String normalizedWalletOwnerType = normalizeCustomerType(wallet.getOwnerType(), wallet.getOwnerCode());
         if (normalizedWalletOwnerType == null
-                || !normalizedWalletOwnerType.equalsIgnoreCase(intent.getCustomerType())
-                || !wallet.getOwnerCode().equalsIgnoreCase(intent.getCustomerCode())) {
+                || !sameParty(normalizedWalletOwnerType, wallet.getOwnerCode(), intent.getCustomerType(), intent.getCustomerCode())) {
             throw new BadRequestException("Wallet owner does not match payment intent customer");
         }
         if (!wallet.getCurrency().equalsIgnoreCase(intent.getCurrency())) {
