@@ -34,6 +34,13 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
     private final BookingIdentityResolver identityResolver;
     private final BookingPaymentContextResolver paymentContextResolver;
     private final com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride staffOverride;
+    private com.sni.bokaticowork.features.booking.service.support.BookingOccupancyFinder occupancy;
+
+    /** Plages occupees rendues avec un creneau indisponible (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setOccupancy(com.sni.bokaticowork.features.booking.service.support.BookingOccupancyFinder occupancy) {
+        this.occupancy = occupancy;
+    }
 
     @Override
     public BookingAvailabilityResponse check(BookingAvailabilityRequest request) {
@@ -129,8 +136,20 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
                 null,
                 null,
                 "XAF",
-                message
+                message,
+                occupiedRanges(resource, request, quantity)
         );
+    }
+
+    private List<BookingAvailabilityResponse.OccupiedRange> occupiedRanges(Resource resource, BookingAvailabilityRequest request, int quantity) {
+        if (occupancy == null) {
+            return List.of();
+        }
+        try {
+            return occupancy.occupiedAround(resource, request.startedAt(), request.endedAt(), quantity);
+        } catch (RuntimeException ex) {
+            return List.of();
+        }
     }
 
     private static long noticeMinutes(Resource resource) {

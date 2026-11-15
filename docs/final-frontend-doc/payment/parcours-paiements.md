@@ -135,7 +135,7 @@ Messages en anglais (sauf mention), à traduire :
 | Espèces hors XAF | 400 | « Cash payments are only allowed in XAF » |
 | Session de caisse absente | 400 | `VALIDATION_FAILED` sur `cashSessionNumber` (`@NotNull`) ; chaîne vide : « Cash session number is required for cash payments » |
 | Session non ouverte ou caisse automatique | 400/409 | messages de la caisse, voir [parcours-caisses.md](parcours-caisses.md) |
-| Portefeuille d'un autre client | 400 | « Wallet owner does not match payment intent customer » |
+| Portefeuille d'un autre client | 400 | « Wallet owner does not match payment intent customer ». Un membre et son client personne sont une même personne : l'intention au nom du membre se paie avec le portefeuille ouvert sous son code client, et l'inverse. |
 | Devise du portefeuille | 400 | « Wallet currency does not match payment intent currency » |
 | Portefeuille non actif | 400 | « Wallet is not active » |
 | Solde insuffisant | 400 | « Insufficient wallet balance » |

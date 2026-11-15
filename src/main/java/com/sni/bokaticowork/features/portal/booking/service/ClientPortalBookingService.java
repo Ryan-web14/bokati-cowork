@@ -163,7 +163,7 @@ public class ClientPortalBookingService {
                     result.bookingUnit(), result.unitPrice(), result.estimatedAmount(), result.currency(),
                     "Créneau réservé aux abonnés");
         }
-        return result;
+        return result.withoutBookingNumbers();
     }
 
 
