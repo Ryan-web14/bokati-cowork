@@ -56,6 +56,20 @@ public class UserServiceImpl implements UserService {
     }
 
     private static final String MAX_FAILED_LOGIN_KEY = "app.security.failed-login.max-attempts";
+    private static final String LOCK_MINUTES_KEY = "app.security.failed-login.lock-minutes";
+    static final int DEFAULT_LOCK_MINUTES = 30;
+
+    private com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents;
+
+    /** Lot A2 : verrouillages et deverrouillages enregistres (facultatif dans les tests). */
+    @Autowired(required = false)
+    void setSecurityEvents(com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents) {
+        this.securityEvents = securityEvents;
+    }
+
+    private int lockMinutes() {
+        return platformSettings == null ? DEFAULT_LOCK_MINUTES : platformSettings.integer(LOCK_MINUTES_KEY, DEFAULT_LOCK_MINUTES);
+    }
 
     private int maxFailedLoginAttempts() {
         return platformSettings == null ? maxFailedLoginAttempts
@@ -318,7 +332,12 @@ public class UserServiceImpl implements UserService {
         userRepo.findByEmailIgnoreCase(email).ifPresent(user -> {
             user.setFailedLoginAttempts(0);
             user.setLastLogin(LocalDateTime.now());
-            //userRepo.save(user);
+            if (Boolean.TRUE.equals(user.getIsAccountLocked()) && !user.lockActive()) {
+                // Verrou echu : la connexion reussie le leve.
+                user.setIsAccountLocked(false);
+                user.setLockedUntil(null);
+            }
+            userRepo.save(user);
         });
     }
 
@@ -326,14 +345,26 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void recordLoginFailure(String email) {
         userRepo.findByEmailIgnoreCase(email).ifPresent(user -> {
+            if (Boolean.TRUE.equals(user.getIsAccountLocked()) && !user.lockActive()) {
+                // Verrou echu : on repart de zero plutot que de reverrouiller au premier echec.
+                user.setIsAccountLocked(false);
+                user.setLockedUntil(null);
+                user.setFailedLoginAttempts(0);
+            }
             int failures = user.getFailedLoginAttempts() == null ? 0 : user.getFailedLoginAttempts();
             int nextFailures = failures + 1;
             user.setFailedLoginAttempts(nextFailures);
-            if (nextFailures >= maxFailedLoginAttempts()) {
+            if (nextFailures >= maxFailedLoginAttempts() && !Boolean.TRUE.equals(user.getIsAccountLocked())) {
+                int minutes = lockMinutes();
                 user.setIsAccountLocked(true);
+                user.setLockedUntil(minutes > 0 ? java.time.Instant.now().plusSeconds(60L * minutes) : null);
                 log.warn("User {} locked after {} failed login attempts", email, nextFailures);
+                if (securityEvents != null) {
+                    securityEvents.record(com.sni.bokaticowork.core.audit.security.SecurityEventType.ACCOUNT_LOCKED, user.getId(), user.getUserId(),
+                            email, "failedAttempts", nextFailures, "lockedUntil", user.getLockedUntil() == null ? "manuel" : user.getLockedUntil().toString());
+                }
             }
-           // userRepo.save(user);
+            userRepo.save(user);
         });
     }
 
@@ -368,8 +399,13 @@ public class UserServiceImpl implements UserService {
         Users user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User with email " + email + " not found"));
         user.setIsAccountLocked(false);
+        user.setLockedUntil(null);
         user.setFailedLoginAttempts(0);
         userRepo.save(user);
+        if (securityEvents != null) {
+            securityEvents.record(com.sni.bokaticowork.core.audit.security.SecurityEventType.ACCOUNT_UNLOCKED, user.getId(), user.getUserId(),
+                    email, "by", "SELF");
+        }
     }
 
     private List<String> validateUser(UserRequest request){

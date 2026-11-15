@@ -49,6 +49,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return platformSettings == null ? enabled : platformSettings.bool(ENABLED_KEY, enabled);
     }
 
+    private com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents;
+
+    /** Lot A2 : evenements de securite (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSecurityEvents(com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents) {
+        this.securityEvents = securityEvents;
+    }
+
     @Override
     protected void doFilterInternal(
             @NotNull HttpServletRequest request,
@@ -70,6 +78,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         // Nommer l'adresse et la route · un plafond atteint est soit un abus, soit une interface
         // qui boucle. Les deux se diagnostiquent par la meme ligne.
         log.warn("Plafond atteint · {} {} depuis {}", request.getMethod(), request.getRequestURI(), clientIp);
+        if (securityEvents != null) {
+            securityEvents.recordThrottled("429|" + clientIp + "|" + rule.key(), com.sni.bokaticowork.core.audit.security.SecurityEventType.RATE_LIMITED, null, null, null, request,
+                    "rule", rule.key(), "limit", rule.maxRequests(), "windowSeconds", rule.windowSeconds());
+        }
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType("application/json");
         // Retry-After · une interface qui respecte l'en-tete cesse de marteler d'elle-meme.

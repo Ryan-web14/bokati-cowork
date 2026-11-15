@@ -63,6 +63,19 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
     private final JWTService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final com.sni.bokaticowork.security.registration.EmailDomainPolicy emailDomainPolicy;
+    private com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents;
+
+    /** Lot A2 : connexions, refus, deconnexions et alertes enregistres (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSecurityEvents(com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents) {
+        this.securityEvents = securityEvents;
+    }
+
+    private void event(com.sni.bokaticowork.core.audit.security.SecurityEventType type, Users user, String login, Object... details) {
+        if (securityEvents != null) {
+            securityEvents.record(type, user == null ? null : user.getId(), user == null ? null : user.getUserId(), login, details);
+        }
+    }
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.promotion.pricing.referral.service.ReferralProgramService referralProgramService;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.promotion.pricing.referral.service.ReferralService referralService;
 
@@ -90,7 +103,12 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
                 : platformSettings.number(REFRESH_REUSE_GRACE_KEY, refreshReuseGraceSeconds);
     }
 
-    @Transactional
+    /**
+     * Lot A2 : un refus ne defait pas le compte des echecs ni le verrou decide juste avant. Sans le
+     * {@code noRollbackFor}, l'exception qui repond 401 annulait l'increment : le verrouillage
+     * apres trop d'echecs ne se declenchait jamais.
+     */
+    @Transactional(noRollbackFor = {BadCredentialException.class, AccountLockedException.class})
     public LoginResponse login(LoginRequest request, HttpServletRequest httpReq) throws AuthenticationException{
 
         log.debug("Authenticating user {}", request.getEmail());
@@ -190,6 +208,7 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
                         + "(revoque le {}) · toutes ses sessions sont fermees",
                 user.getUserId(), httpReq == null ? "?" : com.sni.bokaticowork.core.observability.RequestContext.clientIp(httpReq), revokedAt);
         sessionService.revokeAllForUser(user);
+        event(com.sni.bokaticowork.core.audit.security.SecurityEventType.REFRESH_TOKEN_REUSE, user, user.getEmail(), "revokedAt", revokedAt.toString());
     }
 
     @Override
@@ -198,6 +217,10 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
             return;
         }
         refreshTokenService.revokeToken(token);
+        Authentication current = SecurityContextHolder.getContext().getAuthentication();
+        if (current != null && current.getPrincipal() instanceof UserPrincipal principal) {
+            event(com.sni.bokaticowork.core.audit.security.SecurityEventType.LOGOUT, principal.getUser(), principal.getUsername());
+        }
         try {
             sessionService.invalidateSessionByToken(token);
         } catch (ResourceNotFoundException ignored) {
@@ -231,10 +254,12 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
         try {
             email = oneTimeTokenService.validateOneTimeToken(ottRequest.getOttToken(), ottRequest.getVerificationToken()).get(true);
         } catch (JwtException e) {
+            event(com.sni.bokaticowork.core.audit.security.SecurityEventType.LOGIN_FAILURE, null, null, "method", "ONE_TIME_CODE", "reason", "INVALID_TOKEN");
             throw new BadCredentialException("Invalid token");
         }
 
         if(email == null || email.isEmpty()){
+            event(com.sni.bokaticowork.core.audit.security.SecurityEventType.LOGIN_FAILURE, null, null, "method", "ONE_TIME_CODE", "reason", "INVALID_CODE");
             throw new BadCredentialException("Invalid token");
         }
 
@@ -247,7 +272,12 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
         } catch (UsernameNotFoundException e) {
             throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
         }
-        assertAccountUsable(principal);
+        try {
+            assertAccountUsable(principal);
+        } catch (AccountLockedException locked) {
+            event(com.sni.bokaticowork.core.audit.security.SecurityEventType.LOGIN_REFUSED_LOCKED, principal.getUser(), email, "method", "ONE_TIME_CODE");
+            throw locked;
+        }
 
         userProvisioningService.completePortalVerification(email, "OTT_VERIFICATION");
         principal = (UserPrincipal) userDetailService.loadUserByUsername(email);
@@ -272,7 +302,9 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void resetPassword(String email) {
-        passwordResetService.generatePasswordResetToken(userService.getUserByEmailForService(email));
+        Users user = userService.getUserByEmailForService(email);
+        passwordResetService.generatePasswordResetToken(user);
+        event(com.sni.bokaticowork.core.audit.security.SecurityEventType.PASSWORD_RESET_REQUESTED, user, email);
     }
 
     @Override
@@ -400,20 +432,23 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
             UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
             if (backOffice && !com.sni.bokaticowork.security.authorization.SecurityRoles.hasAdminRealmRole(principal.getAuthorities())) {
                 log.warn("Back-office login refused for an account without staff role: {}", principal.getUsername());
+                event(com.sni.bokaticowork.core.audit.security.SecurityEventType.LOGIN_REFUSED_BACK_OFFICE, principal.getUser(), principal.getUsername());
                 SecurityContextHolder.clearContext();
                 throw new com.sni.bokaticowork.core.exception.customs.BackOfficeAccessDeniedException(
                         "Ce compte n'a pas accès à l'espace d'administration");
             }
             SecurityContextHolder.getContext().setAuthentication(authentication);
             sessionService.invalidateOldestSessionByUser(principal.getUser());
-            return createSessionAndResponse(request, principal);
+            return createSessionAndResponse(request, principal, "PASSWORD");
         } catch (LockedException e) {
             log.warn("Login attempt on locked account: {}", token.getPrincipal());
+            event(com.sni.bokaticowork.core.audit.security.SecurityEventType.LOGIN_REFUSED_LOCKED, null, String.valueOf(token.getPrincipal()), "method", "PASSWORD");
             throw new AccountLockedException("Your account is locked. Use the unlock-account flow to regain access.");
         } catch (AuthenticationException e){
             Object principal = token.getPrincipal();
             if (principal instanceof String email) {
                 userService.recordLoginFailure(email);
+                event(com.sni.bokaticowork.core.audit.security.SecurityEventType.LOGIN_FAILURE, null, email, "method", "PASSWORD", "reason", e.getClass().getSimpleName());
             }
             log.warn("Error authenticating user", e);
             throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
@@ -437,12 +472,13 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
         authToken.setDetails((new WebAuthenticationDetailsSource().buildDetails(request)));
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
-        return createSessionAndResponse(request, principal);
+        return createSessionAndResponse(request, principal, "ONE_TIME_CODE");
     }
 
-    private LoginResponse createSessionAndResponse(HttpServletRequest request, UserPrincipal principal) {
+    private LoginResponse createSessionAndResponse(HttpServletRequest request, UserPrincipal principal, String method) {
         UserSessionToken tokens = sessionService.createSession(request, principal);
         userService.recordLoginSuccess(principal.getUser().getEmail());
+        event(com.sni.bokaticowork.core.audit.security.SecurityEventType.LOGIN_SUCCESS, principal.getUser(), principal.getUsername(), "method", method);
 
         return LoginResponse.builder()
                 .accessToken(tokens.getAccessToken())

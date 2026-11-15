@@ -69,4 +69,14 @@ public class UserSession {
     @Column(name = "location_guess")
     private String locationGuess;
 
+    /** Lot A2 : fermeture par un administrateur (date, auteur, motif). */
+    @jakarta.persistence.Column(name = "revoked_at")
+    private Instant revokedAt;
+
+    @jakarta.persistence.Column(name = "revoked_by", length = 250)
+    private String revokedBy;
+
+    @jakarta.persistence.Column(name = "revoked_reason", length = 300)
+    private String revokedReason;
+
 }

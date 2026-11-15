@@ -53,7 +53,8 @@ public class UserPrincipal implements UserDetails, CredentialsContainer {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !Boolean.TRUE.equals(user.getIsAccountLocked());
+        // Lot A2 : un verrou dont la duree est echue ne bloque plus ; la connexion suivante le leve.
+        return !user.lockActive();
     }
 
     @Override
