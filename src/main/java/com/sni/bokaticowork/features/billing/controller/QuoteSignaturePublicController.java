@@ -49,7 +49,7 @@ public class QuoteSignaturePublicController {
                 request.signerName(),
                 request.signerEmail(),
                 request.signatureImageBase64(),
-                http.getRemoteAddr(),
+                com.sni.bokaticowork.core.observability.RequestContext.clientIp(http),
                 http.getHeader("User-Agent")
         );
         return ResponseEntity.ok(quoteSignatureService.confirmSignature(token, enriched));

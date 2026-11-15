@@ -40,7 +40,7 @@ public class ContractSigningController {
             @PathVariable UUID token,
             @Valid @RequestBody SignContractRequest request,
             HttpServletRequest httpRequest) {
-        String ipAddress = httpRequest.getRemoteAddr();
+        String ipAddress = com.sni.bokaticowork.core.observability.RequestContext.clientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         return ResponseEntity.ok(signingService.sign(token, request, ipAddress, userAgent));
     }

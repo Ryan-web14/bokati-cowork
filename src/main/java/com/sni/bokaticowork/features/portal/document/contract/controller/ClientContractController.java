@@ -74,7 +74,7 @@ public class ClientContractController {
             @Valid @RequestBody ClientContractSignRequest request,
             HttpServletRequest httpRequest) {
         Member member = clientContextService.getAuthenticatedMember();
-        String ip = httpRequest.getRemoteAddr();
+        String ip = com.sni.bokaticowork.core.observability.RequestContext.clientIp(httpRequest);
         String ua = httpRequest.getHeader("User-Agent");
         return ResponseEntity.ok(clientContractService.signContract(member, contractCode, request, ip, ua));
     }

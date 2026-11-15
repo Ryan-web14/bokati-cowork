@@ -74,6 +74,10 @@ spring:
         sender-email: ${MICROSOFT_SENDER_EMAIL:no-reply@elleaose.com}
 
 logging:
+  # Centre d'audit (lot A0) : une ligne JSON par evenement, avec requestId, clientIp et user (MDC).
+  structured:
+    format:
+      console: ${LOG_STRUCTURED_FORMAT:logstash}
   level:
     root: WARN
     com.sni.bokaticowork: INFO

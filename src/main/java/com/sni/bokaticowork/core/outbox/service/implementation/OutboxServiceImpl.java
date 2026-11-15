@@ -53,6 +53,7 @@ public class OutboxServiceImpl implements OutboxService {
                 .payload(serialize(payload))
                 .status(OutboxEventStatus.PENDING)
                 .availableAt(Instant.now())
+                .requestId(com.sni.bokaticowork.core.observability.RequestContext.currentRequestId())
                 .build();
 
         return repository.save(event);
@@ -151,6 +152,10 @@ public class OutboxServiceImpl implements OutboxService {
     public int processPending(int batchSize) {
         List<OutboxEvent> events = claimPending(batchSize);
         for (OutboxEvent event : events) {
+            String previousRequestId = org.slf4j.MDC.get(com.sni.bokaticowork.core.observability.RequestContext.MDC_REQUEST_ID);
+            if (event.getRequestId() != null) {
+                org.slf4j.MDC.put(com.sni.bokaticowork.core.observability.RequestContext.MDC_REQUEST_ID, event.getRequestId());
+            }
             try {
                 resolveProcessor(event).process(event);
                 markPublished(event.getId());
@@ -159,6 +164,12 @@ public class OutboxServiceImpl implements OutboxService {
                     markDead(event.getId(), ex.getMessage());
                 } else {
                     markFailed(event.getId(), ex.getMessage(), Instant.now().plusSeconds(RETRY_DELAY_SECONDS));
+                }
+            } finally {
+                if (previousRequestId == null) {
+                    org.slf4j.MDC.remove(com.sni.bokaticowork.core.observability.RequestContext.MDC_REQUEST_ID);
+                } else {
+                    org.slf4j.MDC.put(com.sni.bokaticowork.core.observability.RequestContext.MDC_REQUEST_ID, previousRequestId);
                 }
             }
         }

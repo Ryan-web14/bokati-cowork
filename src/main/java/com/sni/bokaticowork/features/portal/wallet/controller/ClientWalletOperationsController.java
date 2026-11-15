@@ -350,11 +350,8 @@ public class ClientWalletOperationsController {
         return wallet;
     }
 
+    /** Adresse reelle du client (derriere le proxy), pas la premiere valeur de X-Forwarded-For que l'appelant choisit. */
     private String clientIp(HttpServletRequest http) {
-        String forwarded = http.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return http.getRemoteAddr();
+        return com.sni.bokaticowork.core.observability.RequestContext.clientIp(http);
     }
 }

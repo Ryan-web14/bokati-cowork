@@ -56,6 +56,10 @@ public class AuditLog {
     @Column(name = "session_id")
     private String sessionId;
 
+    /** Identifiant de la requete (en-tete X-Request-Id), commun aux journaux et a la boite de sortie (lot A0). */
+    @Column(name = "request_id", length = 64)
+    private String requestId;
+
     @Column(name = "error_code")
     private String errorCode;
 

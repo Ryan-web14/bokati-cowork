@@ -115,7 +115,7 @@ class BillingSendingB4Test {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<String>> values = ArgumentCaptor.forClass(List.class);
-        verify(sender).send(eq("+242061135836"), eq("PAYMENT_REMINDER"), values.capture(), any(), eq("FAC-9"), eq("factures"));
+        verify(sender).send(eq("+242061135836"), eq("PAYMENT_REMINDER"), values.capture(), any(), eq("FAC-9"), eq("invoices"));
         assertThat(values.getValue()).containsExactly("Awa", "FAC-9", "150 000", "30/11/2026");
         assertThat(sent.get(0).providerReference()).isEqualTo("msg-1");
         assertThat(sent.get(0).channel()).isEqualTo("WHATSAPP");

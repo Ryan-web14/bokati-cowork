@@ -56,6 +56,9 @@ spring:
     virtual-host: /
 
 logging:
+  # Centre d'audit (lot A0) : identifiant de requete et compte en tete de chaque ligne.
+  pattern:
+    correlation: "[%X{requestId:-} %X{user:-}] "
   level:
     com.sni.bokaticowork: DEBUG
     com.sni.ohadabokati: DEBUG

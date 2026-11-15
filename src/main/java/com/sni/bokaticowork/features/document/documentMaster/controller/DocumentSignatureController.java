@@ -43,7 +43,7 @@ public class DocumentSignatureController {
                 documentCode,
                 signatureId,
                 request,
-                httpRequest.getRemoteAddr(),
+                com.sni.bokaticowork.core.observability.RequestContext.clientIp(httpRequest),
                 httpRequest.getHeader("User-Agent")
         ));
     }

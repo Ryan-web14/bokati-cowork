@@ -188,7 +188,7 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
         }
         log.warn("ALERTE SECURITE · jeton de rafraichissement deja consomme presente pour {} depuis {} "
                         + "(revoque le {}) · toutes ses sessions sont fermees",
-                user.getUserId(), httpReq == null ? "?" : httpReq.getRemoteAddr(), revokedAt);
+                user.getUserId(), httpReq == null ? "?" : com.sni.bokaticowork.core.observability.RequestContext.clientIp(httpReq), revokedAt);
         sessionService.revokeAllForUser(user);
     }
 

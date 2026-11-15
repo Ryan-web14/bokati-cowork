@@ -53,6 +53,10 @@ public class OutboxEvent {
     @Column(name = "available_at", nullable = false)
     private Instant availableAt;
 
+    /** Requete qui a publie l'evenement (lot A0) : son traitement reprend cet identifiant dans ses journaux. */
+    @Column(name = "request_id", length = 64)
+    private String requestId;
+
     @Column(name = "last_error", columnDefinition = "TEXT")
     private String lastError;
 
