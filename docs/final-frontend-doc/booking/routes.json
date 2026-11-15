@@ -1897,6 +1897,12 @@
     },
     "message": {
      "type": "string"
+    },
+    "occupiedRanges": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange"
+     }
     }
    }
   },
@@ -3011,6 +3017,28 @@
     }
    }
   },
+  "BookingAvailabilityResponse.OccupiedRange": {
+   "type": "object",
+   "properties": {
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "bookingNumbers": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
   "BookingIdentityLookup": {
    "type": "object",
    "properties": {
@@ -3107,6 +3135,7 @@
   "BookingLineResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingLineResponse",
   "BookingBatchResponse.BatchInvoice": "com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse.BatchInvoice",
   "CreateBookingBatchRequest.Line": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchRequest.Line",
+  "BookingAvailabilityResponse.OccupiedRange": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange",
   "BookingIdentityLookup": "com.sni.bokaticowork.features.booking.dto.request.BookingIdentityLookup"
  }
 }

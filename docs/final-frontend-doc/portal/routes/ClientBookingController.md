@@ -195,6 +195,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `estimatedAmount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
 | `message` | texte |  |  |
+| `occupiedRanges` | [BookingAvailabilityResponse.OccupiedRange](#m-BookingAvailabilityResponse-OccupiedRange)[] |  |  |
 
 <a id="m-ClientCheckAvailabilityRequest"></a>
 #### ClientCheckAvailabilityRequest
@@ -273,3 +274,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `email` | texte |  |  |
 | `phone` | texte |  |  |
 | `role` | enum : `HOST`, `GUEST`, `ORGANIZER`, `MEMBER` |  |  |
+
+<a id="m-BookingAvailabilityResponse-OccupiedRange"></a>
+#### BookingAvailabilityResponse.OccupiedRange
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `startedAt` | date-heure locale sans fuseau |  |  |
+| `endedAt` | date-heure locale sans fuseau |  |  |
+| `reason` | texte |  |  |
+| `bookingNumbers` | texte[] |  |  |

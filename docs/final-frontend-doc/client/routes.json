@@ -1291,6 +1291,18 @@
   "UpdateMemberRequest": {
    "type": "object",
    "properties": {
+    "memberId": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "userId": {
+     "type": "string"
+    },
+    "fullname": {
+     "type": "string"
+    },
     "firstname": {
      "maxLength": 350,
      "minLength": 0,
@@ -1318,6 +1330,18 @@
     "whatsappPhone": {
      "maxLength": 30,
      "minLength": 0,
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "portalAccess": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string"
+    },
+    "updatedAt": {
      "type": "string"
     }
    }

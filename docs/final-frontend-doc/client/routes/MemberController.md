@@ -385,12 +385,20 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
+| `memberId` | texte |  |  |
+| `customerId` | texte |  |  |
+| `userId` | texte |  |  |
+| `fullname` | texte |  |  |
 | `firstname` | texte |  | longueur min `0`, longueur max `350` |
 | `lastname` | texte |  | longueur min `0`, longueur max `350` |
 | `email` | string (email) |  | longueur min `0`, longueur max `250` |
 | `phone` | texte |  | longueur min `0`, longueur max `30` |
 | `phoneCountry` | texte |  |  |
 | `whatsappPhone` | texte |  | longueur min `0`, longueur max `30` |
+| `status` | texte |  |  |
+| `portalAccess` | booléen |  |  |
+| `createdAt` | texte |  |  |
+| `updatedAt` | texte |  |  |
 
 <a id="m-KycGracePeriodRequest"></a>
 #### KycGracePeriodRequest

@@ -6526,6 +6526,12 @@
     },
     "message": {
      "type": "string"
+    },
+    "occupiedRanges": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange"
+     }
     }
    }
   },
@@ -10362,6 +10368,28 @@
     }
    }
   },
+  "BookingAvailabilityResponse.OccupiedRange": {
+   "type": "object",
+   "properties": {
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "bookingNumbers": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
   "ClientPlanSummaryResponse.HighlightedBenefit": {
    "type": "object",
    "properties": {
@@ -11995,6 +12023,7 @@
   "StatementDtos.Line": "com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Line",
   "BookingParticipantResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingParticipantResponse",
   "BookingParticipantRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest",
+  "BookingAvailabilityResponse.OccupiedRange": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange",
   "ClientPlanSummaryResponse.HighlightedBenefit": "com.sni.bokaticowork.features.portal.subscription.dto.response.ClientPlanSummaryResponse.HighlightedBenefit",
   "PlanPriceResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PlanPriceResponse",
   "PlanBenefitResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PlanBenefitResponse",
