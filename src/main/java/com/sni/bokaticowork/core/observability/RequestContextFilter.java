@@ -17,7 +17,7 @@ import java.io.IOException;
  * Premier filtre de chaque requete (lot A0) : identifiant de requete et adresse reelle du client,
  * poses dans la requete, le MDC et la reponse ({@code X-Request-Id}), retires a la fin.
  */
-@Component
+@Component("bokatiRequestContextFilter")
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
 public class RequestContextFilter extends OncePerRequestFilter {
 
