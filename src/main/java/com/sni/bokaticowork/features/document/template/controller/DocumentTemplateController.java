@@ -70,7 +70,7 @@ public class DocumentTemplateController {
      * Apercu PDF : contenu du corps s'il a des blocs, sinon le brouillon, sinon la version publiee ;
      * avec la piece {@code number} si elle est donnee, sinon des donnees d'exemple. Rien n'est ecrit.
      */
-    @PostMapping(value = "/{code}/preview", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PostMapping(value = "/{code}/preview")
     public ResponseEntity<byte[]> preview(@PathVariable String code, @RequestParam(required = false) String number,
                                           @RequestBody(required = false) Content request) {
         byte[] pdf = service.preview(code, number, request);
@@ -81,7 +81,7 @@ public class DocumentTemplateController {
     }
 
     /** Apercu HTML d'un courriel (lot E1) : contenu du corps, sinon brouillon, sinon version publiee ; valeurs d'exemple. */
-    @PostMapping(value = "/{code}/preview-email", produces = MediaType.TEXT_HTML_VALUE)
+    @PostMapping(value = "/{code}/preview-email")
     public ResponseEntity<String> previewEmail(@PathVariable String code, @RequestBody(required = false) Content request) {
         return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(service.previewEmail(code, request));
     }

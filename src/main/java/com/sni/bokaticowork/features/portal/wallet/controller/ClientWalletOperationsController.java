@@ -294,7 +294,7 @@ public class ClientWalletOperationsController {
     // Documents
     // -------------------------------------------------------------------------------------
 
-    @GetMapping(value = "/statement", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = "/statement")
     public ResponseEntity<byte[]> statement(@PathVariable String walletNumber,
                                             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
@@ -306,7 +306,7 @@ public class ClientWalletOperationsController {
                 .body(pdf);
     }
 
-    @GetMapping(value = "/ledger/{transactionNumber}/receipt", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = "/ledger/{transactionNumber}/receipt")
     public ResponseEntity<byte[]> receipt(@PathVariable String walletNumber, @PathVariable String transactionNumber) {
         WalletAccount wallet = owned(walletNumber);
         byte[] pdf = statementService.receipt(wallet, transactionNumber);
