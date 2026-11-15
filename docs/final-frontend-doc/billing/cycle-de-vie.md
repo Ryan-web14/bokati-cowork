@@ -42,9 +42,10 @@ Un devis expiré ou refusé libère son stock réservé ([stock](stock.md)). La 
 | `SENT` | Ancien statut d'envoi | n'est plus posé sur une facture (lot B1) ; des factures anciennes peuvent l'avoir | comme `ISSUED` |
 | `PARTIALLY_PAID` | Payée en partie | encaissement, acompte déduit | `PAID`, `OVERDUE` |
 | `PAID` | Soldée | encaissement complet | aucune (correction : avoir) |
+| `REFUNDED` (facture) | Payée puis remboursée en partie par avoir, soldée par l'avoir et le paiement restant (par exemple une réservation annulée remboursée à 50 %) | remboursement d'un paiement couvert par un avoir imputé | aucune |
 | `OVERDUE` | Échue avec un solde | tâche horaire | `PARTIALLY_PAID`, `PAID` |
 | `WRITTEN_OFF` | Passée en perte | comptabilité (créances irrécouvrables) | aucune |
-| `CANCELLED` | Annulée | `DELETE /documents/{n}` ; remplacement par une rectificative ([modification](modification-facture.md)) ou par une facture d'un autre client ([changement de client](changement-client.md)) | aucune |
+| `CANCELLED` | Annulée | avoir imputé couvrant toute une facture non payée ; `DELETE /documents/{n}` ; remplacement par une rectificative ([modification](modification-facture.md)) ou par une facture d'un autre client ([changement de client](changement-client.md)) | aucune |
 
 Une facture remplacée porte `replacedByDocumentNumber` (champ de l'entité, visible dans les événements et le journal) ; la rectificative porte `originalDocumentNumber`.
 
@@ -89,3 +90,15 @@ Seul un avoir `VALIDATED` compte dans `customerImpact` (négatif) et dans `total
 | Avoir | `VALIDATED` | Imputer, Reverser au portefeuille |
 | Proforma | tout statut | Modifier (nouvelle version), Envoyer |
 | Proforma | non `CONVERTED` | Transformer en devis |
+
+## Avoir imputé sur sa facture : une déduction, pas un paiement
+
+Depuis le 15/11/2026, un avoir imputé sur sa propre facture (`PATCH /credit-notes/{n}/apply` ou création avec `applyImmediately`) est compté à part, dans `creditedAmount`, et non plus dans `paidAmount`. Reste dû = total − avoirs − paiements.
+
+| Cas | Avant | Maintenant |
+| --- | --- | --- |
+| Facture de 10 000 non payée, avoir de 2 500 | `PARTIALLY_PAID`, 2 500 « payés » | Statut inchangé (`ISSUED`, `VALIDATED`, `OVERDUE`...), `creditedAmount` 2 500, reste dû 7 500 |
+| Avoir couvrant toute une facture non payée | `PAID` | `CANCELLED` |
+| Réservation payée 10 000, annulée, avoir de 5 000 puis remboursement de 5 000 | `PARTIALLY_PAID`, reste dû 5 000 | `REFUNDED`, reste dû 0 |
+
+L'écran affiche `creditedAmount` à côté des paiements (« Avoirs : 2 500 »). Un avoir imputé sur une **autre** facture (`apply-to`) ou transféré lors d'un changement de client reste un règlement, car il porte de l'argent déjà encaissé. Les factures traitées avant le 15/11/2026 gardent leur état : leurs avoirs restent comptés dans `paidAmount`.

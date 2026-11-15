@@ -2421,7 +2421,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
             throw ConflictException.coded("CREDIT_NOTE", "l'avoir " + creditNoteNumber + " a déjà été consommé");
         }
-        BillingDocument invoice = applyPayment(creditNote.getSourceCode(), creditNote.getTotalAmount());
+        BillingDocument invoice = applyCredit(creditNote.getSourceCode(), creditNote.getTotalAmount());
         creditNote.setStatus(BillingDocumentStatus.APPLIED);
         BillingDocument saved = documentRepository.save(creditNote);
         eventWriter.write(saved, "CREDIT_NOTE_APPLIED", java.util.Map.of("invoiceNumber", invoice.getDocumentNumber()));
@@ -2613,9 +2613,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
         BillingDocument document = lockedByNumber(documentNumber);
         lifecycleSupport.ensureCanPay(document);
-        BigDecimal paid = document.getPaidAmount().add(amount).min(document.getTotalAmount());
+        BigDecimal paid = document.getPaidAmount().add(amount).min(document.getTotalAmount().subtract(credited(document)).max(BigDecimal.ZERO));
         document.setPaidAmount(paid);
-        document.setBalanceDue(document.getTotalAmount().subtract(paid));
+        document.setBalanceDue(document.getTotalAmount().subtract(credited(document)).subtract(paid).max(BigDecimal.ZERO));
         if (document.getBalanceDue().signum() == 0) {
             document.setStatus(BillingDocumentStatus.PAID);
             document.setPaidAt(Instant.now());
@@ -2631,6 +2631,47 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             elementSettlements.publish(saved.getDocumentNumber(), "Paiement de " + amount.stripTrailingZeros().toPlainString()
                     + " sur " + saved.getDocumentNumber());
         }
+        return saved;
+    }
+
+    private static BigDecimal credited(BillingDocument document) {
+        return document.getCreditedAmount() == null ? BigDecimal.ZERO : document.getCreditedAmount();
+    }
+
+    /**
+     * Avoir impute sur sa propre facture : il reduit le reste du sans etre un reglement (ni paiement
+     * compte, ni effet sur les elements regles par la facture). La facture garde son statut tant qu'il
+     * reste du ; entierement couverte, elle est soldee (avec des paiements) ou annulee (sans paiement).
+     * Payee avant l'avoir, elle reste payee : le trop-percu se rembourse, et le remboursement la
+     * passe a « remboursee ».
+     */
+    BillingDocument applyCredit(String documentNumber, BigDecimal amount) {
+        if (amount == null || amount.signum() <= 0) {
+            throw BadRequestException.coded("CREDIT_AMOUNT", "Le montant de l'avoir doit être positif");
+        }
+        BillingDocument document = lockedByNumber(documentNumber);
+        BigDecimal credited = credited(document).add(amount).min(document.getTotalAmount());
+        document.setCreditedAmount(credited);
+        BigDecimal paid = document.getPaidAmount() == null ? BigDecimal.ZERO : document.getPaidAmount();
+        document.setBalanceDue(document.getTotalAmount().subtract(credited).subtract(paid).max(BigDecimal.ZERO));
+        if (document.getBalanceDue().signum() == 0) {
+            if (paid.signum() > 0) {
+                document.setStatus(BillingDocumentStatus.PAID);
+                if (document.getPaidAt() == null) {
+                    document.setPaidAt(Instant.now());
+                }
+            } else {
+                document.setStatus(BillingDocumentStatus.CANCELLED);
+                if (document.getCancelledAt() == null) {
+                    document.setCancelledAt(Instant.now());
+                }
+            }
+        } else if (paid.signum() > 0) {
+            document.setStatus(BillingDocumentStatus.PARTIALLY_PAID);
+        }
+        syncAdvance(document);
+        BillingDocument saved = documentRepository.save(document);
+        depositHook(saved);
         return saved;
     }
 
@@ -2691,8 +2732,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             paid = BigDecimal.ZERO;
         }
         document.setPaidAmount(paid);
-        document.setBalanceDue(document.getTotalAmount().subtract(paid));
-        if (paid.signum() == 0) {
+        document.setBalanceDue(document.getTotalAmount().subtract(credited(document)).subtract(paid).max(BigDecimal.ZERO));
+        if (credited(document).signum() > 0 && document.getBalanceDue().signum() == 0) {
+            // Payee puis remboursee a hauteur de son avoir (annulation selon la politique) : soldee
+            // par l'avoir et le paiement restant, elle est remboursee, pas « partiellement payee ».
+            document.setStatus(paid.signum() == 0 ? BillingDocumentStatus.CANCELLED : BillingDocumentStatus.REFUNDED);
+        } else if (paid.signum() == 0) {
             document.setStatus(Boolean.TRUE.equals(document.getLocked()) ? BillingDocumentStatus.VALIDATED : BillingDocumentStatus.ISSUED);
             document.setPaidAt(null);
         } else if (document.getBalanceDue().signum() > 0) {

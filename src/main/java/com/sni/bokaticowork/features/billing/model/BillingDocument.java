@@ -120,6 +120,11 @@ public class BillingDocument {
     @Builder.Default
     private BigDecimal paidAmount = BigDecimal.ZERO;
 
+    /** Avoirs imputes sur cette facture : ils reduisent le reste du sans etre des paiements. */
+    @Column(name = "credited_amount", nullable = false, precision = 19, scale = 4)
+    @Builder.Default
+    private BigDecimal creditedAmount = BigDecimal.ZERO;
+
     @Column(name = "balance_due", nullable = false, precision = 19, scale = 4)
     @Builder.Default
     private BigDecimal balanceDue = BigDecimal.ZERO;
