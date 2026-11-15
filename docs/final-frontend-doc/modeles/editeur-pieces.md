@@ -65,7 +65,7 @@ L'éditeur construit ses listes de choix depuis ce catalogue, jamais depuis une 
 
 ## Aperçu
 
-`POST /document-templates/{code}/preview?number=` renvoie un PDF (`application/pdf`, à afficher dans un cadre) :
+`POST /document-templates/{code}/preview?number=` renvoie un PDF (`application/pdf`, à afficher dans un cadre) ; le lire en binaire (`responseType: 'blob'`), quel que soit l'en-tête `Accept` envoyé :
 - sans `number` : données d'exemple ;
 - avec `number` (si `realPreview` est vrai) : une vraie pièce, par exemple un numéro de mouvement de caisse ou de facture ; `previewNumberHint` dit quel numéro saisir. Rien n'est écrit, aucune pièce n'est modifiée ni numérotée.
 

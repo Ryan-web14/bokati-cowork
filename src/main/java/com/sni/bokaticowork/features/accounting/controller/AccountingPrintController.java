@@ -29,19 +29,19 @@ public class AccountingPrintController {
     private final ChequeService cheques;
     private final StatementPrintService statements;
 
-    @GetMapping(value = "/deposit-slips/{number}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = "/deposit-slips/{number}/pdf")
     public ResponseEntity<byte[]> depositSlip(@PathVariable String number) {
         return pdf(cheques.slipPdf(number), "bordereau-" + number);
     }
 
-    @GetMapping(value = "/purchases/suppliers/{code}/statement/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = "/purchases/suppliers/{code}/statement/pdf")
     public ResponseEntity<byte[]> supplierStatement(@PathVariable String code,
                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return pdf(statements.supplierStatement(code, from, to), "releve-fournisseur-" + code);
     }
 
-    @GetMapping(value = "/partners/{code}/statement/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = "/partners/{code}/statement/pdf")
     public ResponseEntity<byte[]> partnerStatement(@PathVariable String code,
                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
