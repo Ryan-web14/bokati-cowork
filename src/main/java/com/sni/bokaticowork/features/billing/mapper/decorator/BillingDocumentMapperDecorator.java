@@ -164,7 +164,8 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
         ,
                 new com.sni.bokaticowork.features.billing.dto.response.BillingDocumentAuthorResponse(document.getCreatedBy(),
                         document.getCreatedByName(), document.getCreatedByTitle(), document.getVersionAuthor(),
-                        document.getVersionAuthorName(), document.getVersionAuthorTitle()));
+                        document.getVersionAuthorName(), document.getVersionAuthorTitle()),
+                document.getCreditedAmount() == null ? java.math.BigDecimal.ZERO : document.getCreditedAmount());
     }
 
     @Override
