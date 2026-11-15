@@ -55,6 +55,8 @@ Pour afficher ou masquer un bouton, comparer le droit exigé par la route à la 
 
 ## Format des réponses
 
+**Identifiant de requête.** Chaque réponse porte l'en-tête `X-Request-Id`. L'afficher avec les messages d'erreur (« Référence : ... ») : il retrouve la requête dans les journaux et le journal d'audit. Le frontend peut envoyer son propre `X-Request-Id` (8 à 64 caractères : lettres, chiffres, `.`, `_`, `-`) ; sinon le serveur en crée un. L'en-tête est lisible depuis le navigateur (CORS expose tous les en-têtes de l'API).
+
 - **Pas d'enveloppe.** Une route renvoie directement l'objet décrit dans sa ligne « Réponse » : un objet, une liste, ou une page. Le type `ApiResponse<T>` existe dans le code mais aucune route ne l'utilise.
 - **Page maison** `PaginatedResponse<T>` (123 routes) :
 

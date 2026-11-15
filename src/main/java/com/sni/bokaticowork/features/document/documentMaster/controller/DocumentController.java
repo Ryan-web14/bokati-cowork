@@ -325,10 +325,8 @@ public class DocumentController {
         return ResponseEntity.ok(accessLogService.getByUser(userId, pageable));
     }
 
+    /** Adresse reelle du client (derriere le proxy), pas la premiere valeur de X-Forwarded-For que l'appelant choisit. */
     private String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        return (forwarded != null && !forwarded.isBlank())
-                ? forwarded.split(",")[0].trim()
-                : request.getRemoteAddr();
+        return com.sni.bokaticowork.core.observability.RequestContext.clientIp(request);
     }
 }

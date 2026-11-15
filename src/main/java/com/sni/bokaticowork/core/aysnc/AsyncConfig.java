@@ -26,6 +26,8 @@ public class AsyncConfig implements AsyncConfigurer, SchedulingConfigurer {
         executor.setMaxPoolSize(12);
         executor.setQueueCapacity(200);
         executor.setThreadNamePrefix("async-");
+        // Centre d'audit (lot A0) : la tache garde l'identifiant de requete et le compte de son appelant.
+        executor.setTaskDecorator(new com.sni.bokaticowork.core.observability.MdcTaskDecorator());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
         executor.initialize();

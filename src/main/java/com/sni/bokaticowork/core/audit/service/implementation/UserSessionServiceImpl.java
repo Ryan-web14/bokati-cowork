@@ -280,19 +280,8 @@ public class UserSessionServiceImpl implements UserSessionService {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String ipAddress = request.getHeader("X-Forwarded-For");
-
-        if (ipAddress != null && !ipAddress.isBlank() && !"unknown".equalsIgnoreCase(ipAddress)) {
-            return ipAddress.split(",")[0].trim();
-        }
-
-        ipAddress = request.getHeader("Forwarded");
-
-        if (ipAddress != null && !ipAddress.isBlank() && !"unknown".equalsIgnoreCase(ipAddress)) {
-            return ipAddress;
-        }
-
-        return request.getRemoteAddr();
+        // Adresse reelle du client (derriere le proxy) : la premiere valeur de X-Forwarded-For est choisie par l'appelant.
+        return com.sni.bokaticowork.core.observability.RequestContext.clientIp(request);
     }
 
     private String getLocationByIp(String clientIp) {

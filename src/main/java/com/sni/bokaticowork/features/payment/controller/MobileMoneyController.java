@@ -251,12 +251,9 @@ public class MobileMoneyController {
                 request.getRequestURI(), headers, body);
     }
 
+    /** Adresse reelle du client (derriere le proxy), pas la premiere valeur de X-Forwarded-For que l'appelant choisit. */
     private String clientIp(HttpServletRequest request) {
-        String forwardedFor = request == null ? null : request.getHeader("X-Forwarded-For");
-        if (StringUtils.hasText(forwardedFor)) {
-            return forwardedFor.split(",")[0].trim();
-        }
-        return request == null ? null : request.getRemoteAddr();
+        return com.sni.bokaticowork.core.observability.RequestContext.clientIp(request);
     }
 
     private String writeJson(Object value) {
