@@ -29,6 +29,14 @@ public class ErrorResponse {
         this.platformSettings = platformSettings;
     }
 
+    private com.sni.bokaticowork.core.audit.ops.AppErrors appErrors;
+
+    /** Centre d'audit (lot A4) : chaque erreur serveur est gardee une par une. */
+    @Autowired(required = false)
+    void setAppErrors(com.sni.bokaticowork.core.audit.ops.AppErrors appErrors) {
+        this.appErrors = appErrors;
+    }
+
     private boolean devMode() {
         return platformSettings == null ? devMode : platformSettings.bool(DEV_MODE_KEY, devMode);
     }
@@ -41,6 +49,9 @@ public class ErrorResponse {
 
         if (status.is5xxServerError()) {
             LOGGER.error("[traceId={}] {} {} · {}", traceId, errorCode, path, message, ex);
+            if (appErrors != null) {
+                appErrors.record(status.value(), errorCode, traceId, request, ex);
+            }
         } else {
             LOGGER.warn("[traceId={}] {} {} · {}", traceId, errorCode, path,
                     ex != null ? ex.getMessage() : message);
