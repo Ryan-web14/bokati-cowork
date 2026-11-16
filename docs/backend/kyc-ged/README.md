@@ -1,6 +1,6 @@
 # Centre KYC et GED : plan d'amélioration et règlement des écarts
 
-Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan seulement : rien n'est implémenté.
+Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan validé avec les décisions de l'exploitant du 16/11/2026 (voir plus bas) ; rien n'est encore implémenté.
 
 ## Constat (vérifié dans le code le 16/11/2026)
 
@@ -31,26 +31,33 @@ Les plus graves :
 | **KG2. Recto, verso et remplacements** | Verso dispensé de la règle « un seul document du type » ; ancien recto ou verso passé `SUPERSEDED` au remplacement (statut enfin utilisé). Synchronisation par document **ou** verso : jamais de pièce créée pour un verso, plus d'appel en double. Synchronisation lancée après validation de la transaction (plus de lecture de données non validées). Suppression depuis le portail : document archivé, nouveau dépôt possible. `KycDocumentResponse.id` toujours l'identifiant court ; `documentCodes` accepté (alias de `documentIds`). | K4, K5, K6, K-n3, K-n10 |
 | **KG3. Événements, relances, automatismes** | Tous les événements KYC ont un processeur (notifiants ou simplement consignés) : plus d'événement abandonné. Courriel en échec réessayé par la boîte d'envoi. `KYC_CASE_REJECTED` publié par un vrai refus (voir KG7) ou supprimé ; courriel pour `KYC_RENEWAL_REQUIRED`. Relances d'expiration chaque jour, par seuil franchi (60, 30, 7 jours) et mémorisé, sur les pièces vivantes seulement. Expiration : une seule logique (document et pièce), avec le délai de grâce et le passage en renouvellement. Approbation automatique : une seule règle (`autoApprove` au dépôt, `autoApproveAfterDays` après délai), jamais sur une pièce renvoyée en correction ; une transaction par élément. | K7, K8, K9, K-n4, K-n5, K-n12, G-n3 |
 | **KG4. GED : revue, dépôt, documents** | Opérations en masse et rétention nocturne : une transaction par document, résultat partiel exact ; `{space}` filtre vraiment. Remplacement refusé sur un document archivé, expiré, remplacé ou signé ; `autoApprove` respecté. Verrou appliqué aussi aux décisions, étiquettes, métadonnées, signatures ; état du verrou dans `DocumentResponse`. Formats : une seule liste par défaut, contrôle de l'espace sur le type détecté, `upload-config` exact ; import ZIP borné à la taille réelle des requêtes et protégé contre l'archive piégée (taille décompressée limitée). `ownerCode` métier pour contrats et factures ; `ownerCode`, `ownerLabel`, `folderCode`, `folderName` dans la réponse. Fichier supprimé du stockage quand la transaction est annulée. File de revue sans N+1. | G1, G4, G7, G8, G9, G11, G-n2, G-n4, G-n6, G-n8 |
-| **KG5. Partage, signature, circuits, permissions** | Partage : voir la décision 1. Signature : le signataire doit être le compte connecté ; dernière signature = document `SIGNED` et événement ; demande refusée sur un document rejeté ou archivé. Circuits d'approbation : voir la décision 2. Permissions par document : voir la décision 3. Politique de rétention réactivable. | G3, G5, G6, G10, G11, G-n5, G-n9 |
+| **KG5. Partage, signature, circuits, permissions** | **Partage interne seulement** : plus aucune route publique (`/shares/**` retiré des chemins publics) ; un lien de partage exige la connexion, respecte les droits et les dossiers restreints, ne sert le fichier qu'à un compte de l'équipe (téléchargement si permis, expiration, compteur) ; révocation par l'auteur ou un administrateur ; courriel de l'auteur jamais exposé. Un document part vers un client par courriel ou par son espace client. **Circuits d'approbation réels** : un circuit inactif, ou d'un autre espace ou type, ne démarre pas ; l'approbateur de chaque étape est contrôlé (compte désigné ou rôle) ; la dernière approbation approuve le document, un refus le refuse ; `autoApproveDays` appliqué par la tâche du cycle de vie ; état du circuit lu sur la dernière instance (plus d'erreur 500). **Permissions par document retirées** : `/document-permissions` supprimé (lecture des anciennes lignes de dossier reprise par les accès de dossier de l'explorateur), tout passe par les dossiers restreints. Signature : le signataire doit être le compte connecté ; dernière signature = document `SIGNED` et événement ; demande refusée sur un document rejeté ou archivé. Politique de rétention réactivable. | G3, G5, G6, G10, G11, G-n5, G-n9 |
 | **KG6. Erreurs et messages** | Réponses dédiées : fichier trop lourd `413`, valeur ou énumération invalide `400` (paramètre et valeurs admises nommés), transaction annulée `409` au lieu de `500`. Messages KYC et GED en français. Double contrôle de droit sur la rétention supprimé. | G13, G-n7 |
-| **KG7. Améliorations du centre** | Voir la décision 4 : à choisir. | |
+| **KG7. Améliorations du centre** | Les quatre retenues : tableau de bord KYC ; renouvellements, refus définitif et motifs normalisés ; demande de pièces par WhatsApp et détection des doublons ; historique dans le centre d'audit. Détail plus bas. | |
 | **KG8. Doc et tests** | Doc frontend `document/` mise à jour (écarts marqués Réglé, parcours corrigés), routes régénérées ; tests unitaires et d'intégration par lot ; démarrage complet vérifié. | |
 
 Ordre conseillé : KG0 (sécurité), KG1, KG2, KG3, KG4, KG6, KG5, KG7, KG8 (au fil de l'eau).
 
-## Décisions à prendre
+## Décisions de l'exploitant (16/11/2026)
 
-1. **Liens de partage.** Aujourd'hui ils ne servent aucun fichier. Choix : (a) servir le fichier par le lien (jeton, expiration, mot de passe en en-tête, téléchargement si permis, compteur), ce qui ouvre un accès externe aux documents ; (b) **conseillé** au vu de la règle « pas d'ouverture vers l'extérieur » : supprimer l'accès public, garder le partage entre comptes de l'équipe (lien interne qui exige la connexion), et envoyer un document à un client par courriel ou par son espace client.
-2. **Circuits d'approbation** (`/document-workflows`). Aujourd'hui décoratifs. Choix : (a) les rendre réels (approbateur contrôlé, statut du document changé, délai d'approbation automatique) ; (b) les retirer et garder la revue simple par espace. Conseil : (b) si personne ne s'en sert, sinon (a).
-3. **Permissions par document** (`/document-permissions`). Aujourd'hui seules les permissions de dossier (dossiers restreints) sont appliquées. Conseil : retirer les permissions par document et tout faire par les accès de dossier, déjà en place dans l'explorateur.
-4. **Améliorations (KG7)**, à retenir ou non :
-   - a. Tableau de bord KYC : files par ancienneté, délai de traitement, échéances, charge par agent, dossiers bloqués.
-   - b. Calendrier des renouvellements : pièces qui expirent dans 90 jours, relance groupée.
-   - c. Motifs de refus et de correction normalisés (liste), repris dans le courriel et le portail.
-   - d. Refus définitif d'un dossier (statut `REJECTED` réel, aujourd'hui jamais posé) distinct de la demande de correction.
-   - e. Pièces demandées au client par WhatsApp (modèle à faire approuver) en plus du courriel.
-   - f. Détection de doublons : même numéro de pièce sur deux titulaires.
-   - g. Avant / après des dossiers KYC, pièces et documents dans le journal des actions (centre d'audit, lot A1) et onglet « Historique » de la fiche.
+| Sujet | Décision |
+| --- | --- |
+| Liens de partage | **Interne seulement** : plus d'accès public, partage entre comptes de l'équipe ; un document part vers un client par courriel ou par son espace client (règle « pas d'ouverture vers l'extérieur ») |
+| Circuits d'approbation de documents | **Les rendre réels** (approbateur contrôlé, statut du document changé, approbation après délai, circuit inactif refusé) |
+| Permissions par document | **Accès par dossier seul** : `/document-permissions` retiré, tout passe par les dossiers restreints de l'explorateur |
+| Améliorations | **Toutes les quatre retenues** (détail ci-dessous) |
+
+## Améliorations retenues (KG7)
+
+1. **Tableau de bord KYC** : dossiers par statut ; files par ancienneté (moins de 2 jours, 2 à 7, plus de 7) ; délai moyen et médian de traitement (dépôt complet à décision) ; dossiers en retard sur leur échéance (`slaDeadline`) ; charge par agent (dossiers assignés, décidés sur la période) ; dossiers bloqués (en attente de correction depuis plus de 14 jours, sans pièce depuis la création). Route `GET /kyc/dashboard/center`, droit `KYC:READ`.
+2. **Renouvellements, refus définitif, motifs normalisés** :
+   - calendrier des pièces qui expirent dans les 90 jours, par semaine, avec relance groupée (`POST /kyc/renewals/remind`, `KYC:MANAGE`) ;
+   - refus définitif d'un dossier : statut `REJECTED` réellement posé (aujourd'hui jamais), distinct de la demande de correction, avec motif obligatoire, courriel `KYC_CASE_REJECTED` et dossier fermé aux dépôts ; réouverture par un administrateur ;
+   - motifs de refus et de correction tirés d'une liste tenue dans le backend (liste de référence modifiable, code et libellé), repris dans le courriel, le portail et le tableau de bord ; texte libre en complément.
+3. **Demande de pièces par WhatsApp et détection des doublons** :
+   - quand une pièce manque ou est renvoyée en correction, message WhatsApp au titulaire (modèle `kyc_pieces_demandees` à créer chez Infobip et à faire approuver par Meta), en plus du courriel ; lien vers l'espace client ;
+   - même numéro de pièce (type et numéro normalisé) sur deux titulaires : signalé sur la fiche et dans le tableau de bord (`duplicateOf`), sans bloquer ; route de liste des doublons.
+4. **Historique dans le centre d'audit** : `KycCase`, `KycDocument` (pièce), `Document`, `KycCaseRequirement` ajoutés aux entités principales du journal des actions (avant / après) ; onglet « Historique » de la fiche d'un dossier, d'une pièce et d'un document par la chronologie du centre d'audit (`/admin/audit/timeline?entityCode=...`), doc frontend.
 
 ## Tableau des écarts
 
