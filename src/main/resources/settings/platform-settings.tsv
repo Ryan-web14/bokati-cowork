@@ -242,6 +242,7 @@ app.portal.kyc-grace-period-days	PORTAL	INTEGER	LIVE	7	Grâce KYC du portail (jo
 app.referral.share-url-template	ENVIRONMENT	TEXT	LIVE	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
 app.security.bootstrap.secret	SECURITY	SECRET	RESTART		Secret d'initialisation
 app.security.cors.allowed-origins	SECURITY	TEXT	RESTART	*	Origines autorisées
+app.security.failed-login.lock-minutes	SECURITY	INTEGER	LIVE	30	Durée du verrouillage après trop d'échecs de connexion (minutes, 0 : jusqu'au déverrouillage manuel)
 app.security.failed-login.max-attempts	SECURITY	INTEGER	LIVE	5	Essais de connexion avant blocage
 app.security.jwt.access-token-expiration-ms	SECURITY	INTEGER	LIVE	900000	Durée d'un jeton d'accès (ms)
 app.security.jwt.refresh-reuse-grace-seconds	SECURITY	INTEGER	LIVE	30	Grâce de réutilisation du jeton de rafraîchissement (secondes)

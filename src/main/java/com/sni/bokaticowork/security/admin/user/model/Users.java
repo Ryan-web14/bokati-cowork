@@ -71,6 +71,15 @@ public class Users {
     @Column(name = "failed_login_attempts")
     private Integer failedLoginAttempts;
 
+    /** Fin du verrouillage apres trop d'echecs (lot A2) ; vide : jusqu'au deverrouillage manuel. */
+    @Column(name = "locked_until")
+    private java.time.Instant lockedUntil;
+
+    /** Verrou en vigueur : pose, et sans fin ou pas encore echu. */
+    public boolean lockActive() {
+        return Boolean.TRUE.equals(isAccountLocked) && (lockedUntil == null || lockedUntil.isAfter(java.time.Instant.now()));
+    }
+
     @Column(name = "pending_email", length = 250)
     private String pendingEmail;
 

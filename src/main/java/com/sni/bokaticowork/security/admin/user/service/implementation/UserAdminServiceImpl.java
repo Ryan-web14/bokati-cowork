@@ -218,13 +218,26 @@ public class UserAdminServiceImpl implements UserAdminService {
         return toAdminResponse(userService.getUserByIdForService(user.getId()), null);
     }
 
+    private com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents;
+
+    /** Lot A2 : evenements de securite (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSecurityEvents(com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents) {
+        this.securityEvents = securityEvents;
+    }
+
     @Override
     public AdminUserResponse unlock(String userCode) {
         Users user = findByCode(userCode);
         privilegeGuard.assertMayActOn(privilegeGuard.currentActor(), user);
         user.setIsAccountLocked(false);
+        user.setLockedUntil(null);
         user.setFailedLoginAttempts(0);
         userRepository.save(user);
+        if (securityEvents != null) {
+            securityEvents.record(com.sni.bokaticowork.core.audit.security.SecurityEventType.ACCOUNT_UNLOCKED, user.getId(), user.getUserId(), user.getEmail(),
+                    "by", privilegeGuard.currentActor() == null ? null : privilegeGuard.currentActor().email());
+        }
         return toAdminResponse(userService.getUserByIdForService(user.getId()), null);
     }
 
@@ -247,7 +260,12 @@ public class UserAdminServiceImpl implements UserAdminService {
         }
         user.setFailedLoginAttempts(0);
         user.setIsAccountLocked(false);
+        user.setLockedUntil(null);
         userRepository.save(user);
+        if (securityEvents != null) {
+            securityEvents.record(com.sni.bokaticowork.core.audit.security.SecurityEventType.PASSWORD_RESET_BY_ADMIN, user.getId(), user.getUserId(), user.getEmail(),
+                    "generated", generate);
+        }
         return toAdminResponse(userService.getUserByIdForService(user.getId()), generatedPassword);
     }
 

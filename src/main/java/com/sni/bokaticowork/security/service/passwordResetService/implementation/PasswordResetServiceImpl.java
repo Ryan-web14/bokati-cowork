@@ -126,6 +126,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         user.setFailedLoginAttempts(0);
         user.setIsAccountLocked(false);
+        user.setLockedUntil(null);
+        if (securityEvents != null) {
+            securityEvents.record(com.sni.bokaticowork.core.audit.security.SecurityEventType.PASSWORD_RESET_COMPLETED, user.getId(), user.getUserId(), userEmail,
+                    "triggeredBy", triggeredBy == null ? "SELF" : triggeredBy);
+        }
 
         log.info("Password successfully reset for user: {} (triggered by: {})",
                 userEmail, triggeredBy != null ? triggeredBy : "self");
@@ -135,6 +140,14 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             notifier.sendPasswordChangedConfirmation(userEmail);
             notifier.notifyAdminResetCompleted(triggeredBy, userEmail);
         });
+    }
+
+    private com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents;
+
+    /** Lot A2 : evenements de securite (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSecurityEvents(com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents) {
+        this.securityEvents = securityEvents;
     }
 
     private void runAfterCommit(Runnable task) {

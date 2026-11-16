@@ -82,8 +82,19 @@ public class GlobalExceptionHandler {
                 "Access to this resource is forbidden.", request, ex, null));
     }
 
+    private com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents;
+
+    /** Lot A2 : evenements de securite (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSecurityEvents(com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents) {
+        this.securityEvents = securityEvents;
+    }
+
     @ExceptionHandler(AccesDeniedException.class)
     public ResponseEntity<Object> handleAccessDenied(AccesDeniedException ex, HttpServletRequest request) {
+        if (securityEvents != null) {
+            securityEvents.accessDenied(request, "SERVICE");
+        }
         return respond(errorResponse.build(ErrorCode.ACCESS_DENIED, HttpStatus.FORBIDDEN,
                 "Access denied.", request, ex, null));
     }
@@ -95,6 +106,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<Object> handleMethodAccessDenied(org.springframework.security.access.AccessDeniedException ex,
                                                            HttpServletRequest request) {
+        if (securityEvents != null) {
+            securityEvents.accessDenied(request, "METHOD");
+        }
         return respond(errorResponse.build(ErrorCode.ACCESS_DENIED, HttpStatus.FORBIDDEN,
                 "Access denied.", request, ex, null));
     }

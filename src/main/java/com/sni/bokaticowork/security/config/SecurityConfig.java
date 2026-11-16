@@ -56,6 +56,14 @@ public class SecurityConfig {
     @Value("${app.security.cors.allowed-origins:*}")
     private String corsAllowedOrigins;
 
+    private com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents;
+
+    /** Lot A2 : evenements de securite (facultatif dans les tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSecurityEvents(com.sni.bokaticowork.core.audit.security.SecurityEvents securityEvents) {
+        this.securityEvents = securityEvents;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -116,6 +124,9 @@ public class SecurityConfig {
                             objectMapper.writeValue(response.getOutputStream(), body);
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            if (securityEvents != null) {
+                                securityEvents.accessDenied(request, "ROUTE");
+                            }
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             Map<String, Object> body = new LinkedHashMap<>();
