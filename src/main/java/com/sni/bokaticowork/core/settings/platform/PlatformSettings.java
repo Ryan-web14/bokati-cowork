@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySourcesPropertyResolver;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -40,7 +39,7 @@ public class PlatformSettings {
     private final Map<String, Optional<String>> fileValues = new ConcurrentHashMap<>();
     private volatile PropertySourcesPropertyResolver fileResolver;
 
-    @Scheduled(fixedDelay = 60_000)
+    /** Relue chaque minute sur chaque instance, voir {@link PlatformSettingsRefresher}. */
     public void refresh() {
         try {
             values = repository.findAll().stream()

@@ -42,19 +42,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-batch</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-batch-jdbc</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-cache</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jdbc</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -196,22 +184,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-batch-jdbc-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-batch-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-cache-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jdbc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -425,5 +398,49 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- Build Heroku (la variable STACK n'existe que la) : jar extrait et cache de demarrage AOT,
+		     voir tools/heroku/preparer-demarrage.sh. Le jar complet est supprime pour la taille du slug,
+		     d'ou l'installation dans le depot local sautee. -->
+		<profile>
+			<id>heroku</id>
+			<activation>
+				<property>
+					<name>env.STACK</name>
+				</property>
+			</activation>
+			<properties>
+				<maven.install.skip>true</maven.install.skip>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>3.6.3</version>
+						<executions>
+							<execution>
+								<id>preparer-demarrage</id>
+								<phase>package</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>sh</executable>
+									<arguments>
+										<argument>${project.basedir}/tools/heroku/preparer-demarrage.sh</argument>
+										<argument>${project.build.directory}</argument>
+										<argument>${java.home}/bin/java</argument>
+										<argument>${project.build.finalName}.jar</argument>
+									</arguments>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

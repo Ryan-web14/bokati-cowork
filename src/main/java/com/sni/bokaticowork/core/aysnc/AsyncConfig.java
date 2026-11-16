@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
@@ -15,7 +14,7 @@ import java.util.concurrent.Executor;
 
 @Configuration
 @EnableAsync
-@EnableScheduling
+// Planification activee par core.async.SchedulingConfig, sur le seul dyno designe.
 public class AsyncConfig implements AsyncConfigurer, SchedulingConfigurer {
 
     @Bean(name = "taskExecutor")
@@ -29,7 +28,9 @@ public class AsyncConfig implements AsyncConfigurer, SchedulingConfigurer {
         // Centre d'audit (lot A0) : la tache garde l'identifiant de requete et le compte de son appelant.
         executor.setTaskDecorator(new com.sni.bokaticowork.core.observability.MdcTaskDecorator());
         executor.setWaitForTasksToCompleteOnShutdown(true);
-        executor.setAwaitTerminationSeconds(30);
+        // Heroku tue le processus 30 s apres SIGTERM : Tomcat, cet executeur et le planificateur
+        // doivent s'arreter ensemble dans ce delai (8 s chacun au plus).
+        executor.setAwaitTerminationSeconds(8);
         executor.initialize();
         return executor;
     }
@@ -40,7 +41,7 @@ public class AsyncConfig implements AsyncConfigurer, SchedulingConfigurer {
         scheduler.setPoolSize(8);
         scheduler.setThreadNamePrefix("scheduler-");
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
-        scheduler.setAwaitTerminationSeconds(30);
+        scheduler.setAwaitTerminationSeconds(8);
         scheduler.setErrorHandler(ex ->
                 org.slf4j.LoggerFactory.getLogger(AsyncConfig.class)
                         .error("Scheduler error: {}", ex.getMessage(), ex));
