@@ -19,12 +19,14 @@ import java.util.List;
 public class DocumentShareController {
 
     private final DocumentShareService service;
+    private final com.sni.bokaticowork.features.document.explorer.access.GedAccessService gedAccess;
 
     @PostMapping("/documents/{documentCode}/share")
     @Audited(module = "DOCUMENT", action = "CREATE_SHARE_LINK", ressource = "document")
     public ResponseEntity<ShareLinkResponse> shareDocument(
             @PathVariable String documentCode,
             @Valid @RequestBody CreateShareLinkRequest request) {
+        gedAccess.requireDocumentCode(documentCode, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.DOWNLOAD);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.shareDocument(documentCode, request));
     }
 
@@ -33,6 +35,7 @@ public class DocumentShareController {
     public ResponseEntity<ShareLinkResponse> shareFolder(
             @PathVariable String folderCode,
             @Valid @RequestBody CreateShareLinkRequest request) {
+        gedAccess.requireFolderCode(folderCode, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.DOWNLOAD);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.shareFolder(folderCode, request));
     }
 
@@ -53,6 +56,7 @@ public class DocumentShareController {
 
     @GetMapping("/documents/{documentCode}/shares")
     public ResponseEntity<List<ShareLinkResponse>> listByDocument(@PathVariable String documentCode) {
+        gedAccess.requireDocumentCode(documentCode, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         return ResponseEntity.ok(service.listByDocument(documentCode));
     }
 }

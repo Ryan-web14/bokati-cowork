@@ -102,6 +102,20 @@ public class DocumentServiceImpl implements DocumentService {
 
     private PlatformSettings platformSettings;
 
+    private com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard reviewGuard;
+    private com.sni.bokaticowork.features.document.explorer.access.GedAccessService gedAccess;
+
+    @Autowired(required = false)
+    void setGedAccess(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.document.explorer.access.GedAccessService gedAccess) {
+        this.gedAccess = gedAccess;
+    }
+
+    /** Lot KG0 : droit de decider controle pour toutes les voies (unitaire, masse, circuits). */
+    @Autowired(required = false)
+    void setReviewGuard(com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard reviewGuard) {
+        this.reviewGuard = reviewGuard;
+    }
+
     @Autowired(required = false)
     void setPlatformSettings(PlatformSettings platformSettings) {
         this.platformSettings = platformSettings;
@@ -246,6 +260,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse approve(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
+        guard(document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision.APPROVE);
+        request.setReviewedBy(reviewer(request.getReviewedBy()));
         assertReviewable(document, DocumentStatus.APPROVED);
         boolean liftsRejection = document.getStatus() == DocumentStatus.REJECTED;
         document.setStatus(DocumentStatus.APPROVED);
@@ -271,6 +287,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse reject(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
+        guard(document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision.REJECT);
+        request.setReviewedBy(reviewer(request.getReviewedBy()));
         assertReviewable(document, DocumentStatus.REJECTED);
         document.setStatus(DocumentStatus.REJECTED);
         documentRepository.save(document);
@@ -285,6 +303,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse requestCorrection(String documentCode, DocumentCorrectionRequest request) {
         Document document = serviceDocument(documentCode);
+        guard(document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision.CORRECTION);
+        request.setReviewedBy(reviewer(request.getReviewedBy()));
         assertReviewable(document, DocumentStatus.NEEDS_CORRECTION);
 
         Instant deadline = Instant.now().plus(
@@ -721,8 +741,13 @@ public class DocumentServiceImpl implements DocumentService {
         if (!StringUtils.hasText(folderCode)) {
             return null;
         }
-        return folderRepository.findByCode(folderCode.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Folder not found: " + folderCode));
+        DocumentFolder folder = folderRepository.findByCode(folderCode.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable : " + folderCode));
+        // Lot KG0 : deposer dans un dossier restreint demande le droit d'y ecrire.
+        if (gedAccess != null) {
+            gedAccess.require(folder, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.EDIT);
+        }
+        return folder;
     }
 
     /** Le classement physique du stockage : par proprietaire, ou dans « internal » sans proprietaire. */
@@ -775,6 +800,24 @@ public class DocumentServiceImpl implements DocumentService {
         payload.put("version", document.getCurrentVersionNumber());
         payload.put("actorId", actorId);
         outboxService.publish(eventType, "DOCUMENT", document.getCode(), payload);
+    }
+
+    private void guard(Document document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision decision) {
+        if (reviewGuard != null) {
+            reviewGuard.check(document.getSpace(), decision);
+        }
+    }
+
+    /**
+     * Auteur d'une decision (lot KG0) : toujours le compte connecte ; la valeur fournie par le corps
+     * de la requete n'est retenue que pour une tache du systeme, sans compte.
+     */
+    private Long reviewer(Long declared) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+            return principal.getUser().getId();
+        }
+        return declared != null ? declared : SystemActors.SYSTEM_USER_ID;
     }
 
     private Long currentUserId() {

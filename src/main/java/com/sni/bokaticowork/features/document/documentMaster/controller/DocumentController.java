@@ -166,27 +166,28 @@ public class DocumentController {
     }
 
     @PostMapping("/{code}/approve")
-    @PreAuthorize("hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')")
+    // Lot KG0 : droit controle par le service selon l'espace du document (DocumentReviewGuard).
     @Audited(module = "DOCUMENT", action = "APPROVE", ressource = "document")
     @Idempotent(operation = "DOCUMENT_APPROVE")
     public ResponseEntity<DocumentResponse> approve(@PathVariable String code, @Valid @RequestBody DocumentReviewDecisionRequest request) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         return ResponseEntity.ok(service.approve(code, request));
     }
 
     @PostMapping("/{code}/reject")
-    @PreAuthorize("hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')")
     @Audited(module = "DOCUMENT", action = "REJECT", ressource = "document")
     @Idempotent(operation = "DOCUMENT_REJECT")
     public ResponseEntity<DocumentResponse> reject(@PathVariable String code, @Valid @RequestBody DocumentReviewDecisionRequest request) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         return ResponseEntity.ok(service.reject(code, request));
     }
 
     @PostMapping("/{code}/request-correction")
-    @PreAuthorize("hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')")
     @Audited(module = "DOCUMENT", action = "REQUEST_CORRECTION", ressource = "document")
     public ResponseEntity<DocumentResponse> requestCorrection(
             @PathVariable String code,
             @Valid @RequestBody DocumentCorrectionRequest request) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         return ResponseEntity.ok(service.requestCorrection(code, request));
     }
 
@@ -314,6 +315,7 @@ public class DocumentController {
     public ResponseEntity<PaginatedResponse<DocumentAccessLogResponse>> accessLogs(
             @PathVariable String code,
             @PageableDefault(size = 20, sort = "accessedAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         return ResponseEntity.ok(accessLogService.getByDocument(code, pageable));
     }
 

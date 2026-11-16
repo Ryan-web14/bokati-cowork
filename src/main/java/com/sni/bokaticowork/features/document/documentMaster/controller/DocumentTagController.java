@@ -22,6 +22,7 @@ import java.util.Map;
 public class DocumentTagController {
 
     private final DocumentTagService tagService;
+    private final com.sni.bokaticowork.features.document.explorer.access.GedAccessService gedAccess;
     private final DocumentMetadataService metadataService;
 
     // ── Tag catalog ──────────────────────────────────────────────────────────
@@ -61,17 +62,20 @@ public class DocumentTagController {
     public ResponseEntity<List<DocumentTagResponse>> assignTags(
             @PathVariable String code,
             @Valid @RequestBody DocumentTagAssignRequest request) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.EDIT);
         return ResponseEntity.ok(tagService.assignTags(code, request));
     }
 
     @DeleteMapping(ApiPath.V1 + "/documents/{code}/tags/{tagCode}")
     public ResponseEntity<Void> removeTag(@PathVariable String code, @PathVariable String tagCode) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.EDIT);
         tagService.removeTag(code, tagCode);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping(ApiPath.V1 + "/documents/{code}/tags")
     public ResponseEntity<List<DocumentTagResponse>> getDocumentTags(@PathVariable String code) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         return ResponseEntity.ok(tagService.getDocumentTags(code));
     }
 
@@ -81,16 +85,19 @@ public class DocumentTagController {
     public ResponseEntity<Map<String, String>> setMetadata(
             @PathVariable String code,
             @RequestBody Map<String, String> metadata) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.EDIT);
         return ResponseEntity.ok(metadataService.setMetadata(code, metadata));
     }
 
     @GetMapping(ApiPath.V1 + "/documents/{code}/metadata")
     public ResponseEntity<Map<String, String>> getMetadata(@PathVariable String code) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         return ResponseEntity.ok(metadataService.getMetadata(code));
     }
 
     @DeleteMapping(ApiPath.V1 + "/documents/{code}/metadata/{key}")
     public ResponseEntity<Void> deleteMetadataKey(@PathVariable String code, @PathVariable String key) {
+        gedAccess.requireDocumentCode(code, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.EDIT);
         metadataService.deleteKey(code, key);
         return ResponseEntity.noContent().build();
     }

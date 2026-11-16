@@ -2,7 +2,7 @@
 
 > Partie du [README du module](README.md). Routes exactes : [routes/DocumentReviewQueueController.md](routes/DocumentReviewQueueController.md), [routes/DocumentController.md](routes/DocumentController.md), [routes/DocumentSignatureController.md](routes/DocumentSignatureController.md), [routes/DocumentWorkflowController.md](routes/DocumentWorkflowController.md).
 
-Toutes les décisions exigent `reviewedBy` : l'identifiant numérique (int64, gardé en texte) du compte qui décide. Le serveur ne le compare pas au compte connecté ; envoyer celui de l'utilisateur connecté (voir [README](README.md#identifiants-numériques-à-manipuler-sans-perte)).
+Depuis le lot KG0 (16/11/2026), l'auteur d'une décision est **toujours le compte connecté** : `reviewedBy` n'est plus obligatoire et il est ignoré s'il est envoyé (les exemples ci-dessous peuvent l'omettre). Une pièce KYC se décide avec `KYC:APPROVE` ou `KYC:REJECT` ; un autre document avec `DOCUMENT:REVIEW` ou le droit de revue de son espace. Les décisions en masse traitent chaque document à part (résultat partiel exact) et refusent un document hors de l'espace de la route. Les files ne montrent que les espaces permis et les documents des dossiers visibles.
 
 ## File de revue
 

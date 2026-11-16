@@ -14,7 +14,7 @@ public class DocumentBulkCorrectionRequest {
     @NotEmpty
     private List<String> codes;
 
-    @NotNull
+    /** Ignore pour un compte connecte : l\'auteur est toujours le compte connecte (lot KG0). */
     private Long reviewedBy;
 
     @NotBlank

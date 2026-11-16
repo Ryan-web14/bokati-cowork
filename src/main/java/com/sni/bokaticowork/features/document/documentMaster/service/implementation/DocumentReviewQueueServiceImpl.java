@@ -32,6 +32,12 @@ public class DocumentReviewQueueServiceImpl implements DocumentReviewQueueServic
 
     private final DocumentRepository documentRepository;
     private final DocumentService documentService;
+    private com.sni.bokaticowork.features.document.documentMaster.security.DocumentSpaceSecurityService spaceSecurity;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSpaceSecurity(com.sni.bokaticowork.features.document.documentMaster.security.DocumentSpaceSecurityService spaceSecurity) {
+        this.spaceSecurity = spaceSecurity;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -47,14 +53,36 @@ public class DocumentReviewQueueServiceImpl implements DocumentReviewQueueServic
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponse<DocumentResponse> getGlobalQueue(Pageable pageable) {
-        return getQueue(null, pageable);
+        java.util.Set<DocumentSpace> spaces = spaceSecurity == null ? null
+                : spaceSecurity.reviewableSpaces(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
+        if (spaces == null) {
+            return getQueue(null, pageable);
+        }
+        if (spaces.isEmpty()) {
+            return new PaginatedResponse<>(org.springframework.data.domain.Page.<DocumentResponse>empty(pageable));
+        }
+        return new PaginatedResponse<>(documentRepository.findAllBySpaceInAndStatus(spaces, DocumentStatus.PENDING_REVIEW, pageable)
+                .map(doc -> documentService.getByCode(doc.getCode())));
+    }
+
+    /** Lot KG0 : un document hors de l'espace de la route n'est pas traite. */
+    private void requireSpace(DocumentSpace space, String code) {
+        com.sni.bokaticowork.features.document.documentMaster.model.Document document = documentRepository.findByCode(code)
+                .orElseThrow(() -> new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Document introuvable : " + code));
+        if (space != null && document.getSpace() != space) {
+            throw new com.sni.bokaticowork.core.exception.customs.BadRequestException(
+                    "Document " + code + " hors de l'espace " + space.name() + " (espace " + document.getSpace() + ")");
+        }
     }
 
     @Override
+    // Lot KG0 : chaque document dans sa propre transaction ; un echec n'annule pas les autres.
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public DocumentBulkActionResponse bulkApprove(DocumentSpace space, DocumentBulkApproveRequest request) {
         List<DocumentBulkItemResult> results = new ArrayList<>();
         for (String code : request.getCodes()) {
             try {
+                requireSpace(space, code);
                 DocumentReviewDecisionRequest decision = new DocumentReviewDecisionRequest();
                 decision.setReviewedBy(request.getReviewedBy());
                 decision.setComment(request.getComment());
@@ -69,10 +97,13 @@ public class DocumentReviewQueueServiceImpl implements DocumentReviewQueueServic
     }
 
     @Override
+    // Lot KG0 : chaque document dans sa propre transaction ; un echec n'annule pas les autres.
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public DocumentBulkActionResponse bulkReject(DocumentSpace space, DocumentBulkRejectRequest request) {
         List<DocumentBulkItemResult> results = new ArrayList<>();
         for (String code : request.getCodes()) {
             try {
+                requireSpace(space, code);
                 DocumentReviewDecisionRequest decision = new DocumentReviewDecisionRequest();
                 decision.setReviewedBy(request.getReviewedBy());
                 decision.setComment(request.getComment());
@@ -89,10 +120,13 @@ public class DocumentReviewQueueServiceImpl implements DocumentReviewQueueServic
     }
 
     @Override
+    // Lot KG0 : chaque document dans sa propre transaction ; un echec n'annule pas les autres.
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public DocumentBulkActionResponse bulkRequestCorrection(DocumentSpace space, DocumentBulkCorrectionRequest request) {
         List<DocumentBulkItemResult> results = new ArrayList<>();
         for (String code : request.getCodes()) {
             try {
+                requireSpace(space, code);
                 DocumentCorrectionRequest correction = new DocumentCorrectionRequest();
                 correction.setReviewedBy(request.getReviewedBy());
                 correction.setCorrectionNote(request.getCorrectionNote());

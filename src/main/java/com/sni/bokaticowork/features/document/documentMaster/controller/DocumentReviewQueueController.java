@@ -24,12 +24,14 @@ import org.springframework.web.bind.annotation.*;
 public class DocumentReviewQueueController {
 
     private final DocumentReviewQueueService service;
+    private final com.sni.bokaticowork.features.document.explorer.access.GedAccessService gedAccess;
 
     @GetMapping("/queue")
-    @PreAuthorize("hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')")
+    // Lot KG0 : file limitee aux espaces que le compte peut revoir.
+    @PreAuthorize("@docSpaceSecurity.canReviewAny(authentication)")
     public ResponseEntity<PaginatedResponse<DocumentResponse>> globalQueue(
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(service.getGlobalQueue(pageable));
+        return ResponseEntity.ok(gedAccess.withoutHiddenDocuments(service.getGlobalQueue(pageable)));
     }
 
     @GetMapping("/{space}")
@@ -37,7 +39,7 @@ public class DocumentReviewQueueController {
     public ResponseEntity<PaginatedResponse<DocumentResponse>> spaceQueue(
             @PathVariable DocumentSpace space,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(service.getQueue(space, pageable));
+        return ResponseEntity.ok(gedAccess.withoutHiddenDocuments(service.getQueue(space, pageable)));
     }
 
     @PostMapping("/{space}/bulk-approve")

@@ -77,10 +77,12 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return new AuthorizationDecision(granted);
         }
 
-        boolean granted = has(authorities, requiredPermission)
-                || has(authorities, requiredPermission.replace(':', '_'));
+        boolean granted = grants(authorities, requiredPermission);
         if (!granted) {
-            deny(request, auth, requiredPermission, "permission absente des autorites de l'utilisateur");
+            deny(request, auth, requiredPermission.endsWith("*")
+                            ? requiredPermission.substring(0, requiredPermission.length() - 1) + " (ou un droit de revue d'espace)"
+                            : requiredPermission,
+                    "permission absente des autorites de l'utilisateur");
         }
         return new AuthorizationDecision(granted);
     }
@@ -387,24 +389,44 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("CLIENT", actionFor("CLIENT", method));
         }
         if (path.startsWith("/kyc")) {
-            // Les decisions en masse (bulk-approve, bulk-reject et ses alias) ne contiennent ni
-            // /approve ni /reject : elles tombaient sur KYC:READ, une lecture suffisait a valider.
-            if (path.contains("/approve") || path.contains("/bulk-approve")) return permission("KYC", "APPROVE");
-            if (path.contains("/reject") || path.contains("/bulk-reject")
-                    || path.contains("/bulk-disapprove") || path.contains("/bulk-desapprove")) {
+            // Lot KG0 : toute lecture (listes /approved, /rejected et leurs alias compris) avec
+            // KYC:READ ; decisions sur suffixe exact ; toute autre ecriture (creation, soumission,
+            // assignation, risque, notes, exigences, depot par l'equipe, regles) avec KYC:MANAGE.
+            // Avant, ces ecritures ne demandaient que KYC:READ.
+            if (HttpMethod.GET.matches(method)) return permission("KYC", "READ");
+            if (endsWithAny(path, "/approve", "/bulk-approve")) return permission("KYC", "APPROVE");
+            if (endsWithAny(path, "/reject", "/bulk-reject", "/bulk-disapprove", "/bulk-desapprove", "/request-correction")) {
                 return permission("KYC", "REJECT");
             }
-            return permission("KYC", "READ");
+            return permission("KYC", "MANAGE");
         }
         if (path.startsWith("/documents")) {
-            if (path.contains("/approve") || path.contains("/reject") ||
-                path.contains("/request-correction") || path.contains("/restore") ||
-                path.contains("/archive") || path.contains("/analytics") ||
-                path.contains("/export") || path.contains("/access-logs")) {
+            // Decisions : DOCUMENT:REVIEW ou le droit de revue d'un espace (DOCUMENT:REVIEW_<ESPACE>) ;
+            // le service controle l'espace du document, et KYC:APPROVE / KYC:REJECT pour une piece KYC.
+            if (endsWithAny(path, "/approve", "/reject", "/request-correction")) return ANY_DOCUMENT_REVIEW;
+            if (path.contains("/restore") || path.contains("/archive") || path.contains("/analytics")
+                    || path.contains("/export") || path.contains("/access-logs")) {
                 return permission("DOCUMENT", "REVIEW");
             }
+            if (HttpMethod.GET.matches(method)) return permission("DOCUMENT", "READ");
+            // Signature : le signataire designe signe avec la lecture ; le service verifie que c'est lui.
+            if (path.endsWith("/sign")) return permission("DOCUMENT", "READ");
             if (HttpMethod.POST.matches(method)) return permission("DOCUMENT", "UPLOAD");
-            return permission("DOCUMENT", "READ");
+            // PATCH, PUT et DELETE (metadonnees, etiquettes...) : ecritures, plus la lecture.
+            return permission("DOCUMENT", "WRITE");
+        }
+        if (path.startsWith("/document-folders") || path.startsWith("/document-tags")) {
+            return permission("DOCUMENT", HttpMethod.GET.matches(method) ? "READ" : "WRITE");
+        }
+        if (path.startsWith("/document-workflows")) {
+            return HttpMethod.GET.matches(method) ? permission("DOCUMENT", "READ") : permission("SYSTEM", "SETTINGS");
+        }
+        if (path.startsWith("/document-permissions")) {
+            return permission("SYSTEM", "SETTINGS");
+        }
+        if (path.startsWith("/spaces")) {
+            if (HttpMethod.GET.matches(method)) return permission("DOCUMENT", "READ");
+            return permission("DOCUMENT", HttpMethod.POST.matches(method) ? "UPLOAD" : "WRITE");
         }
         if (path.startsWith("/subscriptions") || path.startsWith("/subscription")
                 || path.startsWith("/passes") || path.startsWith("/usage-records")) {
@@ -486,7 +508,9 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("DOCUMENT", "WRITE");
         }
         if (path.startsWith("/review")) {
-            return permission("DOCUMENT", "REVIEW");
+            // File de revue : DOCUMENT:REVIEW ou le droit de revue d'au moins un espace ; le service
+            // ne montre et ne traite que les espaces permis.
+            return ANY_DOCUMENT_REVIEW;
         }
 
         return null;
@@ -524,6 +548,30 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return MODULES_WITH_DELETE_PERMISSION.contains(module) ? "DELETE" : "UPDATE";
         }
         return "UPDATE";
+    }
+
+    /** DOCUMENT:REVIEW ou n'importe quel DOCUMENT:REVIEW_<ESPACE> (lot KG0). */
+    static final String ANY_DOCUMENT_REVIEW = "DOCUMENT:REVIEW*";
+
+    private static boolean endsWithAny(String path, String... suffixes) {
+        String trimmed = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+        for (String suffix : suffixes) {
+            if (trimmed.endsWith(suffix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Droit exige, ou toute famille de droits pour une exigence terminee par {@code *}. */
+    private boolean grants(Collection<? extends GrantedAuthority> authorities, String required) {
+        if (required.endsWith("*")) {
+            String prefix = required.substring(0, required.length() - 1);
+            String underscored = prefix.replace(':', '_');
+            return authorities.stream().map(GrantedAuthority::getAuthority).filter(java.util.Objects::nonNull)
+                    .anyMatch(a -> a.startsWith(prefix) || a.startsWith(underscored));
+        }
+        return has(authorities, required) || has(authorities, required.replace(':', '_'));
     }
 
     private String permission(String module, String action) {

@@ -12,6 +12,6 @@ public class KycCaseBulkApproveRequest {
     @NotEmpty
     private List<String> documentCodes;
 
-    @NotNull
+    /** Ignore pour un compte connecte : l\'auteur est toujours le compte connecte (lot KG0). */
     private Long reviewedBy;
 }

@@ -275,7 +275,7 @@ public class KycServiceImpl implements KycService {
         validateCrossDocumentRules(kycCase);
 
         kycCase.setStatus(KycCaseStatus.APPROVED);
-        kycCase.setReviewedBy(request.getReviewedBy());
+        kycCase.setReviewedBy(actor(request.getReviewedBy()));
         kycCase.setReviewedAt(Instant.now());
         kycCase.setCompletedAt(Instant.now());
         kycCase.setDecisionComment(trimToNull(request.getComment()));
@@ -294,7 +294,7 @@ public class KycServiceImpl implements KycService {
             provisionDefaultWallet("CUSTOMER", customer.getCustomerId());
         }
 
-        publishCaseEvent("KYC_CASE_APPROVED", kycCase, request.getReviewedBy());
+        publishCaseEvent("KYC_CASE_APPROVED", kycCase, actor(request.getReviewedBy()));
 
         return toResponse(kycCase);
     }
@@ -307,7 +307,7 @@ public class KycServiceImpl implements KycService {
 
         KycCase kycCase = serviceCase(code);
         kycCase.setStatus(KycCaseStatus.PENDING_CORRECTION);
-        kycCase.setReviewedBy(request.getReviewedBy());
+        kycCase.setReviewedBy(actor(request.getReviewedBy()));
         kycCase.setReviewedAt(Instant.now());
         kycCase.setDecisionComment(request.getComment().trim());
         caseRepository.save(kycCase);
@@ -317,7 +317,7 @@ public class KycServiceImpl implements KycService {
                 .forEach(item -> verificationRepository.save(KycVerification.builder()
                         .kycDocument(item)
                         .verificationStatus(item.getStatus())
-                        .verifiedBy(request.getReviewedBy())
+                        .verifiedBy(actor(request.getReviewedBy()))
                         .verifiedAt(Instant.now())
                         .notes(request.getComment().trim())
                         .build()));
@@ -330,7 +330,7 @@ public class KycServiceImpl implements KycService {
             customer.setStatus(com.sni.bokaticowork.features.client.customer.enums.CustomerStatus.PENDING);
         }
 
-        publishCaseEvent("KYC_CASE_CORRECTION_REQUESTED", kycCase, request.getReviewedBy());
+        publishCaseEvent("KYC_CASE_CORRECTION_REQUESTED", kycCase, actor(request.getReviewedBy()));
 
         return toResponse(kycCase);
     }
@@ -462,7 +462,8 @@ public class KycServiceImpl implements KycService {
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponse<KycCaseResponse> myQueue(Long userId, Pageable pageable) {
-        Long resolvedUserId = userId != null ? userId : currentUserId();
+        // Lot KG0 : « ma file » est toujours celle du compte connecte.
+        Long resolvedUserId = actor(userId);
         Page<KycCase> page = caseRepository.findAllByAssignedToOrderBySubmittedAtAsc(resolvedUserId, pageable);
         return new PaginatedResponse<>(page.map(this::toResponse));
     }
@@ -473,11 +474,11 @@ public class KycServiceImpl implements KycService {
         KycCaseNote note = KycCaseNote.builder()
                 .kycCase(kycCase)
                 .content(request.getContent().trim())
-                .authorId(request.getAuthorId())
+                .authorId(actor(request.getAuthorId()))
                 .internal(request.getInternal() == null ? Boolean.TRUE : request.getInternal())
                 .build();
         noteRepository.save(note);
-        publishCaseEvent("KYC_CASE_NOTE_ADDED", kycCase, request.getAuthorId());
+        publishCaseEvent("KYC_CASE_NOTE_ADDED", kycCase, actor(request.getAuthorId()));
         return mapper.toNoteResponse(note);
     }
 
@@ -583,7 +584,7 @@ public class KycServiceImpl implements KycService {
         kycCase.setRiskLevel(request.getRiskLevel());
         kycCase.setDecisionComment(trimToNull(request.getComment()));
         caseRepository.save(kycCase);
-        publishCaseEvent("KYC_RISK_LEVEL_UPDATED", kycCase, request.getReviewedBy());
+        publishCaseEvent("KYC_RISK_LEVEL_UPDATED", kycCase, actor(request.getReviewedBy()));
         return toResponse(kycCase);
     }
 
@@ -629,7 +630,7 @@ public class KycServiceImpl implements KycService {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public KycBulkActionResponse bulkApprove(KycBulkApproveRequest request) {
         List<KycBulkItemResult> results = request.getDocumentIds().stream()
-                .map(code -> bulkApproveOne(code, request.getReviewedBy()))
+                .map(code -> bulkApproveOne(code, actor(request.getReviewedBy())))
                 .toList();
         return bulkResponse(results);
     }
@@ -638,7 +639,7 @@ public class KycServiceImpl implements KycService {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public KycBulkActionResponse bulkReject(KycBulkRejectRequest request) {
         List<KycBulkItemResult> results = request.getItems().stream()
-                .map(item -> bulkRejectOne(item.getDocumentCode(), request.getReviewedBy(), item.getReason()))
+                .map(item -> bulkRejectOne(item.getDocumentCode(), actor(request.getReviewedBy()), item.getReason()))
                 .toList();
         return bulkResponse(results);
     }
@@ -686,6 +687,18 @@ public class KycServiceImpl implements KycService {
             case CUSTOMER -> 48L;
             default -> 24L;
         };
+    }
+
+    /**
+     * Auteur d'une decision, d'une note ou d'un changement (lot KG0) : toujours le compte connecte ;
+     * la valeur fournie par la requete n'est retenue que pour une tache du systeme, sans compte.
+     */
+    private Long actor(Long declared) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
+            return principal.getUser().getId();
+        }
+        return declared != null ? declared : com.sni.bokaticowork.core.utils.constant.SystemActors.SYSTEM_USER_ID;
     }
 
     private Long currentUserId() {
@@ -1018,7 +1031,7 @@ public class KycServiceImpl implements KycService {
                                 .documentCode(code).success(false)
                                 .error("Document does not belong to case " + caseCode).build();
                     }
-                    return bulkApproveOne(code, request.getReviewedBy());
+                    return bulkApproveOne(code, actor(request.getReviewedBy()));
                 })
                 .toList();
         return bulkResponse(results);
@@ -1038,7 +1051,7 @@ public class KycServiceImpl implements KycService {
                                 .documentCode(item.getDocumentCode()).success(false)
                                 .error("Document does not belong to case " + caseCode).build();
                     }
-                    return bulkRejectOne(item.getDocumentCode(), request.getReviewedBy(), item.getReason());
+                    return bulkRejectOne(item.getDocumentCode(), actor(request.getReviewedBy()), item.getReason());
                 })
                 .toList();
         return bulkResponse(results);
@@ -1053,7 +1066,7 @@ public class KycServiceImpl implements KycService {
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found in case " + caseCode));
 
         DocumentCorrectionRequest corrReq = new DocumentCorrectionRequest();
-        corrReq.setReviewedBy(request.getReviewedBy());
+        corrReq.setReviewedBy(actor(request.getReviewedBy()));
         corrReq.setCorrectionNote(request.getCorrectionNote());
         corrReq.setDeadlineDays(request.getDeadlineDays());
         documentService.requestCorrection(kycDoc.getDocument().getCode(), corrReq);
@@ -1061,7 +1074,7 @@ public class KycServiceImpl implements KycService {
         kycDoc.setStatus(KycDocumentVerificationStatus.REJECTED);
         documentRepository.save(kycDoc);
 
-        publishCaseEvent("KYC_DOCUMENT_CORRECTION_REQUESTED", kycCase, request.getReviewedBy());
+        publishCaseEvent("KYC_DOCUMENT_CORRECTION_REQUESTED", kycCase, actor(request.getReviewedBy()));
         return mapper.toDocumentResponse(kycDoc);
     }
 

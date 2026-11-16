@@ -2,6 +2,8 @@
 
 > Partie du [README du module](README.md). Routes exactes : [routes/KycController.md](routes/KycController.md), [routes/KycDocumentAdminController.md](routes/KycDocumentAdminController.md), [routes/KycDocumentReviewController.md](routes/KycDocumentReviewController.md), [routes/KycCrossValidationRuleController.md](routes/KycCrossValidationRuleController.md).
 
+> **Lot KG0 (16/11/2026)** : les écritures sur un dossier (création, soumission, affectation, niveau de risque, notes, exigences, dépôt par l'équipe, détails d'une pièce, règles) demandent `KYC:MANAGE` ; l'auteur d'une décision ou d'une note est toujours le compte connecté (`reviewedBy`, `authorId` ne sont plus à envoyer, ils sont ignorés) ; une pièce KYC ne se décide qu'avec `KYC:APPROVE` ou `KYC:REJECT`, même par les routes documentaires.
+
 ## Principe
 
 - Un dossier KYC (`code` `KYCCASE…`) par propriétaire `MEMBER`, `CUSTOMER` ou `BUSINESS` (les autres types de propriétaire sont refusés : `400` « KYC is only supported for member, customer or business »).
@@ -36,7 +38,7 @@
 
 ## Ouvrir un dossier
 
-1. `POST /sni/api/v1/kyc/cases` ([route](routes/KycController.md#r-post-sni-api-v1-kyc-cases)), droit `KYC:READ`, `Idempotency-Key` conseillé. Corps : `{ "ownerType": "MEMBER", "ownerCode": "MBR…", "documentTypeCodes": ["CNI", "JUSTIFICATIF_DOMICILE"] }` (`documentTypeCodes` facultatif ; chaque code doit exister, sinon `400` « Unknown document type: X »).
+1. `POST /sni/api/v1/kyc/cases` ([route](routes/KycController.md#r-post-sni-api-v1-kyc-cases)), droit `KYC:MANAGE`, `Idempotency-Key` conseillé. Corps : `{ "ownerType": "MEMBER", "ownerCode": "MBR…", "documentTypeCodes": ["CNI", "JUSTIFICATIF_DOMICILE"] }` (`documentTypeCodes` facultatif ; chaque code doit exister, sinon `400` « Unknown document type: X »).
 2. Si le propriétaire a déjà un dossier qui n'est ni `APPROVED` ni `REJECTED`, ce dossier est renvoyé tel quel (même statut `201`, `documentTypeCodes` ignoré). Comme un dossier « refusé » est en `PENDING_CORRECTION`, c'est le cas le plus fréquent.
 3. Sinon : nouveau dossier `IN_PROGRESS`, risque `MEDIUM` pour une entreprise, `LOW` sinon ; `documentTypeCodes` devient la liste des exigences propres au dossier ; un membre passe `PENDING` ; courriel « Votre dossier KYC est ouvert » au propriétaire.
 4. Un dossier est aussi ouvert automatiquement au premier dépôt d'un document de catégorie `KYC` (sans courriel).
@@ -57,7 +59,7 @@
 
 ## Déposer une pièce pour le compte d'un propriétaire
 
-`POST /sni/api/v1/kyc/documents/admin/upload` ([route](routes/KycDocumentAdminController.md#r-post-sni-api-v1-kyc-documents-admin-upload)), droit `KYC:READ`, `multipart/form-data`.
+`POST /sni/api/v1/kyc/documents/admin/upload` ([route](routes/KycDocumentAdminController.md#r-post-sni-api-v1-kyc-documents-admin-upload)), droit `KYC:MANAGE`, `multipart/form-data`.
 
 1. Préalable : le propriétaire doit avoir un dossier (sinon `400` « Aucun dossier KYC actif pour ce propriétaire · créez-en un d'abord ») ; le type doit être de catégorie `KYC` pour que la pièce soit suivie ; un type recto/verso doit avoir `multipleAllowed = true` (sinon le verso échoue en `400` « Only one document of type 'X' is allowed per owner »).
 2. Parties du formulaire (toutes en texte, sauf le fichier) : `ownerType`, `ownerCode`, `documentTypeCode` (obligatoires), `side` (`FRONT` par défaut, ou `BACK`), `documentNumber`, `issueDate`, `expiryDate` (`AAAA-MM-JJ`), et la partie fichier `file`.
@@ -74,7 +76,7 @@
 ### File de revue des pièces
 
 - `GET /sni/api/v1/kyc/documents/review-queue` ([route](routes/KycDocumentReviewController.md#r-get-sni-api-v1-kyc-documents-review-queue)) : toutes les pièces `PENDING`, liste complète (pas de pagination), les plus récemment modifiées d'abord.
-- `GET /sni/api/v1/kyc/documents/reviewed?status=APPROVED|REJECTED` (sans `status` : les deux) ; alias `GET /kyc/documents/approved` (droit `KYC:APPROVE`), `GET /kyc/documents/rejected` (droit `KYC:REJECT`), `/disapproved` et `/desapproved` (droit `KYC:READ`).
+- `GET /sni/api/v1/kyc/documents/reviewed?status=APPROVED|REJECTED` (sans `status` : les deux) ; alias `GET /kyc/documents/approved` (droit `KYC:READ` depuis le lot KG0), `GET /kyc/documents/rejected` (droit `KYC:REJECT`), `/disapproved` et `/desapproved` (droit `KYC:READ`).
 - Chaque ligne porte `ownerName`, `documentType`, `documentCode`, `backDocumentCode`, `status`, `uploadedAt`.
 
 ### Approuver une pièce
@@ -152,7 +154,7 @@ Quand toutes les pièces exigées sont `VERIFIED`, le recalcul passe le dossier 
 
 ## Règles de contrôle croisé
 
-Paramétrage (droit `KYC:READ`) : `GET/POST /sni/api/v1/kyc/cross-validation-rules`, `GET/PUT/DELETE /sni/api/v1/kyc/cross-validation-rules/{id}` ([routes](routes/KycCrossValidationRuleController.md)). `{id}` est un int64 ⚠.
+Paramétrage (lecture `KYC:READ`, création, modification et suppression `KYC:MANAGE`) : `GET/POST /sni/api/v1/kyc/cross-validation-rules`, `GET/PUT/DELETE /sni/api/v1/kyc/cross-validation-rules/{id}` ([routes](routes/KycCrossValidationRuleController.md)). `{id}` est un int64 ⚠.
 
 - Corps : `{ "documentTypeCode1": "CNI", "documentTypeCode2": "PASSEPORT", "fieldToCompare": "last_name", "blocking": true, "active": true }`. Codes mis en majuscules, champ en minuscules.
 - Champs comparables : `first_name`/`firstname`, `last_name`/`lastname`/`name`, `date_of_birth`/`dob`, `expiry_date`, `document_number`, `nationality`. Toute autre valeur est acceptée à l'enregistrement mais ne compare rien.

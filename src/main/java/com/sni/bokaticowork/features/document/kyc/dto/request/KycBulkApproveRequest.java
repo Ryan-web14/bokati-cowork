@@ -11,6 +11,6 @@ public class KycBulkApproveRequest {
     @NotEmpty
     private List<String> documentIds;
 
-    @NotNull
+    /** Ignore pour un compte connecte : l\'auteur est toujours le compte connecte (lot KG0). */
     private Long reviewedBy;
 }

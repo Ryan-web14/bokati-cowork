@@ -1,6 +1,8 @@
 # Centre KYC et GED : plan d'amélioration et règlement des écarts
 
-Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan validé avec les décisions de l'exploitant du 16/11/2026 (voir plus bas) ; rien n'est encore implémenté.
+Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan validé avec les décisions de l'exploitant du 16/11/2026 (voir plus bas).
+
+État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)).
 
 ## Constat (vérifié dans le code le 16/11/2026)
 

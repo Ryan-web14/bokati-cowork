@@ -58,6 +58,7 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
         if (signature.getSignatureStatus() != DocumentSignatureStatus.PENDING) {
             throw new BadRequestException("Document signature is not pending");
         }
+        requireSigner(signature);
         signature.setSignatureStatus(DocumentSignatureStatus.SIGNED);
         signature.setSignedAt(Instant.now());
         signature.setIpAddress(trim(ipAddress));
@@ -74,6 +75,26 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
         return signatureRepository.findAllByDocument_CodeOrderByIdAsc(documentCode).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    /**
+     * Lot KG0 : seul le signataire designe signe, avec son propre compte (meme identifiant, ou meme
+     * courriel). Personne ne signe a la place d'un autre, administrateur compris.
+     */
+    private void requireSigner(DocumentSignature signature) {
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof com.sni.bokaticowork.security.admin.user.model.UserPrincipal principal)) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException("Signature réservée au signataire connecté");
+        }
+        com.sni.bokaticowork.security.admin.user.model.Users user = principal.getUser();
+        boolean sameUser = "USER".equalsIgnoreCase(signature.getSignerType()) && signature.getSignerId() != null && signature.getSignerId() == user.getId();
+        boolean sameEmail = StringUtils.hasText(signature.getSignerEmail()) && user.getEmail() != null
+                && signature.getSignerEmail().trim().equalsIgnoreCase(user.getEmail().trim());
+        if (!sameUser && !sameEmail) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException(
+                    "Seul le signataire désigné (" + signature.getSignerName() + ") peut signer");
+        }
     }
 
     private Document document(String documentCode) {
