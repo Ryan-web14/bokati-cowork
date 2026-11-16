@@ -9,7 +9,7 @@ Module [document](../README.md) · 4 route(s).
 <a id="r-delete-sni-api-v1-document-permissions"></a>
 ### DELETE /sni/api/v1/document-permissions
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java`, méthode `revoke`
 
@@ -24,7 +24,7 @@ Module [document](../README.md) · 4 route(s).
 <a id="r-get-sni-api-v1-document-permissions"></a>
 ### GET /sni/api/v1/document-permissions
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Réponse : `List<DocumentPermissionResponse>`
 - Modèles : [DocumentPermissionResponse](#m-DocumentPermissionResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java`, méthode `list`
@@ -37,7 +37,7 @@ Module [document](../README.md) · 4 route(s).
 <a id="r-post-sni-api-v1-document-permissions"></a>
 ### POST /sni/api/v1/document-permissions
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Corps JSON (obligatoire) : `GrantPermissionRequest`
 - Réponse : `DocumentPermissionResponse`
 - Modèles : [DocumentPermissionResponse](#m-DocumentPermissionResponse), [GrantPermissionRequest](#m-GrantPermissionRequest)
@@ -46,7 +46,7 @@ Module [document](../README.md) · 4 route(s).
 <a id="r-get-sni-api-v1-document-permissions-effective"></a>
 ### GET /sni/api/v1/document-permissions/effective
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Réponse : `Set<String>`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java`, méthode `effective`
 

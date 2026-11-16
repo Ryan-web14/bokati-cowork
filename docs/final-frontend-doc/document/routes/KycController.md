@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [document](../README.md) · 24 route(s).
+Module [document](../README.md) · 25 route(s).
 
 ## Routes
 
@@ -29,7 +29,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-post-sni-api-v1-kyc-cases"></a>
 ### POST /sni/api/v1/kyc/cases
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - En-tête `Idempotency-Key` : conseillé (opération `KYC_CASE_CREATE`, voir le README racine)
 - Corps JSON (obligatoire) : `CreateKycCaseRequest`
 - Réponse : `KycCaseResponse`
@@ -99,7 +99,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-patch-sni-api-v1-kyc-cases-code-assign"></a>
 ### PATCH /sni/api/v1/kyc/cases/{code}/assign
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Corps JSON (obligatoire) : `KycAssignRequest`
 - Réponse : `KycCaseResponse`
 - Modèles : [KycCaseResponse](#m-KycCaseResponse), [KycAssignRequest](#m-KycAssignRequest)
@@ -140,7 +140,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-post-sni-api-v1-kyc-cases-code-documents-request-correction"></a>
 ### POST /sni/api/v1/kyc/cases/{code}/documents/request-correction
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:REJECT`
 - Corps JSON (obligatoire) : `KycCaseCorrectionRequest`
 - Réponse : `KycDocumentResponse`
 - Modèles : [KycDocumentResponse](#m-KycDocumentResponse), [KycCaseCorrectionRequest](#m-KycCaseCorrectionRequest)
@@ -174,6 +174,19 @@ Module [document](../README.md) · 24 route(s).
 | `code` | chemin | `String` | oui |  |
 | `includeInternalNotes` | requête | `boolean` |  | true |
 
+<a id="r-patch-sni-api-v1-kyc-cases-code-level"></a>
+### PATCH /sni/api/v1/kyc/cases/{code}/level
+
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
+- Corps JSON (obligatoire) : `KycController.LevelRequest`
+- Réponse : `KycCaseResponse`
+- Modèles : [KycCaseResponse](#m-KycCaseResponse), [KycController.LevelRequest](#m-KycController-LevelRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java`, méthode `changeLevel`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
 <a id="r-get-sni-api-v1-kyc-cases-code-missing-requirements"></a>
 ### GET /sni/api/v1/kyc/cases/{code}/missing-requirements
 
@@ -201,7 +214,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-post-sni-api-v1-kyc-cases-code-notes"></a>
 ### POST /sni/api/v1/kyc/cases/{code}/notes
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Corps JSON (obligatoire) : `KycCaseNoteRequest`
 - Réponse : `KycCaseNoteResponse`
 - Modèles : [KycCaseNoteResponse](#m-KycCaseNoteResponse), [KycCaseNoteRequest](#m-KycCaseNoteRequest)
@@ -240,7 +253,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-post-sni-api-v1-kyc-cases-code-requirements"></a>
 ### POST /sni/api/v1/kyc/cases/{code}/requirements
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Corps JSON (obligatoire) : `KycCaseRequirementRequest`
 - Réponse : `KycCaseRequirementResponse`
 - Modèles : [KycCaseRequirementResponse](#m-KycCaseRequirementResponse), [KycCaseRequirementRequest](#m-KycCaseRequirementRequest)
@@ -253,7 +266,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-delete-sni-api-v1-kyc-cases-code-requirements-documenttypecode"></a>
 ### DELETE /sni/api/v1/kyc/cases/{code}/requirements/{documentTypeCode}
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java`, méthode `removeCaseRequirement`
 
@@ -277,7 +290,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-patch-sni-api-v1-kyc-cases-code-risk-level"></a>
 ### PATCH /sni/api/v1/kyc/cases/{code}/risk-level
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Corps JSON (obligatoire) : `KycRiskLevelRequest`
 - Réponse : `KycCaseResponse`
 - Modèles : [KycCaseResponse](#m-KycCaseResponse), [KycRiskLevelRequest](#m-KycRiskLevelRequest)
@@ -290,7 +303,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-post-sni-api-v1-kyc-cases-code-submit"></a>
 ### POST /sni/api/v1/kyc/cases/{code}/submit
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - En-tête `Idempotency-Key` : conseillé (opération `KYC_CASE_SUBMIT`, voir le README racine)
 - Réponse : `KycCaseResponse`
 - Modèles : [KycCaseResponse](#m-KycCaseResponse)
@@ -342,6 +355,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `reminderCount` | entier |  |  |
 | `riskLevel` | enum : `LOW`, `MEDIUM`, `HIGH`, `VERY_HIGH` |  |  |
 | `kycLevel` | entier |  |  |
+| `requestedKycLevel` | entier |  |  |
 | `complete` | booléen |  |  |
 | `approved` | booléen |  |  |
 | `missingDocumentTypeCodes` | texte[] |  |  |
@@ -384,7 +398,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `reviewedBy` | entier int64 ⚠ | oui |  |
+| `reviewedBy` | entier int64 ⚠ |  |  |
 | `comment` | texte |  |  |
 
 <a id="m-KycAssignRequest"></a>
@@ -411,7 +425,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `documentCodes` | texte[] | oui | éléments min `1` |
-| `reviewedBy` | entier int64 ⚠ | oui |  |
+| `reviewedBy` | entier int64 ⚠ |  |  |
 
 <a id="m-KycCaseBulkRejectRequest"></a>
 #### KycCaseBulkRejectRequest
@@ -419,7 +433,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `items` | [KycBulkRejectItemRequest](#m-KycBulkRejectItemRequest)[] | oui | éléments min `1` |
-| `reviewedBy` | entier int64 ⚠ | oui |  |
+| `reviewedBy` | entier int64 ⚠ |  |  |
 
 <a id="m-KycDocumentResponse"></a>
 #### KycDocumentResponse
@@ -456,7 +470,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `documentCode` | texte | oui | longueur min `1` |
-| `reviewedBy` | entier int64 ⚠ | oui |  |
+| `reviewedBy` | entier int64 ⚠ |  |  |
 | `correctionNote` | texte | oui | longueur min `1` |
 | `deadlineDays` | entier |  | min `1` |
 
@@ -471,6 +485,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `daysUntilExpiry` | entier int64 ⚠ |  |  |
 | `expired` | booléen |  |  |
 | `status` | enum : `PENDING`, `VERIFIED`, `REJECTED`, `EXPIRED` |  |  |
+
+<a id="m-KycController-LevelRequest"></a>
+#### KycController.LevelRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `level` | entier | oui | min `1`, max `4` |
+| `reason` | texte |  |  |
 
 <a id="m-KycRequirementStatus"></a>
 #### KycRequirementStatus
@@ -504,7 +526,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `content` | texte | oui | longueur min `1` |
-| `authorId` | entier int64 ⚠ | oui |  |
+| `authorId` | entier int64 ⚠ |  |  |
 | `internal` | booléen |  |  |
 
 <a id="m-KycCaseRequirementResponse"></a>

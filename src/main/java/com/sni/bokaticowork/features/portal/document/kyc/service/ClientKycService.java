@@ -50,6 +50,13 @@ public class ClientKycService {
     private final DocumentRequirementRepository requirementRepository;
     private final DocumentTypeRepository documentTypeRepository;
     private final DocumentUploadValidator uploadValidator;
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementResolver requirementResolver;
+
+    /** Lot KG1 : pieces demandees pour ce dossier (globales et propres au dossier). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setRequirementResolver(com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementResolver requirementResolver) {
+        this.requirementResolver = requirementResolver;
+    }
 
     @Transactional(readOnly = true)
     public ClientKycStatusResponse getMyCase(Member member) {
@@ -65,15 +72,19 @@ public class ClientKycService {
         if (closedForUploads(kycCase)) {
             return List.of();
         }
-        List<DocumentRequirement> reqs = requirementRepository
-                .findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(DocumentOwnerType.MEMBER);
+        // Lot KG1 : les pieces de ce dossier (exigences globales et propres au dossier), chacune avec
+        // l'etat et les codes de la piece deposee (avant : exigences globales seules, sans etat).
+        List<DocumentRequirement> reqs = requirementResolver != null
+                ? requirementResolver.resolve(kycCase)
+                : requirementRepository.findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(DocumentOwnerType.MEMBER);
         // Once the case is approved the dossier is complete: nothing is required or missing anymore.
         boolean approved = kycCase.getStatus() == KycCaseStatus.APPROVED;
-        List<KycRequirementStatus> statuses = kycService.getMissingRequirements(kycCase.getCode());
+        List<KycDocument> pieces = kycDocumentRepository.findAllByKycCaseOrderByIdAsc(kycCase);
         return reqs.stream().map(r -> {
-            KycRequirementStatus match = statuses.stream()
-                    .filter(s -> s.getDocumentTypeCode().equals(r.getDocumentTypeCode()))
-                    .findFirst().orElse(null);
+            KycDocument match = pieces.stream()
+                    .filter(piece -> r.getDocumentTypeCode().equalsIgnoreCase(piece.getDocumentType()))
+                    .reduce((first, second) -> second)
+                    .orElse(null);
             DocumentType docType = documentTypeRepository.findByCode(r.getDocumentTypeCode()).orElse(null);
             return ClientKycRequirementResponse.builder()
                     .documentTypeCode(r.getDocumentTypeCode())
@@ -81,8 +92,8 @@ public class ClientKycService {
                     .required(!approved && Boolean.TRUE.equals(r.getRequired()))
                     .requiresBackSide(docType != null ? docType.getRequiresBackSide() : Boolean.FALSE)
                     .status(match != null && match.getStatus() != null ? match.getStatus().name() : null)
-                    .documentCode(match != null ? match.getDocumentCode() : null)
-                    .backDocumentCode(match != null ? match.getBackDocumentCode() : null)
+                    .documentCode(match != null && match.getDocument() != null ? match.getDocument().getCode() : null)
+                    .backDocumentCode(match != null && match.getBackDocument() != null ? match.getBackDocument().getCode() : null)
                     .build();
         }).toList();
     }
@@ -150,6 +161,10 @@ public class ClientKycService {
 
         KycCase kycCase = resolveCase(member);
         assertCaseEditable(kycCase);
+        // Lot KG1 : seules les pieces demandees pour ce dossier se deposent.
+        if (requirementResolver != null && !requirementResolver.accepts(kycCase, documentType)) {
+            throw new BadRequestException("Cette pièce n'est pas demandée pour votre dossier : " + docType.getName());
+        }
 
         DocumentUploadMetadataRequest metadata = new DocumentUploadMetadataRequest();
         metadata.setOwnerType(DocumentOwnerType.MEMBER);

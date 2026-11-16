@@ -9,7 +9,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-kyc-documents-approved"></a>
 ### GET /sni/api/v1/kyc/documents/approved
 
-- Accès : back-office : rôle d'administration et droit `KYC:APPROVE`
+- Accès : back-office : rôle d'administration et droit `KYC:READ`
 - Réponse : `List<KycDocumentResponse>`
 - Modèles : [KycDocumentResponse](#m-KycDocumentResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java`, méthode `approved`
@@ -73,7 +73,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-kyc-documents-rejected"></a>
 ### GET /sni/api/v1/kyc/documents/rejected
 
-- Accès : back-office : rôle d'administration et droit `KYC:REJECT`
+- Accès : back-office : rôle d'administration et droit `KYC:READ`
 - Réponse : `List<KycDocumentResponse>`
 - Modèles : [KycDocumentResponse](#m-KycDocumentResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java`, méthode `rejected`
@@ -159,7 +159,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `documentIds` | texte[] | oui | éléments min `1` |
-| `reviewedBy` | entier int64 ⚠ | oui |  |
+| `reviewedBy` | entier int64 ⚠ |  |  |
 
 <a id="m-KycBulkRejectRequest"></a>
 #### KycBulkRejectRequest
@@ -167,7 +167,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `items` | [KycBulkRejectItemRequest](#m-KycBulkRejectItemRequest)[] | oui | éléments min `1` |
-| `reviewedBy` | entier int64 ⚠ | oui |  |
+| `reviewedBy` | entier int64 ⚠ |  |  |
 
 <a id="m-KycDocumentOcrResultResponse"></a>
 #### KycDocumentOcrResultResponse

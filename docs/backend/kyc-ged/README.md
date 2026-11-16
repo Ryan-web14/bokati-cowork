@@ -2,7 +2,7 @@
 
 Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan validé avec les décisions de l'exploitant du 16/11/2026 (voir plus bas).
 
-État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)).
+État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)).
 
 ## Constat (vérifié dans le code le 16/11/2026)
 
@@ -29,7 +29,7 @@ Les plus graves :
 | Lot | Contenu | Écarts |
 | --- | --- | --- |
 | **KG0. Droits et auteurs** | Règles d'URL KYC selon la méthode : lecture `KYC:READ` ; écritures de dossier (création, soumission, assignation, risque, notes, exigences, dépôt par l'équipe, règles de contrôle croisé) avec un nouveau droit `KYC:MANAGE` donné à `KYC_REVIEWER`, `ADMIN` et `SUPER_ADMIN` ; décisions `KYC:APPROVE` / `KYC:REJECT` sur suffixe exact ; alias `/disapproved` et `/desapproved` traités comme lectures. Décision sur une pièce de l'espace KYC par `/documents/{code}/approve` : exige aussi `KYC:APPROVE`. GED : `PATCH` et `DELETE` sur `/documents/**` exigent `DOCUMENT:WRITE` ; règles d'URL pour `/document-folders`, `/document-tags`, `/document-workflows`, `/document-permissions`, `/spaces`. Droits `DOCUMENT:REVIEW_<ESPACE>` rendus effectifs (revue limitée à l'espace). Auteur toujours tiré du compte connecté (`reviewedBy`, `authorId`, `userId` acceptés mais ignorés). Dossiers restreints respectés au dépôt, sur les étiquettes, métadonnées, signatures, partages, journaux d'accès, tableau de bord, export et file de revue. | K1, K10, K-n1, G2, G3, G5, G12, G-n1 |
-| **KG1. Cycle KYC cohérent** | Un seul calcul des exigences (celles du dossier, sinon les globales filtrées par type de client et forme juridique) pour le recalcul, la fiche et le portail ; exigences propres à un dossier demandées, téléversables et comptées (section dédiée ci-dessous). Une seule approbation : effets communs (client ou membre actif, portefeuille, courriel `KYC_CASE_APPROVED`) que l'approbation vienne de l'équipe ou du recalcul. Gardes de statut : une décision manuelle (refus, correction, soumission) n'est plus écrasée par le recalcul ; approbation refusée sur un dossier non soumis ; pas de second courriel. Activer un client n'approuve plus son dossier. Recalcul après ajout ou retrait d'une exigence ; exigence retirée ré-ajoutable. Le verso doit être approuvé quand le type en demande un. Liste du portail avec le statut et le code de chaque pièce. | K2, K3, K-n2, K-n6, K-n7, K-n8, K-n9, K-n11 |
+| **KG1. Cycle KYC cohérent** | Un seul calcul des exigences (les globales filtrées par type de client, forme juridique et niveau KYC demandé, plus celles du dossier ; niveau KYC modifiable, `PATCH /kyc/cases/{code}/level`) pour le recalcul, la fiche et le portail ; exigences propres à un dossier demandées, téléversables et comptées (section dédiée ci-dessous). Une seule approbation : effets communs (client ou membre actif, portefeuille, courriel `KYC_CASE_APPROVED`) que l'approbation vienne de l'équipe ou du recalcul. Gardes de statut : une décision manuelle (refus, correction, soumission) n'est plus écrasée par le recalcul ; approbation refusée sur un dossier non soumis ; pas de second courriel. Activer un client n'approuve plus son dossier. Recalcul après ajout ou retrait d'une exigence ; exigence retirée ré-ajoutable. Le verso doit être approuvé quand le type en demande un. Liste du portail avec le statut et le code de chaque pièce. | K2, K3, K-n2, K-n6, K-n7, K-n8, K-n9, K-n11 |
 | **KG2. Recto, verso et remplacements** | Verso dispensé de la règle « un seul document du type » ; ancien recto ou verso passé `SUPERSEDED` au remplacement (statut enfin utilisé). Synchronisation par document **ou** verso : jamais de pièce créée pour un verso, plus d'appel en double. Synchronisation lancée après validation de la transaction (plus de lecture de données non validées). Suppression depuis le portail : document archivé, nouveau dépôt possible. `KycDocumentResponse.id` toujours l'identifiant court ; `documentCodes` accepté (alias de `documentIds`). | K4, K5, K6, K-n3, K-n10 |
 | **KG3. Événements, relances, automatismes** | Tous les événements KYC ont un processeur (notifiants ou simplement consignés) : plus d'événement abandonné. Courriel en échec réessayé par la boîte d'envoi. `KYC_CASE_REJECTED` publié par un vrai refus (voir KG7) ou supprimé ; courriel pour `KYC_RENEWAL_REQUIRED`. Relances d'expiration chaque jour, par seuil franchi (60, 30, 7 jours) et mémorisé, sur les pièces vivantes seulement. Expiration : une seule logique (document et pièce), avec le délai de grâce et le passage en renouvellement. Approbation automatique : une seule règle (`autoApprove` au dépôt, `autoApproveAfterDays` après délai), jamais sur une pièce renvoyée en correction ; une transaction par élément. | K7, K8, K9, K-n4, K-n5, K-n12, G-n3 |
 | **KG4. GED : revue, dépôt, documents** | Opérations en masse et rétention nocturne : une transaction par document, résultat partiel exact ; `{space}` filtre vraiment. Remplacement refusé sur un document archivé, expiré, remplacé ou signé ; `autoApprove` respecté. Verrou appliqué aussi aux décisions, étiquettes, métadonnées, signatures ; état du verrou dans `DocumentResponse`. Formats : une seule liste par défaut, contrôle de l'espace sur le type détecté, `upload-config` exact ; import ZIP borné à la taille réelle des requêtes et protégé contre l'archive piégée (taille décompressée limitée). `ownerCode` métier pour contrats et factures ; `ownerCode`, `ownerLabel`, `folderCode`, `folderName` dans la réponse. Fichier supprimé du stockage quand la transaction est annulée. File de revue sans N+1. | G1, G4, G7, G8, G9, G11, G-n2, G-n4, G-n6, G-n8 |
@@ -44,7 +44,7 @@ Ordre conseillé : KG0 (sécurité), KG1, KG2, KG3, KG4, KG6, KG5, KG7, KG8 (au 
 
 Une exigence ajoutée à un dossier (`POST /kyc/cases/{code}/requirements`) doit être prise en compte partout, comme une exigence globale. Aujourd'hui elle n'apparaît pas dans la liste du portail, le recalcul l'ignore (le dossier peut être approuvé sans elle) et, une fois retirée, elle ne peut plus être remise.
 
-Règle : les exigences d'un dossier sont celles du dossier quand il en a, sinon les exigences globales filtrées par type de titulaire, type de client et forme juridique. Un seul calcul (`KycRequirementResolver`) sert à tout.
+Règle : les exigences d'un dossier sont les exigences globales filtrées par type de titulaire, type de client, forme juridique et niveau KYC demandé, **plus** celles du dossier (une ligne active ajoute ou remplace, une ligne inactive dispense). Un seul calcul (`KycRequirementResolver`) sert à tout.
 
 Critères de validation (testés) :
 
@@ -81,8 +81,8 @@ Critères de validation (testés) :
 | N° | Écart | État |
 | --- | --- | --- |
 | K1 | `/disapproved`, `/desapproved` en `KYC:READ` | confirmé |
-| K2 | Approbation par recalcul sans courriel ni portefeuille | confirmé |
-| K3 | Exigences du dossier et type de client ignorés | confirmé (plus large) |
+| K2 | Approbation par recalcul sans courriel ni portefeuille | Réglé (KG1) |
+| K3 | Exigences du dossier et type de client ignorés | Réglé (KG1) |
 | K4 | Verso et `multipleAllowed`, recto jamais `SUPERSEDED` | confirmé |
 | K5 | Verso recréé en pièce distincte | confirmé (et peut approuver seul) |
 | K6 | `KycDocumentResponse.id` incohérent, `documentIds` = codes | confirmé |
@@ -91,16 +91,16 @@ Critères de validation (testés) :
 | K9 | Approbation automatique incohérente | confirmé |
 | K10 | `reviewedBy`, `authorId` fournis par le client | confirmé (plus large) |
 | K-n1 | Écritures KYC en `KYC:READ` ; `DOCUMENT:REVIEW` contourne `KYC:APPROVE` | nouveau |
-| K-n2 | Activer un client approuve son dossier | nouveau |
+| K-n2 | Activer un client approuve son dossier | Réglé (KG1) |
 | K-n3 | Synchronisation asynchrone dans la transaction de l'appelant | nouveau |
 | K-n4 | Approbation automatique de pièces renvoyées en correction ; une transaction pour tout le passage | nouveau |
 | K-n5 | Expiration horaire des documents court-circuite le renouvellement KYC | nouveau |
-| K-n6 | Verso jamais exigé approuvé | nouveau |
-| K-n7 | Exigence retirée non ré-ajoutable ; pas de recalcul | nouveau |
-| K-n8 | Statut de correction écrasé | nouveau |
-| K-n9 | Liste des pièces du portail sans statut | nouveau |
+| K-n6 | Verso jamais exigé approuvé | Réglé (KG1) |
+| K-n7 | Exigence retirée non ré-ajoutable ; pas de recalcul | Réglé (KG1) |
+| K-n8 | Statut de correction écrasé | Réglé (KG1) |
+| K-n9 | Liste des pièces du portail sans statut | Réglé (KG1) |
 | K-n10 | Suppression au portail bloque un nouveau dépôt | nouveau |
-| K-n11 | Décisions manuelles écrasées, approbation sans garde | nouveau |
+| K-n11 | Décisions manuelles écrasées, approbation sans garde | Réglé (KG1) |
 | K-n12 | Relances envoyées à des pièces refusées ou remplacées | nouveau |
 | G1 | Opérations en masse en une transaction ; `{space}` sans effet | confirmé |
 | G2 | Droits `DOCUMENT:REVIEW_<ESPACE>` sans effet | confirmé |

@@ -9,7 +9,7 @@ Module [document](../README.md) · 2 route(s).
 <a id="r-post-sni-api-v1-kyc-documents-admin-upload"></a>
 ### POST /sni/api/v1/kyc/documents/admin/upload
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Envoi : `multipart/form-data`
 - Réponse : `KycDocumentResponse`
 - Modèles : [KycDocumentResponse](#m-KycDocumentResponse), [DocumentOwnerType](#m-DocumentOwnerType)
@@ -29,7 +29,7 @@ Module [document](../README.md) · 2 route(s).
 <a id="r-patch-sni-api-v1-kyc-documents-admin-kycdocumentid-details"></a>
 ### PATCH /sni/api/v1/kyc/documents/admin/{kycDocumentId}/details
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Corps JSON (obligatoire) : `KycDocumentDetailsRequest`
 - Réponse : `KycDocumentResponse`
 - Modèles : [KycDocumentResponse](#m-KycDocumentResponse), [KycDocumentDetailsRequest](#m-KycDocumentDetailsRequest)

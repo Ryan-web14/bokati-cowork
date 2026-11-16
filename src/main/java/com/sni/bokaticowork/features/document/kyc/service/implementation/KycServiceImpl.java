@@ -124,6 +124,13 @@ public class KycServiceImpl implements KycService {
     private final OutboxService outboxService;
     private final OutboxEventRepository outboxEventRepository;
     private final KycAutomationService kycAutomationService;
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementResolver requirementResolver;
+
+    /** Lot KG1 : exigences du dossier (globales et propres au dossier) calculees en un seul endroit. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setRequirementResolver(com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementResolver requirementResolver) {
+        this.requirementResolver = requirementResolver;
+    }
     private final SpringTemplateEngine templateEngine;
     private final KycMapper mapper;
     private final WalletService walletService;
@@ -245,7 +252,7 @@ public class KycServiceImpl implements KycService {
         kycCase.setStatus(KycCaseStatus.SUBMITTED);
         kycCase.setSubmittedAt(Instant.now());
         kycCase.setRiskLevel(calculateRiskLevel(kycCase));
-        kycCase.setKycLevel(calculateKycLevel(kycCase));
+        kycCase.setKycLevel(Math.max(kycCase.getRequestedKycLevel() == null ? 1 : kycCase.getRequestedKycLevel(), calculateKycLevel(kycCase)));
         kycCase.setSlaDeadline(kycCase.getSubmittedAt().plus(slaHours(kycCase), ChronoUnit.HOURS));
         caseRepository.save(kycCase);
 
@@ -265,6 +272,13 @@ public class KycServiceImpl implements KycService {
     @Override
     public KycCaseResponse approve(String code, KycDecisionRequest request) {
         KycCase kycCase = serviceCase(code);
+        // Lot KG1 : pas de seconde approbation (ni de second courriel), pas d'approbation d'un dossier clos.
+        if (kycCase.getStatus() == KycCaseStatus.APPROVED) {
+            throw new BadRequestException("Ce dossier KYC est déjà approuvé");
+        }
+        if (kycCase.getStatus() == KycCaseStatus.REJECTED || kycCase.getStatus() == KycCaseStatus.EXPIRED) {
+            throw new BadRequestException("Ce dossier KYC est clos (" + kycCase.getStatus() + ") : il doit être rouvert avant toute décision");
+        }
         CaseAssessment assessment = assess(kycCase);
         if (!assessment.complete()) {
             throw new BadRequestException("KYC case cannot be approved while mandatory documents are missing");
@@ -279,7 +293,7 @@ public class KycServiceImpl implements KycService {
         kycCase.setReviewedAt(Instant.now());
         kycCase.setCompletedAt(Instant.now());
         kycCase.setDecisionComment(trimToNull(request.getComment()));
-        kycCase.setKycLevel(calculateKycLevel(kycCase));
+        kycCase.setKycLevel(Math.max(kycCase.getRequestedKycLevel() == null ? 1 : kycCase.getRequestedKycLevel(), calculateKycLevel(kycCase)));
         kycCase.setRiskLevel(kycCase.getRiskLevel() == null ? calculateRiskLevel(kycCase) : kycCase.getRiskLevel());
         kycCase.setSlaDeadline(null);
         caseRepository.save(kycCase);
@@ -333,6 +347,42 @@ public class KycServiceImpl implements KycService {
         publishCaseEvent("KYC_CASE_CORRECTION_REQUESTED", kycCase, actor(request.getReviewedBy()));
 
         return toResponse(kycCase);
+    }
+
+    @Override
+    public KycCaseResponse changeLevel(String code, int level, String reason) {
+        if (level < 1 || level > 4) {
+            throw new BadRequestException("Le niveau KYC doit être compris entre 1 et 4");
+        }
+        KycCase kycCase = serviceCase(code);
+        if (kycCase.getStatus() == KycCaseStatus.REJECTED || kycCase.getStatus() == KycCaseStatus.EXPIRED) {
+            throw new BadRequestException("Ce dossier KYC est clos (" + kycCase.getStatus() + ") : il doit être rouvert avant de changer son niveau");
+        }
+        int previous = kycCase.getRequestedKycLevel() == null ? 1 : kycCase.getRequestedKycLevel();
+        if (previous == level) {
+            return toResponse(kycCase);
+        }
+        kycCase.setRequestedKycLevel(level);
+        caseRepository.save(kycCase);
+        // Pieces desormais demandees et non encore fournies, pour prevenir le titulaire.
+        List<String> missing = assess(kycCase).missingDocumentTypeCodes();
+        HashMap<String, Object> payload = new HashMap<>();
+        payload.put("kycCaseCode", kycCase.getCode());
+        payload.put("ownerType", kycCase.getOwnerType());
+        payload.put("ownerId", kycCase.getOwnerId());
+        payload.put("previousLevel", previous);
+        payload.put("level", level);
+        payload.put("reason", trimToNull(reason));
+        payload.put("missingDocumentTypeCodes", missing);
+        payload.put("missingDocumentNames", missing.stream()
+                .map(type -> documentTypeRepository.findByCode(type).map(DocumentType::getName).orElse(type))
+                .toList());
+        payload.put("status", kycCase.getStatus() == null ? null : kycCase.getStatus().name());
+        payload.put("actorId", actor(null));
+        outboxService.publish("KYC_CASE_LEVEL_CHANGED", "KYC_CASE", kycCase.getCode(), payload);
+        // Le dossier se rouvre si des pieces obligatoires du nouveau niveau manquent.
+        kycAutomationService.recompute(kycCase);
+        return toResponse(caseRepository.findByCode(code).orElse(kycCase));
     }
 
     private KycCase serviceCase(String code) {
@@ -899,9 +949,23 @@ public class KycServiceImpl implements KycService {
                 .allMatch(req -> documents.stream().anyMatch(doc ->
                         doc.getDocumentType().equalsIgnoreCase(req.getDocumentTypeCode())
                                 && doc.getStatus() == KycDocumentVerificationStatus.VERIFIED
+                                && backSideVerified(doc)
                 ));
 
         return new CaseAssessment(missing.isEmpty(), allVerified, missing);
+    }
+
+    /** Lot KG1 : le verso doit etre approuve quand le type en a un. */
+    private static boolean backSideVerified(KycDocument piece) {
+        com.sni.bokaticowork.features.document.documentMaster.model.Document front = piece.getDocument();
+        boolean requiresBack = front != null && front.getDocumentType() != null
+                && Boolean.TRUE.equals(front.getDocumentType().getRequiresBackSide());
+        if (piece.getBackDocument() == null) {
+            return !requiresBack;
+        }
+        var status = piece.getBackDocument().getStatus();
+        return status == com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.APPROVED
+                || status == com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.SIGNED;
     }
 
     private OwnerResolution resolveOwner(DocumentOwnerType ownerType, String ownerCode) {
@@ -972,8 +1036,25 @@ public class KycServiceImpl implements KycService {
         KycCase kycCase = serviceCase(caseCode);
         String normalizedCode = request.getDocumentTypeCode().trim().toUpperCase(Locale.ROOT);
 
-        if (caseRequirementRepository.existsByKycCaseAndDocumentTypeCode(kycCase, normalizedCode)) {
-            throw new BadRequestException("Requirement already exists for document type: " + normalizedCode);
+        java.util.Optional<KycCaseRequirement> existing = caseRequirementRepository.findByKycCaseAndDocumentTypeCode(kycCase, normalizedCode);
+        if (existing.isPresent() && Boolean.TRUE.equals(existing.get().getActive())) {
+            throw new BadRequestException("Cette pièce est déjà demandée pour ce dossier : " + normalizedCode);
+        }
+        if (documentTypeRepository.findByCode(normalizedCode).isEmpty()) {
+            throw new BadRequestException("Type de document inconnu : " + normalizedCode);
+        }
+        if (existing.isPresent()) {
+            // Lot KG1 : une exigence retiree (ou une dispense) se remet.
+            KycCaseRequirement again = existing.get();
+            again.setActive(true);
+            again.setRequired(request.getRequired() != null ? request.getRequired() : Boolean.TRUE);
+            if (request.getDocumentTypeName() != null && !request.getDocumentTypeName().isBlank()) {
+                again.setDocumentTypeName(request.getDocumentTypeName().trim());
+            }
+            caseRequirementRepository.save(again);
+            publishCaseEvent("KYC_CASE_REQUIREMENT_ADDED", kycCase, actor(null));
+            kycAutomationService.recompute(kycCase);
+            return toCaseRequirementResponse(again);
         }
 
         String typeName = request.getDocumentTypeName();
@@ -990,7 +1071,9 @@ public class KycServiceImpl implements KycService {
                 .required(request.getRequired() != null ? request.getRequired() : Boolean.TRUE)
                 .build();
         caseRequirementRepository.save(entity);
-        publishCaseEvent("KYC_CASE_REQUIREMENT_ADDED", kycCase, null);
+        publishCaseEvent("KYC_CASE_REQUIREMENT_ADDED", kycCase, actor(null));
+        // Lot KG1 : la piece est aussitot demandee et comptee (un dossier approuve se rouvre si elle est obligatoire).
+        kycAutomationService.recompute(kycCase);
         return toCaseRequirementResponse(entity);
     }
 
@@ -998,12 +1081,22 @@ public class KycServiceImpl implements KycService {
     public void removeCaseRequirement(String caseCode, String documentTypeCode) {
         KycCase kycCase = serviceCase(caseCode);
         String normalizedCode = documentTypeCode.trim().toUpperCase(Locale.ROOT);
+        boolean demanded = filteredRequirementsForCase(kycCase).stream()
+                .anyMatch(item -> normalizedCode.equalsIgnoreCase(item.getDocumentTypeCode()));
         KycCaseRequirement requirement = caseRequirementRepository
                 .findByKycCaseAndDocumentTypeCode(kycCase, normalizedCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Case requirement not found: " + normalizedCode));
+                .orElseGet(() -> {
+                    if (!demanded) {
+                        throw new ResourceNotFoundException("Cette pièce n'est pas demandée pour ce dossier : " + normalizedCode);
+                    }
+                    // Lot KG1 : retirer une exigence globale pour ce seul dossier = dispense.
+                    return KycCaseRequirement.builder().kycCase(kycCase).documentTypeCode(normalizedCode)
+                            .documentTypeName(normalizedCode).required(Boolean.FALSE).build();
+                });
         requirement.setActive(false);
         caseRequirementRepository.save(requirement);
-        publishCaseEvent("KYC_CASE_REQUIREMENT_REMOVED", kycCase, null);
+        publishCaseEvent("KYC_CASE_REQUIREMENT_REMOVED", kycCase, actor(null));
+        kycAutomationService.recompute(kycCase);
     }
 
     @Override
@@ -1098,6 +1191,9 @@ public class KycServiceImpl implements KycService {
     }
 
     private List<DocumentRequirement> filteredRequirementsForCase(KycCase kycCase) {
+        if (requirementResolver != null) {
+            return requirementResolver.resolve(kycCase);
+        }
         List<KycCaseRequirement> caseRequirements = caseRequirementRepository
                 .findAllByKycCaseAndActiveTrueOrderByDocumentTypeNameAsc(kycCase);
 

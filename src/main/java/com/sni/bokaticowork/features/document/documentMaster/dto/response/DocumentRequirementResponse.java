@@ -15,4 +15,5 @@ public class DocumentRequirementResponse {
     private String businessLegalForm;
     private Boolean required;
     private Boolean active;
+    private Integer kycLevel;
 }

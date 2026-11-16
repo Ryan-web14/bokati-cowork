@@ -31,7 +31,8 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
             "KYC_CASE_APPROVED",
             "KYC_CASE_REJECTED",
             "KYC_CASE_CORRECTION_REQUESTED",
-            "KYC_INCOMPLETE_REMINDER"
+            "KYC_INCOMPLETE_REMINDER",
+            "KYC_CASE_LEVEL_CHANGED"
     );
 
     private final ObjectMapper objectMapper;
@@ -74,6 +75,15 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
         vars.put("eventType",     event.getEventType());
         vars.put("eventLabel",    resolveEventLabel(event.getEventType()));
         vars.put("status",        status != null ? status : "N/A");
+        // Lot KG1 : niveau KYC change, pieces a fournir.
+        vars.put("level", textValue(payload, "level"));
+        vars.put("reason", textValue(payload, "reason"));
+        java.util.List<String> names = new java.util.ArrayList<>();
+        JsonNode missing = payload.get("missingDocumentNames");
+        if (missing != null && missing.isArray()) {
+            missing.forEach(node -> names.add(node.asText()));
+        }
+        vars.put("missingDocuments", names);
 
         try {
             mailService.sendKycNotification(recipient.email(), subject, vars);
@@ -92,6 +102,7 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
             case "KYC_CASE_REJECTED",
                  "KYC_CASE_CORRECTION_REQUESTED" -> "Une petite mise à jour est nécessaire sur votre dossier KYC" + ref;
             case "KYC_INCOMPLETE_REMINDER" -> "Petit rappel : votre dossier KYC vous attend" + ref;
+            case "KYC_CASE_LEVEL_CHANGED" -> "Quelques pièces complémentaires pour votre dossier KYC" + ref;
             default                      -> "Votre dossier KYC" + ref;
         };
     }
@@ -103,6 +114,7 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
             case "KYC_CASE_REJECTED",
                  "KYC_CASE_CORRECTION_REQUESTED" -> "Mise à jour demandée";
             case "KYC_INCOMPLETE_REMINDER" -> "Rappel";
+            case "KYC_CASE_LEVEL_CHANGED" -> "Pièces complémentaires";
             default                      -> "Notification";
         };
     }

@@ -328,7 +328,8 @@ public class DocumentServiceImpl implements DocumentService {
                 .build();
         documentReviewRepository.save(review);
 
-        syncKycDocumentStatus(document, KycDocumentVerificationStatus.PENDING);
+        // Lot KG1 : piece renvoyee en correction = a refaire (le dossier attend une correction).
+        syncKycDocumentStatus(document, KycDocumentVerificationStatus.REJECTED);
         publishDocumentEvent("DOCUMENT_CORRECTION_REQUESTED", document, request.getReviewedBy());
         return getByCode(documentCode);
     }

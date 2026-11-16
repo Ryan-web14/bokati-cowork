@@ -84,6 +84,11 @@ public class KycCase {
     @Column(name = "kyc_level", nullable = false)
     private Integer kycLevel = 1;
 
+    /** Niveau KYC demande pour ce dossier (lot KG1) : les pieces de ce niveau sont exigees. */
+    @Builder.Default
+    @Column(name = "requested_kyc_level", nullable = false)
+    private Integer requestedKycLevel = 1;
+
     @PrePersist
     public void prePersist() {
         startedAt = startedAt == null ? Instant.now() : startedAt;
@@ -91,5 +96,6 @@ public class KycCase {
         reminderCount = reminderCount == null ? 0 : reminderCount;
         riskLevel = riskLevel == null ? KycRiskLevel.LOW : riskLevel;
         kycLevel = kycLevel == null ? 1 : kycLevel;
+        requestedKycLevel = requestedKycLevel == null ? 1 : requestedKycLevel;
     }
 }

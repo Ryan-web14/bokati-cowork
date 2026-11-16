@@ -9,7 +9,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-administrative-dashboard"></a>
 ### GET /sni/api/v1/spaces/administrative/dashboard
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `DocumentDashboardResponse`
 - Modèles : [DocumentDashboardResponse](#m-DocumentDashboardResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `adminDashboard`
@@ -17,7 +17,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-administrative-documents"></a>
 ### GET /sni/api/v1/spaces/administrative/documents
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `PaginatedResponse<DocumentResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [DocumentResponse](#m-DocumentResponse), [DocumentOwnerType](#m-DocumentOwnerType), [DocumentStatus](#m-DocumentStatus)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `listAdministrative`
@@ -33,7 +33,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-post-sni-api-v1-spaces-administrative-documents-upload"></a>
 ### POST /sni/api/v1/spaces/administrative/documents/upload
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:UPLOAD`
 - Envoi : `multipart/form-data`
 - En-tête `Idempotency-Key` : conseillé (opération `SPACE_ADMIN_UPLOAD`, voir le README racine)
 - Réponse : `DocumentResponse`
@@ -48,7 +48,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-assets-dashboard"></a>
 ### GET /sni/api/v1/spaces/assets/dashboard
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `DocumentDashboardResponse`
 - Modèles : [DocumentDashboardResponse](#m-DocumentDashboardResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `assetDashboard`
@@ -56,7 +56,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-assets-documents"></a>
 ### GET /sni/api/v1/spaces/assets/documents
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `PaginatedResponse<DocumentResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [DocumentResponse](#m-DocumentResponse), [DocumentOwnerType](#m-DocumentOwnerType), [DocumentStatus](#m-DocumentStatus)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `listAssets`
@@ -72,7 +72,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-post-sni-api-v1-spaces-assets-documents-upload"></a>
 ### POST /sni/api/v1/spaces/assets/documents/upload
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:UPLOAD`
 - Envoi : `multipart/form-data`
 - En-tête `Idempotency-Key` : conseillé (opération `SPACE_ASSET_UPLOAD`, voir le README racine)
 - Réponse : `DocumentResponse`
@@ -87,7 +87,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-contracts-dashboard"></a>
 ### GET /sni/api/v1/spaces/contracts/dashboard
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `DocumentDashboardResponse`
 - Modèles : [DocumentDashboardResponse](#m-DocumentDashboardResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `contractDashboard`
@@ -95,7 +95,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-contracts-documents"></a>
 ### GET /sni/api/v1/spaces/contracts/documents
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `PaginatedResponse<DocumentResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [DocumentResponse](#m-DocumentResponse), [DocumentOwnerType](#m-DocumentOwnerType), [DocumentStatus](#m-DocumentStatus)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `listContracts`
@@ -111,7 +111,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-post-sni-api-v1-spaces-contracts-documents-upload"></a>
 ### POST /sni/api/v1/spaces/contracts/documents/upload
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:UPLOAD`
 - Envoi : `multipart/form-data`
 - En-tête `Idempotency-Key` : conseillé (opération `SPACE_CONTRACT_UPLOAD`, voir le README racine)
 - Réponse : `DocumentResponse`
@@ -126,7 +126,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-financial-dashboard"></a>
 ### GET /sni/api/v1/spaces/financial/dashboard
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `DocumentDashboardResponse`
 - Modèles : [DocumentDashboardResponse](#m-DocumentDashboardResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `financialDashboard`
@@ -134,7 +134,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-financial-documents"></a>
 ### GET /sni/api/v1/spaces/financial/documents
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `PaginatedResponse<DocumentResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [DocumentResponse](#m-DocumentResponse), [DocumentOwnerType](#m-DocumentOwnerType), [DocumentStatus](#m-DocumentStatus)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `listFinancial`
@@ -152,7 +152,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-post-sni-api-v1-spaces-financial-documents-upload"></a>
 ### POST /sni/api/v1/spaces/financial/documents/upload
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:UPLOAD`
 - Envoi : `multipart/form-data`
 - En-tête `Idempotency-Key` : conseillé (opération `SPACE_FINANCIAL_UPLOAD`, voir le README racine)
 - Réponse : `DocumentResponse`
@@ -167,7 +167,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-general-dashboard"></a>
 ### GET /sni/api/v1/spaces/general/dashboard
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `DocumentDashboardResponse`
 - Modèles : [DocumentDashboardResponse](#m-DocumentDashboardResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `generalDashboard`
@@ -175,7 +175,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-get-sni-api-v1-spaces-general-documents"></a>
 ### GET /sni/api/v1/spaces/general/documents
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `PaginatedResponse<DocumentResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [DocumentResponse](#m-DocumentResponse), [DocumentOwnerType](#m-DocumentOwnerType), [DocumentStatus](#m-DocumentStatus)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java`, méthode `listGeneral`
@@ -191,7 +191,7 @@ Module [document](../README.md) · 15 route(s).
 <a id="r-post-sni-api-v1-spaces-general-documents-upload"></a>
 ### POST /sni/api/v1/spaces/general/documents/upload
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:UPLOAD`
 - Envoi : `multipart/form-data`
 - En-tête `Idempotency-Key` : conseillé (opération `SPACE_GENERAL_UPLOAD`, voir le README racine)
 - Réponse : `DocumentResponse`

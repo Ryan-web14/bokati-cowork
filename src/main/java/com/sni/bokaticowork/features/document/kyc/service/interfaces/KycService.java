@@ -52,6 +52,12 @@ public interface KycService {
     PaginatedResponse<KycCaseResponse> expiringSoon(Integer days, Pageable pageable);
     List<KycExpiryDocumentStatus> expiryStatus(String code);
     KycCaseResponse updateRiskLevel(String code, KycRiskLevelRequest request);
+
+    /**
+     * Change le niveau KYC demande (lot KG1) : les pieces de ce niveau deviennent exigees, le dossier
+     * se rouvre s'il en manque, et le titulaire est prevenu des pieces a fournir.
+     */
+    KycCaseResponse changeLevel(String code, int level, String reason);
     List<KycDocumentResponse> reviewQueue();
     List<KycDocumentResponse> reviewedDocuments(List<KycDocumentVerificationStatus> statuses);
     KycDocumentOcrResultResponse getOcrResult(String documentCode);

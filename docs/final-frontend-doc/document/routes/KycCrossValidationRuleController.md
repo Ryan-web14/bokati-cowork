@@ -21,7 +21,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-post-sni-api-v1-kyc-cross-validation-rules"></a>
 ### POST /sni/api/v1/kyc/cross-validation-rules
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Corps JSON (obligatoire) : `KycCrossValidationRuleRequest`
 - Réponse : `KycCrossValidationRuleResponse`
 - Modèles : [KycCrossValidationRuleResponse](#m-KycCrossValidationRuleResponse), [KycCrossValidationRuleRequest](#m-KycCrossValidationRuleRequest)
@@ -30,7 +30,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-delete-sni-api-v1-kyc-cross-validation-rules-id"></a>
 ### DELETE /sni/api/v1/kyc/cross-validation-rules/{id}
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCrossValidationRuleController.java`, méthode `delete`
 
@@ -53,7 +53,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-put-sni-api-v1-kyc-cross-validation-rules-id"></a>
 ### PUT /sni/api/v1/kyc/cross-validation-rules/{id}
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Corps JSON (obligatoire) : `KycCrossValidationRuleRequest`
 - Réponse : `KycCrossValidationRuleResponse`
 - Modèles : [KycCrossValidationRuleResponse](#m-KycCrossValidationRuleResponse), [KycCrossValidationRuleRequest](#m-KycCrossValidationRuleRequest)

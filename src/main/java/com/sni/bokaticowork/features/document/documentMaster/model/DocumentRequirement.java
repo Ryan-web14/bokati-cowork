@@ -44,4 +44,15 @@ public class DocumentRequirement {
     @Builder.Default
     @Column(name = "active")
     private Boolean active = Boolean.TRUE;
+
+    /** Niveau KYC a partir duquel la piece est demandee (1 : toujours). Lot KG1. */
+    @Builder.Default
+    @Column(name = "kyc_level", nullable = false)
+    private Integer kycLevel = 1;
+
+    @jakarta.persistence.PrePersist
+    @jakarta.persistence.PreUpdate
+    void normalizeKycLevel() {
+        kycLevel = kycLevel == null || kycLevel < 1 ? 1 : kycLevel;
+    }
 }

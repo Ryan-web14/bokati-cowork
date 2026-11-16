@@ -119,13 +119,25 @@ Quand toutes les pièces exigées sont `VERIFIED`, le recalcul passe le dossier 
 
 `PATCH /sni/api/v1/kyc/cases/{code}/risk-level`, corps `{ "riskLevel": "HIGH", "reviewedBy": "…", "comment": "…" }`. Écrase `decisionComment` par `comment` (même vide). Un risque `HIGH` ou `VERY_HIGH` est conservé lors des recalculs et porte le niveau KYC à 4.
 
+### Niveau KYC demandé
+
+`PATCH /sni/api/v1/kyc/cases/{code}/level`, droit `KYC:MANAGE`, corps `{ "level": 2, "reason": "Volume de transactions" }` (`level` de 1 à 4, `reason` facultatif, repris dans le courriel). Réponse : la fiche `KycCaseResponse`.
+
+- `requestedKycLevel` (fiche) : niveau demandé ; `kycLevel` : niveau atteint (au moins le niveau demandé une fois le dossier approuvé).
+- Les exigences globales de niveau inférieur ou égal deviennent exigées ; elles apparaissent aussitôt dans `requirements` et `missingDocumentTypeCodes`, et dans l'espace client du titulaire.
+- Le titulaire reçoit le courriel « Quelques pièces complémentaires pour votre dossier KYC » avec la liste des pièces à fournir.
+- Un dossier approuvé auquel il manque une pièce obligatoire du nouveau niveau repasse `IN_PROGRESS` ; le membre ou le client reste actif.
+- `400` si le niveau sort de 1 à 4, ou si le dossier est `REJECTED` ou `EXPIRED`. Même niveau : rien ne change. Baisser le niveau ne rouvre rien.
+- Écran conseillé : sélecteur de niveau 1 à 4 avec motif sur la fiche ; montrer les pièces de chaque niveau d'après `GET /document-requirements` (champ `kycLevel`).
+
 ### Approuver le dossier
 
 `POST /sni/api/v1/kyc/cases/{code}/approve` ([route](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-approve)), droit `KYC:APPROVE`, `Idempotency-Key` conseillé, corps `{ "reviewedBy": "…", "comment": "…" }`.
 
 1. Conditions : aucune pièce ni verso manquant ; toutes les pièces exigées `VERIFIED` ; règles de contrôle croisé bloquantes respectées. Sinon `400` (messages dans le [README](README.md#kyc)).
 2. Effets : `APPROVED`, réviseur et dates posés, échéance effacée ; membre `ACTIVE` ou client `ACTIVE` ; portefeuille par défaut en `XAF` créé s'il n'existe pas (un échec ici ne bloque pas) ; courriel « Bonne nouvelle : votre dossier KYC est validé ».
-3. Aucun contrôle de statut de départ : un dossier déjà approuvé peut être réapprouvé.
+3. Un dossier déjà `APPROVED` ne se réapprouve pas (`400` « Ce dossier KYC est déjà approuvé ») ; un dossier `REJECTED` ou `EXPIRED` doit être rouvert avant (`400`). **Réglé** (KG1).
+4. Les mêmes effets (titulaire actif, portefeuille, courriel) s'appliquent quand le recalcul approuve le dossier de lui-même.
 
 ### Refuser le dossier (renvoyer en correction)
 
@@ -133,7 +145,7 @@ Quand toutes les pièces exigées sont `VERIFIED`, le recalcul passe le dossier 
 
 - Le dossier passe **`PENDING_CORRECTION`** (pas `REJECTED`), le membre `PENDING_CORRECTION`, le client `PENDING`. Une trace de vérification est ajoutée pour chaque pièce `PENDING` ou `REJECTED`. Courriel « Une petite mise à jour est nécessaire sur votre dossier KYC ».
 - Le refus du dossier ne refuse aucune pièce : indiquer au membre lesquelles refaire en refusant ou en faisant corriger les pièces concernées.
-- Attention : un nouveau dépôt ou une nouvelle revue de pièce relance le recalcul, qui peut faire quitter `PENDING_CORRECTION` sans action du réviseur.
+- Le recalcul ne fait plus quitter un dossier renvoyé en correction sans nouvelle pièce ; il ne touche plus un dossier `REJECTED` et garde `SUBMITTED`. **Réglé** (KG1).
 
 ## Notes internes
 
@@ -144,9 +156,11 @@ Quand toutes les pièces exigées sont `VERIFIED`, le recalcul passe le dossier 
 ## Exigences propres au dossier
 
 - Lister : `GET /sni/api/v1/kyc/cases/{code}/requirements` (actives et inactives, `active` dans chaque ligne).
-- Ajouter : `POST /sni/api/v1/kyc/cases/{code}/requirements`, corps `{ "documentTypeCode": "CNI", "documentTypeName": "…", "required": true }`. `400` « Requirement already exists for document type: CNI » (même si elle a été retirée : on ne peut pas la remettre). Le code de type n'est pas vérifié ; le nom par défaut est celui du type, sinon le code.
-- Retirer : `DELETE /sni/api/v1/kyc/cases/{code}/requirements/{documentTypeCode}` (désactivation, `204`).
-- Dès qu'un dossier a une exigence propre active, ses exigences globales ne comptent plus pour la fiche, la soumission et l'approbation manuelle.
+- Ajouter : `POST /sni/api/v1/kyc/cases/{code}/requirements`, corps `{ "documentTypeCode": "CNI", "documentTypeName": "…", "required": true }`. `400` « Cette pièce est déjà demandée pour ce dossier : CNI », `400` « Type de document inconnu : … ». Une exigence retirée se remet par le même appel. **Réglé** (KG1).
+- Retirer : `DELETE /sni/api/v1/kyc/cases/{code}/requirements/{documentTypeCode}` (`204`). Retirer une exigence globale en dispense ce seul dossier (une ligne inactive est créée). `404` si la pièce n'est pas demandée.
+- Les exigences propres **s'ajoutent** aux exigences globales (avant, elles les remplaçaient). Une ligne active remplace le caractère obligatoire d'une exigence globale du même type ; une ligne inactive dispense. **Réglé** (KG1).
+- Après un ajout ou un retrait, le dossier est recalculé : un dossier approuvé se rouvre (`IN_PROGRESS`) si une pièce obligatoire manque ; la pièce apparaît aussitôt dans l'espace client du titulaire, qui peut la déposer.
+- Dépôt : seules les pièces demandées pour le dossier se déposent (équipe et titulaire) : `400` « Cette pièce n'est pas demandée pour ce dossier … ».
 
 ## Export PDF
 

@@ -56,6 +56,17 @@
           pi&#232;ces.</p>
         <p>Rendez-vous dans votre espace personnel, o&#249; le d&#233;tail des &#233;l&#233;ments attendus vous est indiqu&#233;.</p>
       </div>
+      <!-- Niveau de v&#233;rification relev&#233; (lot KG1) -->
+      <div th:case="'KYC_CASE_LEVEL_CHANGED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Votre dossier de v&#233;rification passe au <strong th:text="'niveau ' + ${level}">niveau 2</strong>.
+          Pour le compl&#233;ter, nous avons besoin de quelques pi&#232;ces suppl&#233;mentaires.</p>
+        <p th:if="${reason}" th:text="${reason}">Motif</p>
+        <ul th:if="${missingDocuments != null and !missingDocuments.isEmpty()}" style="margin:0 0 18px 18px;">
+          <li th:each="name : ${missingDocuments}" th:text="${name}">Pi&#232;ce</li>
+        </ul>
+        <p>Vous pouvez les d&#233;poser depuis votre espace personnel. Votre acc&#232;s reste ouvert pendant ce temps.</p>
+      </div>
       <div th:case="'KYC_CASE_CORRECTION_REQUESTED'">
         <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
         <p>Nous avons examin&#233; votre dossier et une petite mise &#224; jour est n&#233;cessaire avant de pouvoir le

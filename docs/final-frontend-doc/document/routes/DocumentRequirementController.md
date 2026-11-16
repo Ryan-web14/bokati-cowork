@@ -110,6 +110,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `businessLegalForm` | texte |  |  |
 | `required` | booléen |  |  |
 | `active` | booléen |  |  |
+| `kycLevel` | entier |  |  |
 
 <a id="m-DocumentOwnerType"></a>
 #### DocumentOwnerType
@@ -128,3 +129,4 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `businessLegalForm` | texte |  |  |
 | `required` | booléen |  |  |
 | `active` | booléen |  |  |
+| `kycLevel` | entier |  | min `1`, max `4` |

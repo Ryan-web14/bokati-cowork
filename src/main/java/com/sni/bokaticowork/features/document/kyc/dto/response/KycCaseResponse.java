@@ -33,6 +33,8 @@ public class KycCaseResponse {
     private Integer reminderCount;
     private KycRiskLevel riskLevel;
     private Integer kycLevel;
+    /** Niveau demande (les pieces de ce niveau sont exigees) ; {@code kycLevel} est le niveau atteint. */
+    private Integer requestedKycLevel;
     private boolean complete;
     private boolean approved;
     private List<String> missingDocumentTypeCodes;

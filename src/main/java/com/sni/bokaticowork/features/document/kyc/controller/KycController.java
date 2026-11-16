@@ -179,6 +179,20 @@ public class KycController {
         return ResponseEntity.ok(service.updateRiskLevel(code, request));
     }
 
+    /**
+     * Niveau KYC demande (lot KG1) : {@code { "level": 2, "reason": "..." }}. Les pieces de ce niveau
+     * sont exigees ; le dossier se rouvre s'il en manque et le titulaire est prevenu. Droit KYC:MANAGE.
+     */
+    @PatchMapping("/{code}/level")
+    @Audited(module = "KYC", action = "CHANGE_LEVEL", ressource = "kyc_case")
+    public ResponseEntity<KycCaseResponse> changeLevel(@PathVariable String code, @Valid @RequestBody LevelRequest request) {
+        return ResponseEntity.ok(service.changeLevel(code, request.level(), request.reason()));
+    }
+
+    public record LevelRequest(@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Min(1)
+                               @jakarta.validation.constraints.Max(4) Integer level, String reason) {
+    }
+
     @GetMapping("/{code}/export/pdf")
     public ResponseEntity<byte[]> exportPdf(
             @PathVariable String code,

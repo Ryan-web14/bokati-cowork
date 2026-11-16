@@ -39,6 +39,12 @@ public class KycDocumentUploadService {
     private final KycDocumentRepository kycDocumentRepository;
     private final KycAutomationService kycAutomationService;
     private final DocumentUploadValidator uploadValidator;
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementResolver requirementResolver;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setRequirementResolver(com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementResolver requirementResolver) {
+        this.requirementResolver = requirementResolver;
+    }
 
     @Transactional
     public KycDocumentResponse adminUpload(DocumentOwnerType ownerType,
@@ -77,6 +83,11 @@ public class KycDocumentUploadService {
                 .findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(ownerType, ownerId)
                 .orElseThrow(() -> new BadRequestException(
                         "Aucun dossier KYC actif pour ce propriétaire · créez-en un d'abord"));
+        // Lot KG1 : seules les pieces demandees pour ce dossier se deposent (la transaction annule le depot).
+        if (requirementResolver != null && !requirementResolver.accepts(kycCase, documentTypeCode)) {
+            throw new BadRequestException("Cette pièce n'est pas demandée pour ce dossier : " + documentTypeCode.toUpperCase()
+                    + " (ajoutez-la d'abord aux exigences du dossier)");
+        }
 
         if ("BACK".equalsIgnoreCase(side)) {
             KycDocument autoCreated = kycDocumentRepository.findByDocument(document).orElse(null);

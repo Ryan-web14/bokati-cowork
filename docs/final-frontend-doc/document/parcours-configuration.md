@@ -50,11 +50,12 @@ Droit commun : `SYSTEM:SETTINGS` (règle d'URL). Les politiques de rétention ex
 Elles disent quels types chaque propriétaire doit fournir ; elles pilotent le KYC (pièces manquantes, soumission, approbation, recalcul automatique) et la vue « pièces manquantes » d'un propriétaire.
 
 1. Lister : `GET /sni/api/v1/document-requirements?ownerType=MEMBER&active=true` ([route](routes/DocumentRequirementController.md#r-get-sni-api-v1-document-requirements)).
-2. Créer : `POST /sni/api/v1/document-requirements`, `Idempotency-Key` conseillé. Corps : `{ "ownerType": "CUSTOMER", "documentTypeCode": "RCCM", "documentTypeName": "Registre du commerce", "customerType": "COMPANY", "businessLegalForm": null, "required": true, "active": true }`.
+2. Créer : `POST /sni/api/v1/document-requirements`, `Idempotency-Key` conseillé. Corps : `{ "ownerType": "CUSTOMER", "documentTypeCode": "RCCM", "documentTypeName": "Registre du commerce", "customerType": "COMPANY", "businessLegalForm": null, "required": true, "active": true, "kycLevel": 1 }`.
    - `documentTypeCode` doit exister (`404` « Document type not found »).
    - `documentTypeName` : libellé affiché dans les check-lists, par défaut le code.
    - `customerType` (pour `CUSTOMER`) et `businessLegalForm` (pour `BUSINESS`) restreignent l'exigence ; mis en majuscules ; vides = tous. Valeurs attendues : celles des modules `client` et `company` (non listées ici).
    - `required` (défaut `true`) : seules les exigences obligatoires bloquent la soumission et l'approbation KYC.
+   - `kycLevel` (1 à 4, défaut 1) : niveau KYC à partir duquel la pièce est demandée. Un dossier de niveau 2 demande les pièces de niveau 1 et 2 ; voir [Niveau KYC demandé](parcours-kyc.md#niveau-kyc-demandé).
    - Doublon (même propriétaire, type, type de client, forme juridique) : `409` « Document requirement already exists ».
 3. Modifier : `PATCH /sni/api/v1/document-requirements/{id}` avec le corps complet (`ownerType` et `documentTypeCode` obligatoires). Le doublon n'y est pas contrôlé.
 4. Activer, désactiver : `PATCH /document-requirements/{id}/activate`, `/deactivate` ; `DELETE /document-requirements/{id}` désactive.

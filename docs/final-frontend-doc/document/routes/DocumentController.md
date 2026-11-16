@@ -186,7 +186,7 @@ Module [document](../README.md) · 25 route(s).
 <a id="r-post-sni-api-v1-documents-code-approve"></a>
 ### POST /sni/api/v1/documents/{code}/approve
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW` ; contrôle supplémentaire sur la méthode : `hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*`
 - En-tête `Idempotency-Key` : conseillé (opération `DOCUMENT_APPROVE`, voir le README racine)
 - Corps JSON (obligatoire) : `DocumentReviewDecisionRequest`
 - Réponse : `DocumentResponse`
@@ -257,7 +257,7 @@ Module [document](../README.md) · 25 route(s).
 <a id="r-post-sni-api-v1-documents-code-reject"></a>
 ### POST /sni/api/v1/documents/{code}/reject
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW` ; contrôle supplémentaire sur la méthode : `hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*`
 - En-tête `Idempotency-Key` : conseillé (opération `DOCUMENT_REJECT`, voir le README racine)
 - Corps JSON (obligatoire) : `DocumentReviewDecisionRequest`
 - Réponse : `DocumentResponse`
@@ -286,7 +286,7 @@ Module [document](../README.md) · 25 route(s).
 <a id="r-post-sni-api-v1-documents-code-request-correction"></a>
 ### POST /sni/api/v1/documents/{code}/request-correction
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW` ; contrôle supplémentaire sur la méthode : `hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*`
 - Corps JSON (obligatoire) : `DocumentCorrectionRequest`
 - Réponse : `DocumentResponse`
 - Modèles : [DocumentResponse](#m-DocumentResponse), [DocumentCorrectionRequest](#m-DocumentCorrectionRequest)
@@ -518,7 +518,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `reviewedBy` | entier int64 ⚠ | oui |  |
+| `reviewedBy` | entier int64 ⚠ |  |  |
 | `comment` | texte |  |  |
 | `rejectionReasonCode` | texte |  |  |
 | `rejectionReasonDetail` | texte |  |  |
@@ -528,7 +528,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `reviewedBy` | entier int64 ⚠ | oui |  |
+| `reviewedBy` | entier int64 ⚠ |  |  |
 | `correctionNote` | texte | oui | longueur min `1` |
 | `comment` | texte |  |  |
 | `deadlineDays` | entier |  | min `1` |

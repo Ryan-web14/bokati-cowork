@@ -9,7 +9,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-post-sni-api-v1-document-folders-foldercode-share"></a>
 ### POST /sni/api/v1/document-folders/{folderCode}/share
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Corps JSON (obligatoire) : `CreateShareLinkRequest`
 - Réponse : `ShareLinkResponse`
 - Modèles : [ShareLinkResponse](#m-ShareLinkResponse), [CreateShareLinkRequest](#m-CreateShareLinkRequest)
