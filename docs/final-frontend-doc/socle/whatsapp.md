@@ -63,6 +63,7 @@ Modèles fournis (`WhatsAppService.DEFAULTS`), créés par `POST /admin/whatsapp
 | `WALLET_PAYMENT_REQUEST_RECEIVED` | `portefeuille_demande_paiement` | UTILITY | Demande de paiement : prénom, demandeur, montant, motif | Voir la demande |
 | `WALLET_LOW_BALANCE` | `portefeuille_solde_bas` | UTILITY | Solde bas : prénom, solde, seuil choisi | Recharger |
 | `WALLET_SECURITY_ALERT` | `portefeuille_alerte` | UTILITY | Alerte : prénom, événement (portefeuille suspendu, réactivé, clôturé) | aucun |
+| `AUDIT_ALERT` | `alerte_centre_audit` | UTILITY | Alerte du centre d'audit aux administrateurs choisis : salutation, titre, détail (lot A6). À créer et faire approuver par Meta avant le premier envoi | aucun |
 
 Règles :
 - les textes nomment l'entreprise et ne commencent ni ne finissent par une variable (règles de Meta) ;

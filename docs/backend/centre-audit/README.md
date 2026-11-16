@@ -47,7 +47,7 @@ Le tout avec recherche, chronologie par utilisateur et par élément, tableaux d
 | **A7. Rétention, intégrité, confidentialité** | Durée de conservation par journal (paramètres), purge planifiée par lots. Chaînage par empreinte de `audit_log` et `security_event`, comme les journaux du contrat et de la conformité, avec une route de vérification. Masquage centralisé. Consultations et exports du centre audités. |
 | **A8. Doc frontend** | `docs/final-frontend-doc/audit/` : écrans, filtres, routes, erreurs ; routes régénérées. |
 
-État : **A0 fait** ([lot-a0-socle.md](lot-a0-socle.md)), **A2 fait** ([lot-a2-securite.md](lot-a2-securite.md)), **A1 fait** ([lot-a1-actions.md](lot-a1-actions.md)), **A4 fait** ([lot-a4-evenements.md](lot-a4-evenements.md)), **A3 fait** ([lot-a3-trafic.md](lot-a3-trafic.md)), **A5 fait** ([lot-a5-centre-unifie.md](lot-a5-centre-unifie.md)).
+État : **A0 fait** ([lot-a0-socle.md](lot-a0-socle.md)), **A2 fait** ([lot-a2-securite.md](lot-a2-securite.md)), **A1 fait** ([lot-a1-actions.md](lot-a1-actions.md)), **A4 fait** ([lot-a4-evenements.md](lot-a4-evenements.md)), **A3 fait** ([lot-a3-trafic.md](lot-a3-trafic.md)), **A5 fait** ([lot-a5-centre-unifie.md](lot-a5-centre-unifie.md)), **A6 fait** ([lot-a6-alertes.md](lot-a6-alertes.md)).
 
 Ordre conseillé : A0, puis A2 et A1 (le plus utile pour l'exploitant), A4, A3, A5, A6, A7, A8.
 

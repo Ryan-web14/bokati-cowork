@@ -143,7 +143,13 @@ public class WhatsAppService implements WhatsAppMessageSender {
             new DefaultTemplate("WALLET_SECURITY_ALERT", "portefeuille_alerte", "UTILITY",
                     "Bonjour {{1}}, information importante sur votre portefeuille ELLE A OSE : {{2}}. "
                             + "Si vous n'êtes pas à l'origine de cette opération, contactez-nous en répondant à ce message.",
-                    List.of("Awa", "votre portefeuille est suspendu"), "ELLE A OSE", null, null));
+                    List.of("Awa", "votre portefeuille est suspendu"), "ELLE A OSE", null, null),
+            // Centre d'audit (lot A6) : alerte aux administrateurs choisis (bokati.audit.alerts.whatsapp-recipients).
+            new DefaultTemplate("AUDIT_ALERT", "alerte_centre_audit", "UTILITY",
+                    "Bonjour {{1}}, alerte du centre d'audit ELLE A OSE : {{2}}. Détail : {{3}}. "
+                            + "Ouvrez le centre d'audit pour la traiter et en accuser lecture.",
+                    List.of("équipe", "Taux d'erreurs serveur élevé", "12 % des requêtes en erreur sur les 5 dernières minutes"),
+                    "ELLE A OSE", null, null));
 
     public record TemplateRequest(String purpose, String name, String language, String category, String text, List<String> examples, String footer,
                                   Button button, Integer codeExpirationMinutes) {
