@@ -19,6 +19,10 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     @Query(nativeQuery = true, value = "SELECT * FROM customer WHERE customer_id = :customerId AND deleted = false")
     Optional<Customer> findByCustomerId(@Param("customerId") String customerId);
 
+    /** Profils clients d'une entreprise (abonnements au nom du profil ou de l'entite). */
+    @Query(nativeQuery = true, value = "SELECT * FROM customer WHERE business_entity_id = :businessEntityId AND deleted = false")
+    java.util.List<Customer> findAllByBusinessEntityId(@Param("businessEntityId") Long businessEntityId);
+
     @Query(nativeQuery = true, value = "SELECT * FROM customer WHERE email = :email AND deleted = false")
     Optional<Customer> findByEmail(String email);
 
