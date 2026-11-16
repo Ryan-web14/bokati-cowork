@@ -12,6 +12,7 @@ import java.util.List;
  *                            et de la marge minimale. C'est cette valeur que l'interface doit
  *                            afficher, et non {@code floorPrice} qui peut etre vide alors qu'un
  *                            plancher existe bel et bien.
+ *                            Vaut 0 quand l'article n'a aucun plancher ({@code floorPriceOrigin} NONE).
  * @param floorPriceOrigin    d'ou vient ce plancher · {@code EXPLICIT}, {@code DERIVED_FROM_MARGIN},
  *                            {@code COST_PRICE} ou {@code NONE}. Permet d'expliquer le blocage a
  *                            l'utilisateur plutot que de lui opposer un nombre sans justification.

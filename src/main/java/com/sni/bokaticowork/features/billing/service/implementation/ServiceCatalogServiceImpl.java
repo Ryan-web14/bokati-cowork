@@ -363,7 +363,8 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
                 item.getMinMarginRate(),
                 item.getMaxDiscountRate(),
                 item.getDiscountPolicy(),
-                item.effectiveFloorPrice(),
+                // Sans plancher (origine NONE) : 0, qui ne bloque aucune remise, plutot que null.
+                item.effectiveFloorPrice() != null ? item.effectiveFloorPrice() : BigDecimal.ZERO,
                 floorPriceOrigin(item),
 
                 item.getDetailedDescription(),

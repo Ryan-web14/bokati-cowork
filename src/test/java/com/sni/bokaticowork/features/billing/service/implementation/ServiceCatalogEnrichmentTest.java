@@ -142,4 +142,21 @@ class ServiceCatalogEnrichmentTest {
                 null, null, null, null, null,
                 clearFields);
     }
+
+    @Test
+    void anItemWithoutFloorExposesZeroInsteadOfNull() {
+        when(sequenceGenerator.next(anyString())).thenReturn("SRV-002");
+        when(catalogItemRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        ServiceCatalogItemResponse created = service.create(new CreateServiceCatalogItemRequest(
+                "Article simple", null, null, null, new BigDecimal("50000"), "XAF", null, 1,
+                null, null, null, null, null,
+                null, List.of(), null,
+                null, null, null, null, null,
+                null, List.of(), null,
+                null, null));
+
+        assertThat(created.effectiveFloorPrice()).isEqualByComparingTo("0");
+        assertThat(created.floorPriceOrigin()).isEqualTo("NONE");
+    }
 }
