@@ -4,6 +4,19 @@
 
 Un article du catalogue (`itemCode`) porte prix, unité, coût, plancher, marge minimale, remise maximale, politique de remise. **Familles et sous-familles** : champs `category` et `subcategory`.
 
+## Plancher appliqué : champ souvent null
+
+`effectiveFloorPrice` est le plancher réellement appliqué (à afficher plutôt que `floorPrice`), et `floorPriceOrigin` dit d'où il vient :
+
+| `floorPriceOrigin` | `effectiveFloorPrice` |
+| --- | --- |
+| `EXPLICIT` | `floorPrice` saisi |
+| `DERIVED_FROM_MARGIN` | `costPrice / (1 - minMarginRate / 100)` |
+| `COST_PRICE` | `costPrice` (coût saisi, sans marge minimale) |
+| `NONE` | **`null`** : ni plancher ni coût saisis |
+
+Un article sans coût ni plancher (cas le plus courant) renvoie donc `effectiveFloorPrice: null`. L'écran doit le prévoir : afficher « Aucun plancher » au lieu de formater le nombre (`value?.toLocaleString() ?? 'Aucun plancher'`). Il en va de même pour tous les champs facultatifs de l'article : `costPrice`, `floorPrice`, `minMarginRate`, `maxDiscountRate`, `defaultQuantity`, `minQuantity`, `maxQuantity`, `taxRuleCode`, `taxRule`, `category`, `unit`, `billingMode`, `validFrom`, `validUntil` peuvent tous être `null`.
+
 ## Prix par segment et prix datés
 
 - `POST /catalog/{itemCode}/prices` avec `{ "segment": "MEMBER", "unitPrice": 120000, "validFrom": "2027-01-01", "reason": "Hausse annuelle" }`. Segments : `ALL` (défaut), `MEMBER`, `COMPANY`, `VISITOR`. Le prix en vigueur du même segment s'arrête la veille ; **rien n'est effacé**. Un prix `ALL` en vigueur aujourd'hui devient aussi le prix de la fiche.
