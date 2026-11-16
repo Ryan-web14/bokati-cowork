@@ -57,13 +57,22 @@ public class AspectAudit {
                 .metadata(metadata)
                 .build();
 
+        // Lot A1 : les ecritures en base faites pendant l'appel (avant / apres, element touche).
+        com.sni.bokaticowork.core.audit.change.AuditChanges.begin();
+        boolean changesOpen = true;
         try{
             Object result = pjp.proceed();
-            log.setDiff(AuditContext.getDiff());
+            changesOpen = false;
+            attachChanges(log, com.sni.bokaticowork.core.audit.change.AuditChanges.end(), true);
             auditService.save(log);
 
             return result;
         }catch (Exception e){
+            if (changesOpen) {
+                changesOpen = false;
+                // Echec : la transaction est annulee, les ecritures captees n'ont pas eu lieu.
+                attachChanges(log, com.sni.bokaticowork.core.audit.change.AuditChanges.end(), false);
+            }
             log.setAuditStatus(AuditStatus.FAILURE);
             log.setErrorCode(e.getClass().getSimpleName());
             log.setErrorMessage(safeMsg(e.getMessage()));
@@ -73,8 +82,33 @@ public class AspectAudit {
             auditService.save(log);
             throw e;
         }finally {
+            if (changesOpen) {
+                com.sni.bokaticowork.core.audit.change.AuditChanges.end();
+            }
             AuditContext.clear();
         }
+    }
+
+    /**
+     * Diff explicite de l'appelant s'il en a pose un, sinon les changements captes (action reussie
+     * seulement) ; element principal dans tous les cas.
+     */
+    private void attachChanges(AuditLog log, com.sni.bokaticowork.core.audit.change.AuditChanges.Result changes, boolean succeeded) {
+        Map<String, Object> explicit = AuditContext.getDiff();
+        if (explicit != null) {
+            log.setDiff(explicit);
+        } else if (succeeded && !changes.isEmpty()) {
+            log.setDiff(changes.toDiff());
+        }
+        com.sni.bokaticowork.core.audit.change.AuditChanges.Change primary = changes.primary();
+        if (primary != null) {
+            log.setEntityType(primary.entityType());
+            log.setEntityCode(truncate(primary.entityCode(), 120));
+        }
+    }
+
+    private String truncate(String value, int max) {
+        return value == null || value.length() <= max ? value : value.substring(0, max);
     }
 
     private String blankToNull(String s) {

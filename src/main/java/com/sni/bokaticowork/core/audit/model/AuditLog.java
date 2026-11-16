@@ -60,6 +60,14 @@ public class AuditLog {
     @Column(name = "request_id", length = 64)
     private String requestId;
 
+    /** Element principal touche (lot A1) : type d'entite, par exemple {@code BillingDocument}. */
+    @Column(name = "entity_type", length = 80)
+    private String entityType;
+
+    /** Code lisible de cet element, par exemple un numero de facture. */
+    @Column(name = "entity_code", length = 120)
+    private String entityCode;
+
     @Column(name = "error_code")
     private String errorCode;
 
