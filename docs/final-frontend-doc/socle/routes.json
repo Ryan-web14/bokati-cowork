@@ -150,6 +150,30 @@
      "type": "Instant"
     },
     {
+     "in": "query",
+     "name": "entityType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "entityCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "requestId",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ressource",
+     "required": false,
+     "type": "String"
+    },
+    {
      "in": "pageable",
      "name": "page, size, sort",
      "default": "size=20, sort=createdAt,DESC",
@@ -157,6 +181,84 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.audit.model.AuditLog>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit-logs/export",
+   "package": "core.audit.controller",
+   "controller": "AdminAuditController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/controller/AdminAuditController.java",
+   "handler": "export",
+   "declaredIn": "AdminAuditController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "module",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "action",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "actorEmail",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.core.audit.enums.AuditStatus"
+    },
+    {
+     "in": "query",
+     "name": "createdFrom",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "createdTo",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "entityType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "entityCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "requestId",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ressource",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
   },
   {
    "methods": [
@@ -392,6 +494,165 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.audit.model.SettingsAuditLogs>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/alerts",
+   "package": "core.audit.alert",
+   "controller": "AlertController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/alert/AlertController.java",
+   "handler": "list",
+   "declaredIn": "AlertController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "rule",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "50",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.audit.alert.AlertService.Alert>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/audit/alerts/evaluate",
+   "package": "core.audit.alert",
+   "controller": "AlertController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/alert/AlertController.java",
+   "handler": "evaluate",
+   "declaredIn": "AlertController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.audit.alert.AlertService.RuleView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/alerts/rules",
+   "package": "core.audit.alert",
+   "controller": "AlertController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/alert/AlertController.java",
+   "handler": "rules",
+   "declaredIn": "AlertController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.audit.alert.AlertService.RuleView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/alerts/{id}",
+   "package": "core.audit.alert",
+   "controller": "AlertController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/alert/AlertController.java",
+   "handler": "get",
+   "declaredIn": "AlertController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.audit.alert.AlertService.Alert>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/audit/alerts/{id}/acknowledge",
+   "package": "core.audit.alert",
+   "controller": "AlertController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/alert/AlertController.java",
+   "handler": "acknowledge",
+   "declaredIn": "AlertController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "body": {
+    "type": "Map<String, String>",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.audit.alert.AlertService.Alert>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/dashboard",
+   "package": "core.audit.alert",
+   "controller": "AlertController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/alert/AlertController.java",
+   "handler": "dashboard",
+   "declaredIn": "AlertController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Object>>"
   },
   {
    "methods": [
@@ -1108,6 +1369,233 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/admin/audit/errors",
+   "package": "core.audit.ops",
+   "controller": "OperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/ops/OperationsController.java",
+   "handler": "errors",
+   "declaredIn": "OperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "path",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "exception",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "requestId",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "50",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.audit.ops.OperationsService.AppError>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/errors/{id}",
+   "package": "core.audit.ops",
+   "controller": "OperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/ops/OperationsController.java",
+   "handler": "error",
+   "declaredIn": "OperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.audit.ops.OperationsService.AppError>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/health",
+   "package": "core.audit.ops",
+   "controller": "OperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/ops/OperationsController.java",
+   "handler": "health",
+   "declaredIn": "OperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Object>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/jobs",
+   "package": "core.audit.ops",
+   "controller": "OperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/ops/OperationsController.java",
+   "handler": "jobs",
+   "declaredIn": "OperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.audit.ops.OperationsService.TaskStatus>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/jobs/runs",
+   "package": "core.audit.ops",
+   "controller": "OperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/ops/OperationsController.java",
+   "handler": "runs",
+   "declaredIn": "OperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "task",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "outcome",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "50",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.audit.ops.OperationsService.TaskRun>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/integrity",
+   "package": "core.audit.retention",
+   "controller": "RetentionController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/retention/RetentionController.java",
+   "handler": "integrity",
+   "declaredIn": "RetentionController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.audit.retention.AuditIntegrity.Report>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/retention",
+   "package": "core.audit.retention",
+   "controller": "RetentionController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/retention/RetentionController.java",
+   "handler": "retention",
+   "declaredIn": "RetentionController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.audit.retention.AuditRetention.TargetView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/audit/retention/run",
+   "package": "core.audit.retention",
+   "controller": "RetentionController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/retention/RetentionController.java",
+   "handler": "run",
+   "declaredIn": "RetentionController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Long>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/admin/audit/security-events",
    "package": "core.audit.security",
    "controller": "SecurityAuditController",
@@ -1268,6 +1756,313 @@
     }
    ],
    "response": "ResponseEntity<List<com.sni.bokaticowork.core.audit.security.SecurityAuditService.SessionView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/timeline",
+   "package": "core.audit.timeline",
+   "controller": "TimelineController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/timeline/TimelineController.java",
+   "handler": "read",
+   "declaredIn": "TimelineController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "user",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "entityType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "entityCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "requestId",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "sources",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "cursor",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "type": "Integer"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.audit.timeline.TimelineService.Page>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/timeline/export",
+   "package": "core.audit.timeline",
+   "controller": "TimelineController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/timeline/TimelineController.java",
+   "handler": "export",
+   "declaredIn": "TimelineController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "user",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "entityType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "entityCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "requestId",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "sources",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/timeline/sources",
+   "package": "core.audit.timeline",
+   "controller": "TimelineController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/timeline/TimelineController.java",
+   "handler": "sources",
+   "declaredIn": "TimelineController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [],
+   "response": "ResponseEntity<Set<String>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/traffic",
+   "package": "core.audit.traffic",
+   "controller": "TrafficController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/traffic/TrafficController.java",
+   "handler": "series",
+   "declaredIn": "TrafficController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "granularity",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "route",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "method",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.audit.traffic.TrafficService.TrafficPoint>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/traffic/requests",
+   "package": "core.audit.traffic",
+   "controller": "TrafficController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/traffic/TrafficController.java",
+   "handler": "requests",
+   "declaredIn": "TrafficController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "route",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "user",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "requestId",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "minStatus",
+     "required": false,
+     "type": "Integer"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "50",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.audit.traffic.TrafficService.RequestEntry>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/traffic/routes",
+   "package": "core.audit.traffic",
+   "controller": "TrafficController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/traffic/TrafficController.java",
+   "handler": "routes",
+   "declaredIn": "TrafficController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "sort",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.audit.traffic.TrafficService.RouteTraffic>>"
   },
   {
    "methods": [
@@ -1566,6 +2361,12 @@
     "requestId": {
      "type": "string"
     },
+    "entityType": {
+     "type": "string"
+    },
+    "entityCode": {
+     "type": "string"
+    },
     "errorCode": {
      "type": "string"
     },
@@ -1712,6 +2513,91 @@
      "format": "date-time"
     },
     "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "AlertService.Alert": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "ruleCode": {
+     "type": "string"
+    },
+    "severity": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    },
+    "metricValue": {
+     "type": "number"
+    },
+    "threshold": {
+     "type": "number"
+    },
+    "openedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastSeenAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "resolvedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "acknowledgedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "acknowledgedBy": {
+     "type": "string"
+    },
+    "acknowledgeNote": {
+     "type": "string"
+    },
+    "notifications": {
+     "type": "string"
+    }
+   }
+  },
+  "AlertService.RuleView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "settingKey": {
+     "type": "string"
+    },
+    "threshold": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "enabled": {
+     "type": "boolean"
+    },
+    "severity": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "currentValue": {
+     "type": "number"
+    },
+    "detail": {
      "type": "string"
     }
    }
@@ -1950,6 +2836,208 @@
     }
    }
   },
+  "OperationsService.AppError": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "traceId": {
+     "type": "string"
+    },
+    "requestId": {
+     "type": "string"
+    },
+    "httpMethod": {
+     "type": "string"
+    },
+    "path": {
+     "type": "string"
+    },
+    "status": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "errorCode": {
+     "type": "string"
+    },
+    "exceptionClass": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    },
+    "rootCause": {
+     "type": "string"
+    },
+    "userEmail": {
+     "type": "string"
+    },
+    "clientIp": {
+     "type": "string"
+    },
+    "stackTrace": {
+     "type": "string"
+    }
+   }
+  },
+  "OperationsService.TaskStatus": {
+   "type": "object",
+   "properties": {
+    "taskName": {
+     "type": "string"
+    },
+    "lastStartedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastFinishedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastDurationMs": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lastOutcome": {
+     "type": "string"
+    },
+    "lastError": {
+     "type": "string"
+    },
+    "lastFailureAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "runCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "failureCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "consecutiveFailures": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "averageDurationMs": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "maxDurationMs": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "instance": {
+     "type": "string"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "OperationsService.TaskRun": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "taskName": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "finishedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "durationMs": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "outcome": {
+     "type": "string"
+    },
+    "error": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "instance": {
+     "type": "string"
+    }
+   }
+  },
+  "AuditIntegrity.Report": {
+   "type": "object",
+   "properties": {
+    "journal": {
+     "type": "string"
+    },
+    "checked": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "firstSeq": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lastSeq": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "unchained": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "intact": {
+     "type": "boolean"
+    },
+    "breaks": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.audit.retention.AuditIntegrity.Break"
+     }
+    }
+   }
+  },
+  "AuditRetention.TargetView": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "table": {
+     "type": "string"
+    },
+    "settingKey": {
+     "type": "string"
+    },
+    "days": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "rows": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "oldest": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
   "SecurityAuditService.EventView": {
    "type": "object",
    "properties": {
@@ -2035,6 +3123,138 @@
     },
     "revokedReason": {
      "type": "string"
+    }
+   }
+  },
+  "TimelineService.Page": {
+   "type": "object",
+   "properties": {
+    "items": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.audit.timeline.TimelineService.Entry"
+     }
+    },
+    "nextCursor": {
+     "type": "string"
+    }
+   }
+  },
+  "TrafficService.TrafficPoint": {
+   "type": "object",
+   "properties": {
+    "period": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "requests": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "clientErrors": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "serverErrors": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "averageMs": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "p50Ms": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "p95Ms": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "maxMs": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "TrafficService.RequestEntry": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "requestId": {
+     "type": "string"
+    },
+    "method": {
+     "type": "string"
+    },
+    "path": {
+     "type": "string"
+    },
+    "route": {
+     "type": "string"
+    },
+    "status": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "durationMs": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "userEmail": {
+     "type": "string"
+    },
+    "clientIp": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "TrafficService.RouteTraffic": {
+   "type": "object",
+   "properties": {
+    "method": {
+     "type": "string"
+    },
+    "route": {
+     "type": "string"
+    },
+    "requests": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "clientErrors": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "serverErrors": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "averageMs": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "p50Ms": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "p95Ms": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "maxMs": {
+     "type": "integer",
+     "format": "int64"
     }
    }
   },
@@ -2249,6 +3469,57 @@
     }
    }
   },
+  "AuditIntegrity.Break": {
+   "type": "object",
+   "properties": {
+    "chainSeq": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "kind": {
+     "type": "string"
+    }
+   }
+  },
+  "TimelineService.Entry": {
+   "type": "object",
+   "properties": {
+    "occurredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "source": {
+     "type": "string"
+    },
+    "refId": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string"
+    },
+    "actor": {
+     "type": "string"
+    },
+    "entityType": {
+     "type": "string"
+    },
+    "entityCode": {
+     "type": "string"
+    },
+    "summary": {
+     "type": "string"
+    },
+    "requestId": {
+     "type": "string"
+    },
+    "ipAddress": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   }
+  },
   "WhatsAppService.Button": {
    "type": "object",
    "properties": {
@@ -2301,6 +3572,8 @@
   "OutboxEvent": "com.sni.bokaticowork.core.outbox.model.OutboxEvent",
   "OutboxEventStatus": "com.sni.bokaticowork.core.outbox.enums.OutboxEventStatus",
   "SettingsAuditLogs": "com.sni.bokaticowork.core.audit.model.SettingsAuditLogs",
+  "AlertService.Alert": "com.sni.bokaticowork.core.audit.alert.AlertService.Alert",
+  "AlertService.RuleView": "com.sni.bokaticowork.core.audit.alert.AlertService.RuleView",
   "CountryResponse": "com.sni.bokaticowork.core.baseClasses.dto.response.CountryResponse",
   "CountryRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.CountryRequest",
   "CountryService.PhoneCodeEntry": "com.sni.bokaticowork.core.baseClasses.service.interfaces.CountryService.PhoneCodeEntry",
@@ -2312,13 +3585,24 @@
   "MemberPurgeController.BatchPurgeRequest": "com.sni.bokaticowork.core.maintenance.MemberPurgeController.BatchPurgeRequest",
   "MemberPurgeService.MemberCandidate": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.MemberCandidate",
   "MemberPurgeService.PurgeReport": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.PurgeReport",
+  "OperationsService.AppError": "com.sni.bokaticowork.core.audit.ops.OperationsService.AppError",
+  "OperationsService.TaskStatus": "com.sni.bokaticowork.core.audit.ops.OperationsService.TaskStatus",
+  "OperationsService.TaskRun": "com.sni.bokaticowork.core.audit.ops.OperationsService.TaskRun",
+  "AuditIntegrity.Report": "com.sni.bokaticowork.core.audit.retention.AuditIntegrity.Report",
+  "AuditRetention.TargetView": "com.sni.bokaticowork.core.audit.retention.AuditRetention.TargetView",
   "SecurityAuditService.EventView": "com.sni.bokaticowork.core.audit.security.SecurityAuditService.EventView",
   "SecurityAuditService.SessionView": "com.sni.bokaticowork.core.audit.security.SecurityAuditService.SessionView",
+  "TimelineService.Page": "com.sni.bokaticowork.core.audit.timeline.TimelineService.Page",
+  "TrafficService.TrafficPoint": "com.sni.bokaticowork.core.audit.traffic.TrafficService.TrafficPoint",
+  "TrafficService.RequestEntry": "com.sni.bokaticowork.core.audit.traffic.TrafficService.RequestEntry",
+  "TrafficService.RouteTraffic": "com.sni.bokaticowork.core.audit.traffic.TrafficService.RouteTraffic",
   "WhatsAppMessage": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessage",
   "WhatsAppTemplate": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppTemplate",
   "WhatsAppService.TemplateRequest": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppService.TemplateRequest",
   "WhatsAppMessageSender.Result": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessageSender.Result",
   "WhatsAppController.TestRequest": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppController.TestRequest",
+  "AuditIntegrity.Break": "com.sni.bokaticowork.core.audit.retention.AuditIntegrity.Break",
+  "TimelineService.Entry": "com.sni.bokaticowork.core.audit.timeline.TimelineService.Entry",
   "WhatsAppService.Button": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppService.Button"
  }
 }

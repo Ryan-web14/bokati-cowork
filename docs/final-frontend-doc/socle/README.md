@@ -77,6 +77,8 @@ Suppression logique : `DELETE /sni/api/v1/countries/{countryCode}` doit passer l
 
 ### Journal d'audit
 
+> Le centre d'audit complet (chronologie, tableau de bord, alertes, trafic, tâches, erreurs, intégrité) est décrit dans [audit/README.md](../audit/README.md).
+
 1. `GET /sni/api/v1/admin/audit-logs` ([détail](routes/AdminAuditController.md#r-get-sni-api-v1-admin-audit-logs)) avec les filtres :
    - `module` et `action` : égalité exacte, insensible à la casse. Valeurs de `module` présentes dans le code : `INVENTORY`, `COMPANY`, `DOCUMENT`, `RESOURCE`, `KYC`, `CONTRACT`, `MEMBER`, `TASK`, `CONTRACT_AMENDMENT`, `CONTRACT_DRAFT`, `USER`, `CONTRACT_TEMPLATE`, `BUSINESS`, `ROLE`, `PERMISSION`, `CUSTOMER`, `ROLE_PERMISSION`, `MAINTENANCE`, `CURRENCY`, `COUNTRY`, `ADDRESS`, `SETTINGS`, `ROLE_USER`, `EVENT_REGISTRATION`, `MOBILE_MONEY`. Aucune route ne fournit cette liste : la coder en dur ou laisser un champ libre.
    - `actorEmail` : recherche « contient », insensible à la casse.
