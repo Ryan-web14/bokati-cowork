@@ -106,11 +106,26 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return responseMapper.toResponse(getForService(subscriptionNumber));
     }
 
+    private com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriberIdentities subscriberIdentities;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSubscriberIdentities(com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriberIdentities subscriberIdentities) {
+        this.subscriberIdentities = subscriberIdentities;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public SubscriptionResponse current(SubscriberType subscriberType, String subscriberCode) {
         if (subscriberType == null || !StringUtils.hasText(subscriberCode)) {
             throw new BadRequestException("Subscriber type and subscriber code are required");
+        }
+        if (subscriberIdentities != null && subscriberType != SubscriberType.MEMBER) {
+            for (var identity : subscriberIdentities.of(subscriberType, subscriberCode)) {
+                var found = subscriptionRepository.findCurrentActive(identity.type().name(), identity.code(), LocalDate.now());
+                if (found.isPresent()) {
+                    return responseMapper.toResponse(found.get());
+                }
+            }
         }
         return subscriptionRepository.findCurrentActive(subscriberType.name(), subscriberCode.trim(), LocalDate.now())
                 .map(responseMapper::toResponse)
@@ -120,6 +135,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponse<SubscriptionResponse> list(SubscriptionSearchCriteria criteria, Pageable pageable) {
+        // Une entreprise : son profil client et son entite (chercher par l'un trouve l'autre).
+        if (criteria != null && subscriberIdentities != null && StringUtils.hasText(criteria.getSubscriberCode())
+                && criteria.getSubscriberType() != SubscriberType.MEMBER) {
+            criteria.setIdentities(subscriberIdentities.of(criteria.getSubscriberType(), criteria.getSubscriberCode()));
+        }
         return new PaginatedResponse<>(subscriptionRepository.findAll(SubscriptionSpecification.search(criteria), pageable)
                 .map(responseMapper::toResponse));
     }

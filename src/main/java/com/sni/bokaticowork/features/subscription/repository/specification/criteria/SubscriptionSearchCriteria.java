@@ -19,4 +19,9 @@ public class SubscriptionSearchCriteria {
     private String planCode;
     private SubscriptionStatus status;
     private LocalDate nextBillingBefore;
+    /**
+     * Identites du meme souscripteur (profil client et entite d'une entreprise) ; quand elle est
+     * remplie, elle remplace le filtre {@code subscriberType} / {@code subscriberCode}.
+     */
+    private java.util.List<com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriberIdentities.Identity> identities;
 }

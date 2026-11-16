@@ -169,6 +169,7 @@ Formes d'erreur : voir [Erreurs](../README.md#erreurs). Dans ce module, une `Con
 - Plans : `GET /sni/api/v1/subscriptions/plans?status=ACTIVE` ; versions : `GET .../plans/{planCode}/versions` (seulement les versions de catalogue).
 - Définitions de droits : `GET /sni/api/v1/subscriptions/entitlement-definitions/search/basic?query=...` pour une saisie assistée.
 - Plans de pass : `GET /sni/api/v1/pass-plans?status=ACTIVE`, puis `GET .../{planCode}/versions` et `GET /sni/api/v1/pass-plans/versions/{versionCode}/prices`.
+- **Entreprise : deux identités** (16/11/2026). Une entreprise a un profil client (`CUS-COM-...`, type `CUSTOMER`) relié à son entité (`code` d'entreprise, type `BUSINESS_ENTITY`) ; ses abonnements peuvent être au nom de l'un ou de l'autre. `GET /sni/api/v1/subscriptions?subscriberType=...&subscriberCode=...` et `GET /sni/api/v1/subscriptions/current` trouvent les abonnements des deux identités, quel que soit le type (`CUSTOMER` ou `BUSINESS_ENTITY`) et le code envoyés ; la réponse garde le `subscriberType` et le `subscriberCode` réels de chaque abonnement. Un membre n'a qu'une identité.
 - Les souscripteurs (membres, clients, entreprises) viennent des modules [client](../client/README.md) et [company](../company/README.md) : envoyer leur code métier (`memberId`, `customerId`, `code` d'entreprise) dans `subscriberCode` ou `ownerCode`.
 - Énumérations : toutes dans les modèles des fichiers `routes/`.
 

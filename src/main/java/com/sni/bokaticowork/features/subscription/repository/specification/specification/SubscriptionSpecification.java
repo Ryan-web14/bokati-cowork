@@ -30,11 +30,18 @@ public final class SubscriptionSpecification {
 
             List<Predicate> predicates = new ArrayList<>();
 
-            if (criteria.getSubscriberType() != null) {
-                predicates.add(cb.equal(root.get("subscriberType"), criteria.getSubscriberType()));
-            }
-            if (StringUtils.hasText(criteria.getSubscriberCode())) {
-                predicates.add(cb.equal(root.get("subscriberCode"), criteria.getSubscriberCode().trim()));
+            if (criteria.getIdentities() != null && !criteria.getIdentities().isEmpty()) {
+                predicates.add(cb.or(criteria.getIdentities().stream()
+                        .map(identity -> cb.and(cb.equal(root.get("subscriberType"), identity.type()),
+                                cb.equal(root.get("subscriberCode"), identity.code())))
+                        .toArray(Predicate[]::new)));
+            } else {
+                if (criteria.getSubscriberType() != null) {
+                    predicates.add(cb.equal(root.get("subscriberType"), criteria.getSubscriberType()));
+                }
+                if (StringUtils.hasText(criteria.getSubscriberCode())) {
+                    predicates.add(cb.equal(root.get("subscriberCode"), criteria.getSubscriberCode().trim()));
+                }
             }
             if (criteria.getStatus() != null) {
                 predicates.add(cb.equal(root.get("status"), criteria.getStatus()));
