@@ -32,7 +32,7 @@ class OperationsA4IT extends PostgresIntegrationTestBase {
     void taskTotalsAccumulateAndFailuresAreKept() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.initialize();
-        OperationsWriter writer = new OperationsWriter(jdbc, scheduler, "web.1");
+        OperationsWriter writer = new OperationsWriter(jdbc, scheduler, "web.1", new com.sni.bokaticowork.core.audit.traffic.TrafficRecorder());
         try {
             ScheduledRuns.drain();
             run("DunningPolicyWorker", null);

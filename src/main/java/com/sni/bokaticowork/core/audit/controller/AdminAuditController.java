@@ -8,7 +8,6 @@ import com.sni.bokaticowork.core.audit.service.interfaces.AuditService;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -35,10 +34,10 @@ import java.time.LocalDate;
 @RequestMapping(ApiPath.V1 + "/admin/audit-logs")
 public class AdminAuditController {
 
-    private final AuditService auditService;
+    static final String EXPORT_MAX_ROWS_KEY = "bokati.audit.export.max-rows";
 
-    @Value("${bokati.audit.export.max-rows:10000}")
-    private int exportMaxRows;
+    private final AuditService auditService;
+    private final com.sni.bokaticowork.core.settings.platform.PlatformSettings settings;
 
     @GetMapping
     public ResponseEntity<PaginatedResponse<AuditLog>> list(
@@ -74,7 +73,7 @@ public class AdminAuditController {
             @RequestParam(required = false) String ressource) {
         AuditLogFilter filter = new AuditLogFilter(module, action, actorEmail, status, createdFrom, createdTo,
                 entityType, entityCode, requestId, ressource);
-        AuditService.AuditExport export = auditService.export(filter, exportMaxRows);
+        AuditService.AuditExport export = auditService.export(filter, (int) settings.number(EXPORT_MAX_ROWS_KEY, 10_000));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
         headers.setContentDisposition(ContentDisposition.attachment()

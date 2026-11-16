@@ -288,6 +288,8 @@ billing.deal.auto-create	BILLING	BOOLEAN	LIVE	true	Affaires : le premier devis d
 billing.discount.override-mode	BILLING	ENUM	LIVE	APPROVAL	Remise ou prix hors limites : APPROVAL (demande au responsable N+1 par le centre d'approbation, l'émission attend son accord) ou PERMISSION (droit de dérogation et motif, sans circuit)
 billing.quote.revision-validity-days	BILLING	INTEGER	LIVE	30	Devis : jours de validité garantis après une révision (la date de validité est prolongée si besoin)
 billing.stock.issue-on	BILLING	ENUM	LIVE	INVOICE	Sortie de stock des articles vendus : INVOICE (à l'émission de la facture), DELIVERY (à la livraison de chaque bon de livraison, la facture ne sort plus rien) ou NONE (aucune sortie automatique)
+bokati.audit.export.max-rows	AUDIT	INTEGER	LIVE	10000	Lignes au plus dans un export CSV du journal des actions
+bokati.audit.traffic.slow-ms	AUDIT	INTEGER	LIVE	2000	Durée à partir de laquelle une requête est gardée une par une comme lente (ms)
 bokati.billing.default-currency	BILLING	TEXT	LIVE	XAF	Devise par défaut
 bokati.billing.dunning.batch-size	BILLING	INTEGER	LIVE	200	Taille de lot des relances
 bokati.billing.dunning.cron	BILLING	CRON	LIVE	0 30 8 * * *	Planification des relances

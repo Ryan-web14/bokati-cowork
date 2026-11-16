@@ -27,12 +27,16 @@ public class OperationsWriter implements SmartInitializingSingleton {
     private final JdbcTemplate jdbc;
     private final TaskScheduler scheduler;
     private final String instance;
+    private final com.sni.bokaticowork.core.audit.traffic.TrafficRecorder traffic;
+    private volatile boolean stopping;
 
     public OperationsWriter(JdbcTemplate jdbc, @Qualifier("taskScheduler") TaskScheduler scheduler,
-                            @Value("${DYNO:local}") String instance) {
+                            @Value("${DYNO:local}") String instance,
+                            com.sni.bokaticowork.core.audit.traffic.TrafficRecorder traffic) {
         this.jdbc = jdbc;
         this.scheduler = scheduler;
         this.instance = instance;
+        this.traffic = traffic;
     }
 
     @Override
@@ -42,21 +46,88 @@ public class OperationsWriter implements SmartInitializingSingleton {
 
     @jakarta.annotation.PreDestroy
     void flushOnShutdown() {
+        stopping = true;
         flush();
     }
 
     void flush() {
         ScheduledRuns.Drained drained = ScheduledRuns.drain();
-        if (drained.totals().isEmpty() && drained.runs().isEmpty()) {
+        if (!drained.totals().isEmpty() || !drained.runs().isEmpty()) {
+            try {
+                writeTotals(drained.totals());
+                writeRuns(drained.runs());
+            } catch (RuntimeException exception) {
+                log.warn("Centre d'audit : executions des taches non ecrites ({} taches, {} executions) : {}",
+                        drained.totals().size(), drained.runs().size(), exception.getMessage());
+            }
+        }
+        // Trafic : minutes terminees seulement, sauf a l'arret.
+        List<com.sni.bokaticowork.core.audit.traffic.TrafficRecorder.MinuteRow> minutes =
+                traffic.drainMinutes(stopping ? null : Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES));
+        List<com.sni.bokaticowork.core.audit.traffic.TrafficRecorder.SlowRequest> requests = traffic.drainRequests();
+        try {
+            writeTraffic(minutes);
+            writeRequests(requests);
+        } catch (RuntimeException exception) {
+            log.warn("Centre d'audit : trafic non ecrit ({} lignes, {} requetes) : {}", minutes.size(), requests.size(),
+                    exception.getMessage());
+        }
+    }
+
+    private void writeTraffic(List<com.sni.bokaticowork.core.audit.traffic.TrafficRecorder.MinuteRow> rows) {
+        if (rows.isEmpty()) {
             return;
         }
-        try {
-            writeTotals(drained.totals());
-            writeRuns(drained.runs());
-        } catch (RuntimeException exception) {
-            log.warn("Centre d'audit : executions des taches non ecrites ({} taches, {} executions) : {}",
-                    drained.totals().size(), drained.runs().size(), exception.getMessage());
+        jdbc.batchUpdate("""
+                INSERT INTO traffic_minute (minute, http_method, route, request_count, client_errors, server_errors,
+                                            total_ms, max_ms, histogram)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (minute, http_method, route) DO UPDATE SET
+                    request_count = traffic_minute.request_count + EXCLUDED.request_count,
+                    client_errors = traffic_minute.client_errors + EXCLUDED.client_errors,
+                    server_errors = traffic_minute.server_errors + EXCLUDED.server_errors,
+                    total_ms = traffic_minute.total_ms + EXCLUDED.total_ms,
+                    max_ms = greatest(traffic_minute.max_ms, EXCLUDED.max_ms),
+                    histogram = (SELECT array_agg(a + b ORDER BY i)
+                                 FROM unnest(traffic_minute.histogram, EXCLUDED.histogram) WITH ORDINALITY AS u(a, b, i))
+                """, rows, rows.size(), (statement, row) -> {
+            statement.setTimestamp(1, timestamp(row.minute()));
+            statement.setString(2, row.method());
+            statement.setString(3, row.route());
+            statement.setLong(4, row.count());
+            statement.setLong(5, row.clientErrors());
+            statement.setLong(6, row.serverErrors());
+            statement.setLong(7, row.totalMs());
+            statement.setLong(8, row.maxMs());
+            Integer[] histogram = new Integer[row.histogram().length];
+            for (int i = 0; i < histogram.length; i++) {
+                histogram[i] = row.histogram()[i];
+            }
+            statement.setArray(9, statement.getConnection().createArrayOf("integer", histogram));
+        });
+    }
+
+    private void writeRequests(List<com.sni.bokaticowork.core.audit.traffic.TrafficRecorder.SlowRequest> requests) {
+        if (requests.isEmpty()) {
+            return;
         }
+        jdbc.batchUpdate("""
+                INSERT INTO request_log (created_at, request_id, http_method, path, route, status, duration_ms, user_email,
+                                         client_ip, reason, instance)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, requests, requests.size(), (statement, request) -> {
+            statement.setTimestamp(1, timestamp(request.createdAt()));
+            statement.setString(2, request.requestId());
+            statement.setString(3, request.method());
+            statement.setString(4, request.path());
+            statement.setString(5, request.route());
+            statement.setInt(6, request.status());
+            statement.setLong(7, request.durationMs());
+            statement.setString(8, request.userEmail());
+            statement.setString(9, request.clientIp());
+            statement.setString(10, request.reason());
+            statement.setString(11, instance);
+        });
     }
 
     private void writeTotals(List<ScheduledRuns.TaskTotals> totals) {

@@ -233,6 +233,12 @@ public class OperationsService {
     // ── Outils ─────────────────────────────────────────────────────────────────
 
     private <T> Page<T> page(String select, Where where, String order, int page, int size, org.springframework.jdbc.core.RowMapper<T> mapper) {
+        return page(jdbc, select, where, order, page, size, mapper);
+    }
+
+    /** Page lue en SQL : total, puis lignes triees, taille bornee a {@link #MAX_PAGE_SIZE}. */
+    public static <T> Page<T> page(JdbcTemplate jdbc, String select, Where where, String order, int page, int size,
+                                   org.springframework.jdbc.core.RowMapper<T> mapper) {
         if (page < 0 || size < 1) {
             throw new BadRequestException("page doit etre positive et size au moins 1");
         }
@@ -251,41 +257,41 @@ public class OperationsService {
     }
 
     /** Clause WHERE construite avec des parametres lies (aucune valeur saisie dans le SQL). */
-    static final class Where {
+    public static final class Where {
         private final StringBuilder sql = new StringBuilder();
         private final List<Object> args = new ArrayList<>();
 
-        private Where add(String condition, Object arg) {
+        public Where add(String condition, Object arg) {
             sql.append(sql.length() == 0 ? " WHERE " : " AND ").append(condition);
             args.add(arg);
             return this;
         }
 
-        Where eq(String column, String value) {
+        public Where eq(String column, String value) {
             return StringUtils.hasText(value) ? add(column + " = ?", value.trim()) : this;
         }
 
-        Where eqUpper(String column, String value) {
+        public Where eqUpper(String column, String value) {
             return StringUtils.hasText(value) ? add(column + " = ?", value.trim().toUpperCase(java.util.Locale.ROOT)) : this;
         }
 
-        Where like(String column, String value) {
+        public Where like(String column, String value) {
             return StringUtils.hasText(value) ? add("lower(" + column + ") LIKE ?", "%" + value.trim().toLowerCase(java.util.Locale.ROOT) + "%") : this;
         }
 
-        Where from(String column, Instant value) {
+        public Where from(String column, Instant value) {
             return value == null ? this : add(column + " >= ?", Timestamp.from(value));
         }
 
-        Where to(String column, Instant value) {
+        public Where to(String column, Instant value) {
             return value == null ? this : add(column + " <= ?", Timestamp.from(value));
         }
 
-        String sql() {
+        public String sql() {
             return sql.toString();
         }
 
-        Object[] args() {
+        public Object[] args() {
             return args.toArray();
         }
     }
