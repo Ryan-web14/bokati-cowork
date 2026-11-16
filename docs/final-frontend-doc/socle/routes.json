@@ -1108,6 +1108,171 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/admin/audit/security-events",
+   "package": "core.audit.security",
+   "controller": "SecurityAuditController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/security/SecurityAuditController.java",
+   "handler": "events",
+   "declaredIn": "SecurityAuditController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "type",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "login",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "userCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ip",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "requestId",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "50",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<Page<com.sni.bokaticowork.core.audit.security.SecurityAuditService.EventView>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/audit/sessions/{sessionId}",
+   "package": "core.audit.security",
+   "controller": "SecurityAuditController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/security/SecurityAuditController.java",
+   "handler": "revoke",
+   "declaredIn": "SecurityAuditController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.audit.security.SecurityAuditService.SessionView>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/audit/users/{userCode}/sessions",
+   "package": "core.audit.security",
+   "controller": "SecurityAuditController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/security/SecurityAuditController.java",
+   "handler": "revokeAll",
+   "declaredIn": "SecurityAuditController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit/users/{userCode}/sessions",
+   "package": "core.audit.security",
+   "controller": "SecurityAuditController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/security/SecurityAuditController.java",
+   "handler": "sessions",
+   "declaredIn": "SecurityAuditController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "activeOnly",
+     "required": false,
+     "default": "true",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.audit.security.SecurityAuditService.SessionView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/admin/whatsapp/messages",
    "package": "core.communication.whatsapp",
    "controller": "WhatsAppController",
@@ -1398,6 +1563,9 @@
     "sessionId": {
      "type": "string"
     },
+    "requestId": {
+     "type": "string"
+    },
     "errorCode": {
      "type": "string"
     },
@@ -1498,6 +1666,9 @@
     "availableAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "requestId": {
+     "type": "string"
     },
     "lastError": {
      "type": "string"
@@ -1779,6 +1950,94 @@
     }
    }
   },
+  "SecurityAuditService.EventView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "eventType": {
+     "type": "string"
+    },
+    "userCode": {
+     "type": "string"
+    },
+    "login": {
+     "type": "string"
+    },
+    "ipAddress": {
+     "type": "string"
+    },
+    "userAgent": {
+     "type": "string"
+    },
+    "requestId": {
+     "type": "string"
+    },
+    "path": {
+     "type": "string"
+    },
+    "detailsJson": {
+     "type": "string"
+    }
+   }
+  },
+  "SecurityAuditService.SessionView": {
+   "type": "object",
+   "properties": {
+    "sessionId": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastAccessAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expiredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "revoked": {
+     "type": "boolean"
+    },
+    "ipAddress": {
+     "type": "string"
+    },
+    "deviceType": {
+     "type": "string"
+    },
+    "userAgent": {
+     "type": "string"
+    },
+    "location": {
+     "type": "string"
+    },
+    "roles": {
+     "type": "string"
+    },
+    "revokedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "revokedBy": {
+     "type": "string"
+    },
+    "revokedReason": {
+     "type": "string"
+    }
+   }
+  },
   "WhatsAppMessage": {
    "type": "object",
    "properties": {
@@ -2053,6 +2312,8 @@
   "MemberPurgeController.BatchPurgeRequest": "com.sni.bokaticowork.core.maintenance.MemberPurgeController.BatchPurgeRequest",
   "MemberPurgeService.MemberCandidate": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.MemberCandidate",
   "MemberPurgeService.PurgeReport": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.PurgeReport",
+  "SecurityAuditService.EventView": "com.sni.bokaticowork.core.audit.security.SecurityAuditService.EventView",
+  "SecurityAuditService.SessionView": "com.sni.bokaticowork.core.audit.security.SecurityAuditService.SessionView",
   "WhatsAppMessage": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessage",
   "WhatsAppTemplate": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppTemplate",
   "WhatsAppService.TemplateRequest": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppService.TemplateRequest",

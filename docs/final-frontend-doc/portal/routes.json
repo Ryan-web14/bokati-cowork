@@ -4736,9 +4736,6 @@
    "access": {
     "kind": "member-portal"
    },
-   "produces": [
-    "application/pdf"
-   ],
    "params": [
     {
      "in": "path",
@@ -4961,9 +4958,6 @@
    "access": {
     "kind": "member-portal"
    },
-   "produces": [
-    "application/pdf"
-   ],
    "params": [
     {
      "in": "path",
@@ -11372,6 +11366,9 @@
     },
     "author": {
      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.response.BillingDocumentAuthorResponse"
+    },
+    "creditedAmount": {
+     "type": "number"
     }
    }
   },

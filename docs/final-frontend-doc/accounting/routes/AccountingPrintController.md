@@ -10,7 +10,6 @@ Module [accounting](../README.md) · 3 route(s).
 ### GET /sni/api/v1/accounting/deposit-slips/{number}/pdf
 
 - Accès : back-office : rôle d'administration et droit `ACCOUNTING_REPORT:READ`
-- Renvoie : `application/pdf`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingPrintController.java`, méthode `depositSlip`
 
@@ -22,7 +21,6 @@ Module [accounting](../README.md) · 3 route(s).
 ### GET /sni/api/v1/accounting/partners/{code}/statement/pdf
 
 - Accès : back-office : rôle d'administration et droit `FINANCING:READ`
-- Renvoie : `application/pdf`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingPrintController.java`, méthode `partnerStatement`
 
@@ -36,7 +34,6 @@ Module [accounting](../README.md) · 3 route(s).
 ### GET /sni/api/v1/accounting/purchases/suppliers/{code}/statement/pdf
 
 - Accès : back-office : rôle d'administration et droit `PURCHASE:READ`
-- Renvoie : `application/pdf`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingPrintController.java`, méthode `supplierStatement`
 

@@ -188,13 +188,90 @@
     },
     {
      "in": "query",
+     "name": "interval",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
      "name": "groupBy",
      "required": false,
-     "default": "day",
      "type": "String"
     }
    ],
    "response": "ResponseEntity<List<com.sni.bokaticowork.features.analytics.dto.BookingTrendResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/analytics/trends/occupancy",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "occupancyTrend",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "interval",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.analytics.dto.OccupancyTrendResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/analytics/trends/revenue",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "revenueTrend",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "interval",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.analytics.dto.RevenueTrendResponse>>"
   },
   {
    "methods": [
@@ -500,6 +577,57 @@
     }
    }
   },
+  "OccupancyTrendResponse": {
+   "type": "object",
+   "properties": {
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "days": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "bookingCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "bookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "availableMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "occupancyRate": {
+     "type": "number"
+    }
+   }
+  },
+  "RevenueTrendResponse": {
+   "type": "object",
+   "properties": {
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "invoiceCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "invoicedAmount": {
+     "type": "number"
+    },
+    "paymentCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "collectedAmount": {
+     "type": "number"
+    }
+   }
+  },
   "AnalyticsOverviewResponse.BookingMetrics": {
    "type": "object",
    "properties": {
@@ -719,6 +847,8 @@
   "TopOwnerResponse": "com.sni.bokaticowork.features.analytics.dto.TopOwnerResponse",
   "TopResourceResponse": "com.sni.bokaticowork.features.analytics.dto.TopResourceResponse",
   "BookingTrendResponse": "com.sni.bokaticowork.features.analytics.dto.BookingTrendResponse",
+  "OccupancyTrendResponse": "com.sni.bokaticowork.features.analytics.dto.OccupancyTrendResponse",
+  "RevenueTrendResponse": "com.sni.bokaticowork.features.analytics.dto.RevenueTrendResponse",
   "AnalyticsOverviewResponse.BookingMetrics": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.BookingMetrics",
   "AnalyticsOverviewResponse.FinancialMetrics": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.FinancialMetrics",
   "AnalyticsComparisonResponse.Variation": "com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse.Variation",

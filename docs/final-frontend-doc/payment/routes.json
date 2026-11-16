@@ -11231,6 +11231,9 @@
     },
     "author": {
      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.response.BillingDocumentAuthorResponse"
+    },
+    "creditedAmount": {
+     "type": "number"
     }
    }
   },

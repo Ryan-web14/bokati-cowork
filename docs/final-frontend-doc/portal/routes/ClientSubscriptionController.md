@@ -401,6 +401,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `companyName` | texte |  |  |
 | `companyLinkSource` | texte |  |  |
 | `author` | [BillingDocumentAuthorResponse](#m-BillingDocumentAuthorResponse) |  |  |
+| `creditedAmount` | nombre décimal |  |  |
 
 <a id="m-MobileMoneyDepositResponse-AccountDetailsResponse"></a>
 #### MobileMoneyDepositResponse.AccountDetailsResponse

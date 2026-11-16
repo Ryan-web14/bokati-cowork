@@ -4,7 +4,7 @@
 
 ## En bref
 
-Le module fournit les indicateurs du tableau de bord d'accueil du back-office : une vue d'ensemble chiffrée sur une période, une comparaison avec la période précédente, un instantané « en ce moment » de l'occupation, une courbe des réservations et les classements des meilleurs clients et des ressources les plus réservées.
+Le module fournit les indicateurs du tableau de bord d'accueil du back-office : une vue d'ensemble chiffrée sur une période, une comparaison avec la période précédente, un instantané « en ce moment » de l'occupation, des courbes (réservations, chiffre d'affaires, occupation) et les classements des meilleurs clients et des ressources les plus réservées.
 
 Lecture seule, calculée à chaque appel en SQL natif sur les tables de `billing`, `payment` (transactions et portefeuilles), `booking`, `resource`, `subscription`, `client` et `inventory`. Pas de cache, pas de worker, pas de temps réel poussé.
 
@@ -17,7 +17,9 @@ Toutes les routes exigent `REPORT:VIEW` (back-office), comme le module [reportin
 | `GET /sni/api/v1/analytics/overview` | sept blocs : `financial`, `payment`, `wallet`, `booking`, `subscription`, `customer`, `inventory` | `fromDate`, `toDate` facultatifs |
 | `GET /sni/api/v1/analytics/comparison` | deux vues d'ensemble (`current`, `previous`) et quatre variations (`revenue`, `paid`, `bookings`, `activeSubscriptions`) | `fromDate` obligatoire, `toDate` facultatif (aujourd'hui par défaut) |
 | `GET /sni/api/v1/analytics/live` | instantané : réservations en cours, ressources occupées, taux d'occupation, attentes, chiffres du jour | aucune (maintenant et aujourd'hui) |
-| `GET /sni/api/v1/analytics/trends/bookings` | série de réservations par jour, semaine ou mois | `fromDate`, `toDate`, `groupBy` |
+| `GET /sni/api/v1/analytics/trends/bookings` | série de réservations par jour, semaine ou mois | `fromDate`, `toDate`, `interval` (ou `groupBy`) |
+| `GET /sni/api/v1/analytics/trends/revenue` | série du chiffre d'affaires : facturé et encaissé | `fromDate`, `toDate`, `interval` |
+| `GET /sni/api/v1/analytics/trends/occupancy` | série du taux d'occupation | `fromDate`, `toDate`, `interval` |
 | `GET /sni/api/v1/analytics/top-owners` | classement des titulaires de réservations | `fromDate`, `toDate`, `limit` |
 | `GET /sni/api/v1/analytics/top-resources` | classement des ressources | `fromDate`, `toDate`, `limit` |
 | `GET /sni/api/v1/reports/financial/summary` | le seul bloc `financial` de la vue d'ensemble | `fromDate`, `toDate` |
@@ -47,7 +49,7 @@ Le module n'a aucun objet à statut. Il compte les statuts des autres modules, l
 
 1. Au chargement : `GET /sni/api/v1/analytics/live` ([détail](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-live)) pour le bandeau « en ce moment ».
 2. En parallèle : `GET /sni/api/v1/analytics/comparison?fromDate=2026-11-01&toDate=2026-11-08&compareWithPrevious=true` ([détail](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-comparison)) pour les cartes chiffrées avec leur évolution.
-3. Puis les graphiques et classements avec la même période : `.../analytics/trends/bookings`, `.../analytics/top-owners`, `.../analytics/top-resources`.
+3. Puis les graphiques et classements avec la même période : `.../analytics/trends/bookings`, `.../analytics/trends/revenue`, `.../analytics/trends/occupancy`, `.../analytics/top-owners`, `.../analytics/top-resources`.
 4. Un changement de période relance les appels 2 et 3 ; `live` se rafraîchit seul (voir plus bas).
 
 ### Bandeau « en ce moment »
@@ -74,9 +76,27 @@ Le module n'a aucun objet à statut. Il compte les statuts des autres modules, l
 
 ### Courbe des réservations
 
-1. `GET /sni/api/v1/analytics/trends/bookings?fromDate=...&toDate=...&groupBy=day` ([détail](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-trends-bookings)).
-2. `groupBy` vaut `day` (défaut), `week` ou `month` (casse indifférente). La `date` de chaque point est le premier jour de l'intervalle (le lundi pour `week`, le 1er pour `month`).
+1. `GET /sni/api/v1/analytics/trends/bookings?fromDate=...&toDate=...&interval=DAY` ([détail](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-trends-bookings)).
+2. `interval` (ou l'ancien `groupBy`) vaut `DAY` (défaut), `WEEK` ou `MONTH` (casse indifférente). La `date` de chaque point est le premier jour de l'intervalle (le lundi pour `week`, le 1er pour `month`).
 3. Chaque point : `bookingCount`, `confirmedCount`, `cancelledCount`, `revenue`. Les réservations sont regroupées par date de **création**. Seuls les intervalles ayant au moins une réservation sont renvoyés : compléter à zéro côté écran.
+
+### Courbe du chiffre d'affaires
+
+1. `GET /sni/api/v1/analytics/trends/revenue?fromDate=2026-10-17&toDate=2026-11-16&interval=DAY` ([détail](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-trends-revenue)).
+2. Chaque point : `date` (premier jour de la période), `invoiceCount` et `invoicedAmount` (factures émises, mêmes règles que `financial.invoicedAmount` : ni brouillon, ni refusée, expirée, convertie, annulée, par date de création), `paymentCount` et `collectedAmount` (paiements réussis, par date de création, comme le bloc `payment`). Deux courbes conseillées : facturé et encaissé.
+3. **Toutes les périodes sont présentes**, à zéro sans activité : rien à compléter côté écran.
+
+### Courbe d'occupation
+
+1. `GET /sni/api/v1/analytics/trends/occupancy?fromDate=...&toDate=...&interval=DAY` ([détail](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-trends-occupancy)).
+2. Règle du rapport d'occupation (module [reporting](../reporting/README.md)) : minutes réservées (réservations confirmées, en cours ou terminées, par **heure de début**) sur 8 heures par jour et par ressource d'un type actif. Chaque point : `date`, `days` (jours de la période dans l'intervalle : une semaine coupée par l'intervalle en compte moins de 7), `bookingCount`, `bookedMinutes`, `availableMinutes`, `occupancyRate` (pourcentage, deux décimales, peut dépasser 100 si les réservations débordent des 8 heures).
+3. Toutes les périodes sont présentes, comme pour le chiffre d'affaires.
+
+### Règles communes aux courbes du chiffre d'affaires et de l'occupation
+
+- Sans dates : les 30 derniers jours jusqu'à aujourd'hui. Sans `toDate` : aujourd'hui. Sans `fromDate` : 30 jours avant `toDate`.
+- `interval` : `DAY` (défaut), `WEEK` (semaines du lundi), `MONTH`. Autre valeur : `400`, message `interval doit valoir DAY, WEEK ou MONTH`.
+- `fromDate` après `toDate` : `400`, message `fromDate doit preceder toDate`. Plus de 400 périodes (par exemple deux ans par jour) : `400` ; passer à `WEEK` ou `MONTH`.
 
 ### Classements
 
@@ -88,7 +108,7 @@ Le module n'a aucun objet à statut. Il compte les statuts des autres modules, l
 ## Règles et erreurs à refléter dans l'écran
 
 - **`fromDate` manquant sur `/analytics/comparison`** : `400 MISSING_PARAMETER`. Il est obligatoire sur cette seule route.
-- **`groupBy` hors `day`, `week`, `month`** : `400 BAD_REQUEST`, message `groupBy must be one of: day, week, month` (`src/main/java/com/sni/bokaticowork/features/analytics/service/AnalyticsServiceImpl.java:247`).
+- **`interval` ou `groupBy` hors `day`, `week`, `month`** sur la courbe des réservations : `400 BAD_REQUEST`, message `groupBy must be one of: day, week, month` (`src/main/java/com/sni/bokaticowork/features/analytics/service/AnalyticsServiceImpl.java:247`).
 - **`limit` inférieur à 1** : `400 BAD_REQUEST`, message `limit must be greater than zero` (`AnalyticsServiceImpl.java:253`). Au-delà de 100, ramené à 100 sans erreur.
 - **Date mal formée** (attendu `AAAA-MM-JJ`) : `LocalDate.parse` lève une exception non traitée, d'où `500 INTERNAL_SERVER_ERROR` (`AnalyticsController.java:142`). Valider le format avant l'appel.
 - **`limit` non numérique** : `500` également (pas de gestionnaire de conversion dans `src/main/java/com/sni/bokaticowork/core/exception/GlobalExceptionHandler.java`).
