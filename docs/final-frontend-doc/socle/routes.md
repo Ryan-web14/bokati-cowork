@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-48 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+52 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -44,6 +44,10 @@
 | GET | `/sni/api/v1/admin/maintenance/members/purge-candidates` | ADMIN:ACCESS | [MemberPurgeController](routes/MemberPurgeController.md#r-get-sni-api-v1-admin-maintenance-members-purge-candidates) |
 | DELETE | `/sni/api/v1/admin/maintenance/members/{memberCode}` | SYSTEM:SETTINGS | [MemberPurgeController](routes/MemberPurgeController.md#r-delete-sni-api-v1-admin-maintenance-members-membercode) |
 | GET | `/sni/api/v1/admin/maintenance/members/{memberCode}/purge-preview` | ADMIN:ACCESS | [MemberPurgeController](routes/MemberPurgeController.md#r-get-sni-api-v1-admin-maintenance-members-membercode-purge-preview) |
+| GET | `/sni/api/v1/admin/audit/security-events` | SYSTEM:AUDIT | [SecurityAuditController](routes/SecurityAuditController.md#r-get-sni-api-v1-admin-audit-security-events) |
+| DELETE | `/sni/api/v1/admin/audit/sessions/{sessionId}` | SYSTEM:AUDIT | [SecurityAuditController](routes/SecurityAuditController.md#r-delete-sni-api-v1-admin-audit-sessions-sessionid) |
+| DELETE | `/sni/api/v1/admin/audit/users/{userCode}/sessions` | SYSTEM:AUDIT | [SecurityAuditController](routes/SecurityAuditController.md#r-delete-sni-api-v1-admin-audit-users-usercode-sessions) |
+| GET | `/sni/api/v1/admin/audit/users/{userCode}/sessions` | SYSTEM:AUDIT | [SecurityAuditController](routes/SecurityAuditController.md#r-get-sni-api-v1-admin-audit-users-usercode-sessions) |
 | GET | `/sni/api/v1/admin/whatsapp/messages` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-get-sni-api-v1-admin-whatsapp-messages) |
 | POST | `/sni/api/v1/admin/whatsapp/messages/refresh` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-post-sni-api-v1-admin-whatsapp-messages-refresh) |
 | GET | `/sni/api/v1/admin/whatsapp/subscription` | SYSTEM:SETTINGS | [WhatsAppController](routes/WhatsAppController.md#r-get-sni-api-v1-admin-whatsapp-subscription) |

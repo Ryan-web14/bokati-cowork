@@ -6,6 +6,7 @@ import jakarta.persistence.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -110,6 +111,86 @@ public class AnalyticsRepository {
         query.setParameter("groupBy", groupBy);
         query.setParameter("fromDate", fromDate);
         query.setParameter("toDate", toDate);
+        @SuppressWarnings("unchecked")
+        List<Object[]> results = query.getResultList();
+        return results;
+    }
+
+    /**
+     * Factures emises par periode : memes regles que {@link #financial} (montant facture), pour que la
+     * courbe et la carte du resume donnent les memes totaux. Colonnes : periode, nombre, montant.
+     */
+    public List<Object[]> invoicedByPeriod(String unit, Instant from, Instant toExclusive) {
+        return periodRows("""
+                SELECT date_trunc(:unit, created_at)::date AS period,
+                       count(*) AS invoice_count,
+                       coalesce(sum(total_amount), 0) AS invoiced_amount
+                FROM billing_document
+                WHERE document_type = 'INVOICE'
+                  AND status NOT IN ('DRAFT','REJECTED','EXPIRED','CONVERTED','CANCELLED','VOIDED')
+                  AND created_at >= CAST(:fromDate AS timestamptz)
+                  AND created_at < CAST(:toDate AS timestamptz)
+                GROUP BY 1
+                """, unit, from, toExclusive);
+    }
+
+    /** Paiements reussis par periode. Colonnes : periode, nombre, montant. */
+    public List<Object[]> collectedByPeriod(String unit, Instant from, Instant toExclusive) {
+        return periodRows("""
+                SELECT date_trunc(:unit, created_at)::date AS period,
+                       count(*) AS payment_count,
+                       coalesce(sum(amount), 0) AS collected_amount
+                FROM payment_transaction
+                WHERE status = 'SUCCEEDED'
+                  AND created_at >= CAST(:fromDate AS timestamptz)
+                  AND created_at < CAST(:toDate AS timestamptz)
+                GROUP BY 1
+                """, unit, from, toExclusive);
+    }
+
+    /**
+     * Reservations comptees dans l'occupation, par periode de debut : regle du rapport d'occupation
+     * (confirmees, en cours, terminees ; ressources non supprimees d'un type actif).
+     * Colonnes : periode, nombre, minutes.
+     */
+    public List<Object[]> occupancyByPeriod(String unit, LocalDateTime from, LocalDateTime toExclusive) {
+        Query query = entityManager.createNativeQuery("""
+                SELECT date_trunc(:unit, b.started_at)::date AS period,
+                       count(*) AS booking_count,
+                       coalesce(sum(b.duration_minutes), 0) AS booked_minutes
+                FROM booking b
+                JOIN resource r ON r.id = b.resource_id AND r.deleted = false
+                JOIN resource_type rt ON rt.id = r.type_id AND rt.active = true
+                WHERE b.deleted = false
+                  AND b.status IN ('CONFIRMED','IN_PROGRESS','COMPLETED')
+                  AND b.started_at >= CAST(:fromDate AS timestamp)
+                  AND b.started_at < CAST(:toDate AS timestamp)
+                GROUP BY 1
+                """);
+        query.setParameter("unit", unit);
+        query.setParameter("fromDate", from);
+        query.setParameter("toDate", toExclusive);
+        @SuppressWarnings("unchecked")
+        List<Object[]> results = query.getResultList();
+        return results;
+    }
+
+    /** Ressources prises en compte dans l'occupation (non supprimees, d'un type actif). */
+    public long occupancyResourceCount() {
+        Object result = entityManager.createNativeQuery("""
+                SELECT count(*)
+                FROM resource r
+                JOIN resource_type rt ON rt.id = r.type_id AND rt.active = true
+                WHERE r.deleted = false
+                """).getSingleResult();
+        return result == null ? 0L : ((Number) result).longValue();
+    }
+
+    private List<Object[]> periodRows(String sql, String unit, Instant from, Instant toExclusive) {
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter("unit", unit);
+        query.setParameter("fromDate", from);
+        query.setParameter("toDate", toExclusive);
         @SuppressWarnings("unchecked")
         List<Object[]> results = query.getResultList();
         return results;

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [analytics](../README.md) · 8 route(s).
+Module [analytics](../README.md) · 10 route(s).
 
 ## Routes
 
@@ -81,7 +81,36 @@ Module [analytics](../README.md) · 8 route(s).
 | --- | --- | --- | --- | --- |
 | `fromDate` | requête | `String` |  |  |
 | `toDate` | requête | `String` |  |  |
-| `groupBy` | requête | `String` |  | day |
+| `interval` | requête | `String` |  |  |
+| `groupBy` | requête | `String` |  |  |
+
+<a id="r-get-sni-api-v1-analytics-trends-occupancy"></a>
+### GET /sni/api/v1/analytics/trends/occupancy
+
+- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Réponse : `List<OccupancyTrendResponse>`
+- Modèles : [OccupancyTrendResponse](#m-OccupancyTrendResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java`, méthode `occupancyTrend`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `fromDate` | requête | `String` |  |  |
+| `toDate` | requête | `String` |  |  |
+| `interval` | requête | `String` |  |  |
+
+<a id="r-get-sni-api-v1-analytics-trends-revenue"></a>
+### GET /sni/api/v1/analytics/trends/revenue
+
+- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Réponse : `List<RevenueTrendResponse>`
+- Modèles : [RevenueTrendResponse](#m-RevenueTrendResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java`, méthode `revenueTrend`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `fromDate` | requête | `String` |  |  |
+| `toDate` | requête | `String` |  |  |
+| `interval` | requête | `String` |  |  |
 
 <a id="r-get-sni-api-v1-reports-attendance-summary"></a>
 ### GET /sni/api/v1/reports/attendance/summary
@@ -208,6 +237,29 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `confirmedCount` | entier int64 ⚠ |  |  |
 | `cancelledCount` | entier int64 ⚠ |  |  |
 | `revenue` | nombre décimal |  |  |
+
+<a id="m-OccupancyTrendResponse"></a>
+#### OccupancyTrendResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `date` | date AAAA-MM-JJ |  |  |
+| `days` | entier |  |  |
+| `bookingCount` | entier int64 ⚠ |  |  |
+| `bookedMinutes` | entier int64 ⚠ |  |  |
+| `availableMinutes` | entier int64 ⚠ |  |  |
+| `occupancyRate` | nombre décimal |  |  |
+
+<a id="m-RevenueTrendResponse"></a>
+#### RevenueTrendResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `date` | date AAAA-MM-JJ |  |  |
+| `invoiceCount` | entier int64 ⚠ |  |  |
+| `invoicedAmount` | nombre décimal |  |  |
+| `paymentCount` | entier int64 ⚠ |  |  |
+| `collectedAmount` | nombre décimal |  |  |
 
 <a id="m-AnalyticsOverviewResponse-BookingMetrics"></a>
 #### AnalyticsOverviewResponse.BookingMetrics

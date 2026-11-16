@@ -1,6 +1,6 @@
 # Événements de sécurité et sessions (centre d'audit, lot A2)
 
-> Rédigé d'après le code (16/11/2026). Routes exactes : `routes/SecurityAuditController.md`. Droit `SYSTEM:AUDIT`, donné à `SUPER_ADMIN`, `ADMIN` et `AUDITOR`.
+> Rédigé d'après le code (16/11/2026). Routes exactes : [socle/routes/SecurityAuditController.md](../socle/routes/SecurityAuditController.md). Droit `SYSTEM:AUDIT`, donné à `SUPER_ADMIN`, `ADMIN` et `AUDITOR`.
 
 ## Événements de sécurité
 

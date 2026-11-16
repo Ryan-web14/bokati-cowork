@@ -459,6 +459,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `taxAmount` | nombre décimal |  |  |
 | `totalAmount` | nombre décimal |  |  |
 | `paidAmount` | nombre décimal |  |  |
+| `creditedAmount` | nombre décimal |  |  |
 | `balanceDue` | nombre décimal |  |  |
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |

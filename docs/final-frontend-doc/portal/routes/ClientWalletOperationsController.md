@@ -86,7 +86,6 @@ Module [portal](../README.md) · 23 route(s).
 ### GET /sni/api/v1/client/wallet/{walletNumber}/ledger/{transactionNumber}/receipt
 
 - Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
-- Renvoie : `application/pdf`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/portal/wallet/controller/ClientWalletOperationsController.java`, méthode `receipt`
 
@@ -189,7 +188,6 @@ Module [portal](../README.md) · 23 route(s).
 ### GET /sni/api/v1/client/wallet/{walletNumber}/statement
 
 - Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
-- Renvoie : `application/pdf`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/portal/wallet/controller/ClientWalletOperationsController.java`, méthode `statement`
 

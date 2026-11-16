@@ -5,6 +5,8 @@ import com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse;
 import com.sni.bokaticowork.features.analytics.dto.AnalyticsLiveResponse;
 import com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse;
 import com.sni.bokaticowork.features.analytics.dto.BookingTrendResponse;
+import com.sni.bokaticowork.features.analytics.dto.OccupancyTrendResponse;
+import com.sni.bokaticowork.features.analytics.dto.RevenueTrendResponse;
 import com.sni.bokaticowork.features.analytics.dto.TopOwnerResponse;
 import com.sni.bokaticowork.features.analytics.dto.TopResourceResponse;
 import com.sni.bokaticowork.features.analytics.repository.AnalyticsRepository;
@@ -117,11 +119,30 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.booking(parseStart(fromDate), parseEnd(toDate)));
     }
 
+    /** {@code interval} (DAY, WEEK, MONTH), comme les autres tendances ; {@code groupBy} reste accepte. */
     @GetMapping("/analytics/trends/bookings")
     public ResponseEntity<List<BookingTrendResponse>> bookingTrend(@RequestParam(required = false) String fromDate,
                                                                    @RequestParam(required = false) String toDate,
-                                                                   @RequestParam(defaultValue = "day") String groupBy) {
-        return ResponseEntity.ok(analyticsService.bookingTrend(parseStart(fromDate), parseEnd(toDate), groupBy));
+                                                                   @RequestParam(required = false) String interval,
+                                                                   @RequestParam(required = false) String groupBy) {
+        String unit = interval != null && !interval.isBlank() ? interval : groupBy;
+        return ResponseEntity.ok(analyticsService.bookingTrend(parseStart(fromDate), parseEnd(toDate), unit));
+    }
+
+    /** Chiffre d'affaires par periode : factures emises et encaissements. */
+    @GetMapping("/analytics/trends/revenue")
+    public ResponseEntity<List<RevenueTrendResponse>> revenueTrend(@RequestParam(required = false) String fromDate,
+                                                                   @RequestParam(required = false) String toDate,
+                                                                   @RequestParam(required = false) String interval) {
+        return ResponseEntity.ok(analyticsService.revenueTrend(parseDate(fromDate), parseDate(toDate), interval));
+    }
+
+    /** Taux d'occupation par periode, regle du rapport d'occupation (8 heures par jour et par ressource). */
+    @GetMapping("/analytics/trends/occupancy")
+    public ResponseEntity<List<OccupancyTrendResponse>> occupancyTrend(@RequestParam(required = false) String fromDate,
+                                                                       @RequestParam(required = false) String toDate,
+                                                                       @RequestParam(required = false) String interval) {
+        return ResponseEntity.ok(analyticsService.occupancyTrend(parseDate(fromDate), parseDate(toDate), interval));
     }
 
     @GetMapping("/analytics/top-owners")

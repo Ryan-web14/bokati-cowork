@@ -3,6 +3,8 @@ package com.sni.bokaticowork.features.analytics.service;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse;
 import com.sni.bokaticowork.features.analytics.dto.BookingTrendResponse;
+import com.sni.bokaticowork.features.analytics.dto.OccupancyTrendResponse;
+import com.sni.bokaticowork.features.analytics.dto.RevenueTrendResponse;
 import com.sni.bokaticowork.features.analytics.dto.TopOwnerResponse;
 import com.sni.bokaticowork.features.analytics.dto.TopResourceResponse;
 import com.sni.bokaticowork.features.analytics.repository.AnalyticsRepository;
@@ -10,17 +12,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class AnalyticsServiceImpl implements AnalyticsService {
+
+    /** Capacite d'une ressource par jour, comme le rapport d'occupation (8 heures). */
+    static final long OPERATING_MINUTES_PER_DAY = 8 * 60L;
 
     private final AnalyticsRepository repository;
 
@@ -58,6 +66,59 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return repository.bookingTrend(fromDate, toDate, normalizedGroupBy).stream()
                 .map(this::bookingTrend)
                 .toList();
+    }
+
+    @Override
+    public List<RevenueTrendResponse> revenueTrend(LocalDate fromDate, LocalDate toDate, String interval) {
+        String unit = TrendPeriods.unit(interval);
+        LocalDate to = TrendPeriods.defaultTo(toDate);
+        LocalDate from = TrendPeriods.defaultFrom(fromDate, to);
+        List<TrendPeriods.Period> periods = TrendPeriods.periods(from, to, unit);
+        Instant start = from.atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant end = to.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        Map<LocalDate, Object[]> invoiced = byPeriod(repository.invoicedByPeriod(unit, start, end));
+        Map<LocalDate, Object[]> collected = byPeriod(repository.collectedByPeriod(unit, start, end));
+        return periods.stream().map(period -> {
+            Object[] invoice = invoiced.get(period.start());
+            Object[] payment = collected.get(period.start());
+            return new RevenueTrendResponse(
+                    period.start(),
+                    invoice == null ? 0L : longAt(invoice, 1),
+                    invoice == null ? BigDecimal.ZERO : decimalAt(invoice, 2),
+                    payment == null ? 0L : longAt(payment, 1),
+                    payment == null ? BigDecimal.ZERO : decimalAt(payment, 2));
+        }).toList();
+    }
+
+    @Override
+    public List<OccupancyTrendResponse> occupancyTrend(LocalDate fromDate, LocalDate toDate, String interval) {
+        String unit = TrendPeriods.unit(interval);
+        LocalDate to = TrendPeriods.defaultTo(toDate);
+        LocalDate from = TrendPeriods.defaultFrom(fromDate, to);
+        List<TrendPeriods.Period> periods = TrendPeriods.periods(from, to, unit);
+        long resources = repository.occupancyResourceCount();
+        Map<LocalDate, Object[]> booked = byPeriod(repository.occupancyByPeriod(unit, from.atStartOfDay(), to.plusDays(1).atStartOfDay()));
+        return periods.stream().map(period -> {
+            Object[] row = booked.get(period.start());
+            long minutes = row == null ? 0L : longAt(row, 2);
+            long available = resources * period.days() * OPERATING_MINUTES_PER_DAY;
+            return new OccupancyTrendResponse(
+                    period.start(),
+                    period.days(),
+                    row == null ? 0L : longAt(row, 1),
+                    minutes,
+                    available,
+                    available == 0 ? BigDecimal.ZERO : BigDecimal.valueOf(minutes).multiply(BigDecimal.valueOf(100))
+                            .divide(BigDecimal.valueOf(available), 2, RoundingMode.HALF_UP));
+        }).toList();
+    }
+
+    private Map<LocalDate, Object[]> byPeriod(List<Object[]> rows) {
+        Map<LocalDate, Object[]> map = new HashMap<>();
+        for (Object[] row : rows) {
+            map.put(dateAt(row, 0), row);
+        }
+        return map;
     }
 
     @Override

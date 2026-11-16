@@ -1238,9 +1238,6 @@
     "kind": "admin",
     "permission": "ACCOUNTING_REPORT:READ"
    },
-   "produces": [
-    "application/pdf"
-   ],
    "params": [
     {
      "in": "path",
@@ -1265,9 +1262,6 @@
     "kind": "admin",
     "permission": "FINANCING:READ"
    },
-   "produces": [
-    "application/pdf"
-   ],
    "params": [
     {
      "in": "path",
@@ -1304,9 +1298,6 @@
     "kind": "admin",
     "permission": "PURCHASE:READ"
    },
-   "produces": [
-    "application/pdf"
-   ],
    "params": [
     {
      "in": "path",
@@ -18747,6 +18738,9 @@
      "type": "number"
     },
     "paidAmount": {
+     "type": "number"
+    },
+    "creditedAmount": {
      "type": "number"
     },
     "balanceDue": {

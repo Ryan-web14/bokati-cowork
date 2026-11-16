@@ -74,6 +74,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `status` | enum : `PENDING`, `PROCESSING`, `PUBLISHED`, `FAILED`, `DEAD` |  |  |
 | `attemptCount` | entier |  |  |
 | `availableAt` | date-heure ISO 8601 UTC |  |  |
+| `requestId` | texte |  |  |
 | `lastError` | texte |  |  |
 | `publishedAt` | date-heure ISO 8601 UTC |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |

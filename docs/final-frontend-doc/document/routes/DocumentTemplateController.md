@@ -66,7 +66,6 @@ Module [document](../README.md) · 11 route(s).
 ### POST /sni/api/v1/document-templates/{code}/preview
 
 - Accès : back-office : rôle d'administration et droit `SYSTEM:DOCUMENT_TEMPLATES`
-- Renvoie : `application/pdf`
 - Corps JSON (facultatif) : `DocumentTemplateDtos.Content`
 - Réponse : `fichier (octets)`
 - Modèles : [DocumentTemplateDtos.Content](#m-DocumentTemplateDtos-Content)
@@ -81,7 +80,6 @@ Module [document](../README.md) · 11 route(s).
 ### POST /sni/api/v1/document-templates/{code}/preview-email
 
 - Accès : back-office : rôle d'administration et droit `SYSTEM:DOCUMENT_TEMPLATES`
-- Renvoie : `text/html`
 - Corps JSON (facultatif) : `DocumentTemplateDtos.Content`
 - Réponse : `String`
 - Modèles : [DocumentTemplateDtos.Content](#m-DocumentTemplateDtos-Content)

@@ -3108,9 +3108,6 @@
     "kind": "admin",
     "permission": "SYSTEM:DOCUMENT_TEMPLATES"
    },
-   "produces": [
-    "application/pdf"
-   ],
    "body": {
     "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Content",
     "required": false
@@ -3145,9 +3142,6 @@
     "kind": "admin",
     "permission": "SYSTEM:DOCUMENT_TEMPLATES"
    },
-   "produces": [
-    "text/html"
-   ],
    "body": {
     "type": "com.sni.bokaticowork.features.document.template.dto.DocumentTemplateDtos.Content",
     "required": false

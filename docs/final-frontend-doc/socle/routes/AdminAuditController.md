@@ -44,6 +44,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `ipAddress` | texte |  |  |
 | `userAgent` | texte |  |  |
 | `sessionId` | texte |  |  |
+| `requestId` | texte |  |  |
 | `errorCode` | texte |  |  |
 | `errorMessage` | texte |  |  |
 | `metadata` | objet { clé : objet libre } |  |  |
