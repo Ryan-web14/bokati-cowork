@@ -8,7 +8,8 @@
 
 - Un dossier KYC (`code` `KYCCASE…`) par propriétaire `MEMBER`, `CUSTOMER` ou `BUSINESS` (les autres types de propriétaire sont refusés : `400` « KYC is only supported for member, customer or business »).
 - Les pièces attendues viennent, dans l'ordre de priorité : des exigences propres au dossier (`/kyc/cases/{code}/requirements`) si le dossier en a au moins une active, sinon des exigences globales actives pour le type de propriétaire (`/document-requirements`, filtrées par forme juridique pour une entreprise). Attention : le recalcul automatique n'utilise que les exigences globales (voir écarts du README).
-- Une pièce KYC = un document recto (`documentCode`) et, si le type a `requiresBackSide = true`, un document verso (`backDocumentCode`). Le verso est un document à part entière du même type.
+- Une pièce KYC = un document recto (`documentCode`) et, si le type a `requiresBackSide = true`, un document verso (`backDocumentCode`). Le verso est un document à part entière du même type, avec sa propre décision ; il ne forme jamais une pièce à lui seul (lot KG2).
+- Remplacer une pièce garde la même pièce (même `id`) : l'ancien fichier passe `SUPERSEDED` (il reste consultable dans la GED), il ne bloque plus de nouveau dépôt.
 - Le statut de vérification d'une pièce suit le statut du document recto : approuver ou refuser une pièce, c'est approuver ou refuser son document.
 - Le dossier évolue seul quand ses pièces changent (recalcul asynchrone) et peut aussi recevoir une décision manuelle.
 - Le membre dépose ses pièces depuis le portail (routes `/sni/api/v1/client/documents/kyc/**`, module [portal](../portal/routes.md)) ; elles arrivent dans les mêmes files.
@@ -61,15 +62,15 @@
 
 `POST /sni/api/v1/kyc/documents/admin/upload` ([route](routes/KycDocumentAdminController.md#r-post-sni-api-v1-kyc-documents-admin-upload)), droit `KYC:MANAGE`, `multipart/form-data`.
 
-1. Préalable : le propriétaire doit avoir un dossier (sinon `400` « Aucun dossier KYC actif pour ce propriétaire · créez-en un d'abord ») ; le type doit être de catégorie `KYC` pour que la pièce soit suivie ; un type recto/verso doit avoir `multipleAllowed = true` (sinon le verso échoue en `400` « Only one document of type 'X' is allowed per owner »).
+1. Préalable : le propriétaire doit avoir un dossier (sinon `400` « Aucun dossier KYC actif pour ce propriétaire · créez-en un d'abord ») ; le type doit être de catégorie `KYC` pour que la pièce soit suivie ; la pièce doit être demandée pour le dossier (lot KG1). La règle « un seul document du type » (`multipleAllowed`) ne s'applique plus aux pièces KYC : un recto remplace, un verso s'ajoute. **Réglé** (KG2).
 2. Parties du formulaire (toutes en texte, sauf le fichier) : `ownerType`, `ownerCode`, `documentTypeCode` (obligatoires), `side` (`FRONT` par défaut, ou `BACK`), `documentNumber`, `issueDate`, `expiryDate` (`AAAA-MM-JJ`), et la partie fichier `file`.
-3. Recto (`side=FRONT`) : crée le document (titre « <nom du type> · <ownerCode> »). Si le dossier a déjà une pièce de ce type, elle est **réutilisée** : son recto est remplacé par le nouveau document, ses champs mis à jour s'ils sont fournis, son statut remis `PENDING` (l'ancien document reste en base, en `PENDING_REVIEW`). Sinon une nouvelle pièce est créée.
-4. Verso (`side=BACK`) : déposer **après** le recto (sinon `400` « Le recto doit être uploadé avant le verso pour le type : X »). Le document verso (titre « … (Arrière) · … ») est rattaché comme `backDocument` de la première pièce de ce type ; la réponse est la pièce recto enrichie de `backDocumentCode`.
+3. Recto (`side=FRONT`) : crée le document (titre « <nom du type> · <ownerCode> »). Si le dossier a déjà une pièce de ce type, elle est **réutilisée** : son recto est remplacé par le nouveau document, ses champs mis à jour, son statut remis `PENDING`. L'ancien recto **et l'ancien verso** passent `SUPERSEDED` (une nouvelle carte demande un nouveau verso : `backDocumentCode` redevient nul). Sinon une nouvelle pièce est créée.
+4. Verso (`side=BACK`) : déposer **après** le recto (sinon `400` « Le recto doit être déposé avant le verso pour la pièce : <nom> »). Le document verso (titre « … (Arrière) · … ») devient le `backDocument` de la pièce de ce type ; un ancien verso passe `SUPERSEDED` ; la pièce repasse `PENDING`. Aucune pièce n'est créée pour un verso. La réponse est la pièce, avec `backDocumentCode`.
 5. Les champs exigés par le type (`requiresDocumentNumber`…) sont seulement journalisés ici, pas imposés. Les compléter après coup si besoin (étape 7).
-6. Réponse `201` `KycDocumentResponse` ; **son `id` est l'identifiant court** de la pièce, à conserver pour l'étape 7. `previewUrl` et `downloadUrl` n'y sont pas remplis : utiliser `documentCode`.
-7. Compléter : `PATCH /sni/api/v1/kyc/documents/admin/{kycDocumentId}/details` ([route](routes/KycDocumentAdminController.md#r-patch-sni-api-v1-kyc-documents-admin-kycdocumentid-details)) avec `{ "documentNumber": "…", "issueDate": "2024-01-15", "expiryDate": "2034-01-15" }` (champs vides ignorés). `{kycDocumentId}` = l'`id` court reçu à l'étape 6 ; l'`id` des autres réponses KYC est l'identifiant interne et donne `404` « Document KYC introuvable ». Ces valeurs ne sont pas recopiées sur le document lui-même.
+6. Réponse `201` `KycDocumentResponse` ; son `id` est l'identifiant court de la pièce, à conserver pour l'étape 7. `previewUrl` et `downloadUrl` n'y sont pas remplis : utiliser `documentCode`.
+7. Compléter : `PATCH /sni/api/v1/kyc/documents/admin/{kycDocumentId}/details` ([route](routes/KycDocumentAdminController.md#r-patch-sni-api-v1-kyc-documents-admin-kycdocumentid-details)) avec `{ "documentNumber": "…", "issueDate": "2024-01-15", "expiryDate": "2034-01-15" }` (champs vides ignorés). `{kycDocumentId}` = l'`id` de la pièce. Toutes les réponses KYC (`documents[]` de la fiche, files de revue, dépôt) donnent désormais le même `id` court. **Réglé** (KG2). Ces valeurs ne sont pas recopiées sur le document lui-même.
 
-Écran conseillé : pour chaque ligne de `requirements[]`, un champ recto et, si `requiresBackSide`, un champ verso activé une fois le recto envoyé. Après l'envoi, recharger la fiche (le recalcul du dossier est asynchrone).
+Écran conseillé : pour chaque ligne de `requirements[]`, un champ recto et, si `requiresBackSide`, un champ verso activé une fois le recto envoyé. Après l'envoi, recharger la fiche : le recalcul du dossier part juste après l'enregistrement du dépôt (asynchrone, une fois par document).
 
 ## Réviser les pièces
 
@@ -83,13 +84,13 @@
 
 Au choix :
 - unitaire : `POST /sni/api/v1/documents/{documentCode}/approve` avec `{ "reviewedBy": "…" }` (droit `DOCUMENT:REVIEW`, voir [parcours-revue.md](parcours-revue.md#approuver-un-document)) ;
-- en masse : `POST /sni/api/v1/kyc/documents/bulk-approve` ([route](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-approve)) avec `{ "documentIds": ["DOC…"], "reviewedBy": "…" }` (malgré son nom, `documentIds` attend des **codes** de documents), ou par dossier `POST /sni/api/v1/kyc/cases/{code}/documents/bulk-approve` avec `{ "documentCodes": [...], "reviewedBy": "…" }` (les codes étrangers au dossier sont signalés en échec). Droit `KYC:APPROVE`, `Idempotency-Key` conseillé.
+- en masse : `POST /sni/api/v1/kyc/documents/bulk-approve` ([route](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-approve)) avec `{ "documentCodes": ["DOC…"] }` (`documentIds`, ancien nom, reste accepté ; les deux attendent des **codes** de documents ; `400` si aucun code), ou par dossier `POST /sni/api/v1/kyc/cases/{code}/documents/bulk-approve` avec `{ "documentCodes": [...], "reviewedBy": "…" }` (les codes étrangers au dossier sont signalés en échec). Droit `KYC:APPROVE`, `Idempotency-Key` conseillé.
 
 Réponse en masse `KycBulkActionResponse` : `processed`, `succeeded`, `failed`, `results[]` (`documentCode`, `success`, `error`). Chaque pièce est traitée dans sa propre transaction.
 
-Le verso n'a pas de décision propre côté KYC : approuver le recto suffit à rendre la pièce `VERIFIED`. Le document verso reste `PENDING_REVIEW` dans les files documentaires ; l'approuver par son code fait recréer une pièce séparée (voir écarts). Conseil : ne pas présenter le verso dans les files documentaires comme une décision à prendre.
+Le verso a sa propre décision : l'approuver ou le refuser par son code (`backDocumentCode`), par les mêmes routes (unitaire ou en masse). Une pièce n'est complète que si son recto est `VERIFIED` et son verso approuvé (lot KG1) ; un verso refusé rend la pièce `REJECTED`. Une décision sur un verso met à jour sa pièce, elle n'en crée plus une. **Réglé** (KG2). Écran conseillé : sur la ligne de la pièce, deux aperçus et deux décisions (recto, verso), ou une action « Approuver la pièce » qui envoie les deux codes en masse.
 
-Quand toutes les pièces exigées sont `VERIFIED`, le recalcul passe le dossier en `APPROVED` et le membre en `ACTIVE`, sans courriel ni création de portefeuille. Pour obtenir le courriel et le portefeuille, appeler ensuite l'approbation manuelle du dossier (elle reste possible sur un dossier déjà `APPROVED`).
+Quand toutes les pièces exigées sont vérifiées, le recalcul passe le dossier en `APPROVED` avec les mêmes effets qu'une approbation manuelle : titulaire actif, portefeuille créé, courriel « votre dossier KYC est validé » (lot KG1).
 
 ### Refuser ou faire corriger des pièces
 

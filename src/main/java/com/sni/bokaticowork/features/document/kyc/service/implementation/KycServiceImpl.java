@@ -679,7 +679,10 @@ public class KycServiceImpl implements KycService {
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public KycBulkActionResponse bulkApprove(KycBulkApproveRequest request) {
-        List<KycBulkItemResult> results = request.getDocumentIds().stream()
+        if (request.codes().isEmpty()) {
+            throw new BadRequestException("Indiquez au moins un document (documentCodes)");
+        }
+        List<KycBulkItemResult> results = request.codes().stream()
                 .map(code -> bulkApproveOne(code, actor(request.getReviewedBy())))
                 .toList();
         return bulkResponse(results);

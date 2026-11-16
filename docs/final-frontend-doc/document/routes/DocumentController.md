@@ -502,6 +502,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
 | `folderCode` | texte |  |  |
+| `kycSide` | texte |  |  |
 
 <a id="m-DocumentBulkActionResponse"></a>
 #### DocumentBulkActionResponse

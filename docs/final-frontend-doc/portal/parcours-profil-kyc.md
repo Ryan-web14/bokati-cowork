@@ -60,11 +60,12 @@ Toutes ces routes existent sous deux préfixes identiques : `/sni/api/v1/client/
 5. **Déposer une pièce** : `POST .../documents` (ou `.../documents/upload`) en `multipart/form-data` ([détail](routes/ClientKycController.md#r-post-sni-api-v1-client-documents-kyc-documents)) :
    - `file` (obligatoire), `documentType` (code du type, obligatoire) ;
    - `documentNumber`, `issueDate`, `expiryDate` (AAAA-MM-JJ) : obligatoires si le type l'exige (`requiresDocumentNumber`, `requiresIssueDate`, `requiresExpiryDate`) ;
-   - `side` : `FRONT` (défaut) ou `BACK`. Le verso exige un recto déjà déposé pour ce type ; il est rattaché au recto (`backDocumentCode`) et ne crée pas de nouvelle pièce.
-   - Un nouveau recto pour un type déjà déposé **remplace** la pièce existante (même `id`, statut remis à `PENDING`).
+   - `side` : `FRONT` (défaut) ou `BACK`. Le verso exige un recto déjà déposé pour ce type ; il est rattaché au recto (`backDocumentCode`) et ne crée pas de nouvelle pièce. Un nouveau verso remplace l'ancien.
+   - Un nouveau recto pour un type déjà déposé **remplace** la pièce existante (même `id`, statut remis à `PENDING`) ; l'ancien verso est aussi remplacé : redéposer le verso de la nouvelle pièce.
+   - Seules les pièces demandées pour le dossier se déposent (`400` « Cette pièce n'est pas demandée pour votre dossier : … »).
    - Réponse `201` avec la pièce (`id`, `documentCode`, `status`, `requiresBackSide`...). Un envoi en JSON répond `400` (« Document upload requires Content-Type: multipart/form-data... »).
 6. **Remplacer le fichier** d'une pièce `PENDING` ou `REJECTED` : `PUT .../documents/{id}` en `multipart/form-data`, partie `file`. Statut remis à `PENDING`.
-7. **Supprimer** une pièce `PENDING` : `DELETE .../documents/{id}` (`204`).
+7. **Retirer** une pièce `PENDING` : `DELETE .../documents/{id}` (`204`). Ses fichiers sont archivés (l'équipe les garde), la pièce disparaît de la liste et le même type peut être redéposé aussitôt. **Réglé** (KG2).
 8. **Lire** : `GET .../documents` (toutes les pièces du dossier), `GET .../documents/{id}`, `GET .../documents/{id}/download` (octets, nom dans `Content-Disposition`).
 9. **Soumettre** : `POST .../submit`, accepté seulement si le dossier est `IN_PROGRESS` ou `PENDING_CORRECTION`. Réponse : le dossier. En pratique, le dépôt de la dernière pièce exigée fait déjà passer le dossier en `UNDER_REVIEW` automatiquement ; relire `my-case` après chaque dépôt et ne proposer « Soumettre » que si `status` vaut encore `IN_PROGRESS` ou `PENDING_CORRECTION`.
 10. Après décision du back-office : `APPROVED` lève la barrière (relire `onboarding-status`), `PENDING_CORRECTION` remet les pièces refusées (`status = REJECTED`) à redéposer, avec le motif dans `decisionComment`.
@@ -81,9 +82,10 @@ Toutes ces routes existent sous deux préfixes identiques : `/sni/api/v1/client/
 | Format refusé | `400` | `Type de fichier non autorisé. Acceptés : ...` |
 | Numéro, date d'émission ou d'expiration manquants | `400` | `Le numéro de document est obligatoire pour le type : ...` (et variantes) |
 | Dépôt alors que le dossier est validé ou en examen | `400` | `KYC case is not open for document uploads. Current status: ...` |
-| Verso avant recto | `400` | `Front side must be uploaded before the back side for document type: ...` |
+| Pièce non demandée pour le dossier | `400` | `Cette pièce n'est pas demandée pour votre dossier : ...` |
+| Verso avant recto | `400` | `Le recto doit être déposé avant le verso pour la pièce : ...` |
 | Remplacement d'une pièce vérifiée | `400` | `Only PENDING or REJECTED documents can be resubmitted` |
-| Suppression d'une pièce non `PENDING` | `400` | `Only PENDING documents can be deleted` |
+| Retrait d'une pièce non `PENDING` | `400` | `Seule une pièce en attente de vérification peut être retirée` |
 | Soumission hors `IN_PROGRESS`/`PENDING_CORRECTION` | `400` | `Your KYC case is not in a submittable state. Current status: ...` |
 | Pièce d'un autre dossier | `404` | `KYC document not found` |
 

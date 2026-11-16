@@ -32,6 +32,9 @@ public interface KycDocumentRepository extends JpaRepository<KycDocument, Long> 
 
     List<KycDocument> findAllByDocument(Document document);
 
+    /** Lot KG2 : la piece dont ce document est le verso. */
+    List<KycDocument> findAllByBackDocument(Document backDocument);
+
     Optional<KycDocument> findByDocument_Code(String documentCode);
 
     List<KycDocument> findAllByDocument_Code(String documentCode);

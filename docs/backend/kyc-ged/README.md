@@ -2,7 +2,7 @@
 
 Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan validé avec les décisions de l'exploitant du 16/11/2026 (voir plus bas).
 
-État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)).
+État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)), **KG2 fait** ([lot-kg2-recto-verso.md](lot-kg2-recto-verso.md)).
 
 ## Constat (vérifié dans le code le 16/11/2026)
 
@@ -83,23 +83,23 @@ Critères de validation (testés) :
 | K1 | `/disapproved`, `/desapproved` en `KYC:READ` | confirmé |
 | K2 | Approbation par recalcul sans courriel ni portefeuille | Réglé (KG1) |
 | K3 | Exigences du dossier et type de client ignorés | Réglé (KG1) |
-| K4 | Verso et `multipleAllowed`, recto jamais `SUPERSEDED` | confirmé |
-| K5 | Verso recréé en pièce distincte | confirmé (et peut approuver seul) |
-| K6 | `KycDocumentResponse.id` incohérent, `documentIds` = codes | confirmé |
+| K4 | Verso et `multipleAllowed`, recto jamais `SUPERSEDED` | Réglé (KG2) |
+| K5 | Verso recréé en pièce distincte | Réglé (KG2) |
+| K6 | `KycDocumentResponse.id` incohérent, `documentIds` = codes | Réglé (KG2) |
 | K7 | Événements KYC sans processeur, `KYC_CASE_REJECTED` jamais publié, courriels en échec perdus | confirmé |
 | K8 | Relances d'expiration à date exacte du lundi | confirmé |
 | K9 | Approbation automatique incohérente | confirmé |
 | K10 | `reviewedBy`, `authorId` fournis par le client | confirmé (plus large) |
 | K-n1 | Écritures KYC en `KYC:READ` ; `DOCUMENT:REVIEW` contourne `KYC:APPROVE` | nouveau |
 | K-n2 | Activer un client approuve son dossier | Réglé (KG1) |
-| K-n3 | Synchronisation asynchrone dans la transaction de l'appelant | nouveau |
+| K-n3 | Synchronisation asynchrone dans la transaction de l'appelant | Réglé (KG2) |
 | K-n4 | Approbation automatique de pièces renvoyées en correction ; une transaction pour tout le passage | nouveau |
 | K-n5 | Expiration horaire des documents court-circuite le renouvellement KYC | nouveau |
 | K-n6 | Verso jamais exigé approuvé | Réglé (KG1) |
 | K-n7 | Exigence retirée non ré-ajoutable ; pas de recalcul | Réglé (KG1) |
 | K-n8 | Statut de correction écrasé | Réglé (KG1) |
 | K-n9 | Liste des pièces du portail sans statut | Réglé (KG1) |
-| K-n10 | Suppression au portail bloque un nouveau dépôt | nouveau |
+| K-n10 | Suppression au portail bloque un nouveau dépôt | Réglé (KG2) |
 | K-n11 | Décisions manuelles écrasées, approbation sans garde | Réglé (KG1) |
 | K-n12 | Relances envoyées à des pièces refusées ou remplacées | nouveau |
 | G1 | Opérations en masse en une transaction ; `{space}` sans effet | confirmé |

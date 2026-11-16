@@ -71,6 +71,7 @@ public class KycDocumentUploadService {
         metadata.setDocumentNumber(documentNumber);
         metadata.setIssueDate(issueDate);
         metadata.setExpiryDate(expiryDate);
+        metadata.setKycSide("BACK".equalsIgnoreCase(side) ? "BACK" : "FRONT");
 
         uploadValidator.validateForAdmin(metadata, docType);
 
@@ -89,61 +90,21 @@ public class KycDocumentUploadService {
                     + " (ajoutez-la d'abord aux exigences du dossier)");
         }
 
-        if ("BACK".equalsIgnoreCase(side)) {
-            KycDocument autoCreated = kycDocumentRepository.findByDocument(document).orElse(null);
-            KycDocument frontDoc = kycDocumentRepository
-                    .findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, documentTypeCode.toUpperCase()).stream()
-                    .filter(candidate -> autoCreated == null || !candidate.getId().equals(autoCreated.getId()))
-                    .findFirst()
-                    .orElseThrow(() -> new BadRequestException(
-                            "Le recto doit être uploadé avant le verso pour le type : " + documentTypeCode));
-
-            kycDocumentRepository.findByDocument(document)
-                    .ifPresent(kycDocumentRepository::delete);
-
-            frontDoc.setBackDocument(document);
-            kycDocumentRepository.save(frontDoc);
-            kycAutomationService.syncFromDocumentUpload(document);
-            return toResponse(frontDoc, docType);
+        // Lot KG2 : documentService.upload a rattache le fichier a sa piece (recto remplace, verso
+        // ajoute, anciens fichiers SUPERSEDED) ; la synchronisation part apres validation.
+        KycDocument piece = pieceOf(document)
+                .orElseThrow(() -> new ResourceNotFoundException("Pièce KYC introuvable après le dépôt"));
+        if (piece.getKycCase() == null) {
+            piece.setKycCase(kycCase);
+            kycDocumentRepository.save(piece);
         }
+        return toResponse(piece, docType);
+    }
 
-        // FRONT · check for existing KycDocument of this type in the case
-        KycDocument justCreated = kycDocumentRepository.findByDocument(document).orElse(null);
-        return kycDocumentRepository.findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, documentTypeCode.toUpperCase()).stream()
-                .filter(candidate -> justCreated == null || !candidate.getId().equals(justCreated.getId()))
-                .findFirst()
-                .map(existing -> {
-                    existing.setDocument(document);
-                    if (StringUtils.hasText(documentNumber)) existing.setDocumentNumber(documentNumber);
-                    if (issueDate != null) existing.setIssueDate(issueDate);
-                    if (expiryDate != null) existing.setExpiryDate(expiryDate);
-                    existing.setStatus(KycDocumentVerificationStatus.PENDING);
-                    kycDocumentRepository.save(existing);
-                    // Remove the orphan auto-created duplicate if present
-                    kycDocumentRepository.findByDocument(document)
-                            .filter(d -> !d.getId().equals(existing.getId()))
-                            .ifPresent(kycDocumentRepository::delete);
-                    kycAutomationService.syncFromDocumentUpload(document);
-                    return toResponse(existing, docType);
-                })
-                .orElseGet(() -> {
-                    KycDocument autoCreated = kycDocumentRepository.findByDocument(document).orElseGet(() -> {
-                        KycDocument nd = KycDocument.builder()
-                                .kycCase(kycCase)
-                                .ownerType(ownerType)
-                                .ownerId(ownerId)
-                                .document(document)
-                                .documentType(documentTypeCode.toUpperCase())
-                                .documentNumber(documentNumber)
-                                .issueDate(issueDate)
-                                .expiryDate(expiryDate)
-                                .status(KycDocumentVerificationStatus.PENDING)
-                                .build();
-                        return kycDocumentRepository.save(nd);
-                    });
-                    kycAutomationService.syncFromDocumentUpload(document);
-                    return toResponse(autoCreated, docType);
-                });
+    /** La piece dont ce document est le recto ou le verso. */
+    private java.util.Optional<KycDocument> pieceOf(Document document) {
+        return kycDocumentRepository.findByDocument(document)
+                .or(() -> kycDocumentRepository.findAllByBackDocument(document).stream().findFirst());
     }
 
     @Transactional

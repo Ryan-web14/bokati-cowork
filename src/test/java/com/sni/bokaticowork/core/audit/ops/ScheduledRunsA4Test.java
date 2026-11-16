@@ -54,6 +54,10 @@ class ScheduledRunsA4Test {
         scheduler.setPoolSize(2);
         scheduler.setTaskDecorator(new ScheduledRunDecorator());
         scheduler.setErrorHandler(ScheduledRuns::fail);
+        // Attendre la fin des executions en cours a l'arret : sinon une derniere execution peut
+        // etre comptee apres le releve (test instable sous charge).
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+        scheduler.setAwaitTerminationSeconds(5);
         scheduler.initialize();
         try {
             CountDownLatch failing = new CountDownLatch(3);

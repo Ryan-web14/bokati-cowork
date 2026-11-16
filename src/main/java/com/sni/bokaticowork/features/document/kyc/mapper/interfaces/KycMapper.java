@@ -23,6 +23,8 @@ public interface KycMapper {
     @Mapping(target = "documents", ignore = true)
     KycCaseResponse toResponse(KycCase kycCase);
 
+    /** Lot KG2 : {@code id} est toujours le numero court de la piece (celui des routes). */
+    @Mapping(target = "id", source = "shortId")
     KycDocumentResponse toDocumentResponse(KycDocument document);
 
     KycCaseNoteResponse toNoteResponse(KycCaseNote note);

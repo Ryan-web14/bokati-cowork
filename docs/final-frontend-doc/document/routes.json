@@ -6379,6 +6379,9 @@
     },
     "folderCode": {
      "type": "string"
+    },
+    "kycSide": {
+     "type": "string"
     }
    }
   },
@@ -9440,13 +9443,15 @@
    }
   },
   "KycBulkApproveRequest": {
-   "required": [
-    "documentIds"
-   ],
    "type": "object",
    "properties": {
     "documentIds": {
-     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "documentCodes": {
      "type": "array",
      "items": {
       "type": "string"

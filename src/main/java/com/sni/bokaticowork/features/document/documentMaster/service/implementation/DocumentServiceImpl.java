@@ -133,7 +133,11 @@ public class DocumentServiceImpl implements DocumentService {
         DocumentFolder folder = targetFolder(metadata.getFolderCode());
         applyDefaultExpiryDate(metadata, documentType);
         validateDocumentMetadata(metadata, documentType, file.getSize());
-        enforceMultipleAllowed(documentType, owner);
+        // Lot KG2 : une piece KYC se remplace (l'ancien fichier passe SUPERSEDED) et un verso
+        // s'ajoute a son recto ; la regle « un seul document du type » ne s'applique qu'ailleurs.
+        if (documentType.getCategory() != DocumentCategory.KYC) {
+            enforceMultipleAllowed(documentType, owner);
+        }
         List<String> allowedMimeTypes = parseAllowedMimeTypes(documentType.getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspect(file, allowedMimeTypes);
 
@@ -544,25 +548,21 @@ public class DocumentServiceImpl implements DocumentService {
         documentRepository.save(document);
     }
 
+    /** Lot KG2 : rattachement recto / verso et remplacement, en un seul endroit (KycPieceLinker). */
     private void attachKycDocumentIfNeeded(Document document, OwnerResolution owner, DocumentUploadMetadataRequest metadata) {
-        if (document.getCategory() != DocumentCategory.KYC) {
+        if (document.getCategory() != DocumentCategory.KYC || pieceLinker == null) {
             return;
         }
-        KycCase kycCase = kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(owner.ownerType(), owner.ownerId())
-                .orElse(null);
+        pieceLinker.link(document, owner.ownerType(), owner.ownerId(),
+                new com.sni.bokaticowork.features.document.kyc.service.support.KycPieceLinker.Details(
+                        metadata.getKycSide(), metadata.getDocumentNumber(), metadata.getIssueDate(), metadata.getExpiryDate()));
+    }
 
-        KycDocument kycDocument = KycDocument.builder()
-                .kycCase(kycCase)
-                .ownerType(owner.ownerType())
-                .ownerId(owner.ownerId())
-                .document(document)
-                .documentType(document.getDocumentType().getCode())
-                .documentNumber(trimToNull(metadata.getDocumentNumber()))
-                .issueDate(metadata.getIssueDate())
-                .expiryDate(metadata.getExpiryDate())
-                .status(KycDocumentVerificationStatus.PENDING)
-                .build();
-        kycDocumentRepository.save(kycDocument);
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycPieceLinker pieceLinker;
+
+    @Autowired
+    void setPieceLinker(com.sni.bokaticowork.features.document.kyc.service.support.KycPieceLinker pieceLinker) {
+        this.pieceLinker = pieceLinker;
     }
 
     private void syncKycDocumentStatus(Document document, KycDocumentVerificationStatus status) {

@@ -158,7 +158,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `documentIds` | texte[] | oui | éléments min `1` |
+| `documentIds` | texte[] |  |  |
+| `documentCodes` | texte[] |  |  |
 | `reviewedBy` | entier int64 ⚠ |  |  |
 
 <a id="m-KycBulkRejectRequest"></a>

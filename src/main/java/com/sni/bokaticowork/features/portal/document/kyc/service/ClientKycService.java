@@ -175,61 +175,22 @@ public class ClientKycService {
         metadata.setDocumentNumber(documentNumber);
         metadata.setIssueDate(issueDate);
         metadata.setExpiryDate(expiryDate);
+        metadata.setKycSide("BACK".equalsIgnoreCase(side) ? "BACK" : "FRONT");
 
         DocumentResponse docResponse = documentService.upload(metadata, file);
         Document document = documentRepository.findByCode(docResponse.getCode())
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found after upload"));
 
-        // documentService.upload a deja range le fichier dans le dossier KYC (une ligne kyc_document
-        // pour tout document de categorie KYC). En creer une seconde ici faisait apparaitre chaque
-        // piece deux fois, et un verso devenait une piece a part entiere. On reprend celle-la, comme
-        // le fait deja l'envoi par l'administration (KycDocumentUploadService).
-        KycDocument autoCreated = kycDocumentRepository.findByDocument(document).orElse(null);
-
-        if ("BACK".equalsIgnoreCase(side)) {
-            KycDocument front = otherOfType(kycCase, documentType, autoCreated)
-                    .orElseThrow(() -> new BadRequestException(
-                            "Front side must be uploaded before the back side for document type: " + documentType));
-            if (autoCreated != null) {
-                kycDocumentRepository.delete(autoCreated);
-            }
-            front.setBackDocument(document);
-            kycDocumentRepository.save(front);
-            kycAutomationService.syncMemberKyc(member.getMemberId());
-            return toDocumentResponse(front);
-        }
-
-        // Une piece deja deposee pour ce type est remplacee, pas doublee.
-        KycDocument existing = otherOfType(kycCase, documentType, autoCreated).orElse(null);
-        KycDocument kycDocument;
-        if (existing != null) {
-            existing.setDocument(document);
-            existing.setDocumentNumber(documentNumber);
-            existing.setIssueDate(issueDate);
-            existing.setExpiryDate(expiryDate);
-            existing.setStatus(KycDocumentVerificationStatus.PENDING);
-            if (autoCreated != null) {
-                kycDocumentRepository.delete(autoCreated);
-            }
-            kycDocument = existing;
-        } else if (autoCreated != null) {
-            kycDocument = autoCreated;
+        // Lot KG2 : documentService.upload a rattache le fichier a sa piece (recto remplace, verso
+        // ajoute a son recto, anciens fichiers SUPERSEDED, jamais de piece pour un verso).
+        KycDocument kycDocument = kycDocumentRepository.findByDocument(document)
+                .or(() -> kycDocumentRepository.findAllByBackDocument(document).stream().findFirst())
+                .orElseThrow(() -> new ResourceNotFoundException("Pièce KYC introuvable après le dépôt"));
+        if (kycDocument.getKycCase() == null) {
             kycDocument.setKycCase(kycCase);
-        } else {
-            kycDocument = KycDocument.builder()
-                    .kycCase(kycCase)
-                    .ownerType(DocumentOwnerType.MEMBER)
-                    .ownerId(member.getId())
-                    .document(document)
-                    .documentType(documentType)
-                    .documentNumber(documentNumber)
-                    .issueDate(issueDate)
-                    .expiryDate(expiryDate)
-                    .status(KycDocumentVerificationStatus.PENDING)
-                    .build();
+            kycDocumentRepository.save(kycDocument);
         }
-        kycDocumentRepository.save(kycDocument);
-        kycAutomationService.syncMemberKyc(member.getMemberId());
+        kycAutomationService.recompute(kycCase);
         return toDocumentResponse(kycDocument);
     }
 
@@ -246,7 +207,7 @@ public class ClientKycService {
         documentService.replace(kycDocument.getDocument().getCode(), file);
         kycDocument.setStatus(KycDocumentVerificationStatus.PENDING);
         kycDocumentRepository.save(kycDocument);
-        kycAutomationService.syncMemberKyc(member.getMemberId());
+        kycAutomationService.recompute(kycDocument.getKycCase());
         return toDocumentResponse(kycDocument);
     }
 
@@ -254,10 +215,15 @@ public class ClientKycService {
     public void deleteDocument(Member member, Long documentId) {
         KycDocument kycDocument = resolveOwnedKycDocument(member, documentId);
         if (kycDocument.getStatus() != KycDocumentVerificationStatus.PENDING) {
-            throw new BadRequestException("Only PENDING documents can be deleted");
+            throw new BadRequestException("Seule une pièce en attente de vérification peut être retirée");
         }
+        // Lot KG2 : les fichiers sont archives (ils restent consultables par l'equipe) et la piece
+        // retiree ; un nouveau depot du meme type est ensuite possible.
+        KycCase kycCase = kycDocument.getKycCase();
+        archiveQuietly(kycDocument.getBackDocument());
+        archiveQuietly(kycDocument.getDocument());
         kycDocumentRepository.delete(kycDocument);
-        kycAutomationService.syncMemberKyc(member.getMemberId());
+        kycAutomationService.recompute(kycCase);
     }
 
     @Transactional
@@ -275,6 +241,13 @@ public class ClientKycService {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private void archiveQuietly(Document document) {
+        if (document == null || document.getStatus() == com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.ARCHIVED) {
+            return;
+        }
+        documentService.archive(document.getCode(), "Pièce retirée par le titulaire depuis son espace");
+    }
 
     private KycCase resolveCase(Member member) {
         return kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(
@@ -295,12 +268,6 @@ public class ClientKycService {
     }
 
     /** La piece deja deposee pour ce type, hors la ligne que l'envoi en cours vient de creer. */
-    private java.util.Optional<KycDocument> otherOfType(KycCase kycCase, String documentType, KycDocument autoCreated) {
-        return kycDocumentRepository.findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, documentType).stream()
-                .filter(candidate -> autoCreated == null || !candidate.getId().equals(autoCreated.getId()))
-                .findFirst();
-    }
-
     private void assertCaseEditable(KycCase kycCase) {
         if (closedForUploads(kycCase)) {
             throw new BadRequestException("KYC case is not open for document uploads. Current status: " + kycCase.getStatus());

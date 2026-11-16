@@ -118,10 +118,31 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         applyCaseStatus(kycCase, targetStatus, "Synced from customer status");
     }
 
-    @Async
+    /** Lot KG2 : programmee apres validation, une fois par document et par transaction. */
+    @Override
+    public void syncFromDocumentUpload(Document document) {
+        scheduleSync(document);
+    }
+
+    @Override
+    public void syncFromDocumentReview(Document document) {
+        scheduleSync(document);
+    }
+
+    private void scheduleSync(Document document) {
+        if (document == null || document.getCategory() != DocumentCategory.KYC) {
+            return;
+        }
+        if (syncRunner != null) {
+            syncRunner.schedule(document.getId());
+        } else {
+            applyDocumentSync(document);
+        }
+    }
+
     @Override
     @Transactional
-    public void syncFromDocumentUpload(Document document) {
+    public void applyDocumentSync(Document document) {
         if (document == null || document.getCategory() != DocumentCategory.KYC) {
             return;
         }
@@ -130,16 +151,11 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         recomputeCaseState(kycCase);
     }
 
-    @Async
-    @Override
-    @Transactional
-    public void syncFromDocumentReview(Document document) {
-        if (document == null || document.getCategory() != DocumentCategory.KYC) {
-            return;
-        }
-        KycCase kycCase = ensureCase(document.getOwnerType(), document.getOwnerId());
-        attachOrRefreshKycDocument(kycCase, document);
-        recomputeCaseState(kycCase);
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycDocumentSyncRunner syncRunner;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSyncRunner(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.document.kyc.service.support.KycDocumentSyncRunner syncRunner) {
+        this.syncRunner = syncRunner;
     }
 
     private com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementResolver requirementResolver;
@@ -267,6 +283,20 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     }
 
     private void attachOrRefreshKycDocument(KycCase kycCase, Document document) {
+        // Lot KG2 : un verso met a jour sa piece, il n'en cree jamais une.
+        java.util.Optional<KycDocument> ofBack = kycDocumentRepository.findAllByBackDocument(document).stream().findFirst();
+        if (ofBack.isPresent()) {
+            KycDocument piece = ofBack.get();
+            if (piece.getDocument() != null) {
+                piece.setStatus(pieceStatus(piece));
+                kycDocumentRepository.save(piece);
+            }
+            return;
+        }
+        if (document.getStatus() == DocumentStatus.SUPERSEDED) {
+            // Ancien fichier d'une piece remplacee : la piece porte deja le nouveau.
+            return;
+        }
         KycDocument kycDocument = kycDocumentRepository.findAllByDocument(document).stream()
                 .filter(item -> item.getKycCase() != null
                         && kycCase.getId() != null
@@ -284,7 +314,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         kycDocument.setDocumentType(document.getDocumentType().getCode());
         kycDocument.setIssueDate(document.getIssueDate());
         kycDocument.setExpiryDate(document.getExpiryDate());
-        kycDocument.setStatus(mapDocumentStatus(document.getStatus()));
+        kycDocument.setStatus(pieceStatus(kycDocument));
         kycDocumentRepository.save(kycDocument);
         kycOcrService.process(kycDocument);
     }
@@ -405,6 +435,16 @@ public class KycAutomationServiceImpl implements KycAutomationService {
                 customerRepository.save(customer);
             }
         }
+    }
+
+    /** Lot KG2 : etat de la piece d'apres son recto, refusee si son verso l'est. */
+    private KycDocumentVerificationStatus pieceStatus(KycDocument piece) {
+        KycDocumentVerificationStatus front = mapDocumentStatus(piece.getDocument().getStatus());
+        Document back = piece.getBackDocument();
+        if (back != null && (back.getStatus() == DocumentStatus.REJECTED || back.getStatus() == DocumentStatus.ARCHIVED)) {
+            return KycDocumentVerificationStatus.REJECTED;
+        }
+        return front;
     }
 
     private KycDocumentVerificationStatus mapDocumentStatus(DocumentStatus status) {
