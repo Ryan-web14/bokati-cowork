@@ -52,6 +52,7 @@ public class OperationsController {
 
     /** Erreurs serveur (5xx), sans la trace. */
     @GetMapping("/errors")
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "AUDIT", action = "VIEW_ERRORS", ressource = "app_error")
     public ResponseEntity<PaginatedResponse<OperationsService.AppError>> errors(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
@@ -65,6 +66,7 @@ public class OperationsController {
 
     /** Une erreur serveur, avec sa trace tronquee. */
     @GetMapping("/errors/{id}")
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "AUDIT", action = "VIEW_ERROR", ressource = "app_error")
     public ResponseEntity<OperationsService.AppError> error(@PathVariable long id) {
         return ResponseEntity.ok(operations.error(id));
     }

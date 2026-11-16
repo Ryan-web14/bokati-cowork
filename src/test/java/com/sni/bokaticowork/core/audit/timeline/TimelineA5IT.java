@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.core.audit.timeline;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.support.AuditPurge;
 import com.sni.bokaticowork.support.PostgresIntegrationTestBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,7 @@ class TimelineA5IT extends PostgresIntegrationTestBase {
 
     @Autowired private JdbcTemplate jdbc;
     @Autowired private TimelineService timeline;
+    @Autowired private org.springframework.transaction.PlatformTransactionManager transactions;
 
     private final Instant base = Instant.now().truncatedTo(ChronoUnit.SECONDS).minusSeconds(600);
 
@@ -63,8 +65,8 @@ class TimelineA5IT extends PostgresIntegrationTestBase {
 
     @AfterEach
     void clean() {
-        jdbc.update("DELETE FROM audit_log WHERE id = 987650001");
-        jdbc.update("DELETE FROM security_event WHERE id = 987650002");
+        AuditPurge.delete(jdbc, transactions, "DELETE FROM audit_log WHERE id = 987650001");
+        AuditPurge.delete(jdbc, transactions, "DELETE FROM security_event WHERE id = 987650002");
         jdbc.update("DELETE FROM email_delivery_log WHERE id = 987650003");
         jdbc.update("DELETE FROM app_error WHERE request_id = 'req-a5'");
         jdbc.update("DELETE FROM request_log WHERE request_id = 'req-a5'");

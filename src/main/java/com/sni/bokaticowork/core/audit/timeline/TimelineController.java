@@ -35,6 +35,7 @@ public class TimelineController {
     private final PlatformSettings settings;
 
     @GetMapping
+    @Audited(module = "AUDIT", action = "VIEW_TIMELINE", ressource = "timeline")
     public ResponseEntity<TimelineService.Page> read(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,

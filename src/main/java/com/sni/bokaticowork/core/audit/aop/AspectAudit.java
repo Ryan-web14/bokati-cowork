@@ -38,7 +38,8 @@ public class AspectAudit {
             metadata.put("requestUri", request.getRequestURI());
             metadata.put("httpMethod", request.getMethod());
             if (request.getQueryString() != null) {
-                metadata.put("queryString", request.getQueryString());
+                // Lot A7 : jetons et codes passes dans l'adresse jamais ecrits.
+                metadata.put("queryString", com.sni.bokaticowork.core.audit.change.AuditValues.maskQuery(request.getQueryString()));
             }
         }
 

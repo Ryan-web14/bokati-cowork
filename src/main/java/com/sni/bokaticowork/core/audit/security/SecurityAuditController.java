@@ -31,6 +31,7 @@ public class SecurityAuditController {
 
     /** {@code type} : un ou plusieurs types separes par des virgules ({@link SecurityEventType}). */
     @GetMapping("/security-events")
+    @Audited(module = "AUDIT", action = "VIEW_SECURITY_EVENTS", ressource = "security_event")
     public ResponseEntity<Page<SecurityAuditService.EventView>> events(
             @RequestParam(required = false) String type, @RequestParam(required = false) String login,
             @RequestParam(required = false) String userCode, @RequestParam(required = false) String ip,
@@ -42,6 +43,7 @@ public class SecurityAuditController {
     }
 
     @GetMapping("/users/{userCode}/sessions")
+    @Audited(module = "AUDIT", action = "VIEW_USER_SESSIONS", ressource = "user_sessions")
     public ResponseEntity<List<SecurityAuditService.SessionView>> sessions(@PathVariable String userCode,
                                                                           @RequestParam(defaultValue = "true") boolean activeOnly) {
         return ResponseEntity.ok(service.sessions(userCode, activeOnly));

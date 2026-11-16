@@ -40,6 +40,7 @@ public class AdminAuditController {
     private final com.sni.bokaticowork.core.settings.platform.PlatformSettings settings;
 
     @GetMapping
+    @Audited(module = "AUDIT", action = "VIEW_AUDIT_LOGS", ressource = "audit_log")
     public ResponseEntity<PaginatedResponse<AuditLog>> list(
             @RequestParam(required = false) String module,
             @RequestParam(required = false) String action,

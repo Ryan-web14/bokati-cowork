@@ -40,6 +40,7 @@ public class AlertController {
     }
 
     @GetMapping("/alerts")
+    @Audited(module = "AUDIT", action = "VIEW_ALERTS", ressource = "audit_alert")
     public ResponseEntity<PaginatedResponse<AlertService.Alert>> list(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String rule,

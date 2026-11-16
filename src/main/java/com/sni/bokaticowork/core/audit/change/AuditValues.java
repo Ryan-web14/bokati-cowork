@@ -20,7 +20,7 @@ public final class AuditValues {
             "password", "passwd", "pwd", "secret", "token", "otp", "pin", "cvv", "cvc", "pan", "hash", "salt",
             "mfa", "totp", "credential", "credentials", "apikey", "privatekey", "cardnumber");
 
-    private static final Pattern WORD_BOUNDARY = Pattern.compile("(?<=[a-z0-9])(?=[A-Z])|[_.\\-]");
+    private static final Pattern WORD_BOUNDARY = Pattern.compile("(?<=[a-z0-9])(?=[A-Z])|[_.\\s\\-]+");
 
     /** Champs techniques sans interet pour l'exploitant. */
     private static final Set<String> IGNORED = Set.of(
@@ -41,6 +41,29 @@ public final class AuditValues {
             }
         }
         return false;
+    }
+
+    /** Chaine de requete d'une adresse avec les valeurs sensibles masquees ({@code token=***}). */
+    public static String maskQuery(String query) {
+        if (query == null || query.isEmpty()) {
+            return query;
+        }
+        StringBuilder masked = new StringBuilder();
+        for (String pair : query.split("&")) {
+            if (masked.length() > 0) {
+                masked.append('&');
+            }
+            int equals = pair.indexOf('=');
+            String name = equals < 0 ? pair : pair.substring(0, equals);
+            String decoded;
+            try {
+                decoded = java.net.URLDecoder.decode(name, java.nio.charset.StandardCharsets.UTF_8);
+            } catch (IllegalArgumentException malformed) {
+                decoded = name;
+            }
+            masked.append(equals < 0 || !isSensitive(decoded) ? pair : name + "=" + MASK);
+        }
+        return shorten(masked.toString());
     }
 
     public static boolean isIgnored(String property) {

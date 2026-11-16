@@ -303,6 +303,14 @@ bokati.audit.alerts.task-failures	AUDIT	INTEGER	LIVE	3	Alerte : échecs consécu
 bokati.audit.alerts.whatsapp-failures	AUDIT	INTEGER	LIVE	5	Alerte : messages WhatsApp refusés ou non remis dans l'heure (0 : coupée)
 bokati.audit.alerts.whatsapp-recipients	AUDIT	TEXT	LIVE		Numéros WhatsApp qui reçoivent les alertes (séparés par des virgules)
 bokati.audit.export.max-rows	AUDIT	INTEGER	LIVE	10000	Lignes au plus dans un export CSV du journal des actions
+bokati.audit.retention.actions-days	AUDIT	INTEGER	LIVE	1825	Conservation du journal des actions (jours, 0 : sans limite)
+bokati.audit.retention.alerts-days	AUDIT	INTEGER	LIVE	365	Conservation des alertes fermées (jours, 0 : sans limite)
+bokati.audit.retention.errors-days	AUDIT	INTEGER	LIVE	90	Conservation des erreurs serveur (jours, 0 : sans limite)
+bokati.audit.retention.jobs-days	AUDIT	INTEGER	LIVE	90	Conservation des exécutions de tâches gardées une par une (jours, 0 : sans limite)
+bokati.audit.retention.requests-days	AUDIT	INTEGER	LIVE	30	Conservation des requêtes lentes ou en erreur gardées une par une (jours, 0 : sans limite)
+bokati.audit.retention.security-days	AUDIT	INTEGER	LIVE	365	Conservation des événements de sécurité (jours, 0 : sans limite)
+bokati.audit.retention.traffic-hours-days	AUDIT	INTEGER	LIVE	395	Conservation du trafic par heure (jours, 0 : sans limite)
+bokati.audit.retention.traffic-minutes-days	AUDIT	INTEGER	LIVE	7	Conservation du trafic par minute (jours, 0 : sans limite)
 bokati.audit.traffic.slow-ms	AUDIT	INTEGER	LIVE	2000	Durée à partir de laquelle une requête est gardée une par une comme lente (ms)
 bokati.billing.default-currency	BILLING	TEXT	LIVE	XAF	Devise par défaut
 bokati.billing.dunning.batch-size	BILLING	INTEGER	LIVE	200	Taille de lot des relances

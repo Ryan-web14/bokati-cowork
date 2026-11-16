@@ -43,6 +43,7 @@ public class TrafficController {
 
     /** Requetes lentes (reason SLOW) ou en erreur serveur (reason ERROR), une par une. */
     @GetMapping("/requests")
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "AUDIT", action = "VIEW_REQUESTS", ressource = "request_log")
     public ResponseEntity<PaginatedResponse<TrafficService.RequestEntry>> requests(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
