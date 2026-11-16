@@ -77,15 +77,22 @@ Suppression logique : `DELETE /sni/api/v1/countries/{countryCode}` doit passer l
 
 ### Journal d'audit
 
+> Le centre d'audit complet (chronologie, tableau de bord, alertes, trafic, tâches, erreurs, intégrité) est décrit dans [audit/README.md](../audit/README.md).
+
 1. `GET /sni/api/v1/admin/audit-logs` ([détail](routes/AdminAuditController.md#r-get-sni-api-v1-admin-audit-logs)) avec les filtres :
    - `module` et `action` : égalité exacte, insensible à la casse. Valeurs de `module` présentes dans le code : `INVENTORY`, `COMPANY`, `DOCUMENT`, `RESOURCE`, `KYC`, `CONTRACT`, `MEMBER`, `TASK`, `CONTRACT_AMENDMENT`, `CONTRACT_DRAFT`, `USER`, `CONTRACT_TEMPLATE`, `BUSINESS`, `ROLE`, `PERMISSION`, `CUSTOMER`, `ROLE_PERMISSION`, `MAINTENANCE`, `CURRENCY`, `COUNTRY`, `ADDRESS`, `SETTINGS`, `ROLE_USER`, `EVENT_REGISTRATION`, `MOBILE_MONEY`. Aucune route ne fournit cette liste : la coder en dur ou laisser un champ libre.
    - `actorEmail` : recherche « contient », insensible à la casse.
    - `status` : `SUCCESS` ou `FAILURE`.
    - `createdFrom`, `createdTo` : date-heure ISO (bornes incluses).
+   - `entityType` (par exemple `BillingDocument`, sans casse) et `entityCode` (par exemple un numéro de facture, sans casse) : tout ce qui est arrivé à un élément (lot A1).
+   - `requestId` : identifiant de requête exact (en-tête `X-Request-Id`), commun aux journaux et aux événements de sécurité.
+   - `ressource` : recherche « contient ».
    - Tri par défaut `createdAt,DESC`, 20 par page.
-2. La réponse est une page `PaginatedResponse<AuditLog>`. Afficher `createdAt`, `actorEmail`, `module`, `action`, `ressource`, `auditStatus`, et en détail `ipAddress`, `userAgent`, `errorMessage`, `metadata`.
-3. `metadata` contient toujours `method` (classe et méthode Java), `requestUri`, `httpMethod`, et `queryString` quand il y en a un ; en cas d'échec, `exception`. `diff` est toujours `null` (aucun code ne le remplit).
-4. Une action faite sans compte (route publique) apparaît avec `actorEmail = "SYSTEM"` et `actorId = 0`.
+2. La réponse est une page `PaginatedResponse<AuditLog>`. Afficher `createdAt`, `actorEmail`, `module`, `action`, `ressource`, `entityType` et `entityCode` (élément principal touché, lien vers sa fiche), `auditStatus`, et en détail `ipAddress`, `userAgent`, `requestId`, `errorMessage`, `metadata`, `diff`.
+3. `metadata` contient toujours `method` (classe et méthode Java), `requestUri`, `httpMethod`, et `queryString` quand il y en a un ; en cas d'échec, `exception`.
+4. **`diff` (lot A1)** : ce que l'action a écrit en base, sous la forme `{ "changes": [ { "entityType", "entityCode", "operation", "fields" } ], "omitted": n }`. `operation` vaut `CREATE`, `UPDATE` ou `DELETE`. `fields` n'existe que pour les éléments principaux (facture et autres documents de facturation, paiement, abonnement, réservation, membre, client, utilisateur, rôle, droit, attribution d'un rôle ou d'un droit, paramètre, modèle de document, modèle de notification) : `{ "status": { "before": "DRAFT", "after": "ISSUED" } }`, seulement les champs modifiés (à la création, les valeurs saisies avec `before` à `null`). Les autres éléments touchés sont listés sans champs. Au plus 30 éléments et 40 champs par élément ; au-delà, `omitted` compte les éléments non listés. Les valeurs longues sont coupées à 300 caractères ; une référence à un autre élément s'écrit `Type:code`. **Données sensibles** (mots de passe, jetons, codes, clés, cartes, et toute valeur d'un paramètre dont la clé désigne un secret) : `***`, même modifiées. Une action en échec garde son élément principal mais pas de `diff` (rien n'a été écrit).
+5. **Export** : `GET /sni/api/v1/admin/audit-logs/export` avec les mêmes filtres : fichier CSV (point-virgule, UTF-8), du plus récent au plus ancien, 10 000 lignes au plus (en-têtes `X-Export-Rows` et `X-Export-Truncated: true` si coupé). Colonne `changements` : une ligne lisible par élément (`UPDATE BillingDocument FAC-1 : status DRAFT -> ISSUED`). L'export est lui-même journalisé (`module = AUDIT`, `action = EXPORT_AUDIT_LOGS`).
+6. Une action faite sans compte (route publique) apparaît avec `actorEmail = "SYSTEM"` et `actorId = 0`.
 
 L'écriture du journal est asynchrone (`AuditServiceImpl.save` en `@Async`) : une action qui vient d'être faite peut n'apparaître qu'après un court délai. Prévoir un bouton « Actualiser » plutôt que d'attendre l'entrée juste après l'action.
 
@@ -273,7 +280,7 @@ Aucun worker ne purge le journal d'audit, l'outbox, les courriels ou les enregis
 13. **Événements outbox sans processeur.** Les événements d'inventaire publiés avec `aggregateType` `STOCK_MOVEMENT` et `INVENTORY_ASSET` (`src/main/java/com/sni/bokaticowork/features/inventory/intelligence/service/implementation/InventoryAutomationServiceImpl.java:70` et `:224`) ne sont reconnus par aucun processeur de `core/outbox/service/implementation/` : ils finissent `DEAD` et encombrent l'écran de suivi.
 14. **Remise en file groupée sans les `DEAD`.** `requeueFailed` ne prend que `FAILED` (`OutboxServiceImpl.java:199`), alors que `FAILED` est repris automatiquement : le bouton n'a d'effet utile que pour avancer un essai, pas pour les événements abandonnés.
 15. **Renvoi d'un courriel en cours.** `DefaultEmailSender.retry` (`src/main/java/com/sni/bokaticowork/core/communication/mailService/baseService/DefaultEmailSender.java:159`) n'écarte que `SENT` : un courriel `SENDING` peut être redéposé et partir deux fois. Le renvoi perd la pièce jointe.
-16. **Audit sans différence.** `AuditContext.setDiff` et `putMeta` ne sont appelés nulle part : `diff` est toujours `null` et `metadata` ne contient que les informations de requête.
+16. **Réglé le 2026-11-16 (centre d'audit, lot A1)** : `diff` contient les écritures en base de l'action, avec l'avant et l'après des éléments principaux. Constat d'origine : **Audit sans différence.** `AuditContext.setDiff` et `putMeta` ne sont appelés nulle part : `diff` est toujours `null` et `metadata` ne contient que les informations de requête.
 17. **Routes en double.** `/sni/api/v1/currency/**` double `/sni/api/v1/currencies/**`, et `GET /currencies/all` double `GET /currencies` (`CurrencyController.java:21` et `:54`).
 18. **Messages en anglais** dans les pays, devises, adresses, outbox, courriels, idempotence et purge totale ; messages de purge de membre en français sans accents.
 19. **Corps d'erreur non standard** pour `confirm` absent sur `DELETE /admin/maintenance/purge-data` et `DELETE /admin/maintenance/members/{memberCode}` (`DataPurgeController.java:28`, `MemberPurgeController.java:105`) : ni `errorCode` ni `traceId`.

@@ -26,7 +26,7 @@ Modules liés : `subscription` (fournit la politique d'abonnement), `socle` (jou
 
 `adminEditable = true` (ouverts à `ADMIN`) : `BOOKING`, `RESOURCES`, `SUBSCRIPTIONS`, `PASSES`, `MARKETPLACE`, `PROMOTIONS`, `DOMICILIATION`, `CONTRACTS`, `SUPPORT`, `TASKS`, `CRM`, `EVENTS`, `PORTAL`.
 
-`adminEditable = false` (`SUPER_ADMIN` seul) : `COMPANIES`, `WALLET`, `PAYMENT`, `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT`.
+`adminEditable = false` (`SUPER_ADMIN` seul) : `COMPANIES`, `WALLET`, `PAYMENT`, `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `AUDIT` (centre d'audit), `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT`.
 
 Règle appliquée par `PlatformSettingsAdminService.mayAccess` (`src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettingsAdminService.java:256`) : `ROLE_SUPER_ADMIN` voit tout ; `ROLE_ADMIN` voit les domaines ouverts ; tout autre rôle est refusé avant même le service par `@PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")` sur le contrôleur, même s'il porte `SYSTEM:SETTINGS`.
 

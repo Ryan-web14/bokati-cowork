@@ -27,6 +27,7 @@ public enum SettingDomain {
     DOCUMENTS("Documents", false),
     LOCALE("Langue et téléphone", false),
     SECURITY("Sécurité", false),
+    AUDIT("Centre d'audit", false),
     NOTIFICATIONS("Notifications et e-mails", false),
     WEBHOOKS("Webhooks", false),
     OUTBOX("Boîte d'envoi", false),

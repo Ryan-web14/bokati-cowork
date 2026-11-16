@@ -25,6 +25,7 @@ class SecurityEventsA2IT extends PostgresIntegrationTestBase {
     @Autowired private SecurityEvents events;
     @Autowired private SecurityEventRepository repository;
     @Autowired private PlatformTransactionManager transactions;
+    @Autowired private javax.sql.DataSource dataSource;
 
     @Test
     void anEventSurvivesTheRollbackOfItsOperation() {
@@ -38,6 +39,7 @@ class SecurityEventsA2IT extends PostgresIntegrationTestBase {
         SecurityEvent saved = repository.findAll().stream().filter(event -> "awa@example.com".equals(event.getLogin())).findFirst().orElseThrow();
         assertThat(saved.getEventType()).isEqualTo("LOGIN_FAILURE");
         assertThat(saved.getDetailsJson()).contains("\"reason\":\"BadCredentialsException\"");
-        repository.delete(saved);
+        com.sni.bokaticowork.support.AuditPurge.delete(new org.springframework.jdbc.core.JdbcTemplate(dataSource), transactions,
+                "DELETE FROM security_event WHERE id = ?", saved.getId());
     }
 }

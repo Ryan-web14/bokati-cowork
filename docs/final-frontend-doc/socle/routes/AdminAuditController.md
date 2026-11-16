@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [socle](../README.md) · 1 route(s).
+Module [socle](../README.md) · 2 route(s).
 
 ## Routes
 
@@ -22,7 +22,32 @@ Module [socle](../README.md) · 1 route(s).
 | `status` | requête | `AuditStatus` |  |  |
 | `createdFrom` | requête | `Instant` |  |  |
 | `createdTo` | requête | `Instant` |  |  |
+| `entityType` | requête | `String` |  |  |
+| `entityCode` | requête | `String` |  |  |
+| `requestId` | requête | `String` |  |  |
+| `ressource` | requête | `String` |  |  |
 | `page, size, sort` | requête (pagination) | `Pageable` |  | size=20, sort=createdAt,DESC |
+
+<a id="r-get-sni-api-v1-admin-audit-logs-export"></a>
+### GET /sni/api/v1/admin/audit-logs/export
+
+- Accès : back-office : rôle d'administration et droit `SYSTEM:AUDIT`
+- Réponse : `fichier (octets)`
+- Modèles : [AuditStatus](#m-AuditStatus)
+- Code : `src/main/java/com/sni/bokaticowork/core/audit/controller/AdminAuditController.java`, méthode `export`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `module` | requête | `String` |  |  |
+| `action` | requête | `String` |  |  |
+| `actorEmail` | requête | `String` |  |  |
+| `status` | requête | `AuditStatus` |  |  |
+| `createdFrom` | requête | `Instant` |  |  |
+| `createdTo` | requête | `Instant` |  |  |
+| `entityType` | requête | `String` |  |  |
+| `entityCode` | requête | `String` |  |  |
+| `requestId` | requête | `String` |  |  |
+| `ressource` | requête | `String` |  |  |
 
 ## Modèles
 
@@ -45,6 +70,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `userAgent` | texte |  |  |
 | `sessionId` | texte |  |  |
 | `requestId` | texte |  |  |
+| `entityType` | texte |  |  |
+| `entityCode` | texte |  |  |
 | `errorCode` | texte |  |  |
 | `errorMessage` | texte |  |  |
 | `metadata` | objet { clé : objet libre } |  |  |

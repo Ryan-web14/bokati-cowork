@@ -34,6 +34,7 @@ public class RequestUserMdcFilter {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
                     MDC.put(RequestContext.MDC_USER, authentication.getName());
+                    request.setAttribute(RequestContext.ATTRIBUTE_USER, authentication.getName());
                 }
                 chain.doFilter(request, response);
             }

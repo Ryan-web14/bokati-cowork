@@ -42,9 +42,13 @@ public class AsyncConfig implements AsyncConfigurer, SchedulingConfigurer {
         scheduler.setThreadNamePrefix("scheduler-");
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.setAwaitTerminationSeconds(8);
-        scheduler.setErrorHandler(ex ->
-                org.slf4j.LoggerFactory.getLogger(AsyncConfig.class)
-                        .error("Scheduler error: {}", ex.getMessage(), ex));
+        // Centre d'audit (lot A4) : chaque execution de tache est comptee, chronometree, et ses echecs gardes.
+        scheduler.setTaskDecorator(new com.sni.bokaticowork.core.audit.ops.ScheduledRunDecorator());
+        scheduler.setErrorHandler(ex -> {
+            com.sni.bokaticowork.core.audit.ops.ScheduledRuns.fail(ex);
+            org.slf4j.LoggerFactory.getLogger(AsyncConfig.class)
+                    .error("Scheduler error: {}", ex.getMessage(), ex);
+        });
         return scheduler;
     }
 

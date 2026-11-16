@@ -2,6 +2,8 @@
 
 > Rédigé d'après le code (16/11/2026). Routes exactes : [socle/routes/SecurityAuditController.md](../socle/routes/SecurityAuditController.md). Droit `SYSTEM:AUDIT`, donné à `SUPER_ADMIN`, `ADMIN` et `AUDITOR`.
 
+Partie du centre d'audit : [audit/README.md](../audit/README.md). Depuis le lot A7, les événements sont chaînés par empreinte et en ajout seul, et chaque consultation de cette liste et des sessions est journalisée.
+
 ## Événements de sécurité
 
 `GET /sni/api/v1/admin/audit/security-events` : page d'événements, du plus récent au plus ancien.

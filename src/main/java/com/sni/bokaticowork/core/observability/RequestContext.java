@@ -25,6 +25,8 @@ public final class RequestContext {
     public static final String MDC_USER = "user";
     static final String ATTRIBUTE_REQUEST_ID = RequestContext.class.getName() + ".requestId";
     static final String ATTRIBUTE_CLIENT_IP = RequestContext.class.getName() + ".clientIp";
+    /** Compte authentifie de la requete, pose apres Spring Security (centre d'audit, lot A3). */
+    public static final String ATTRIBUTE_USER = RequestContext.class.getName() + ".user";
     private static final Pattern SAFE_ID = Pattern.compile("^[A-Za-z0-9._-]{8,64}$");
 
     private RequestContext() {
