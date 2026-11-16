@@ -9,6 +9,10 @@ server:
       min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:5}
 
 spring:
+  lifecycle:
+    # Heroku tue le processus 30 s apres SIGTERM : l'arret propre de Tomcat est borne a 10 s, les
+    # executeurs a 8 s chacun (AsyncConfig), pour finir avant.
+    timeout-per-shutdown-phase: 10s
   application:
     name: bokati-cowork
 

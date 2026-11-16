@@ -1,0 +1,15 @@
+--enable-native-access=ALL-UNNAMED
+-Xmx520m
+-Xms400m
+-Xmn110m
+-XX:MetaspaceSize=200m
+-XX:MaxMetaspaceSize=300m
+-XX:ReservedCodeCacheSize=64m
+-XX:TieredStopAtLevel=1
+-XX:MaxDirectMemorySize=64m
+-Xss512k
+-XX:+UseSerialGC
+-XX:+UseCompactObjectHeaders
+-XX:+UseStringDeduplication
+-XX:ActiveProcessorCount=2
+-XX:+ExitOnOutOfMemoryError
