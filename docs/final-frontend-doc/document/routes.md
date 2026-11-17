@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-215 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+216 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -167,6 +167,7 @@
 | POST | `/sni/api/v1/ged/trash/{batch}/restore` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash-batch-restore) |
 | GET | `/sni/api/v1/ged/tree` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-tree) |
 | GET | `/sni/api/v1/ged/usage` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-usage) |
+| POST | `/sni/api/v1/kyc/cases/backfill` | KYC:MANAGE | [KycCenterController](routes/KycCenterController.md#r-post-sni-api-v1-kyc-cases-backfill) |
 | GET | `/sni/api/v1/kyc/dashboard/center` | KYC:READ | [KycCenterController](routes/KycCenterController.md#r-get-sni-api-v1-kyc-dashboard-center) |
 | GET | `/sni/api/v1/kyc/duplicates` | KYC:READ | [KycCenterController](routes/KycCenterController.md#r-get-sni-api-v1-kyc-duplicates) |
 | GET | `/sni/api/v1/kyc/reasons` | KYC:READ | [KycCenterController](routes/KycCenterController.md#r-get-sni-api-v1-kyc-reasons) |

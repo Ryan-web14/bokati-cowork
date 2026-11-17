@@ -2,9 +2,20 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [document](../README.md) · 8 route(s).
+Module [document](../README.md) · 9 route(s).
 
 ## Routes
+
+<a id="r-post-sni-api-v1-kyc-cases-backfill"></a>
+### POST /sni/api/v1/kyc/cases/backfill
+
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
+- Réponse : `Map<String, Integer>`
+- Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java`, méthode `backfill`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `apply` | requête | `boolean` |  | false |
 
 <a id="r-get-sni-api-v1-kyc-dashboard-center"></a>
 ### GET /sni/api/v1/kyc/dashboard/center
