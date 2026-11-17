@@ -149,7 +149,13 @@ public class WhatsAppService implements WhatsAppMessageSender {
                     "Bonjour {{1}}, alerte du centre d'audit ELLE A OSE : {{2}}. Détail : {{3}}. "
                             + "Ouvrez le centre d'audit pour la traiter et en accuser lecture.",
                     List.of("équipe", "Taux d'erreurs serveur élevé", "12 % des requêtes en erreur sur les 5 dernières minutes"),
-                    "ELLE A OSE", null, null));
+                    "ELLE A OSE", null, null),
+            // Centre KYC (lot KG7) : pieces a deposer ou a corriger ; prenom, pieces, reference du dossier.
+            new DefaultTemplate("KYC_DOCUMENTS_REQUESTED", "kyc_pieces_demandees", "UTILITY",
+                    "Bonjour {{1}}, pour compléter votre dossier de vérification chez ELLE A OSE, merci de déposer : {{2}} (dossier {{3}}). "
+                            + "Vous pouvez le faire depuis votre espace client, en quelques minutes.",
+                    List.of("Awa", "Carte nationale d'identité, Justificatif de domicile", "KYC-202611-00012"), "ELLE A OSE",
+                    new Button("URL", "Déposer mes pièces", PORTAL + "/{{1}}", PORTAL + "/client/kyc"), null));
 
     public record TemplateRequest(String purpose, String name, String language, String category, String text, List<String> examples, String footer,
                                   Button button, Integer codeExpirationMinutes) {

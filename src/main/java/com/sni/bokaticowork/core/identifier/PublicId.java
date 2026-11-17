@@ -48,7 +48,9 @@ public final class PublicId {
         }
         Matcher matcher = CODE.matcher(value);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Identifiant invalide : " + text);
+            // « NaN » ou « undefined » : le frontend a converti le code en nombre au lieu de le renvoyer tel quel.
+            throw new IllegalArgumentException("Identifiant invalide : " + text
+                    + " (renvoyer le code reçu tel quel, par exemple VR-6B4TZB9ZPRKZV, sans le convertir en nombre)");
         }
         String body = matcher.group(1).toUpperCase(Locale.ROOT);
         long result = 0;

@@ -90,8 +90,9 @@ Règles pour le frontend :
 
 1. Garder le code tel quel, **en texte**, et le renvoyer tel quel : dans un chemin (`/accounting/vat-returns/VR-6B4TZB9ZPRKZV/detail`), un paramètre de requête ou un corps JSON (`"accountId": "ACC-6B4TZB9ZPRKZV"`).
 2. Le serveur accepte aussi l'ancien nombre (en texte ou en nombre JSON), sans perte s'il est envoyé en texte : les liens déjà enregistrés restent valides.
-3. Le préfixe n'est qu'une aide à la lecture : comparer deux identifiants par la chaîne entière, ne pas en déduire le type.
-4. Les codes métier (`ticketNumber`, `walletNumber`, `documentNumber`, codes de contrat…) ne changent pas ; ils restent préférables quand une route en propose.
+3. Ne jamais convertir un identifiant en nombre (`Number(id)`, `parseInt(id)`, `+id`) : un code donne `NaN`, et le serveur répond `400` « Valeur « NaN » invalide pour le paramètre id (code identifiant attendu…) ». Typer les identifiants en `string` côté frontend.
+4. Le préfixe n'est qu'une aide à la lecture : comparer deux identifiants par la chaîne entière, ne pas en déduire le type.
+5. Les codes métier (`ticketNumber`, `walletNumber`, `documentNumber`, codes de contrat…) ne changent pas ; ils restent préférables quand une route en propose.
 
 ## Dates et heures
 

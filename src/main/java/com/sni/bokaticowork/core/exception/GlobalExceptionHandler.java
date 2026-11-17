@@ -206,8 +206,12 @@ public class GlobalExceptionHandler {
                                                      HttpServletRequest request) {
         Class<?> type = ex.getRequiredType();
         String allowed = allowedValues(type);
+        boolean identifier = type == Long.class || type == long.class;
+        String expected = identifier
+                ? " (code identifiant attendu, par exemple VR-6B4TZB9ZPRKZV : renvoyer la valeur reçue telle quelle, sans la convertir en nombre)"
+                : (type == null ? "" : " (type attendu : " + type.getSimpleName() + ")");
         String message = "Valeur « " + ex.getValue() + " » invalide pour le paramètre " + ex.getName()
-                + (allowed == null ? (type == null ? "" : " (type attendu : " + type.getSimpleName() + ")") : " · valeurs admises : " + allowed) + ".";
+                + (allowed == null ? expected : " · valeurs admises : " + allowed) + ".";
         return respond(errorResponse.build(ErrorCode.TYPE_MISMATCH, HttpStatus.BAD_REQUEST, message, request, ex,
                 List.of(ex.getName() + " : " + (allowed == null ? "valeur invalide" : "attendu parmi " + allowed))));
     }
