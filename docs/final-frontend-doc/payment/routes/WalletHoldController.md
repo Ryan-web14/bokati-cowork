@@ -74,6 +74,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
+| `sourceLabel` | texte |  |  |
+| `createdBy` | texte |  |  |
+| `createdAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-CreateWalletHoldRequest"></a>
 #### CreateWalletHoldRequest

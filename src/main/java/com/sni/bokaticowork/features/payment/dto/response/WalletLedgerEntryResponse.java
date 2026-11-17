@@ -22,6 +22,8 @@ public record WalletLedgerEntryResponse(
         String sourceCode,
         String reference,
         String createdBy,
-        Instant createdAt
+        Instant createdAt,
+        /** Ce que l'ecriture concerne, en clair (facture, reservation, rechargement...). */
+        String sourceLabel
 ) {
 }

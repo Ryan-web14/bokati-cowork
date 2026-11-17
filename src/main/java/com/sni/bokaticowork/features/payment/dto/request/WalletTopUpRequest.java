@@ -10,7 +10,8 @@ public record WalletTopUpRequest(
         @NotBlank String ownerCode,
         @NotBlank String currency,
         @NotNull BigDecimal amount,
-        @NotBlank String createdBy,
+        /** Ignore pour un compte connecte : l'auteur est le compte du jeton. */
+        String createdBy,
         String reference,
         String metadataJson
 ) {

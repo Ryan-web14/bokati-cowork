@@ -53,7 +53,7 @@ public class PublicPaymentPageService {
     static final Duration RECHECK_INTERVAL = Duration.ofSeconds(20);
 
     private static final Set<PaymentIntentStatus> PAYABLE = Set.of(
-            PaymentIntentStatus.PENDING, PaymentIntentStatus.PROCESSING, PaymentIntentStatus.AUTHORIZED);
+            PaymentIntentStatus.PENDING, PaymentIntentStatus.PROCESSING);
 
     private final PaymentIntentRepository intentRepository;
     private final PaymentService paymentService;

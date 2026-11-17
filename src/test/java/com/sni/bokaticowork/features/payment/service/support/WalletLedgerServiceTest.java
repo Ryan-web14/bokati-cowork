@@ -69,6 +69,21 @@ class WalletLedgerServiceTest {
     }
 
     @Test
+    void aClosedOrFrozenWalletRefusesCreditsAndDebits() {
+        wallet.setStatus(com.sni.bokaticowork.features.payment.enums.WalletStatus.CLOSED);
+        assertThat(catchThrowable(() -> service.credit(wallet, new BigDecimal("10"), WalletEntryType.REFUND,
+                "PAYMENT_TRANSACTION", "TXN-1", null, "system", "REFUND:TXN-1")))
+                .isInstanceOf(com.sni.bokaticowork.core.exception.customs.ConflictException.class);
+
+        wallet.setStatus(com.sni.bokaticowork.features.payment.enums.WalletStatus.LOCKED);
+        assertThat(catchThrowable(() -> service.credit(wallet, new BigDecimal("10"), WalletEntryType.OVERPAYMENT_CREDIT,
+                "PAYMENT_INTENT", "PI-1", null, "system", "OVERPAYMENT:PI-1")))
+                .isInstanceOf(com.sni.bokaticowork.core.exception.customs.ConflictException.class);
+        assertThat(wallet.getLedgerBalance()).isEqualByComparingTo("1000");
+        verify(ledgerRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
     void shouldRefuseToDebitMoreThanTheAvailableBalance() {
         Throwable thrown = catchThrowable(() -> service.debit(wallet, new BigDecimal("1200"),
                 WalletEntryType.PAYMENT, "PAYMENT_INTENT", "PI-1", null, "system", "WALLET_PAYMENT:PI-1"));

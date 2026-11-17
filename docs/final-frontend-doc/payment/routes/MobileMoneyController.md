@@ -2,14 +2,14 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [payment](../README.md) · 11 route(s).
+Module [payment](../README.md) · 10 route(s).
 
 ## Routes
 
 <a id="r-get-sni-api-v1-payments-mobile-money-callbacks"></a>
 ### GET /sni/api/v1/payments/mobile-money/callbacks
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `PaginatedResponse<MobileMoneyCallbackResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [MobileMoneyCallbackResponse](#m-MobileMoneyCallbackResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `listCallbacks`
@@ -22,7 +22,7 @@ Module [payment](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-payments-mobile-money-deposits"></a>
 ### GET /sni/api/v1/payments/mobile-money/deposits
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `PaginatedResponse<MobileMoneyDepositResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `listDeposits`
@@ -35,7 +35,7 @@ Module [payment](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-payments-mobile-money-deposits-depositid"></a>
 ### GET /sni/api/v1/payments/mobile-money/deposits/{depositId}
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `MobileMoneyDepositResponse`
 - Modèles : [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `getDeposit`
@@ -47,7 +47,7 @@ Module [payment](../README.md) · 11 route(s).
 <a id="r-post-sni-api-v1-payments-mobile-money-deposits-depositid-recheck"></a>
 ### POST /sni/api/v1/payments/mobile-money/deposits/{depositId}/recheck
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
 - Réponse : `MobileMoneyDepositResponse`
 - Modèles : [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `recheck`
@@ -71,17 +71,6 @@ Module [payment](../README.md) · 11 route(s).
 - Corps JSON (facultatif) : `binary`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `refundCallback`
-
-<a id="r-get-sni-api-v1-payments-mobile-money-pawapay-return"></a>
-### GET /sni/api/v1/payments/mobile-money/pawapay/return
-
-- Accès : public, sans jeton
-- Réponse : `vide`
-- Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `paymentPageReturn`
-
-| Paramètre | Où | Type | Requis | Défaut |
-| --- | --- | --- | --- | --- |
-| `depositId` | requête | `String` | oui |  |
 
 <a id="r-post-sni-api-v1-payments-mobile-money-pawaypay-callback"></a>
 ### POST /sni/api/v1/payments/mobile-money/pawaypay/callback
@@ -222,7 +211,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `receiptNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PROCESSING`, `SUCCEEDED`, `FAILED`, `REFUNDED`, `REVERSED` |  |  |
 | `paidAt` | date-heure ISO 8601 UTC |  |  |
 | `receivedBy` | texte |  |  |
 | `failureReason` | texte |  |  |
@@ -255,7 +244,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `remainingAmount` | nombre décimal |  |  |
 | `payableAmount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `AUTHORIZED`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED` |  |  |
 | `purpose` | texte |  |  |
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |

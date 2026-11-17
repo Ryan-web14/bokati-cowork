@@ -327,7 +327,6 @@ public class PawapayCallbackProcessor {
     private boolean isTerminal(PaymentTransactionStatus status) {
         return status == PaymentTransactionStatus.SUCCEEDED
                 || status == PaymentTransactionStatus.FAILED
-                || status == PaymentTransactionStatus.CANCELLED
                 || status == PaymentTransactionStatus.REVERSED
                 || status == PaymentTransactionStatus.REFUNDED;
     }

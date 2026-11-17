@@ -35,8 +35,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
 
     private static final Set<PaymentIntentStatus> PAYABLE_STATUSES = Set.of(
             PaymentIntentStatus.PENDING,
-            PaymentIntentStatus.PROCESSING,
-            PaymentIntentStatus.AUTHORIZED
+            PaymentIntentStatus.PROCESSING
     );
 
     private final PaymentIntentRepository intentRepository;
@@ -71,13 +70,13 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     public PaymentLinkResponse createLink(String intentNumber, CreatePaymentLinkRequest request) {
         PaymentIntent intent = findIntent(intentNumber);
         if (!PAYABLE_STATUSES.contains(intent.getStatus())) {
-            throw new BadRequestException("Only pending payment intents can receive a payment link");
+            throw new BadRequestException("Seule une intention en cours peut recevoir un lien de paiement");
         }
 
         PaymentIntentResponse view = mapper.toIntentResponse(intent);
         BigDecimal amount = view.remainingAmount();
         if (amount == null || amount.signum() <= 0) {
-            throw new BadRequestException("Payment intent has no outstanding amount to collect");
+            throw new BadRequestException("L'intention n'a plus rien à encaisser");
         }
 
         // Le lien ouvre notre propre page de paiement · le depot ne part que quand le payeur a saisi
@@ -86,6 +85,11 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
         int ttl = request == null || request.expiresInMinutes() == null ? 1440 : request.expiresInMinutes();
         intent.setPaymentLinkToken(UUID.randomUUID().toString().replace("-", ""));
         intent.setPaymentLinkExpiresAt(Instant.now().plus(Math.max(5, ttl), ChronoUnit.MINUTES));
+        // L'intention vit au moins aussi longtemps que le lien : creee sans echeance, elle expirait
+        // au bout de 15 minutes et le lien de 24 h menait a une intention perimee.
+        if (intent.getExpiresAt() == null || intent.getExpiresAt().isBefore(intent.getPaymentLinkExpiresAt())) {
+            intent.setExpiresAt(intent.getPaymentLinkExpiresAt());
+        }
         intentRepository.save(intent);
         String checkoutUrl = checkoutUrl(intent.getPaymentLinkToken());
 
@@ -101,8 +105,6 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
         return new PaymentLinkResponse(
                 intent.getIntentNumber(),
                 checkoutUrl,
-                null,
-                null,
                 intent.getPaymentLinkToken(),
                 intent.getPaymentLinkExpiresAt(),
                 StringUtils.hasText(recipientEmail) ? recipientEmail : null
@@ -121,15 +123,15 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     @Transactional(readOnly = true)
     public PaymentIntentResponse resolve(String token) {
         if (!StringUtils.hasText(token)) {
-            throw new BadRequestException("Payment link token is required");
+            throw new BadRequestException("Le jeton du lien de paiement est requis");
         }
         PaymentIntent intent = intentRepository.findByPaymentLinkToken(token.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Payment link not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lien de paiement introuvable"));
         if (intent.getPaymentLinkExpiresAt() != null && intent.getPaymentLinkExpiresAt().isBefore(Instant.now())) {
-            throw new BadRequestException("Payment link has expired");
+            throw new BadRequestException("Ce lien de paiement a expiré");
         }
         if (!PAYABLE_STATUSES.contains(intent.getStatus())) {
-            throw new BadRequestException("Payment link is no longer payable");
+            throw new BadRequestException("Ce lien de paiement n'est plus payable");
         }
         return mapper.toIntentResponse(intent);
     }
@@ -188,9 +190,9 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
 
     private PaymentIntent findIntent(String intentNumber) {
         if (!StringUtils.hasText(intentNumber)) {
-            throw new BadRequestException("Payment intent number is required");
+            throw new BadRequestException("Le numéro de l'intention de paiement est requis");
         }
         return intentRepository.findByIntentNumber(intentNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Payment intent not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Intention de paiement introuvable"));
     }
 }

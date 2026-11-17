@@ -144,7 +144,17 @@ public class PawapayDepositService {
         providerResponse.put("message", response.message());
         deposit.setProviderResponseJson(writeJson(providerResponse));
 
-        if ("FAILED".equals(response.status())) {
+        if ("NOT_IMPLEMENTED".equals(response.status())) {
+            // Aucun fournisseur configure : le depot echoue tout de suite (avant, il restait en cours
+            // pour toujours, la relecture de statut etant elle aussi desactivee).
+            deposit.setStatus("FAILED");
+            deposit.setFailureCode("NOT_ENABLED");
+            deposit.setFailureReason(response.message());
+            deposit.setUserMessage("Le paiement mobile money n'est pas disponible pour le moment. Choisissez un autre moyen de paiement.");
+            deposit.setRetryable(Boolean.FALSE);
+            deposit.setFailedAt(Instant.now());
+            deposit.setNextStatusCheckAt(null);
+        } else if ("FAILED".equals(response.status())) {
             PawapayFailureCodes.Explanation explanation = PawapayFailureCodes.explain(response.failureReason());
             deposit.setStatus("FAILED");
             deposit.setFailureCode(explanation.code());

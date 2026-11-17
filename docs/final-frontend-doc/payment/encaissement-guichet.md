@@ -171,7 +171,7 @@ Le mobile money hors plateforme (`MOBILE_MONEY_OFFLINE`) n'y entre jamais.
 
 | Cas | Résultat |
 | --- | --- |
-| `PENDING`, `PROCESSING` ou `AUTHORIZED`, échéance non passée, aucun dépôt mobile money en cours | `CANCELLED` ; `cancelledAt`, `cancelledBy`, `cancellationReason` remplis ; le lien de paiement envoyé au client est fermé |
+| `PENDING` ou `PROCESSING`, échéance non passée, aucun dépôt mobile money en cours | `CANCELLED` ; `cancelledAt`, `cancelledBy`, `cancellationReason` remplis ; le lien de paiement envoyé au client est fermé |
 | un dépôt mobile money attend encore la réponse de l'opérateur | `409` : attendre sa confirmation ou son échec |
 | déjà `CANCELLED` | rendue telle quelle (`200`) |
 | `SUCCEEDED`, `EXPIRED`, `REFUNDED`... | `400` |

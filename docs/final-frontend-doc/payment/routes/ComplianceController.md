@@ -18,8 +18,8 @@ Module [payment](../README.md) · 24 route(s).
 ### GET /sni/api/v1/wallets/compliance/audit/{subjectType}/{subjectCode}
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
-- Réponse : `List<ComplianceAuditEntry>`
-- Modèles : [ComplianceAuditEntry](#m-ComplianceAuditEntry)
+- Réponse : `List<ComplianceController.AuditEntryView>`
+- Modèles : [ComplianceController.AuditEntryView](#m-ComplianceController-AuditEntryView)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/compliance/controller/ComplianceController.java`, méthode `trail`
 
 | Paramètre | Où | Type | Requis | Défaut |
@@ -301,13 +301,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `entries` | entier int64 ⚠ |  |  |
 | `brokenEntries` | texte[] |  |  |
 
-<a id="m-ComplianceAuditEntry"></a>
-#### ComplianceAuditEntry
+<a id="m-ComplianceController-AuditEntryView"></a>
+#### ComplianceController.AuditEntryView
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `entryUuid` | uuid |  |  |
+| `entryUuid` | texte |  |  |
 | `occurredAt` | date-heure ISO 8601 UTC |  |  |
 | `actor` | texte |  |  |
 | `actorRole` | texte |  |  |

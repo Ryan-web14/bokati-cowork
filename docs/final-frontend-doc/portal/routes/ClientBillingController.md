@@ -351,7 +351,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `receiptNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PROCESSING`, `SUCCEEDED`, `FAILED`, `REFUNDED`, `REVERSED` |  |  |
 | `paidAt` | date-heure ISO 8601 UTC |  |  |
 | `receivedBy` | texte |  |  |
 | `failureReason` | texte |  |  |
@@ -391,7 +391,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `remainingAmount` | nombre décimal |  |  |
 | `payableAmount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `AUTHORIZED`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED` |  |  |
 | `purpose` | texte |  |  |
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
@@ -423,7 +423,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `transactionNumber` | texte |  |  |
 | `intentNumber` | texte |  |  |
 | `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
-| `transactionStatus` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `REFUNDED`, `REVERSED` |  |  |
+| `transactionStatus` | enum : `PROCESSING`, `SUCCEEDED`, `FAILED`, `REFUNDED`, `REVERSED` |  |  |
 | `provider` | texte |  |  |
 | `providerReference` | texte |  |  |
 | `depositId` | texte |  |  |

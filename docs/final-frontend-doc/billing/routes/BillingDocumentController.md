@@ -539,6 +539,7 @@ Module [billing](../README.md) · 71 route(s).
 ### POST /sni/api/v1/billing/invoices/{documentNumber}/pay
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- En-tête `Idempotency-Key` : conseillé (opération `INVOICE_PAY`, voir le README racine)
 - Corps JSON (obligatoire) : `PayInvoiceRequest`
 - Réponse : `PayInvoiceResponse`
 - Modèles : [PayInvoiceResponse](#m-PayInvoiceResponse), [PayInvoiceRequest](#m-PayInvoiceRequest)
@@ -1943,7 +1944,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `receiptNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PROCESSING`, `SUCCEEDED`, `FAILED`, `REFUNDED`, `REVERSED` |  |  |
 | `paidAt` | date-heure ISO 8601 UTC |  |  |
 | `receivedBy` | texte |  |  |
 | `failureReason` | texte |  |  |

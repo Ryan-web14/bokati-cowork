@@ -289,7 +289,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `receiptNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PROCESSING`, `SUCCEEDED`, `FAILED`, `REFUNDED`, `REVERSED` |  |  |
 | `paidAt` | date-heure ISO 8601 UTC |  |  |
 | `receivedBy` | texte |  |  |
 | `failureReason` | texte |  |  |

@@ -9,7 +9,7 @@ Module [payment](../README.md) · 5 route(s).
 <a id="r-get-sni-api-v1-payments-mobile-money-operations"></a>
 ### GET /sni/api/v1/payments/mobile-money/operations
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `PaginatedResponse<MobileMoneyDepositResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyOperationsController.java`, méthode `search`
@@ -29,7 +29,7 @@ Module [payment](../README.md) · 5 route(s).
 <a id="r-get-sni-api-v1-payments-mobile-money-operations-reconciliation"></a>
 ### GET /sni/api/v1/payments/mobile-money/operations/reconciliation
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `MobileMoneyOperationsService.Reconciliation`
 - Modèles : [MobileMoneyOperationsService.Reconciliation](#m-MobileMoneyOperationsService-Reconciliation)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyOperationsController.java`, méthode `reconciliation`
@@ -42,7 +42,7 @@ Module [payment](../README.md) · 5 route(s).
 <a id="r-get-sni-api-v1-payments-mobile-money-operations-summary"></a>
 ### GET /sni/api/v1/payments/mobile-money/operations/summary
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `List<MobileMoneyOperationsService.StatusTotal>`
 - Modèles : [MobileMoneyOperationsService.StatusTotal](#m-MobileMoneyOperationsService-StatusTotal)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyOperationsController.java`, méthode `summary`
@@ -55,7 +55,7 @@ Module [payment](../README.md) · 5 route(s).
 <a id="r-get-sni-api-v1-payments-mobile-money-operations-depositid"></a>
 ### GET /sni/api/v1/payments/mobile-money/operations/{depositId}
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `MobileMoneyOperationsService.Detail`
 - Modèles : [MobileMoneyOperationsService.Detail](#m-MobileMoneyOperationsService-Detail)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyOperationsController.java`, méthode `detail`
@@ -67,7 +67,7 @@ Module [payment](../README.md) · 5 route(s).
 <a id="r-post-sni-api-v1-payments-mobile-money-operations-depositid-resolve"></a>
 ### POST /sni/api/v1/payments/mobile-money/operations/{depositId}/resolve
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
 - Corps JSON (obligatoire) : `MobileMoneyOperationsController.ResolveRequest`
 - Réponse : `MobileMoneyOperationsService.Detail`
 - Modèles : [MobileMoneyOperationsService.Detail](#m-MobileMoneyOperationsService-Detail), [MobileMoneyOperationsController.ResolveRequest](#m-MobileMoneyOperationsController-ResolveRequest)
@@ -179,7 +179,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `receiptNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PROCESSING`, `SUCCEEDED`, `FAILED`, `REFUNDED`, `REVERSED` |  |  |
 | `paidAt` | date-heure ISO 8601 UTC |  |  |
 | `receivedBy` | texte |  |  |
 | `failureReason` | texte |  |  |

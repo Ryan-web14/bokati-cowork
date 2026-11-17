@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-208 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+205 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -144,7 +144,6 @@
 | POST | `/sni/api/v1/payments/mobile-money/deposits/{depositId}/recheck` | PAYMENT:PROCESS | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-deposits-depositid-recheck) |
 | POST | `/sni/api/v1/payments/mobile-money/pawapay/callback` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawapay-callback) |
 | POST | `/sni/api/v1/payments/mobile-money/pawapay/refund-callback` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawapay-refund-callback) |
-| GET | `/sni/api/v1/payments/mobile-money/pawapay/return` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-get-sni-api-v1-payments-mobile-money-pawapay-return) |
 | POST | `/sni/api/v1/payments/mobile-money/pawaypay/callback` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawaypay-callback) |
 | POST | `/sni/api/v1/payments/mobile-money/pawaypay/refund-callback` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawaypay-refund-callback) |
 | POST | `/sni/api/v1/payments/mobile-money/pawaypay/test/{phoneNumber}` | PAYMENT:PROCESS | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawaypay-test-phonenumber) |
@@ -181,8 +180,6 @@
 | GET | `/sni/api/v1/payments/receipts/{receiptNumber}/pdf` | PAYMENT:READ | [PaymentReceiptController](routes/PaymentReceiptController.md#r-get-sni-api-v1-payments-receipts-receiptnumber-pdf) |
 | GET | `/sni/api/v1/payments/transactions/{transactionNumber}/receipt` | PAYMENT:READ | [PaymentReceiptController](routes/PaymentReceiptController.md#r-get-sni-api-v1-payments-transactions-transactionnumber-receipt) |
 | GET | `/sni/api/v1/payments/transactions/{transactionNumber}/receipt/pdf` | PAYMENT:READ | [PaymentReceiptController](routes/PaymentReceiptController.md#r-get-sni-api-v1-payments-transactions-transactionnumber-receipt-pdf) |
-| POST | `/sni/api/v1/payments/reconciliation-batches` | PAYMENT:PROCESS | [PaymentReconciliationController](routes/PaymentReconciliationController.md#r-post-sni-api-v1-payments-reconciliation-batches) |
-| PATCH | `/sni/api/v1/payments/reconciliation-batches/{batchNumber}/complete` | PAYMENT:PROCESS | [PaymentReconciliationController](routes/PaymentReconciliationController.md#r-patch-sni-api-v1-payments-reconciliation-batches-batchnumber-complete) |
 | GET | `/public/pay/{token}` | public | [PublicPaymentPageController](routes/PublicPaymentPageController.md#r-get-public-pay-token) |
 | POST | `/public/pay/{token}` | public | [PublicPaymentPageController](routes/PublicPaymentPageController.md#r-post-public-pay-token) |
 | GET | `/public/pay/{token}/suivi/{depositId}` | public | [PublicPaymentPageController](routes/PublicPaymentPageController.md#r-get-public-pay-token-suivi-depositid) |

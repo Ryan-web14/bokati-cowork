@@ -164,23 +164,38 @@ public class WalletControlCentreController {
     }
 
     @PostMapping("/treasury/reconciliations")
-    public ResponseEntity<WalletTreasuryReconciliation> reconcile(@Valid @RequestBody TreasuryRequest request,
-                                                                  Authentication authentication) {
-        return ResponseEntity.ok(treasuryService.reconcile(
+    public ResponseEntity<TreasuryReconciliationView> reconcile(@Valid @RequestBody TreasuryRequest request,
+                                                                Authentication authentication) {
+        return ResponseEntity.ok(TreasuryReconciliationView.of(treasuryService.reconcile(
                 new WalletTreasuryReconciliationService.Inputs(request.date(), request.currency(),
                         request.ledgerAccountBalance(), request.availableCash(), request.explanation()),
-                actor(authentication)));
+                actor(authentication))));
     }
 
     @GetMapping("/treasury/reconciliations")
-    public ResponseEntity<PaginatedResponse<WalletTreasuryReconciliation>> reconciliations(
+    public ResponseEntity<PaginatedResponse<TreasuryReconciliationView>> reconciliations(
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(new PaginatedResponse<>(treasuryService.history(unsorted(pageable))));
+        return ResponseEntity.ok(new PaginatedResponse<>(treasuryService.history(unsorted(pageable)).map(TreasuryReconciliationView::of)));
     }
 
     @GetMapping("/treasury/reconciliations/{number}")
-    public ResponseEntity<WalletTreasuryReconciliation> reconciliation(@PathVariable String number) {
-        return ResponseEntity.ok(treasuryService.get(number));
+    public ResponseEntity<TreasuryReconciliationView> reconciliation(@PathVariable String number) {
+        return ResponseEntity.ok(TreasuryReconciliationView.of(treasuryService.get(number)));
+    }
+
+    /** Rapprochement de tresorerie, sans identifiant interne. */
+    public record TreasuryReconciliationView(String reconciliationNumber, java.time.LocalDate reconciliationDate, String currency,
+                                             java.math.BigDecimal totalWalletBalance, java.math.BigDecimal totalHeldBalance,
+                                             Integer walletCount, java.math.BigDecimal ledgerAccountBalance,
+                                             java.math.BigDecimal availableCash, java.math.BigDecimal coverageRatio,
+                                             java.math.BigDecimal variance, Boolean varianceExplained, String explainedBy,
+                                             String status, String preparedBy, java.time.Instant createdAt) {
+        static TreasuryReconciliationView of(WalletTreasuryReconciliation r) {
+            return new TreasuryReconciliationView(r.getReconciliationNumber(), r.getReconciliationDate(), r.getCurrency(),
+                    r.getTotalWalletBalance(), r.getTotalHeldBalance(), r.getWalletCount(), r.getLedgerAccountBalance(),
+                    r.getAvailableCash(), r.getCoverageRatio(), r.getVariance(), r.getVarianceExplained(), r.getExplainedBy(),
+                    r.getStatus() == null ? null : r.getStatus().name(), r.getPreparedBy(), r.getCreatedAt());
+        }
     }
 
     // -------------------------------------------------------------------------------------

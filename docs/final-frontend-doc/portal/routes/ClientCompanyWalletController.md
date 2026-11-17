@@ -441,6 +441,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `heldBalance` | nombre décimal |  |  |
 | `openedAt` | date-heure ISO 8601 UTC |  |  |
 | `closedAt` | date-heure ISO 8601 UTC |  |  |
+| `ownerName` | texte |  |  |
+| `activeHolds` | [WalletResponse.HoldLine](#m-WalletResponse-HoldLine)[] |  |  |
 
 <a id="m-CompanyWalletDtos-EntryView"></a>
 #### CompanyWalletDtos.EntryView
@@ -479,7 +481,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `receiptNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PROCESSING`, `SUCCEEDED`, `FAILED`, `REFUNDED`, `REVERSED` |  |  |
 | `paidAt` | date-heure ISO 8601 UTC |  |  |
 | `receivedBy` | texte |  |  |
 | `failureReason` | texte |  |  |
@@ -492,6 +494,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `bankName` | texte |  |  |
 | `payerName` | texte |  |  |
 | `payerPhone` | texte |  |  |
+
+<a id="m-WalletResponse-HoldLine"></a>
+#### WalletResponse.HoldLine
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `holdNumber` | texte |  |  |
+| `amount` | nombre décimal |  |  |
+| `sourceType` | texte |  |  |
+| `sourceCode` | texte |  |  |
+| `sourceLabel` | texte |  |  |
+| `expiresAt` | date-heure ISO 8601 UTC |  |  |
+| `createdAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-MobileMoneyDepositResponse-AccountDetailsResponse"></a>
 #### MobileMoneyDepositResponse.AccountDetailsResponse

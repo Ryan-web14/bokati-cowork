@@ -43,7 +43,7 @@ class BillingCalculationServiceTest {
         // Regression : le total se calculait depuis la base taxable, or calculateTaxExcludedAmounts
         // force taxableAmount a zero sur une ligne exoneree. Un avoir - dont la ligne d'ajustement
         // est toujours taxable=false - ressortait donc a 0,00 et son application levait
-        // "Payment amount must be positive", bloquant l'annulation d'une facture scellee.
+        // "Le montant du paiement doit être positif", bloquant l'annulation d'une facture scellee.
         var result = service.calculate(List.of(line("Avoir", "1000", false)), List.of());
 
         assertThat(result.subtotalAmount()).isEqualByComparingTo("1000");

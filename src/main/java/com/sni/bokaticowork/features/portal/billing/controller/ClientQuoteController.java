@@ -72,7 +72,7 @@ public class ClientQuoteController {
     @PostMapping("/proformas/{documentNumber}/pay/mobile-money")
     public ResponseEntity<MobileMoneyDepositResponse> payProforma(@PathVariable String documentNumber,
                                                                   @Valid @RequestBody ClientInitiateMobileMoneyPaymentRequest request) {
-        return ResponseEntity.ok(quotes.payProforma(member(), documentNumber, request));
+        return ResponseEntity.ok(quotes.payProforma(member(), documentNumber, request).forPortal());
     }
 
     // ------------------------------------------------------------------ reclamations

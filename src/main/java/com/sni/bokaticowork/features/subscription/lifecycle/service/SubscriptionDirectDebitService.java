@@ -220,7 +220,7 @@ public class SubscriptionDirectDebitService {
                     transactionNumber = paid.transaction() == null ? null : paid.transaction().transactionNumber();
                     message = "Prélevé";
                 } catch (RuntimeException ex) {
-                    status = ex.getMessage() != null && ex.getMessage().toLowerCase().contains("insufficient")
+                    status = ex.getMessage() != null && (ex.getMessage().toLowerCase().contains("insufficient") || ex.getMessage().toLowerCase().contains("insuffisant"))
                             ? SubscriptionDebitAttempt.Status.INSUFFICIENT_FUNDS : SubscriptionDebitAttempt.Status.FAILED;
                     message = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
                 }
