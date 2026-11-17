@@ -166,10 +166,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `approvalLevel` | enum : `NONE`, `MANAGER`, `DIRECTOR`, `EXECUTIVE` |  |  |
-| `minAmount` | entier int64 ⚠ |  |  |
-| `maxAmount` | entier int64 ⚠ |  |  |
+| `minAmount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `maxAmount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-InventoryAdjustmentApprovalRuleRequest"></a>
@@ -178,8 +178,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `approvalLevel` | enum : `NONE`, `MANAGER`, `DIRECTOR`, `EXECUTIVE` | oui |  |
-| `minAmount` | entier int64 ⚠ | oui |  |
-| `maxAmount` | entier int64 ⚠ |  |  |
+| `minAmount` | entier int64 (texte au-delà de 2^53) | oui |  |
+| `maxAmount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-AdjustmentReasonResponse"></a>
@@ -217,7 +217,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `stockAccount` | texte |  |  |
 | `counterpartAccount` | texte |  |  |
 | `direction` | enum : `DEBIT`, `CREDIT` |  |  |
-| `amount` | entier int64 ⚠ |  |  |
+| `amount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `accountingDate` | date AAAA-MM-JJ |  |  |
 | `periodCode` | texte |  |  |
 | `label` | texte |  |  |
@@ -236,7 +236,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `reopenedBy` | texte |  |  |
 | `reopenedAt` | date-heure ISO 8601 UTC |  |  |
 | `reopenReason` | texte |  |  |
-| `closingStockValue` | entier int64 ⚠ |  |  |
+| `closingStockValue` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-InventoryPeriodRequest"></a>
 #### InventoryPeriodRequest
@@ -265,7 +265,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `itemCode` | texte |  |  |
 | `locationCode` | texte |  |  |
 | `quantityOnHand` | nombre décimal |  |  |
-| `unitCost` | entier int64 ⚠ |  |  |
-| `totalValue` | entier int64 ⚠ |  |  |
+| `unitCost` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalValue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `valuationMethod` | enum : `WEIGHTED_AVERAGE`, `FIFO` |  |  |
 | `oldestLayerAgeDays` | entier |  |  |

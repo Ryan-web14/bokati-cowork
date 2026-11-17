@@ -34,7 +34,7 @@ Module [socle](../README.md) · 5 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `long` | oui |  |
+| `id` | chemin | `long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-admin-audit-health"></a>
 ### GET /sni/api/v1/admin/audit/health
@@ -77,7 +77,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `traceId` | texte |  |  |
 | `requestId` | texte |  |  |
@@ -100,15 +100,15 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `taskName` | texte |  |  |
 | `lastStartedAt` | date-heure ISO 8601 UTC |  |  |
 | `lastFinishedAt` | date-heure ISO 8601 UTC |  |  |
-| `lastDurationMs` | entier int64 ⚠ |  |  |
+| `lastDurationMs` | entier int64 (texte au-delà de 2^53) |  |  |
 | `lastOutcome` | texte |  |  |
 | `lastError` | texte |  |  |
 | `lastFailureAt` | date-heure ISO 8601 UTC |  |  |
-| `runCount` | entier int64 ⚠ |  |  |
-| `failureCount` | entier int64 ⚠ |  |  |
+| `runCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `failureCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `consecutiveFailures` | entier |  |  |
-| `averageDurationMs` | entier int64 ⚠ |  |  |
-| `maxDurationMs` | entier int64 ⚠ |  |  |
+| `averageDurationMs` | entier int64 (texte au-delà de 2^53) |  |  |
+| `maxDurationMs` | entier int64 (texte au-delà de 2^53) |  |  |
 | `instance` | texte |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -117,11 +117,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `taskName` | texte |  |  |
 | `startedAt` | date-heure ISO 8601 UTC |  |  |
 | `finishedAt` | date-heure ISO 8601 UTC |  |  |
-| `durationMs` | entier int64 ⚠ |  |  |
+| `durationMs` | entier int64 (texte au-delà de 2^53) |  |  |
 | `outcome` | texte |  |  |
 | `error` | texte |  |  |
 | `reason` | texte |  |  |

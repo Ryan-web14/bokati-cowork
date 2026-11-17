@@ -39,10 +39,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `journal` | texte |  |  |
-| `checked` | entier int64 ⚠ |  |  |
-| `firstSeq` | entier int64 ⚠ |  |  |
-| `lastSeq` | entier int64 ⚠ |  |  |
-| `unchained` | entier int64 ⚠ |  |  |
+| `checked` | entier int64 (texte au-delà de 2^53) |  |  |
+| `firstSeq` | entier int64 (texte au-delà de 2^53) |  |  |
+| `lastSeq` | entier int64 (texte au-delà de 2^53) |  |  |
+| `unchained` | entier int64 (texte au-delà de 2^53) |  |  |
 | `intact` | booléen |  |  |
 | `breaks` | [AuditIntegrity.Break](#m-AuditIntegrity-Break)[] |  |  |
 
@@ -54,8 +54,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `name` | texte |  |  |
 | `table` | texte |  |  |
 | `settingKey` | texte |  |  |
-| `days` | entier int64 ⚠ |  |  |
-| `rows` | entier int64 ⚠ |  |  |
+| `days` | entier int64 (texte au-delà de 2^53) |  |  |
+| `rows` | entier int64 (texte au-delà de 2^53) |  |  |
 | `oldest` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-AuditIntegrity-Break"></a>
@@ -63,5 +63,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `chainSeq` | entier int64 ⚠ |  |  |
+| `chainSeq` | entier int64 (texte au-delà de 2^53) |  |  |
 | `kind` | texte |  |  |

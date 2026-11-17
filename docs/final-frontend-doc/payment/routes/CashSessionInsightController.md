@@ -84,19 +84,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `status` | texte |  |  |
 | `expectedBalance` | nombre décimal |  |  |
 | `expectedHidden` | booléen |  |  |
-| `paymentCount` | entier int64 ⚠ |  |  |
-| `customersServed` | entier int64 ⚠ |  |  |
+| `paymentCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `customersServed` | entier int64 (texte au-delà de 2^53) |  |  |
 | `paymentTotal` | nombre décimal |  |  |
 | `averageTicket` | nombre décimal |  |  |
-| `refundCount` | entier int64 ⚠ |  |  |
+| `refundCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `refundTotal` | nombre décimal |  |  |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `lastMovementAt` | date-heure ISO 8601 UTC |  |  |
-| `activeMinutes` | entier int64 ⚠ |  |  |
-| `pauseMinutes` | entier int64 ⚠ |  |  |
+| `activeMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
+| `pauseMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `detentionCap` | nombre décimal |  |  |
 | `detentionRemaining` | nombre décimal |  |  |
-| `openAnomalies` | entier int64 ⚠ |  |  |
+| `openAnomalies` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-CashSessionInsightService-SessionPayments"></a>
 #### CashSessionInsightService.SessionPayments
@@ -107,9 +107,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `lines` | [CashSessionInsightService.PaymentLine](#m-CashSessionInsightService-PaymentLine)[] |  |  |
 | `byMethod` | [CashSessionInsightService.MethodTotal](#m-CashSessionInsightService-MethodTotal)[] |  |  |
 | `byHour` | [CashSessionInsightService.HourTotal](#m-CashSessionInsightService-HourTotal)[] |  |  |
-| `paymentCount` | entier int64 ⚠ |  |  |
+| `paymentCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `paymentTotal` | nombre décimal |  |  |
-| `refundCount` | entier int64 ⚠ |  |  |
+| `refundCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `refundTotal` | nombre décimal |  |  |
 
 <a id="m-CashRegisterService-ReassignedPayment"></a>
@@ -187,7 +187,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `paymentMethod` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `amount` | nombre décimal |  |  |
 
 <a id="m-CashSessionInsightService-HourTotal"></a>
@@ -196,5 +196,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `hour` | entier |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `amount` | nombre décimal |  |  |

@@ -233,7 +233,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `number` | texte |  |  |
 | `kind` | texte |  |  |
 | `supplierCode` | texte |  |  |
@@ -303,7 +303,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `number` | texte |  |  |
 | `supplierCode` | texte |  |  |
 | `needStatementNumber` | texte |  |  |
@@ -375,7 +375,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `dueDate` | date AAAA-MM-JJ |  |  |
 | `netToPay` | nombre décimal |  |  |
 | `remaining` | nombre décimal |  |  |
-| `daysLate` | entier int64 ⚠ |  |  |
+| `daysLate` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-PurchaseService-SupplierView"></a>
 #### PurchaseService.SupplierView
@@ -408,7 +408,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `name` | texte |  |  |
 | `niu` | texte |  |  |
@@ -425,7 +425,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `withholdingAccount` | texte |  |  |
 | `withholdingBase` | texte |  |  |
 | `withholdingLabel` | texte |  |  |
-| `inventorySupplierId` | entier int64 ⚠ |  |  |
+| `inventorySupplierId` | code identifiant (texte) |  |  |
 | `status` | texte |  |  |
 | `createdBy` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
@@ -457,8 +457,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `invoiceId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `invoiceId` | code identifiant (texte) |  |  |
 | `lineNo` | entier |  |  |
 | `designation` | texte |  |  |
 | `natureCode` | texte |  |  |
@@ -480,7 +480,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `invoiceNumber` | texte |  |  |
 | `supplierCode` | texte |  |  |
 | `paymentDate` | date AAAA-MM-JJ |  |  |
@@ -512,8 +512,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `orderId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `orderId` | code identifiant (texte) |  |  |
 | `lineNo` | entier |  |  |
 | `designation` | texte |  |  |
 | `quantity` | nombre décimal |  |  |

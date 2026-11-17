@@ -124,12 +124,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `totalCount` | entier int64 ⚠ |  |  |
-| `confirmedCount` | entier int64 ⚠ |  |  |
-| `completedCount` | entier int64 ⚠ |  |  |
-| `cancelledCount` | entier int64 ⚠ |  |  |
+| `totalCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `confirmedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `completedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `cancelledCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalRevenue` | nombre décimal |  |  |
-| `totalBookedMinutes` | entier int64 ⚠ |  |  |
+| `totalBookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `variation` | [ActivityReportResponse.Variation](#m-ActivityReportResponse-Variation) |  |  |
 
 <a id="m-ActivityReportResponse-InvoiceSection"></a>
@@ -137,11 +137,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `totalCount` | entier int64 ⚠ |  |  |
+| `totalCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalInvoiced` | nombre décimal |  |  |
 | `totalPaid` | nombre décimal |  |  |
 | `totalOutstanding` | nombre décimal |  |  |
-| `overdueCount` | entier int64 ⚠ |  |  |
+| `overdueCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `variation` | [ActivityReportResponse.Variation](#m-ActivityReportResponse-Variation) |  |  |
 
 <a id="m-ActivityReportResponse-PaymentSection"></a>
@@ -149,7 +149,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `transactionCount` | entier int64 ⚠ |  |  |
+| `transactionCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalReceived` | nombre décimal |  |  |
 | `cashAmount` | nombre décimal |  |  |
 | `walletAmount` | nombre décimal |  |  |
@@ -163,10 +163,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `activeCount` | entier int64 ⚠ |  |  |
-| `newCount` | entier int64 ⚠ |  |  |
-| `cancelledCount` | entier int64 ⚠ |  |  |
-| `renewedCount` | entier int64 ⚠ |  |  |
+| `activeCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `newCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `cancelledCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `renewedCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `variation` | [ActivityReportResponse.Variation](#m-ActivityReportResponse-Variation) |  |  |
 
 <a id="m-ActivityReportResponse-StockSection"></a>
@@ -174,8 +174,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `inboundMovements` | entier int64 ⚠ |  |  |
-| `outboundMovements` | entier int64 ⚠ |  |  |
+| `inboundMovements` | entier int64 (texte au-delà de 2^53) |  |  |
+| `outboundMovements` | entier int64 (texte au-delà de 2^53) |  |  |
 | `inboundValue` | nombre décimal |  |  |
 | `outboundValue` | nombre décimal |  |  |
 | `variation` | [ActivityReportResponse.Variation](#m-ActivityReportResponse-Variation) |  |  |
@@ -185,9 +185,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `signedCount` | entier int64 ⚠ |  |  |
-| `expiredCount` | entier int64 ⚠ |  |  |
-| `activeCount` | entier int64 ⚠ |  |  |
+| `signedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `expiredCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `activeCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `variation` | [ActivityReportResponse.Variation](#m-ActivityReportResponse-Variation) |  |  |
 
 <a id="m-ActivityReportResponse-MemberSection"></a>
@@ -195,8 +195,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `totalActive` | entier int64 ⚠ |  |  |
-| `newCount` | entier int64 ⚠ |  |  |
+| `totalActive` | entier int64 (texte au-delà de 2^53) |  |  |
+| `newCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `variation` | [ActivityReportResponse.Variation](#m-ActivityReportResponse-Variation) |  |  |
 
 <a id="m-ActivityReportResponse-SupportSection"></a>
@@ -204,10 +204,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `openedCount` | entier int64 ⚠ |  |  |
-| `resolvedCount` | entier int64 ⚠ |  |  |
-| `closedCount` | entier int64 ⚠ |  |  |
-| `highPriorityCount` | entier int64 ⚠ |  |  |
+| `openedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `resolvedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `closedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `highPriorityCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `variation` | [ActivityReportResponse.Variation](#m-ActivityReportResponse-Variation) |  |  |
 
 <a id="m-ActivityReportResponse-Variation"></a>

@@ -58,7 +58,7 @@ Module [company](../README.md) · 4 route(s).
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
 | `passNumber` | chemin | `String` | oui |  |
-| `accessId` | chemin | `Long` | oui |  |
+| `accessId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -77,7 +77,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validUntil` | date-heure ISO 8601 UTC |  |  |
 | `maxUses` | entier |  |  |
 | `usedCount` | entier |  |  |
-| `beneficiaries` | entier int64 ⚠ |  |  |
+| `beneficiaries` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-PassSharingDtos-PassView"></a>
 #### PassSharingDtos.PassView
@@ -104,7 +104,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `memberId` | texte |  |  |
 | `futureBookings` | texte[] |  |  |
 | `warning` | texte |  |  |
@@ -133,7 +133,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `memberId` | texte |  |  |
 | `memberName` | texte |  |  |
 | `open` | booléen |  |  |

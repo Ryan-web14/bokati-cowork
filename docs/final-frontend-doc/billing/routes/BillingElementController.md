@@ -17,7 +17,7 @@ Module [billing](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `allocationId` | chemin | `Long` | oui |  |
+| `allocationId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-billing-documents-documentnumber-elements"></a>
 ### GET /sni/api/v1/billing/documents/{documentNumber}/elements
@@ -131,7 +131,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `allocationId` | entier int64 ⚠ |  |  |
+| `allocationId` | code identifiant (texte) |  |  |
 | `transactionNumber` | texte |  |  |
 | `documentNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
@@ -228,7 +228,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `mode` | texte |  |  |
@@ -240,8 +240,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `allocationId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `allocationId` | code identifiant (texte) |  |  |
 | `documentNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `invoiceOutcome` | texte |  |  |

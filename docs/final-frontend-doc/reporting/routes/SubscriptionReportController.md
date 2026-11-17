@@ -66,7 +66,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `generatedAt` | date-heure ISO 8601 UTC |  |  |
-| `totalActive` | entier int64 ⚠ |  |  |
+| `totalActive` | entier int64 (texte au-delà de 2^53) |  |  |
 | `currentMrr` | nombre décimal |  |  |
 | `mrrTrend` | [SubscriptionReportResponse.MrrDataPoint](#m-SubscriptionReportResponse-MrrDataPoint)[] |  |  |
 | `activeByPlan` | [SubscriptionReportResponse.PlanDistribution](#m-SubscriptionReportResponse-PlanDistribution)[] |  |  |
@@ -81,7 +81,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `month` | date AAAA-MM-JJ |  |  |
 | `mrr` | nombre décimal |  |  |
-| `activeCount` | entier int64 ⚠ |  |  |
+| `activeCount` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-SubscriptionReportResponse-PlanDistribution"></a>
 #### SubscriptionReportResponse.PlanDistribution
@@ -89,7 +89,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `planName` | texte |  |  |
-| `subscriptionCount` | entier int64 ⚠ |  |  |
+| `subscriptionCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalAmount` | nombre décimal |  |  |
 | `percentage` | nombre décimal |  |  |
 
@@ -99,8 +99,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `month` | date AAAA-MM-JJ |  |  |
-| `cancelledCount` | entier int64 ⚠ |  |  |
-| `totalCount` | entier int64 ⚠ |  |  |
+| `cancelledCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `churnRate` | nombre décimal |  |  |
 
 <a id="m-SubscriptionReportResponse-UpcomingRenewal"></a>
@@ -115,7 +115,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `totalAmount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
 | `currentPeriodEnd` | date AAAA-MM-JJ |  |  |
-| `daysUntilRenewal` | entier int64 ⚠ |  |  |
+| `daysUntilRenewal` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-SubscriptionReportResponse-PlanRevenue"></a>
 #### SubscriptionReportResponse.PlanRevenue
@@ -123,6 +123,6 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `planName` | texte |  |  |
-| `subscriptionCount` | entier int64 ⚠ |  |  |
+| `subscriptionCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalRevenue` | nombre décimal |  |  |
 | `percentage` | nombre décimal |  |  |

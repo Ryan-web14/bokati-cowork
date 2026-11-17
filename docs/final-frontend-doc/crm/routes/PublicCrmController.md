@@ -34,4 +34,4 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `estimatedAmount` | nombre décimal |  |  |
 | `probability` | entier |  |  |
 | `expectedCloseDate` | date AAAA-MM-JJ |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |

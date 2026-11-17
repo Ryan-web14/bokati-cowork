@@ -71,8 +71,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `changeNumber` | texte |  |  |
 | `subscriptionNumber` | texte |  |  |
 | `changeType` | enum : `UPGRADE`, `DOWNGRADE`, `ADD_ADDON`, `REMOVE_ADDON`, `QUANTITY_CHANGE` |  |  |
-| `currentPlanVersionId` | entier int64 ⚠ |  |  |
-| `targetPlanVersionId` | entier int64 ⚠ |  |  |
+| `currentPlanVersionId` | code identifiant (texte) |  |  |
+| `targetPlanVersionId` | code identifiant (texte) |  |  |
 | `effectivePolicy` | enum : `IMMEDIATE`, `NEXT_BILLING_PERIOD`, `CUSTOM_DATE` |  |  |
 | `effectiveDate` | date AAAA-MM-JJ |  |  |
 | `prorationAmount` | nombre décimal |  |  |
@@ -101,7 +101,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `changeType` | enum : `UPGRADE`, `DOWNGRADE`, `ADD_ADDON`, `REMOVE_ADDON`, `QUANTITY_CHANGE` | oui |  |
-| `targetPlanVersionId` | entier int64 ⚠ |  |  |
+| `targetPlanVersionId` | code identifiant (texte) |  |  |
 | `effectivePolicy` | enum : `IMMEDIATE`, `NEXT_BILLING_PERIOD`, `CUSTOM_DATE` | oui |  |
 | `effectiveDate` | date AAAA-MM-JJ |  |  |
 | `prorationAmount` | nombre décimal |  |  |

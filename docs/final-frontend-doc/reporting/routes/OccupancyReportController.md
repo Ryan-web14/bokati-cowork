@@ -77,8 +77,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `fromDate` | date AAAA-MM-JJ |  |  |
 | `toDate` | date AAAA-MM-JJ |  |  |
 | `periodDays` | entier |  |  |
-| `totalBookings` | entier int64 ⚠ |  |  |
-| `totalBookedMinutes` | entier int64 ⚠ |  |  |
+| `totalBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalBookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `overallOccupancyRate` | nombre décimal |  |  |
 | `byResourceType` | [OccupancyReportResponse.ResourceTypeOccupancy](#m-OccupancyReportResponse-ResourceTypeOccupancy)[] |  |  |
 | `byResource` | [OccupancyReportResponse.ResourceOccupancy](#m-OccupancyReportResponse-ResourceOccupancy)[] |  |  |
@@ -90,9 +90,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `typeCode` | texte |  |  |
 | `typeName` | texte |  |  |
-| `resourceCount` | entier int64 ⚠ |  |  |
-| `totalBookings` | entier int64 ⚠ |  |  |
-| `totalBookedMinutes` | entier int64 ⚠ |  |  |
+| `resourceCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalBookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalRevenue` | nombre décimal |  |  |
 | `occupancyRate` | nombre décimal |  |  |
 
@@ -105,8 +105,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `resourceName` | texte |  |  |
 | `typeCode` | texte |  |  |
 | `typeName` | texte |  |  |
-| `bookingCount` | entier int64 ⚠ |  |  |
-| `bookedMinutes` | entier int64 ⚠ |  |  |
-| `availableMinutes` | entier int64 ⚠ |  |  |
+| `bookingCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `bookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
+| `availableMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `occupancyRate` | nombre décimal |  |  |
 | `revenue` | nombre décimal |  |  |

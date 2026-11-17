@@ -175,7 +175,7 @@ Module [fund](../README.md) · 39 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-fund-requests-import-legacy"></a>
 ### POST /sni/api/v1/fund-requests/import-legacy
@@ -622,7 +622,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `returned` | nombre décimal |  |  |
 | `remaining` | nombre décimal |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |
-| `daysOverdue` | entier int64 ⚠ |  |  |
+| `daysOverdue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `status` | enum : `DRAFT`, `SUBMITTED`, `IN_APPROVAL`, `APPROVED`, `PARTIALLY_DISBURSED`, `DISBURSED`, `TO_JUSTIFY`, `PARTIALLY_JUSTIFIED`, `JUSTIFIED`, `SETTLED`, `REJECTED`, `CANCELLED`, `EXPIRED` |  |  |
 
 <a id="m-FundDtos-DelegationView"></a>
@@ -630,7 +630,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `delegator` | texte |  |  |
 | `delegate` | texte |  |  |
 | `level` | entier |  |  |
@@ -844,8 +844,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `score` | entier |  |  |
 | `reasons` | texte[] |  |  |
 | `declared` | booléen |  |  |
-| `historyCount` | entier int64 ⚠ |  |  |
-| `contractUnitPrice` | entier int64 ⚠ |  |  |
+| `historyCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `contractUnitPrice` | entier int64 (texte au-delà de 2^53) |  |  |
 | `leadTimeDays` | entier |  |  |
 | `categories` | [SupplierSuggestionDtos.SupplierCategoryView](#m-SupplierSuggestionDtos-SupplierCategoryView)[] |  |  |
 
@@ -854,7 +854,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `lineId` | entier int64 ⚠ |  |  |
+| `lineId` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `itemLabel` | texte |  |  |
 | `sectionCode` | texte |  |  |

@@ -204,7 +204,7 @@ Module [subscription](../README.md) · 17 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `subscriptionNumber` | chemin | `String` | oui |  |
-| `targetPlanVersionId` | requête | `Long` | oui |  |
+| `targetPlanVersionId` | requête | `Long` (code identifiant ou nombre) | oui |  |
 | `effectiveDate` | requête | `LocalDate` |  |  |
 
 ## Modèles
@@ -267,7 +267,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `policyCode` | texte |  |  |
 | `name` | texte |  |  |
 | `prorationPolicy` | enum : `DAILY`, `MONTH_STARTED`, `NONE` |  |  |

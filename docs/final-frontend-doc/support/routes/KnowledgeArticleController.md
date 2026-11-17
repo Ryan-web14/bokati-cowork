@@ -101,7 +101,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `articleCode` | texte |  |  |
 | `title` | texte |  |  |
 | `slug` | texte |  |  |
@@ -111,9 +111,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `publicVisible` | booléen |  |  |
 | `internalOnly` | booléen |  |  |
 | `active` | booléen |  |  |
-| `viewCount` | entier int64 ⚠ |  |  |
-| `createdBy` | entier int64 ⚠ |  |  |
-| `updatedBy` | entier int64 ⚠ |  |  |
+| `viewCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `createdBy` | entier int64 (texte au-delà de 2^53) |  |  |
+| `updatedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -143,10 +143,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `from` | date-heure ISO 8601 UTC |  |  |
 | `to` | date-heure ISO 8601 UTC |  |  |
-| `totalArticles` | entier int64 ⚠ |  |  |
-| `activeArticles` | entier int64 ⚠ |  |  |
-| `totalViews` | entier int64 ⚠ |  |  |
-| `ticketsCreatedInPeriod` | entier int64 ⚠ |  |  |
+| `totalArticles` | entier int64 (texte au-delà de 2^53) |  |  |
+| `activeArticles` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalViews` | entier int64 (texte au-delà de 2^53) |  |  |
+| `ticketsCreatedInPeriod` | entier int64 (texte au-delà de 2^53) |  |  |
 | `topArticles` | [KnowledgeDtos.ArticleViewEntry](#m-KnowledgeDtos-ArticleViewEntry)[] |  |  |
 
 <a id="m-KnowledgeDtos-ArticleSuggestionResponse"></a>
@@ -166,4 +166,4 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `articleCode` | texte |  |  |
 | `title` | texte |  |  |
-| `viewCount` | entier int64 ⚠ |  |  |
+| `viewCount` | entier int64 (texte au-delà de 2^53) |  |  |

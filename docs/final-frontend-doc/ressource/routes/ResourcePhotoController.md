@@ -40,7 +40,7 @@ Module [ressource](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-resources-resourcecode-photos-id"></a>
 ### PATCH /sni/api/v1/resources/{resourceCode}/photos/{id}
@@ -53,7 +53,7 @@ Module [ressource](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -64,7 +64,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `resourceCode` | texte |  |  |
 | `documentCode` | texte |  |  |
 | `caption` | texte |  |  |

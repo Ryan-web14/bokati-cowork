@@ -19,7 +19,7 @@ Points clés :
 
 - `type` d'un client : `PERSON` ou `COMPANY`. Pour une personne, le serveur remplit `companyName` avec `"No company"` ; pour une organisation, `firstname` et `lastname` valent `"No firstname"` et `"No lastname"` quand ils ne sont pas fournis (`src/main/java/com/sni/bokaticowork/features/client/customer/mapper/decorator/CustomerMapperDecorator.java:53-60`). Ne pas afficher ces valeurs telles quelles.
 - Le `customerId` d'un membre est son **payeur par défaut** : ses factures vont à ce client. Il peut s'agir de sa fiche personnelle (`PERSON`) ou d'une organisation (`COMPANY`). Les rattachements à une ou plusieurs organisations (liens avec statut, mode de facturation, fin de lien) sont un autre objet, géré par le module `company` : [../company/README.md](../company/README.md).
-- `CustomerSummaryresponse` contient un champ `id` numérique int64 : ne pas l'utiliser, travailler avec `customerId` (voir [identifiants](../README.md#identifiants--attention-aux-grands-nombres)).
+- `CustomerSummaryresponse` contient un champ `id` numérique int64 : ne pas l'utiliser, travailler avec `customerId` (voir [identifiants](../README.md#identifiants--codes-en-texte)).
 - Les fiches supprimées restent en base (`deleted = true`) et disparaissent de toutes les lectures. Un membre dont le client ou le compte utilisateur est supprimé disparaît aussi des listes (`findAllVisible`, `src/main/java/com/sni/bokaticowork/features/client/member/repository/repo/MemberRepository.java:92-112`).
 
 ## Statuts et cycle de vie

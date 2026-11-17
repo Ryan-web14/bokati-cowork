@@ -327,7 +327,7 @@ Module [accounting](../README.md) · 37 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-numbering-checks"></a>
 ### POST /sni/api/v1/accounting/numbering-checks
@@ -682,7 +682,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `accountNumber` | texte |  |  |
 | `thirdPartyCode` | texte |  |  |
@@ -697,7 +697,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `unletteredBy` | texte |  |  |
 | `unletteredAt` | date-heure ISO 8601 UTC |  |  |
 | `unletteringReason` | texte |  |  |
-| `lineIds` | entier int64 ⚠[] |  |  |
+| `lineIds` | code identifiant (texte)[] |  |  |
 
 <a id="m-AccountingRequests-Letter"></a>
 #### AccountingRequests.Letter
@@ -715,7 +715,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `lineId` | entier int64 ⚠ |  |  |
+| `lineId` | code identifiant (texte) |  |  |
 | `entryNumber` | texte |  |  |
 | `entryDate` | date AAAA-MM-JJ |  |  |
 | `journalCode` | texte |  |  |
@@ -759,8 +759,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `lockedBy` | texte |  |  |
 | `closedAt` | date-heure ISO 8601 UTC |  |  |
 | `closedBy` | texte |  |  |
-| `pendingEntries` | entier int64 ⚠ |  |  |
-| `draftEntries` | entier int64 ⚠ |  |  |
+| `pendingEntries` | entier int64 (texte au-delà de 2^53) |  |  |
+| `draftEntries` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-AccountingResponses-GeneralLedger"></a>
 #### AccountingResponses.GeneralLedger
@@ -808,7 +808,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `lineNo` | entier |  |  |
 | `accountNumber` | texte |  |  |
 | `accountLabel` | texte |  |  |
@@ -851,7 +851,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `lineId` | entier int64 ⚠ | oui |  |
+| `lineId` | code identifiant (texte) | oui |  |
 | `amount` | nombre décimal |  |  |
 
 <a id="m-AccountingResponses-LedgerAccount"></a>

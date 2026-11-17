@@ -26,7 +26,7 @@ Il travaille avec tous les modules : chaque module publie ses événements dans 
 | Enregistrement d'idempotence (`IdempotencyRecord`) | `id` numérique | Une clé `Idempotency-Key` reçue, par opération, avec la réponse mémorisée. |
 | Rapport de purge (`PurgeReport`) | `memberCode` | Nombre de lignes supprimées (ou qui le seraient) par table pour un membre. |
 
-Les identifiants numériques de ce module ne servent qu'à l'affichage, sauf deux : `POST /sni/api/v1/admin/outbox-events/{id}/requeue` et les routes `/sni/api/v1/addresses/{id}`. Pour ces deux cas, garder l'`id` en texte (voir [Identifiants](../README.md#identifiants--attention-aux-grands-nombres)).
+Les identifiants numériques de ce module ne servent qu'à l'affichage, sauf deux : `POST /sni/api/v1/admin/outbox-events/{id}/requeue` et les routes `/sni/api/v1/addresses/{id}`. Pour ces deux cas, garder l'`id` en texte (voir [Identifiants](../README.md#identifiants--codes-en-texte)).
 
 ## Statuts et cycle de vie
 

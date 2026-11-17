@@ -276,7 +276,7 @@ Module [accounting](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-accounting-analytic-rules-id"></a>
 ### PUT /sni/api/v1/accounting/analytic/rules/{id}
@@ -289,7 +289,7 @@ Module [accounting](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-analytic-sections-pending"></a>
 ### GET /sni/api/v1/accounting/analytic/sections/pending
@@ -314,7 +314,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `defaultSection` | texte |  |  |
 | `sortOrder` | entier |  |  |
 | `active` | booléen |  |  |
-| `sections` | entier int64 ⚠ |  |  |
+| `sections` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-AnalyticService-AxisInput"></a>
 #### AnalyticService.AxisInput
@@ -375,7 +375,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `periodCode` | texte |  |  |
 | `axisCode` | texte |  |  |
 | `fromSection` | texte |  |  |
@@ -390,7 +390,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `entryLineId` | entier int64 ⚠ |  |  |
+| `entryLineId` | code identifiant (texte) |  |  |
 | `axisCode` | texte |  |  |
 | `sectionCode` | texte |  |  |
 | `percentage` | nombre décimal |  |  |
@@ -424,7 +424,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `entryLineId` | entier int64 ⚠ |  |  |
+| `entryLineId` | code identifiant (texte) |  |  |
 | `axisCode` | texte |  |  |
 | `fromSection` | texte |  |  |
 | `toSection` | texte |  |  |
@@ -497,7 +497,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `priority` | entier |  |  |
 | `axisCode` | texte |  |  |
 | `accountPrefix` | texte |  |  |

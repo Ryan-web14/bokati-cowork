@@ -85,6 +85,14 @@ public class ApplicationConfig {
             @Override
             public void addFormatters(FormatterRegistry registry) {
                 registry.addConverter(new FrontendInstantConverter(appTimeZone));
+                // Identifiants lisibles (17/11/2026) : un Long de chemin ou de parametre accepte le
+                // code public (VR-6BK2Q9F0ZD1HM) comme l'ancien nombre.
+                registry.addConverter(String.class, Long.class, source -> {
+                    if (source == null || source.isBlank()) {
+                        return null;
+                    }
+                    return com.sni.bokaticowork.core.identifier.PublicId.decode(source);
+                });
             }
         };
     }

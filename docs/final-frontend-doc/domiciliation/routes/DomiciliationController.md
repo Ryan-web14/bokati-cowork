@@ -465,7 +465,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `countryCode` | texte |  |  |
 | `fiscalCapable` | booléen |  |  |
 | `maxOccupants` | entier |  |  |
-| `occupants` | entier int64 ⚠ |  |  |
+| `occupants` | entier int64 (texte au-delà de 2^53) |  |  |
 | `active` | booléen |  |  |
 | `notes` | texte |  |  |
 

@@ -30,7 +30,7 @@ Module [contract](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `amendmentCode` | chemin | `String` | oui |  |
-| `reviewedBy` | requête | `Long` | oui |  |
+| `reviewedBy` | requête | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-amendments-amendmentcode-cancel"></a>
 ### POST /sni/api/v1/amendments/{amendmentCode}/cancel
@@ -44,7 +44,7 @@ Module [contract](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `amendmentCode` | chemin | `String` | oui |  |
-| `actorId` | requête | `Long` | oui |  |
+| `actorId` | requête | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-amendments-amendmentcode-generate-pdf"></a>
 ### POST /sni/api/v1/amendments/{amendmentCode}/generate-pdf
@@ -57,7 +57,7 @@ Module [contract](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `amendmentCode` | chemin | `String` | oui |  |
-| `uploadedBy` | requête | `Long` | oui |  |
+| `uploadedBy` | requête | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-amendments-amendmentcode-preview"></a>
 ### GET /sni/api/v1/amendments/{amendmentCode}/preview
@@ -83,7 +83,7 @@ Module [contract](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `amendmentCode` | chemin | `String` | oui |  |
-| `reviewedBy` | requête | `Long` | oui |  |
+| `reviewedBy` | requête | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-amendments-amendmentcode-sections"></a>
 ### GET /sni/api/v1/amendments/{amendmentCode}/sections
@@ -120,7 +120,7 @@ Module [contract](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `amendmentCode` | chemin | `String` | oui |  |
-| `sectionId` | chemin | `Long` | oui |  |
+| `sectionId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-amendments-amendmentcode-sections-sectionid"></a>
 ### PUT /sni/api/v1/amendments/{amendmentCode}/sections/{sectionId}
@@ -134,7 +134,7 @@ Module [contract](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `amendmentCode` | chemin | `String` | oui |  |
-| `sectionId` | chemin | `Long` | oui |  |
+| `sectionId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-amendments-amendmentcode-sign"></a>
 ### POST /sni/api/v1/amendments/{amendmentCode}/sign
@@ -148,7 +148,7 @@ Module [contract](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `amendmentCode` | chemin | `String` | oui |  |
-| `actorId` | requête | `Long` | oui |  |
+| `actorId` | requête | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-amendments-amendmentcode-submit"></a>
 ### POST /sni/api/v1/amendments/{amendmentCode}/submit
@@ -211,7 +211,7 @@ Module [contract](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `contractCode` | chemin | `String` | oui |  |
-| `proposedBy` | requête | `Long` | oui |  |
+| `proposedBy` | requête | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-contracts-contractcode-audit-events"></a>
 ### GET /sni/api/v1/contracts/{contractCode}/audit-events
@@ -250,14 +250,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `originalContractCode` | texte |  |  |
 | `status` | enum : `DRAFT`, `UNDER_REVIEW`, `PENDING_SIGNATURE`, `ACTIVE`, `REJECTED`, `CANCELLED` |  |  |
 | `description` | texte |  |  |
-| `proposedBy` | entier int64 ⚠ |  |  |
+| `proposedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `proposedAt` | date-heure ISO 8601 UTC |  |  |
 | `effectiveDate` | date AAAA-MM-JJ |  |  |
 | `draftDocumentCode` | texte |  |  |
 | `signedDocumentCode` | texte |  |  |
 | `signedAt` | date-heure ISO 8601 UTC |  |  |
 | `activatedAt` | date-heure ISO 8601 UTC |  |  |
-| `reviewedBy` | entier int64 ⚠ |  |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `reviewComment` | texte |  |  |
 | `rejectionReason` | texte |  |  |
 | `cancellationReason` | texte |  |  |
@@ -286,7 +286,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `code` | texte |  |  |
-| `ownerId` | entier int64 ⚠ |  |  |
+| `ownerId` | code identifiant (texte) |  |  |
 | `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
 | `category` | enum : `KYC`, `LEGAL`, `SYSTEM`, `FINANCIAL`, `ASSET`, `OTHER` |  |  |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
@@ -301,14 +301,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `fileUrl` | texte |  |  |
 | `previewUrl` | texte |  |  |
 | `downloadUrl` | texte |  |  |
-| `fileSize` | entier int64 ⚠ |  |  |
+| `fileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `mimeType` | texte |  |  |
 | `checksumSha256` | texte |  |  |
 | `currentVersionNumber` | entier |  |  |
 | `status` | enum : `DRAFT`, `UPLOADED`, `PENDING_REVIEW`, `NEEDS_CORRECTION`, `APPROVED`, `REJECTED`, `SIGNED`, `EXPIRED`, `ARCHIVED`, `SUPERSEDED` |  |  |
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 | `versions` | [DocumentVersionResponse](#m-DocumentVersionResponse)[] |  |  |
@@ -320,7 +320,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `action` | enum : `ADD`, `MODIFY`, `REMOVE` |  |  |
 | `targetSectionRef` | texte |  |  |
 | `sectionType` | enum : `PREAMBLE`, `ARTICLE`, `CLAUSE`, `SIGNATURE_BLOCK`, `ANNEXE` |  |  |
@@ -355,7 +355,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `variableKey` | texte |  |  |
 | `previousValue` | texte |  |  |
 | `newValue` | texte |  |  |
@@ -384,11 +384,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `contractCode` | texte |  |  |
 | `amendmentCode` | texte |  |  |
 | `eventType` | texte |  |  |
-| `actorId` | entier int64 ⚠ |  |  |
+| `actorId` | code identifiant (texte) |  |  |
 | `actorType` | texte |  |  |
 | `actorName` | texte |  |  |
 | `occurredAt` | date-heure ISO 8601 UTC |  |  |
@@ -428,10 +428,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `mimeTypeDetected` | texte |  |  |
 | `fileExtension` | texte |  |  |
 | `checksumSha256` | texte |  |  |
-| `fileSizeBytes` | entier int64 ⚠ |  |  |
+| `fileSizeBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadStatus` | enum : `PENDING_SCAN`, `READY`, `QUARANTINED`, `REJECTED`, `DELETED` |  |  |
 | `antivirusStatus` | enum : `PENDING`, `CLEAN`, `INFECTED`, `ERROR` |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
 | `current` | booléen |  |  |
 
@@ -440,10 +440,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `label` | texte |  |  |
 | `color` | texte |  |  |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
-| `createdBy` | entier int64 ⚠ |  |  |
+| `createdBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |

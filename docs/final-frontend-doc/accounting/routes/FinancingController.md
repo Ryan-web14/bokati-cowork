@@ -369,7 +369,7 @@ Module [accounting](../README.md) · 40 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-payroll-imports-id-lines"></a>
 ### GET /sni/api/v1/accounting/payroll/imports/{id}/lines
@@ -381,7 +381,7 @@ Module [accounting](../README.md) · 40 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-payroll-imports-id-pay"></a>
 ### POST /sni/api/v1/accounting/payroll/imports/{id}/pay
@@ -394,7 +394,7 @@ Module [accounting](../README.md) · 40 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-payroll-imports-id-post"></a>
 ### POST /sni/api/v1/accounting/payroll/imports/{id}/post
@@ -406,7 +406,7 @@ Module [accounting](../README.md) · 40 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-payroll-rubrics"></a>
 ### GET /sni/api/v1/accounting/payroll/rubrics
@@ -462,7 +462,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `typeCode` | texte |  |  |
 | `direction` | texte |  |  |
@@ -543,7 +543,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `lenderType` | texte |  |  |
 | `lenderCode` | texte |  |  |
@@ -652,8 +652,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `loanId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `loanId` | code identifiant (texte) |  |  |
 | `version` | entier |  |  |
 | `number` | entier |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |
@@ -682,7 +682,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `partnerName` | texte |  |  |
 | `thirdPartyCode` | texte |  |  |
@@ -733,7 +733,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `partnerCode` | texte |  |  |
 | `fromDate` | date AAAA-MM-JJ |  |  |
 | `toDate` | date AAAA-MM-JJ |  |  |
@@ -788,7 +788,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `periodCode` | texte |  |  |
 | `templateCode` | texte |  |  |
 | `fileName` | texte |  |  |
@@ -823,8 +823,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `importId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `importId` | code identifiant (texte) |  |  |
 | `lineNo` | entier |  |  |
 | `matricule` | texte |  |  |
 | `employeeName` | texte |  |  |
@@ -877,8 +877,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `loanId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `loanId` | code identifiant (texte) |  |  |
 | `kind` | texte |  |  |
 | `eventDate` | date AAAA-MM-JJ |  |  |
 | `amount` | nombre décimal |  |  |

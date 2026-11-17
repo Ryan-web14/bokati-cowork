@@ -79,16 +79,19 @@ Pour afficher ou masquer un bouton, comparer le droit exigé par la route à la 
 
 Les routes paginées acceptent `page` (à partir de `0`), `size` et `sort=champ,ASC|DESC` (répétable). La taille et le tri par défaut de chaque route sont indiqués dans sa table de paramètres.
 
-## Identifiants : attention aux grands nombres
+## Identifiants : codes en texte
 
-Les identifiants techniques (`id`, `assignedTo`, `createdBy`…) sont des entiers 64 bits, marqués **`entier int64 ⚠`** dans les modèles. Ils partent en **nombres JSON**, et certains dépassent `2^53` (exemple constaté : `7315645027609924000`). `JSON.parse` en JavaScript les **arrondit en silence**, et l'appel suivant cible alors un objet qui n'existe pas (`not found`).
+Depuis le 17/11/2026, les identifiants techniques ne partent plus en nombres JSON (un navigateur arrondissait ceux qui dépassent `2^53`, par exemple `7319298661696688123` devenu `7319298661696688000`, d'où des `404`). Le nom du champ ne change pas, seule sa valeur passe en texte :
+
+- Tout champ `id`, ou dont le nom finit par `Id` ou `Ids` (`accountId`, `lineIds`…), vaut un **code identifiant** : un préfixe lisible du type, un tiret, puis 13 caractères, par exemple `"id": "VR-6B4TZB9ZPRKZV"` pour une déclaration de TVA. Marqué « code identifiant (texte) » dans les modèles.
+- Tout autre entier 64 bits trop grand pour un navigateur (`createdBy` d'un compte, par exemple) arrive aussi en code. Les petits entiers (compteurs, tailles, montants entiers) restent des nombres : marqués « entier int64 (texte au-delà de 2^53) ».
 
 Règles pour le frontend :
 
-1. Préférer les **codes lisibles** quand la route en propose (`ticketNumber`, `walletNumber`, codes de contrat, de plan, de version…). La plupart des routes récentes n'exposent que des codes.
-2. Quand un identifiant numérique est inévitable, lire le JSON avec un analyseur qui préserve les grands entiers (`lossless-json`, `json-bigint`, ou une conversion en texte des nombres de 16 chiffres et plus avant `JSON.parse`), et le garder **en texte** dans le frontend.
-3. Dans un chemin (`/{id}`) ou un paramètre de requête, envoyer ce texte tel quel : le serveur le lit comme un nombre.
-4. Un champ décrit « nombre envoyé en texte » arrive déjà en texte.
+1. Garder le code tel quel, **en texte**, et le renvoyer tel quel : dans un chemin (`/accounting/vat-returns/VR-6B4TZB9ZPRKZV/detail`), un paramètre de requête ou un corps JSON (`"accountId": "ACC-6B4TZB9ZPRKZV"`).
+2. Le serveur accepte aussi l'ancien nombre (en texte ou en nombre JSON), sans perte s'il est envoyé en texte : les liens déjà enregistrés restent valides.
+3. Le préfixe n'est qu'une aide à la lecture : comparer deux identifiants par la chaîne entière, ne pas en déduire le type.
+4. Les codes métier (`ticketNumber`, `walletNumber`, `documentNumber`, codes de contrat…) ne changent pas ; ils restent préférables quand une route en propose.
 
 ## Dates et heures
 

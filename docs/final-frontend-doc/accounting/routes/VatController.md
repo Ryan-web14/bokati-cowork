@@ -35,7 +35,7 @@ Module [accounting](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-vat-returns-id"></a>
 ### GET /sni/api/v1/accounting/vat-returns/{id}
@@ -47,7 +47,7 @@ Module [accounting](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-vat-returns-id-detail"></a>
 ### GET /sni/api/v1/accounting/vat-returns/{id}/detail
@@ -59,7 +59,7 @@ Module [accounting](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-vat-returns-id-export"></a>
 ### GET /sni/api/v1/accounting/vat-returns/{id}/export
@@ -70,7 +70,7 @@ Module [accounting](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-vat-returns-id-liquidate"></a>
 ### POST /sni/api/v1/accounting/vat-returns/{id}/liquidate
@@ -82,7 +82,7 @@ Module [accounting](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-vat-returns-id-pdf"></a>
 ### GET /sni/api/v1/accounting/vat-returns/{id}/pdf
@@ -93,7 +93,7 @@ Module [accounting](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-accounting-vat-returns-id-validate"></a>
 ### PATCH /sni/api/v1/accounting/vat-returns/{id}/validate
@@ -105,7 +105,7 @@ Module [accounting](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -116,7 +116,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `periodCode` | texte |  |  |
 | `startDate` | date AAAA-MM-JJ |  |  |
 | `endDate` | date AAAA-MM-JJ |  |  |

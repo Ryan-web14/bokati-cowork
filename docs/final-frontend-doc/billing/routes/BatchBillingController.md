@@ -87,7 +87,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `title` | texte |  |  |
 | `status` | texte |  |  |
 | `customers` | entier |  |  |
-| `invoices` | entier int64 ⚠ |  |  |
+| `invoices` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-BatchBillingDtos-RunView"></a>
@@ -121,7 +121,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `itemId` | entier int64 ⚠ | oui |  |
+| `itemId` | code identifiant (texte) | oui |  |
 | `excluded` | booléen | oui |  |
 
 <a id="m-BatchBillingDtos-RunItem"></a>
@@ -129,7 +129,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `itemId` | entier int64 ⚠ |  |  |
+| `itemId` | code identifiant (texte) |  |  |
 | `customerType` | texte |  |  |
 | `customerCode` | texte |  |  |
 | `customerName` | texte |  |  |

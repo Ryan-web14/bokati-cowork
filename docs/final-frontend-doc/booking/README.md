@@ -23,7 +23,7 @@ Le module gère les réservations de ressources (salles, postes, bureaux) saisie
 | Dérogation de quota | `overrideNumber` | Quotas supplémentaires pour un titulaire, sur une période. |
 | Jeton de pointage | `checkInToken` (`XXXX-XXXX`) | Sert à la fois de clé des pages publiques (confirmation, PDF) et de code de pointage. `checkInQrValue` est une **image** (data URI PNG) du QR qui pointe vers la page de scan. |
 
-Identifiants numériques à garder en texte (lecture JSON sans perte, voir [README racine](../README.md#identifiants--attention-aux-grands-nombres)) : `participantId` dans `DELETE .../participants/{participantId}`, `id` d'une entrée de liste d'attente dans `PATCH /bookings/waitlist/{id}/cancel`, `id` des règles d'annulation.
+Identifiants numériques à garder en texte (lecture JSON sans perte, voir [README racine](../README.md#identifiants--codes-en-texte)) : `participantId` dans `DELETE .../participants/{participantId}`, `id` d'une entrée de liste d'attente dans `PATCH /bookings/waitlist/{id}/cancel`, `id` des règles d'annulation.
 
 ### Dates et heures
 

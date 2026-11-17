@@ -134,7 +134,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `status` | texte |  |  |
 | `currency` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `amount` | nombre décimal |  |  |
 
 <a id="m-MobileMoneyOperationsService-Detail"></a>
@@ -232,7 +232,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `kind` | texte |  |  |
 | `referenceId` | texte |  |  |
 | `reportedStatus` | texte |  |  |

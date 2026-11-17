@@ -57,7 +57,7 @@ Module [approval](../README.md) · 14 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-approvals-hierarchy"></a>
 ### GET /sni/api/v1/approvals/hierarchy
@@ -204,7 +204,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `delegator` | texte |  |  |
 | `delegate` | texte |  |  |
 | `center` | texte |  |  |

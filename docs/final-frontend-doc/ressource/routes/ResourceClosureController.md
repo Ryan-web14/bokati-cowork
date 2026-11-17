@@ -38,7 +38,7 @@ Module [ressource](../README.md) · 5 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-resource-closures-id"></a>
 ### GET /sni/api/v1/resource-closures/{id}
@@ -50,7 +50,7 @@ Module [ressource](../README.md) · 5 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-resource-closures-id-active"></a>
 ### PATCH /sni/api/v1/resource-closures/{id}/active
@@ -64,7 +64,7 @@ Module [ressource](../README.md) · 5 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -75,7 +75,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `resourceCode` | texte |  |  |
 | `startedAt` | date-heure locale sans fuseau |  |  |
 | `endedAt` | date-heure locale sans fuseau |  |  |

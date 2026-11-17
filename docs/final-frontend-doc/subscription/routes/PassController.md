@@ -167,7 +167,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `ownerType` | enum : `MEMBER`, `CUSTOMER`, `BUSINESS_ENTITY` | oui |  |
 | `ownerCode` | texte | oui | longueur min `1` |
 | `subscriptionNumber` | texte |  |  |
-| `planVersionId` | entier int64 ⚠ |  |  |
+| `planVersionId` | code identifiant (texte) |  |  |
 | `name` | texte | oui | longueur min `1` |
 | `description` | texte |  |  |
 | `validFrom` | texte | oui |  |

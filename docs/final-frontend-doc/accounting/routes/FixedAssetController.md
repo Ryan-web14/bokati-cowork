@@ -100,7 +100,7 @@ Module [accounting](../README.md) · 49 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-fixed-assets-depreciation-profiles-id-deactivate"></a>
 ### POST /sni/api/v1/accounting/fixed-assets/depreciation-profiles/{id}/deactivate
@@ -112,7 +112,7 @@ Module [accounting](../README.md) · 49 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-fixed-assets-depreciation-runs"></a>
 ### POST /sni/api/v1/accounting/fixed-assets/depreciation-runs
@@ -148,7 +148,7 @@ Module [accounting](../README.md) · 49 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-fixed-assets-disposals-id-collections"></a>
 ### POST /sni/api/v1/accounting/fixed-assets/disposals/{id}/collections
@@ -161,7 +161,7 @@ Module [accounting](../README.md) · 49 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-fixed-assets-disposals-id-indemnities"></a>
 ### POST /sni/api/v1/accounting/fixed-assets/disposals/{id}/indemnities
@@ -174,7 +174,7 @@ Module [accounting](../README.md) · 49 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-fixed-assets-disposals-id-pdf"></a>
 ### GET /sni/api/v1/accounting/fixed-assets/disposals/{id}/pdf
@@ -185,7 +185,7 @@ Module [accounting](../README.md) · 49 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-fixed-assets-disposals-id-validate"></a>
 ### POST /sni/api/v1/accounting/fixed-assets/disposals/{id}/validate
@@ -197,7 +197,7 @@ Module [accounting](../README.md) · 49 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-fixed-assets-impairments-id-decision"></a>
 ### POST /sni/api/v1/accounting/fixed-assets/impairments/{id}/decision
@@ -210,7 +210,7 @@ Module [accounting](../README.md) · 49 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-fixed-assets-inventories"></a>
 ### GET /sni/api/v1/accounting/fixed-assets/inventories
@@ -603,10 +603,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `companyCode` | texte |  |  |
-| `parentId` | entier int64 ⚠ |  |  |
+| `parentId` | code identifiant (texte) |  |  |
 | `categoryCode` | texte |  |  |
 | `targetCategoryCode` | texte |  |  |
 | `designation` | texte |  |  |
@@ -650,7 +650,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `organisation` | texte |  |  |
 | `site` | texte |  |  |
 | `resourceCode` | texte |  |  |
-| `amenityLinkId` | entier int64 ⚠ |  |  |
+| `amenityLinkId` | code identifiant (texte) |  |  |
 | `locationLabel` | texte |  |  |
 | `holder` | texte |  |  |
 | `holderSince` | date AAAA-MM-JJ |  |  |
@@ -721,7 +721,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `organisation` | texte |  |  |
 | `site` | texte |  |  |
 | `resourceCode` | texte |  |  |
-| `amenityLinkId` | entier int64 ⚠ |  |  |
+| `amenityLinkId` | code identifiant (texte) |  |  |
 | `locationLabel` | texte |  |  |
 | `analytic` | objet { clé : texte } |  |  |
 | `warrantyEnd` | date AAAA-MM-JJ |  |  |
@@ -814,7 +814,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `label` | texte |  |  |
 | `categoryCode` | texte |  |  |
 | `brand` | texte |  |  |
@@ -872,8 +872,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `assetId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `assetId` | code identifiant (texte) |  |  |
 | `voucherNumber` | texte |  |  |
 | `reason` | texte |  |  |
 | `disposalDate` | date AAAA-MM-JJ |  |  |
@@ -896,7 +896,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `collectedAmount` | nombre décimal |  |  |
 | `indemnityAmount` | nombre décimal |  |  |
 | `indemnityEntry` | texte |  |  |
-| `billingDocumentId` | entier int64 ⚠ |  |  |
+| `billingDocumentId` | code identifiant (texte) |  |  |
 | `preparedBy` | texte |  |  |
 | `validatedBy` | texte |  |  |
 | `validatedAt` | date-heure ISO 8601 UTC |  |  |
@@ -933,7 +933,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `label` | texte |  |  |
 | `site` | texte |  |  |
@@ -1190,8 +1190,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `assetId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `assetId` | code identifiant (texte) |  |  |
 | `lineType` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `valueDate` | date AAAA-MM-JJ |  |  |
@@ -1205,9 +1205,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `planId` | entier int64 ⚠ |  |  |
-| `assetId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `planId` | code identifiant (texte) |  |  |
+| `assetId` | code identifiant (texte) |  |  |
 | `kind` | texte |  |  |
 | `version` | entier |  |  |
 | `periodCode` | texte |  |  |
@@ -1226,8 +1226,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `assetId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `assetId` | code identifiant (texte) |  |  |
 | `kind` | texte |  |  |
 | `eventDate` | date AAAA-MM-JJ |  |  |
 | `beforeValue` | texte |  |  |
@@ -1244,8 +1244,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `assetId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `assetId` | code identifiant (texte) |  |  |
 | `kind` | texte |  |  |
 | `impairmentDate` | date AAAA-MM-JJ |  |  |
 | `indicator` | texte |  |  |
@@ -1263,8 +1263,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `assetId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `assetId` | code identifiant (texte) |  |  |
 | `maintenanceDate` | date AAAA-MM-JJ |  |  |
 | `kind` | texte |  |  |
 | `provider` | texte |  |  |
@@ -1295,9 +1295,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `campaignId` | entier int64 ⚠ |  |  |
-| `assetId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `campaignId` | code identifiant (texte) |  |  |
+| `assetId` | code identifiant (texte) |  |  |
 | `assetCode` | texte |  |  |
 | `unregisteredLabel` | texte |  |  |
 | `site` | texte |  |  |
@@ -1314,8 +1314,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `assetId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `assetId` | code identifiant (texte) |  |  |
 | `version` | entier |  |  |
 | `kind` | texte |  |  |
 | `method` | texte |  |  |

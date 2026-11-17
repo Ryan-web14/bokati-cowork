@@ -100,7 +100,7 @@ Messages de transition : `Transfer must be REQUESTED`, `Transfer must be APPROVE
 3. Lots immobilisés : `GET /sni/api/v1/inventory/stock/lots/immobilised?itemCode=&locationCode=` (quarantaine ou blocage).
 4. Création manuelle : `POST /sni/api/v1/inventory/items/{itemCode}/lots`. **À éviter** : elle ne crée ni mouvement ni stock (écart 5 du [README](README.md#écarts-relevés)). Les lots se créent normalement par une entrée ou une réception d'achat.
 
-**Obtenir le `lotId`.** Les réponses de lots n'ont pas d'identifiant. Pour agir sur un lot (quarantaine, blocage, inspection), appeler `GET /sni/api/v1/inventory/traceability/{lotNumber}` et prendre `positions[].lotId` de la ligne dont `itemCode` et `locationCode` correspondent. C'est un int64 ⚠ : le lire en préservant les grands entiers.
+**Obtenir le `lotId`.** Les réponses de lots n'ont pas d'identifiant. Pour agir sur un lot (quarantaine, blocage, inspection), appeler `GET /sni/api/v1/inventory/traceability/{lotNumber}` et prendre `positions[].lotId` de la ligne dont `itemCode` et `locationCode` correspondent. C'est un code identifiant en texte (voir le README racine) : le renvoyer tel quel.
 
 ## Quarantaine et blocage
 

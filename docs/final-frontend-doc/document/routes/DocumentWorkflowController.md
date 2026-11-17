@@ -145,7 +145,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `workflowCode` | texte |  |  |
 | `workflowName` | texte |  |  |
 | `documentCode` | texte |  |  |
@@ -169,7 +169,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `stepOrder` | entier |  |  |
 | `stepName` | texte |  |  |
 | `approverType` | texte |  |  |
@@ -196,7 +196,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `stepOrder` | entier |  |  |
 | `stepName` | texte |  |  |
 | `action` | texte |  |  |
-| `actorId` | entier int64 ⚠ |  |  |
+| `actorId` | code identifiant (texte) |  |  |
 | `actorEmail` | texte |  |  |
 | `actedAt` | date-heure ISO 8601 UTC |  |  |
 | `comment` | texte |  |  |

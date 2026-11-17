@@ -47,7 +47,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `itemName` | texte |  |  |
 | `locationCode` | texte |  |  |
@@ -94,8 +94,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `reorderQuantity` | nombre décimal |  |  |
 | `targetQuantity` | nombre décimal |  |  |
 | `shortageQuantity` | nombre décimal |  |  |
-| `estimatedUnitCost` | entier int64 ⚠ |  |  |
-| `estimatedOrderCost` | entier int64 ⚠ |  |  |
+| `estimatedUnitCost` | entier int64 (texte au-delà de 2^53) |  |  |
+| `estimatedOrderCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `preferredSupplierCode` | texte |  |  |
 | `severity` | enum : `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` |  |  |
 | `reasonCode` | enum : `NO_STOCK_LEVEL`, `OUT_OF_STOCK`, `BELOW_MINIMUM`, `AT_MINIMUM`, `BELOW_TARGET_MAX` |  |  |
@@ -109,7 +109,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `quantityOnOrder` | nombre décimal |  |  |
 | `recommendedOrderByDate` | date-heure ISO 8601 UTC |  |  |
 | `bestSupplierCode` | texte |  |  |
-| `bestSupplierPrice` | entier int64 ⚠ |  |  |
+| `bestSupplierPrice` | entier int64 (texte au-delà de 2^53) |  |  |
 | `bestSupplierLeadTimeDays` | entier |  |  |
 
 <a id="m-ReorderSuggestionSeverity"></a>

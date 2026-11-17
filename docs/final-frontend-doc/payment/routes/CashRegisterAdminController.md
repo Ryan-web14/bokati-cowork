@@ -307,7 +307,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `active` | booléen |  |  |
 | `requiresText` | booléen |  |  |
 | `systemValue` | booléen |  |  |
-| `usageCount` | entier int64 ⚠ |  |  |
+| `usageCount` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-CashReferenceValueRequest"></a>
 #### CashReferenceValueRequest
@@ -377,7 +377,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `registerCode` | texte |  |  |
 | `userEmail` | texte |  |  |
 | `role` | enum : `CASHIER`, `HEAD_CASHIER`, `SUPERVISOR`, `VIEWER` |  |  |

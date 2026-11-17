@@ -251,7 +251,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `doubleVisaThreshold` | nombre décimal |  |  |
 | `keywords` | texte |  |  |
 | `sortOrder` | entier |  |  |
-| `usageCount` | entier int64 ⚠ |  |  |
+| `usageCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `active` | booléen |  |  |
 | `systemValue` | booléen |  |  |
 
@@ -323,7 +323,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `cancelledBy` | texte |  |  |
 | `cancelledAt` | date-heure ISO 8601 UTC |  |  |
 | `cancelReason` | texte |  |  |
-| `minutesInTransit` | entier int64 ⚠ |  |  |
+| `minutesInTransit` | entier int64 (texte au-delà de 2^53) |  |  |
 | `note` | texte |  |  |
 
 <a id="m-CashTransferStatus"></a>
@@ -368,7 +368,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `fileName` | texte |  |  |
 | `contentType` | texte |  |  |
 | `storagePath` | texte |  |  |

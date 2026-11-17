@@ -58,7 +58,7 @@ Elles disent quels types chaque propriétaire doit fournir ; elles pilotent le K
    - Doublon (même propriétaire, type, type de client, forme juridique) : `409` « Document requirement already exists ».
 3. Modifier : `PATCH /sni/api/v1/document-requirements/{id}` avec le corps complet (`ownerType` et `documentTypeCode` obligatoires). Le doublon n'y est pas contrôlé.
 4. Activer, désactiver : `PATCH /document-requirements/{id}/activate`, `/deactivate` ; `DELETE /document-requirements/{id}` désactive.
-5. `{id}` est un int64 ⚠ : le lire et le renvoyer en texte.
+5. `{id}` est un code identifiant (texte, voir le README racine) : le renvoyer tel quel.
 
 Effets à connaître :
 - S'il n'existe **aucune** exigence obligatoire active pour un type de propriétaire, le recalcul automatique considère tout dossier KYC de ce type comme approuvé (et active le membre ou le client).

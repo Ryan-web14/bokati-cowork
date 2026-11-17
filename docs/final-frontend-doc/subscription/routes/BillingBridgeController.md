@@ -44,7 +44,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `billingPeriodStart` | date AAAA-MM-JJ |  |  |
 | `billingPeriodEnd` | date AAAA-MM-JJ |  |  |
 | `status` | enum : `PENDING`, `SENT_TO_INVOICE`, `INVOICED`, `CANCELLED` |  |  |
-| `invoiceId` | entier int64 ⚠ |  |  |
+| `invoiceId` | code identifiant (texte) |  |  |
 
 <a id="m-BillableItemStatus"></a>
 #### BillableItemStatus

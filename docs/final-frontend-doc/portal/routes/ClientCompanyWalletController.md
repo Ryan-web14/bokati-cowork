@@ -29,7 +29,7 @@ Module [portal](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `spendId` | chemin | `Long` | oui |  |
+| `spendId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-client-companies-customerid-approvals-spendid-reject"></a>
 ### POST /sni/api/v1/client/companies/{customerId}/approvals/{spendId}/reject
@@ -43,7 +43,7 @@ Module [portal](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `spendId` | chemin | `Long` | oui |  |
+| `spendId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-client-companies-customerid-invoices-documentnumber-pay-wallet"></a>
 ### POST /sni/api/v1/client/companies/{customerId}/invoices/{documentNumber}/pay/wallet
@@ -96,7 +96,7 @@ Module [portal](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `authorizationId` | chemin | `Long` | oui |  |
+| `authorizationId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-client-companies-customerid-spending-authorizations-authorizationid-pin-reset"></a>
 ### POST /sni/api/v1/client/companies/{customerId}/spending-authorizations/{authorizationId}/pin/reset
@@ -109,7 +109,7 @@ Module [portal](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `authorizationId` | chemin | `Long` | oui |  |
+| `authorizationId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-client-companies-customerid-wallet"></a>
 ### GET /sni/api/v1/client/companies/{customerId}/wallet
@@ -163,7 +163,7 @@ Module [portal](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `spendId` | chemin | `Long` | oui |  |
+| `spendId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-client-companies-customerid-wallet-top-ups"></a>
 ### POST /sni/api/v1/client/companies/{customerId}/wallet/top-ups
@@ -224,7 +224,7 @@ Module [portal](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `spendId` | chemin | `Long` | oui |  |
+| `spendId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-client-me-company-wallets-customerid-spends-spendid-confirm"></a>
 ### POST /sni/api/v1/client/me/company-wallets/{customerId}/spends/{spendId}/confirm
@@ -238,7 +238,7 @@ Module [portal](../README.md) · 18 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `spendId` | chemin | `Long` | oui |  |
+| `spendId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -249,7 +249,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `memberId` | texte |  |  |
 | `memberName` | texte |  |  |
 | `operation` | enum : `BOOKING`, `SUBSCRIPTION`, `PASS`, `INVOICE_PAYMENT`, `MARKETPLACE` |  |  |
@@ -291,7 +291,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `companyCustomerCode` | texte |  |  |
 | `walletNumber` | texte |  |  |
 | `memberId` | texte |  |  |

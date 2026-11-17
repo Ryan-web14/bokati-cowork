@@ -68,7 +68,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `name` | texte |  |  |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
@@ -80,7 +80,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `action` | enum : `ARCHIVE`, `PURGE_FLAG` |  |  |
 | `active` | booléen |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
-| `createdBy` | entier int64 ⚠ |  |  |
+| `createdBy` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-DocumentRetentionPolicyRequest"></a>
 #### DocumentRetentionPolicyRequest

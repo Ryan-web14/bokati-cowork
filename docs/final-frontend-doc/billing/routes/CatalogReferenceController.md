@@ -252,7 +252,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `label` | texte |  |  |
 | `parentCode` | texte |  |  |
@@ -261,7 +261,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `displayOrder` | entier |  |  |
 | `active` | booléen |  |  |
 | `createdFromItem` | booléen |  |  |
-| `itemCount` | entier int64 ⚠ |  |  |
+| `itemCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `subcategories` | [CatalogReferenceDtos.CategoryResponse](#m-CatalogReferenceDtos-CategoryResponse)[] |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -311,7 +311,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `label` | texte |  |  |
 | `pluralLabel` | texte |  |  |
@@ -321,7 +321,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `displayOrder` | entier |  |  |
 | `active` | booléen |  |  |
 | `createdFromItem` | booléen |  |  |
-| `itemCount` | entier int64 ⚠ |  |  |
+| `itemCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-CatalogReferenceDtos-UnitRequest"></a>
@@ -354,7 +354,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `baseCode` | texte |  |  |
 | `name` | texte |  |  |

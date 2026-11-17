@@ -21,7 +21,7 @@ Code : `src/main/java/com/sni/bokaticowork/features/marketplace/`. L'ancienne do
 | Commande (`OrderView`) | `orderNumber` (`MKC-2026-000001`), attribué à la validation | Le panier validé. `buyerMemberCode` : l'acheteur, toujours le membre. `billingCompanyCode` : l'organisation qui paie, vide si le membre paie seul. `invoiceNumber` : la facture émise. `creditNoteNumber` : l'avoir de remboursement. |
 | Ligne (`LineView`) | `id` (petit entier, à utiliser dans `/cart/lines/{lineId}`) | Une offre et sa quantité. `offerId` renvoie à l'offre. |
 
-Les `id` de la marketplace sont des numéros courts tirés d'une séquence (`short_id`, `src/main/resources/db/migration/V273__marketplace.sql`) : ils ne posent pas le problème des grands entiers décrit dans le [README racine](../README.md#identifiants--attention-aux-grands-nombres).
+Les `id` de la marketplace sont des numéros courts tirés d'une séquence (`short_id`, `src/main/resources/db/migration/V273__marketplace.sql`) : ils ne posent pas le problème des grands entiers décrit dans le [README racine](../README.md#identifiants--codes-en-texte).
 
 **Prix.** `OfferView.price` est le prix demandé : le prix propre de l'offre (`ownPrice`), sinon le prix de vente de l'article (`salePrice`) ou le prix unitaire de la prestation. `ownPrice` vide signifie que l'offre suit l'article (`MarketplaceCatalogService.java:157`). Au panier, le prix d'une ligne suit l'offre en direct ; à la validation, il est figé sur la ligne avec son intitulé (`MarketplaceOrderService.java:255-258` et `:797-801`).
 

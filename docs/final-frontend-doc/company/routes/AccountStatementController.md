@@ -162,7 +162,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `paidAmount` | nombre décimal |  |  |
 | `balanceDue` | nombre décimal |  |  |
 | `impact` | nombre décimal |  |  |
-| `daysOverdue` | entier int64 ⚠ |  |  |
+| `daysOverdue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `inPeriod` | booléen |  |  |
 
 <a id="m-StatementDtos-Aging"></a>

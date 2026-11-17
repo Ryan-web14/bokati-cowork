@@ -247,14 +247,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `totalWalletBalance` | nombre décimal |  |  |
 | `totalHeldBalance` | nombre décimal |  |  |
 | `openWallets` | entier |  |  |
-| `walletsByStatus` | objet { clé : entier int64 ⚠ } |  |  |
-| `frozenWallets` | entier int64 ⚠ |  |  |
-| `lockedByOwner` | entier int64 ⚠ |  |  |
-| `dormantWallets` | entier int64 ⚠ |  |  |
-| `negativeBalances` | entier int64 ⚠ |  |  |
+| `walletsByStatus` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `frozenWallets` | entier int64 (texte au-delà de 2^53) |  |  |
+| `lockedByOwner` | entier int64 (texte au-delà de 2^53) |  |  |
+| `dormantWallets` | entier int64 (texte au-delà de 2^53) |  |  |
+| `negativeBalances` | entier int64 (texte au-delà de 2^53) |  |  |
 | `todayVolume` | [WalletControlCentreService.VolumeLine](#m-WalletControlCentreService-VolumeLine)[] |  |  |
-| `openFlags` | entier int64 ⚠ |  |  |
-| `pendingApprovals` | entier int64 ⚠ |  |  |
+| `openFlags` | entier int64 (texte au-delà de 2^53) |  |  |
+| `pendingApprovals` | entier int64 (texte au-delà de 2^53) |  |  |
 | `latestReconciliation` | [WalletTreasuryReconciliation](#m-WalletTreasuryReconciliation) |  |  |
 
 <a id="m-WalletControlDtos-FlagView"></a>
@@ -371,7 +371,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `entryType` | enum : `ADMIN_TOPUP`, `TOPUP`, `TRANSFER_IN`, `TRANSFER_OUT`, `TRANSFER_FEE`, `ADMIN_DEBIT`, `PAYMENT`, `REFUND`, `REVERSAL`, `HOLD`, `HOLD_RELEASE`, `ADJUSTMENT`, `CASHBACK`, `PROMOTIONAL_CREDIT`, `OVERPAYMENT_CREDIT` |  |  |
 | `direction` | enum : `DEBIT`, `CREDIT` |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `amount` | nombre décimal |  |  |
 
 <a id="m-WalletTreasuryReconciliation"></a>
@@ -379,7 +379,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `reconciliationNumber` | texte |  |  |
 | `reconciliationDate` | date AAAA-MM-JJ |  |  |
 | `currency` | texte |  |  |

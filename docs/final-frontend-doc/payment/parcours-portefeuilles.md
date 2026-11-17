@@ -161,7 +161,7 @@ Deux chemins coexistent :
 - **Droits à deux niveaux.** Le droit de l'URL (`PAYMENT:READ` / `PAYMENT:PROCESS`) ne suffit pas : `WalletControlCentreController`, `ComplianceController`, `.../integrity`, `.../limits` et `.../security/pin/reset` exigent aussi `ROLE_ADMIN` ou `ROLE_SUPER_ADMIN` (`@PreAuthorize` au niveau de la classe ou de la méthode). `WalletController` et `WalletHoldController` n'ont que le droit.
 - **Écrans** : recherche et fiche de portefeuille (soldes, statut, écritures, retenues, plafonds, intégrité) ; centre de contrôle (tableau de bord, file des actions à viser, file des signalements, trésorerie, export) ; conformité (dossiers, gels, filtrage, règles, audit).
 - **Fichiers téléchargés** : CSV d'export comptable, JSON d'export de dossier.
-- **Identifiants numériques** : `GET .../treasury/reconciliations` et `GET .../audit/...` renvoient les entités telles quelles, avec leur `id` int64 (voir [README racine](../README.md#identifiants--attention-aux-grands-nombres)) ; utiliser `reconciliationNumber` pour naviguer.
+- **Identifiants numériques** : `GET .../treasury/reconciliations` et `GET .../audit/...` renvoient les entités telles quelles, avec leur `id` int64 (voir [README racine](../README.md#identifiants--codes-en-texte)) ; utiliser `reconciliationNumber` pour naviguer.
 - **Champs d'auteur** : partout, l'auteur vient du jeton (centre de contrôle, conformité, recharges, retenues, paiements). Les champs `createdBy` encore acceptés ne servent qu'aux traitements internes.
 
 ## Effets automatiques
