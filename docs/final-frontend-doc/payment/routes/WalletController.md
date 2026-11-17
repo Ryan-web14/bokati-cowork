@@ -34,8 +34,8 @@ Module [payment](../README.md) · 5 route(s).
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
 - Corps JSON (obligatoire) : `WalletTopUpRequest`
-- Réponse : `WalletResponse`
-- Modèles : [WalletResponse](#m-WalletResponse), [WalletTopUpRequest](#m-WalletTopUpRequest)
+- Réponse : `non typé, voir le code`
+- Modèles : [WalletTopUpRequest](#m-WalletTopUpRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/WalletController.java`, méthode `adminTopUp`
 
 <a id="r-get-sni-api-v1-wallets-walletnumber"></a>
@@ -101,7 +101,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `ownerCode` | texte | oui | longueur min `1` |
 | `currency` | texte | oui | longueur min `1` |
 | `amount` | nombre décimal | oui |  |
-| `createdBy` | texte | oui | longueur min `1` |
+| `createdBy` | texte |  |  |
 | `reference` | texte |  |  |
 | `metadataJson` | texte |  |  |
 

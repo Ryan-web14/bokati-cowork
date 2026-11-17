@@ -400,14 +400,28 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BadRequestException("Wallet currency does not match payment intent currency");
         }
         BigDecimal paymentAmount = requestedIntentAmount(request.amount(), intent);
-        // Une intention de paiement n'est reglee qu'une fois : un double-clic ou un rejeu
-        // retombe sur l'ecriture d'origine au lieu de debiter deux fois.
-        walletService.debit(wallet, paymentAmount, WalletEntryType.PAYMENT, "PAYMENT_INTENT",
-                intent.getIntentNumber(), intent.getIntentNumber(), request.createdBy(),
-                "WALLET_PAYMENT:" + intent.getIntentNumber());
-        PaymentTransaction transaction = saveSucceededTransaction(intent, PaymentMethod.WALLET, "INTERNAL_WALLET", wallet.getWalletNumber(), request.createdBy(), request.metadataJson(), paymentAmount);
+        // Une cle par paiement au portefeuille de l'intention (1er, 2e...) : deux paiements partiels
+        // sont deux debits. Avant, la cle etait fixe par intention : le second paiement partiel ne
+        // debitait rien mais creait une transaction reussie. Deux envois simultanes du meme paiement
+        // tombent sur la meme cle : le second retrouve l'ecriture du premier et rend sa transaction.
+        long rank = transactionRepository.findAllByPaymentIntentIdOrderByCreatedAtDesc(intent.getId()).stream()
+                .filter(t -> t.getPaymentMethod() == PaymentMethod.WALLET && t.getStatus() == PaymentTransactionStatus.SUCCEEDED)
+                .count() + 1;
+        Instant debitStart = Instant.now();
+        var entry = walletService.debit(wallet, paymentAmount, WalletEntryType.PAYMENT, "PAYMENT_INTENT",
+                intent.getIntentNumber(), intent.getIntentNumber(), actorOr(request.createdBy()),
+                "WALLET_PAYMENT:" + intent.getIntentNumber() + ":" + rank);
+        if (entry != null && entry.getCreatedAt() != null && entry.getCreatedAt().isBefore(debitStart)) {
+            PaymentTransaction existing = transactionRepository.findAllByPaymentIntentIdOrderByCreatedAtDesc(intent.getId()).stream()
+                    .filter(t -> t.getPaymentMethod() == PaymentMethod.WALLET && t.getStatus() == PaymentTransactionStatus.SUCCEEDED)
+                    .findFirst().orElse(null);
+            if (existing != null) {
+                return mapper.toTransactionResponse(existing);
+            }
+        }
+        PaymentTransaction transaction = saveSucceededTransaction(intent, PaymentMethod.WALLET, "INTERNAL_WALLET", wallet.getWalletNumber(), actorOr(request.createdBy()), request.metadataJson(), paymentAmount);
         reconcileIntent(intent);
-        creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), request.createdBy());
+        creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), actorOr(request.createdBy()));
         publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
         // Personne n'etait en face · la caisse doit apprendre le reglement autrement qu'en ouvrant
         // la facture, sinon elle sert un client qu'elle croit debiteur ou le relance apres coup.
@@ -418,18 +432,21 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public MobileMoneyDepositResponse initiateMobileMoneyDeposit(String intentNumber, InitiateMobileMoneyDepositRequest request) {
         PaymentIntent intent = pendingIntent(intentNumber);
-        BigDecimal depositAmount = requestedIntentAmount(request.amount(), intent);
-        // Ce qui peut se savoir avant l'appel se dit avant l'appel · devise, montant, numero.
-        mobileMoneyGuard.check(intent, request, depositAmount);
 
         // Une demande deja partie sur ce numero pour cette intention est rendue telle quelle :
-        // deux demandes sur le telephone du client, c'est deux paiements possibles.
+        // deux demandes sur le telephone du client, c'est deux paiements possibles. Ce controle
+        // passe avant celui du reste payable : le depot en cours le reserve deja, un double envoi
+        // recevait donc 400 au lieu du depot existant.
         PawapayDeposit pending = pawapayDepositService.inFlight(intent, request).orElse(null);
         if (pending != null) {
             log.info("Depot mobile money {} deja en cours pour l'intention {} · demande rendue telle quelle",
                     pending.getDepositId(), intentNumber);
             return pawapayDepositService.toResponse(pending);
         }
+
+        BigDecimal depositAmount = requestedIntentAmount(request.amount(), intent);
+        // Ce qui peut se savoir avant l'appel se dit avant l'appel · devise, montant, numero.
+        mobileMoneyGuard.check(intent, request, depositAmount);
 
         String methodCtx = CodeComposer.abbrev("MOBILE_MONEY");
         long txnSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
@@ -486,8 +503,8 @@ public class PaymentServiceImpl implements PaymentService {
         meta.put("operatorDisplayName", request.correspondent().getDisplayName());
         meta.put("countryCode", request.correspondent().getCountryCode());
         meta.put("phoneNumber", request.phoneNumber());
-        if (request.createdBy() != null) {
-            meta.put("createdBy", request.createdBy());
+        if (actorOr(request.createdBy()) != null) {
+            meta.put("createdBy", actorOr(request.createdBy()));
         }
         if (StringUtils.hasText(request.metadataJson())) {
             meta.put("clientMetadata", request.metadataJson().trim());
@@ -544,7 +561,7 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentTransaction transaction = processPayment(intent, request, document, cash, manual);
         reconcileIntent(intent);
         BigDecimal overpayment = allocationService.allocateIfBillingDocument(transaction);
-        creditOverpayment(intent, overpayment, request.processedBy());
+        creditOverpayment(intent, overpayment, actorOr(request.processedBy()));
 
         BillingDocumentResponse updatedDocument = billingDocumentService.get(documentNumber);
         // Publish workflow event before sending email · activation/contract generation must not be blocked by email failure
@@ -598,7 +615,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (manual != null) {
             String sessionNumber = trim(request.cashSessionNumber());
             return saveSucceededTransaction(intent, manual.method(), manual.provider(), manual.reference(),
-                    request.processedBy(), request.metadataJson(), intent.getAmount(),
+                    actorOr(request.processedBy()), request.metadataJson(), intent.getAmount(),
                     builder -> applyManualDetails(builder, manual).cashSessionNumber(sessionNumber));
         }
         return switch (request.paymentMethod()) {
@@ -615,29 +632,29 @@ public class PaymentServiceImpl implements PaymentService {
                     throw new BadRequestException("La devise du portefeuille ne correspond pas à celle de la facture");
                 }
                 walletService.debit(wallet, intent.getAmount(), WalletEntryType.PAYMENT,
-                        "PAYMENT_INTENT", intent.getIntentNumber(), intent.getIntentNumber(), request.processedBy(),
+                        "PAYMENT_INTENT", intent.getIntentNumber(), intent.getIntentNumber(), actorOr(request.processedBy()),
                         "WALLET_PAYMENT:" + intent.getIntentNumber());
                 yield saveSucceededTransaction(intent, PaymentMethod.WALLET, "INTERNAL_WALLET",
-                        wallet.getWalletNumber(), resolveMemberProcessing(request.processedBy()), request.metadataJson());
+                        wallet.getWalletNumber(), resolveMemberProcessing(actorOr(request.processedBy())), request.metadataJson());
             }
             case CASH -> {
                 if (!"XAF".equalsIgnoreCase(intent.getCurrency())) {
                     throw new BadRequestException("Les paiements en espèces ne sont autorisés qu'en XAF");
                 }
                 PaymentTransaction cashTxn = saveSucceededTransaction(intent, PaymentMethod.CASH, "CASH",
-                        request.providerReference(), request.processedBy(), request.metadataJson(), intent.getAmount(),
+                        request.providerReference(), actorOr(request.processedBy()), request.metadataJson(), intent.getAmount(),
                         builder -> builder.tenderedAmount(cash == null ? null : cash.tenderedAmount())
                                 .changeAmount(cash == null ? null : cash.changeAmount())
                                 .cashSessionNumber(trim(request.cashSessionNumber())));
                 if (StringUtils.hasText(request.cashSessionNumber())) {
                     cashRegisterService.recordPayment(request.cashSessionNumber(), cashTxn.getAmount(),
-                            cashTxn.getTransactionNumber(), request.processedBy());
+                            cashTxn.getTransactionNumber(), actorOr(request.processedBy()));
                 }
                 yield cashTxn;
             }
             default -> saveSucceededTransaction(intent, request.paymentMethod(),
                     request.paymentMethod().name(), request.providerReference(),
-                    request.processedBy(), request.metadataJson());
+                    actorOr(request.processedBy()), request.metadataJson());
         };
     }
 
@@ -835,8 +852,7 @@ public class PaymentServiceImpl implements PaymentService {
     private String nextRecoveryIdempotencyKey(String baseIdempotencyKey) {
         return intentRepository.findByIdempotencyKey(baseIdempotencyKey)
                 .filter(existing -> existing.getStatus() == PaymentIntentStatus.PENDING
-                        || existing.getStatus() == PaymentIntentStatus.PROCESSING
-                        || existing.getStatus() == PaymentIntentStatus.AUTHORIZED)
+                        || existing.getStatus() == PaymentIntentStatus.PROCESSING)
                 .map(PaymentIntent::getIdempotencyKey)
                 .orElseGet(() -> intentRepository.findByIdempotencyKey(baseIdempotencyKey).isPresent()
                         ? baseIdempotencyKey + ":" + Instant.now().toEpochMilli()
@@ -999,7 +1015,7 @@ public class PaymentServiceImpl implements PaymentService {
             // La protection contre le sur-remboursement reste le controle refundedSoFar + amount
             // <= original.amount effectue plus haut.
             walletService.credit(wallet, amount, WalletEntryType.REFUND, "PAYMENT_TRANSACTION",
-                    original.getTransactionNumber(), request.reason(), request.processedBy(), null);
+                    original.getTransactionNumber(), request.reason(), actorOr(request.processedBy()), null);
         }
         String refundMethodCtx = CodeComposer.abbrev(original.getPaymentMethod().name());
         long refundSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
@@ -1021,7 +1037,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .currency(original.getCurrency())
                 .status(status)
                 .paidAt(Instant.now())
-                .receivedBy(trim(request.processedBy()))
+                .receivedBy(trim(actorOr(request.processedBy())))
                 .failureReason(trim(request.reason()))
                 .metadataJson(originalLinkMetadata(original.getTransactionNumber()))
                 .build());
@@ -1037,6 +1053,8 @@ public class PaymentServiceImpl implements PaymentService {
                 intent.setStatus(PaymentIntentStatus.REVERSED);
             }
             intentRepository.save(intent);
+        } else if (status == PaymentTransactionStatus.REFUNDED) {
+            markPartiallyRefunded(original.getPaymentIntent());
         }
 
         publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus(), fullyRefunded);
@@ -1082,7 +1100,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .amount(money(amount))
                 .currency(original.getCurrency())
                 .status(PaymentTransactionStatus.PROCESSING)
-                .receivedBy(trim(request.processedBy()))
+                .receivedBy(trim(actorOr(request.processedBy())))
                 .failureReason(trim(request.reason()))
                 .metadataJson(originalLinkMetadata(original.getTransactionNumber()))
                 .build());
@@ -1111,6 +1129,8 @@ public class PaymentServiceImpl implements PaymentService {
                 intent.setStatus(targetStatus == PaymentTransactionStatus.REFUNDED
                         ? PaymentIntentStatus.REFUNDED : PaymentIntentStatus.REVERSED);
                 intentRepository.save(intent);
+            } else if (targetStatus == PaymentTransactionStatus.REFUNDED) {
+                markPartiallyRefunded(original.getPaymentIntent());
             }
             publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus(), fullyRefunded);
             return mapper.toTransactionResponse(refund);
@@ -1170,6 +1190,14 @@ public class PaymentServiceImpl implements PaymentService {
         }
         String providerCtx = CodeComposer.abbrev(StringUtils.hasText(provider) ? provider : method.name());
         return "PREF-" + providerCtx + "-" + txnNumber + "-" + paidAt.toEpochMilli();
+    }
+
+    /** Une intention reglee puis remboursee en partie (avant : statut declare, jamais atteint). */
+    private void markPartiallyRefunded(PaymentIntent intent) {
+        if (intent != null && intent.getStatus() == PaymentIntentStatus.SUCCEEDED) {
+            intent.setStatus(PaymentIntentStatus.PARTIALLY_REFUNDED);
+            intentRepository.save(intent);
+        }
     }
 
     private void reconcileIntent(PaymentIntent intent) {
@@ -1284,6 +1312,16 @@ public class PaymentServiceImpl implements PaymentService {
 
     private BigDecimal money(BigDecimal amount) {
         return amount.setScale(4, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * L'auteur d'un geste est le compte connecte ; la valeur du corps ne sert qu'hors contexte
+     * authentifie (traitements internes). Avant, le portefeuille, le paiement de facture et le
+     * remboursement prenaient createdBy ou processedBy tels qu'envoyes.
+     */
+    private String actorOr(String declared) {
+        String current = paymentOrigin == null ? null : paymentOrigin.currentActor();
+        return StringUtils.hasText(current) ? current : declared;
     }
 
     private String trim(String value) {

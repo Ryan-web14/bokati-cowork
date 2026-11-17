@@ -5747,11 +5747,9 @@
     "status": {
      "type": "string",
      "enum": [
-      "PENDING",
       "PROCESSING",
       "SUCCEEDED",
       "FAILED",
-      "CANCELLED",
       "REFUNDED",
       "REVERSED"
      ]
@@ -5858,9 +5856,7 @@
      "enum": [
       "PENDING",
       "PROCESSING",
-      "AUTHORIZED",
       "SUCCEEDED",
-      "FAILED",
       "CANCELLED",
       "EXPIRED",
       "REFUNDED",
@@ -5968,11 +5964,9 @@
     "transactionStatus": {
      "type": "string",
      "enum": [
-      "PENDING",
       "PROCESSING",
       "SUCCEEDED",
       "FAILED",
-      "CANCELLED",
       "REFUNDED",
       "REVERSED"
      ]

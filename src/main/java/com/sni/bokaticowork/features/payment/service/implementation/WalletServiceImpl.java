@@ -105,14 +105,14 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public void debit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType,
+    public com.sni.bokaticowork.features.payment.model.WalletLedgerEntry debit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType,
                       String sourceCode, String reference, String createdBy, String idempotencyKey) {
         ensureUsable(wallet);
         if (limitService != null && entryType == WalletEntryType.PAYMENT) {
             // Un paiement depuis le portefeuille est une depense du titulaire · ses plafonds personnels s'appliquent.
             limitService.assertWithinPersonalCaps(wallet, amount);
         }
-        ledgerService.debit(wallet, amount, entryType, sourceType, sourceCode, reference, createdBy, idempotencyKey);
+        return ledgerService.debit(wallet, amount, entryType, sourceType, sourceCode, reference, createdBy, idempotencyKey);
     }
 
     private WalletAccount getOrCreateWallet(String ownerType, String ownerCode, String currency) {

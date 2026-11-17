@@ -35,6 +35,19 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final PaymentMapper mapper;
 
+    private com.sni.bokaticowork.features.payment.service.support.PaymentOriginResolver paymentOrigin;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPaymentOrigin(com.sni.bokaticowork.features.payment.service.support.PaymentOriginResolver paymentOrigin) {
+        this.paymentOrigin = paymentOrigin;
+    }
+
+    /** Auteur : le compte connecte ; la valeur transmise ne sert qu'aux traitements internes. */
+    private String actorOr(String declared) {
+        String current = paymentOrigin == null ? null : paymentOrigin.currentActor();
+        return current != null && !current.isBlank() ? current : declared;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponse<WalletHoldResponse> list(String walletNumber, String status, String sourceType, String sourceCode, Pageable pageable) {
@@ -57,7 +70,7 @@ public class WalletHoldServiceImpl implements WalletHoldService {
         // il doit exister au moment ou le grand livre est ecrit.
         String holdNumber = sequenceGenerator.next("wallet_hold");
         ledgerService.placeHold(wallet, request.amount(), request.sourceType(), request.sourceCode(),
-                holdNumber, request.createdBy(), "HOLD:" + holdNumber);
+                holdNumber, actorOr(request.createdBy()), "HOLD:" + holdNumber);
         return mapper.toWalletHoldResponse(holdRepository.save(WalletHold.builder()
                 .holdNumber(holdNumber)
                 .wallet(wallet)
@@ -67,12 +80,13 @@ public class WalletHoldServiceImpl implements WalletHoldService {
                 .sourceType(request.sourceType())
                 .sourceCode(request.sourceCode())
                 .expiresAt(request.expiresAt())
-                .createdBy(request.createdBy())
+                .createdBy(actorOr(request.createdBy()))
                 .build()));
     }
 
     @Override
-    public WalletHoldResponse capture(String holdNumber, String createdBy) {
+    public WalletHoldResponse capture(String holdNumber, String declaredBy) {
+        String createdBy = actorOr(declaredBy);
         WalletHold hold = activeHold(holdNumber);
         ledgerService.captureHold(hold.getWallet(), hold.getAmount(), hold.getSourceType(), hold.getSourceCode(),
                 "CAPTURE_HOLD", createdBy, "HOLD_CAPTURE:" + hold.getHoldNumber());
@@ -81,7 +95,8 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     }
 
     @Override
-    public WalletHoldResponse release(String holdNumber, String createdBy) {
+    public WalletHoldResponse release(String holdNumber, String declaredBy) {
+        String createdBy = actorOr(declaredBy);
         WalletHold hold = activeHold(holdNumber);
         releaseHold(hold, createdBy, WalletHoldStatus.RELEASED);
         return mapper.toWalletHoldResponse(hold);

@@ -4041,29 +4041,6 @@
   },
   {
    "methods": [
-    "GET"
-   ],
-   "path": "/sni/api/v1/payments/mobile-money/pawapay/return",
-   "package": "features.payment.controller",
-   "controller": "MobileMoneyController",
-   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java",
-   "handler": "paymentPageReturn",
-   "declaredIn": "MobileMoneyController",
-   "access": {
-    "kind": "public"
-   },
-   "params": [
-    {
-     "in": "query",
-     "name": "depositId",
-     "required": true,
-     "type": "String"
-    }
-   ],
-   "response": "ResponseEntity<void>"
-  },
-  {
-   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/payments/mobile-money/pawaypay/callback",
@@ -5127,51 +5104,6 @@
   },
   {
    "methods": [
-    "POST"
-   ],
-   "path": "/sni/api/v1/payments/reconciliation-batches",
-   "package": "features.payment.controller",
-   "controller": "PaymentReconciliationController",
-   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentReconciliationController.java",
-   "handler": "create",
-   "declaredIn": "PaymentReconciliationController",
-   "access": {
-    "kind": "admin",
-    "permission": "PAYMENT:PROCESS"
-   },
-   "body": {
-    "type": "com.sni.bokaticowork.features.payment.dto.request.CreateReconciliationBatchRequest",
-    "required": true
-   },
-   "params": [],
-   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.ReconciliationBatchResponse>"
-  },
-  {
-   "methods": [
-    "PATCH"
-   ],
-   "path": "/sni/api/v1/payments/reconciliation-batches/{batchNumber}/complete",
-   "package": "features.payment.controller",
-   "controller": "PaymentReconciliationController",
-   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentReconciliationController.java",
-   "handler": "complete",
-   "declaredIn": "PaymentReconciliationController",
-   "access": {
-    "kind": "admin",
-    "permission": "PAYMENT:PROCESS"
-   },
-   "params": [
-    {
-     "in": "path",
-     "name": "batchNumber",
-     "required": true,
-     "type": "String"
-    }
-   ],
-   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.ReconciliationBatchResponse>"
-  },
-  {
-   "methods": [
     "GET"
    ],
    "path": "/public/pay/{token}",
@@ -5787,7 +5719,7 @@
     "required": true
    },
    "params": [],
-   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.WalletResponse>"
+   "response": "ResponseEntity<?>"
   },
   {
    "methods": [
@@ -10399,9 +10331,7 @@
      "enum": [
       "PENDING",
       "PROCESSING",
-      "AUTHORIZED",
       "SUCCEEDED",
-      "FAILED",
       "CANCELLED",
       "EXPIRED",
       "REFUNDED",
@@ -10690,11 +10620,9 @@
     "status": {
      "type": "string",
      "enum": [
-      "PENDING",
       "PROCESSING",
       "SUCCEEDED",
       "FAILED",
-      "CANCELLED",
       "REFUNDED",
       "REVERSED"
      ]
@@ -11288,11 +11216,9 @@
     "transactionStatus": {
      "type": "string",
      "enum": [
-      "PENDING",
       "PROCESSING",
       "SUCCEEDED",
       "FAILED",
-      "CANCELLED",
       "REFUNDED",
       "REVERSED"
      ]
@@ -11377,51 +11303,6 @@
      "type": "string"
     },
     "payerName": {
-     "type": "string"
-    }
-   }
-  },
-  "ReconciliationBatchResponse": {
-   "type": "object",
-   "properties": {
-    "batchNumber": {
-     "type": "string"
-    },
-    "provider": {
-     "type": "string"
-    },
-    "status": {
-     "type": "string",
-     "enum": [
-      "OPEN",
-      "COMPLETED",
-      "FAILED"
-     ]
-    },
-    "createdBy": {
-     "type": "string"
-    },
-    "createdAt": {
-     "type": "string",
-     "format": "date-time"
-    },
-    "completedAt": {
-     "type": "string",
-     "format": "date-time"
-    }
-   }
-  },
-  "CreateReconciliationBatchRequest": {
-   "required": [
-    "provider"
-   ],
-   "type": "object",
-   "properties": {
-    "provider": {
-     "minLength": 1,
-     "type": "string"
-    },
-    "createdBy": {
      "type": "string"
     }
    }
@@ -11875,7 +11756,6 @@
   "WalletTopUpRequest": {
    "required": [
     "amount",
-    "createdBy",
     "currency",
     "ownerCode",
     "ownerType"
@@ -11898,7 +11778,6 @@
      "type": "number"
     },
     "createdBy": {
-     "minLength": 1,
      "type": "string"
     },
     "reference": {
@@ -13320,9 +13199,7 @@
   "PaymentIntentStatus": [
    "PENDING",
    "PROCESSING",
-   "AUTHORIZED",
    "SUCCEEDED",
-   "FAILED",
    "CANCELLED",
    "EXPIRED",
    "REFUNDED",
@@ -13474,8 +13351,6 @@
   "BillingDocumentType": "com.sni.bokaticowork.features.billing.enums.BillingDocumentType",
   "RefundPaymentRequest": "com.sni.bokaticowork.features.payment.dto.request.RefundPaymentRequest",
   "PaymentReceiptResponse": "com.sni.bokaticowork.features.payment.dto.response.PaymentReceiptResponse",
-  "ReconciliationBatchResponse": "com.sni.bokaticowork.features.payment.dto.response.ReconciliationBatchResponse",
-  "CreateReconciliationBatchRequest": "com.sni.bokaticowork.features.payment.dto.request.CreateReconciliationBatchRequest",
   "WalletControlDtos.AdminActionView": "com.sni.bokaticowork.features.payment.control.dto.WalletControlDtos.AdminActionView",
   "WalletControlDtos.RejectRequest": "com.sni.bokaticowork.features.payment.control.dto.WalletControlDtos.RejectRequest",
   "WalletControlCentreService.Dashboard": "com.sni.bokaticowork.features.payment.control.service.WalletControlCentreService.Dashboard",

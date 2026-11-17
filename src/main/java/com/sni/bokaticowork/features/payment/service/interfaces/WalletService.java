@@ -31,6 +31,6 @@ public interface WalletService {
                 String sourceCode, String reference, String createdBy, String idempotencyKey);
 
     /** Debite le portefeuille. Voir {@link #credit} pour la semantique de {@code idempotencyKey}. */
-    void debit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType,
+    com.sni.bokaticowork.features.payment.model.WalletLedgerEntry debit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType,
                String sourceCode, String reference, String createdBy, String idempotencyKey);
 }

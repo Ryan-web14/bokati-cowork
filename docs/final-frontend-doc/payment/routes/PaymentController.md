@@ -317,7 +317,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `remainingAmount` | nombre décimal |  |  |
 | `payableAmount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `AUTHORIZED`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED` |  |  |
 | `purpose` | texte |  |  |
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
@@ -342,7 +342,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 <a id="m-PaymentIntentStatus"></a>
 #### PaymentIntentStatus
 
-Énumération : `PENDING`, `PROCESSING`, `AUTHORIZED`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED`
+Énumération : `PENDING`, `PROCESSING`, `SUCCEEDED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED`
 
 <a id="m-CreatePaymentIntentRequest"></a>
 #### CreatePaymentIntentRequest
@@ -428,7 +428,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `receiptNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PROCESSING`, `SUCCEEDED`, `FAILED`, `REFUNDED`, `REVERSED` |  |  |
 | `paidAt` | date-heure ISO 8601 UTC |  |  |
 | `receivedBy` | texte |  |  |
 | `failureReason` | texte |  |  |

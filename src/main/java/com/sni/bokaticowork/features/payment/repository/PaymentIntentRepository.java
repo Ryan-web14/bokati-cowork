@@ -44,7 +44,7 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntent, Lo
               AND customer_code = :customerCode
               AND source_type = :sourceType
               AND source_code = :sourceCode
-              AND status IN ('PENDING', 'PROCESSING', 'AUTHORIZED')
+              AND status IN ('PENDING', 'PROCESSING')
             ORDER BY created_at DESC
             LIMIT 1
             """)
@@ -102,7 +102,7 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntent, Lo
     @Query(nativeQuery = true, value = """
             UPDATE payment_intent
             SET status = 'EXPIRED', updated_at = NOW()
-            WHERE status IN ('PENDING', 'PROCESSING', 'AUTHORIZED')
+            WHERE status IN ('PENDING', 'PROCESSING')
               AND expires_at IS NOT NULL
               AND expires_at <= :now
             """)
@@ -111,7 +111,7 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntent, Lo
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM payment_intent
-            WHERE status IN ('PENDING', 'PROCESSING', 'AUTHORIZED')
+            WHERE status IN ('PENDING', 'PROCESSING')
               AND expires_at IS NOT NULL
               AND expires_at > :now
               AND expires_at <= :alertThreshold

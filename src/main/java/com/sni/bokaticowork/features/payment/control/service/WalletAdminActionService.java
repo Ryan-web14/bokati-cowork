@@ -354,6 +354,11 @@ public class WalletAdminActionService {
         }
     }
 
+    /** Un mouvement de ce montant exige-t-il un second visa ? (meme seuil pour toutes les voies) */
+    public boolean exceedsFourEyesThreshold(BigDecimal amount) {
+        return amount != null && amount.abs().compareTo(fourEyesThreshold()) >= 0;
+    }
+
     private boolean requiresSecondApproval(WalletAccount wallet, ActionRequest request) {
         return switch (request.type()) {
             case REVERSE -> true;

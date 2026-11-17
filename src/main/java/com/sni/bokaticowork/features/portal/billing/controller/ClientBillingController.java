@@ -112,7 +112,7 @@ public class ClientBillingController {
             @PathVariable String documentNumber,
             @Valid @RequestBody ClientInitiateMobileMoneyPaymentRequest request) {
         Member member = clientContextService.getAuthenticatedMember();
-        return ResponseEntity.ok(clientBillingService.payWithMobileMoney(member, documentNumber, request));
+        return ResponseEntity.ok(clientBillingService.payWithMobileMoney(member, documentNumber, request).forPortal());
     }
 
     @PostMapping("/invoices/{documentNumber}/pay/wallet")
@@ -154,7 +154,7 @@ public class ClientBillingController {
     @GetMapping("/mobile-money/deposits/{depositId}")
     public ResponseEntity<MobileMoneyDepositResponse> mobileMoneyDeposit(@PathVariable String depositId) {
         Member member = clientContextService.getAuthenticatedMember();
-        return ResponseEntity.ok(clientBillingService.mobileMoneyDeposit(member, depositId));
+        return ResponseEntity.ok(clientBillingService.mobileMoneyDeposit(member, depositId).forPortal());
     }
 
     @GetMapping("/payments")

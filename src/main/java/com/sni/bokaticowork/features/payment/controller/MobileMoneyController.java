@@ -194,30 +194,6 @@ public class MobileMoneyController {
         callbackGateway.receiveRefund(new String(signed.body(), java.nio.charset.StandardCharsets.UTF_8), signed, clientIp(request));
         return ResponseEntity.ok().build();
     }
-
-    /**
-     * Retour du navigateur apres la page de paiement hebergee.
-     *
-     * <p>Le depot est relu aupres de l'operateur, puis le client est renvoye vers la page de
-     * resultat. Rien n'est cru sur parole ici non plus · le parametre d'URL ne dit rien.</p>
-     */
-    @GetMapping("/pawapay/return")
-    public ResponseEntity<Void> paymentPageReturn(@RequestParam("depositId") String depositId) {
-        String status = "PROCESSING";
-        try {
-            MobileMoneyDepositResponse deposit = supervision.recheck(depositId);
-            status = deposit.phase() == null ? deposit.status() : deposit.phase();
-        } catch (Exception ex) {
-            log.warn("Retour PawaPay · statut du depot {} non relu : {}", depositId, ex.getMessage());
-        }
-
-        String base = properties.getPaymentPageResultUrl();
-        String target = StringUtils.hasText(base)
-                ? base + (base.contains("?") ? "&" : "?") + "depositId=" + depositId + "&status=" + status
-                : "/";
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(target)).build();
-    }
-
     /**
      * Le rappel tel que PawaPay l'a signe · les octets exacts du corps, et les autorites possibles.
      *

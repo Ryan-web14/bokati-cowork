@@ -35,8 +35,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
 
     private static final Set<PaymentIntentStatus> PAYABLE_STATUSES = Set.of(
             PaymentIntentStatus.PENDING,
-            PaymentIntentStatus.PROCESSING,
-            PaymentIntentStatus.AUTHORIZED
+            PaymentIntentStatus.PROCESSING
     );
 
     private final PaymentIntentRepository intentRepository;
@@ -86,6 +85,11 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
         int ttl = request == null || request.expiresInMinutes() == null ? 1440 : request.expiresInMinutes();
         intent.setPaymentLinkToken(UUID.randomUUID().toString().replace("-", ""));
         intent.setPaymentLinkExpiresAt(Instant.now().plus(Math.max(5, ttl), ChronoUnit.MINUTES));
+        // L'intention vit au moins aussi longtemps que le lien : creee sans echeance, elle expirait
+        // au bout de 15 minutes et le lien de 24 h menait a une intention perimee.
+        if (intent.getExpiresAt() == null || intent.getExpiresAt().isBefore(intent.getPaymentLinkExpiresAt())) {
+            intent.setExpiresAt(intent.getPaymentLinkExpiresAt());
+        }
         intentRepository.save(intent);
         String checkoutUrl = checkoutUrl(intent.getPaymentLinkToken());
 

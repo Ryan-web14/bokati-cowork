@@ -4,14 +4,12 @@ import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashRegisterResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionResponse;
-import com.sni.bokaticowork.features.payment.dto.response.ReconciliationBatchResponse;
 import com.sni.bokaticowork.features.payment.dto.response.WalletHoldResponse;
 import com.sni.bokaticowork.features.payment.dto.response.WalletLedgerEntryResponse;
 import com.sni.bokaticowork.features.payment.dto.response.WalletResponse;
 import com.sni.bokaticowork.features.payment.mapper.decorator.PaymentMapperDecorator;
 import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.features.payment.model.CashSession;
-import com.sni.bokaticowork.features.payment.model.PaymentReconciliationBatch;
 import com.sni.bokaticowork.features.payment.model.PaymentIntent;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
@@ -50,10 +48,6 @@ public interface PaymentMapper {
     }
 
     default CashSessionResponse toCashSessionResponse(CashSession cashSession) {
-        return null;
-    }
-
-    default ReconciliationBatchResponse toReconciliationBatchResponse(PaymentReconciliationBatch batch) {
         return null;
     }
 }

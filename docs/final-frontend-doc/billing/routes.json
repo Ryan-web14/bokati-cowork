@@ -11602,11 +11602,9 @@
     "status": {
      "type": "string",
      "enum": [
-      "PENDING",
       "PROCESSING",
       "SUCCEEDED",
       "FAILED",
-      "CANCELLED",
       "REFUNDED",
       "REVERSED"
      ]

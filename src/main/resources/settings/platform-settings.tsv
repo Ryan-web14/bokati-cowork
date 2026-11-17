@@ -402,10 +402,8 @@ bokati.payment.pawaypay.operator-prefixes	PAYMENT	TEXT	LIVE		Préfixes des opér
 bokati.payment.pawaypay.polling-delay-ms	PAYMENT	INTEGER	LIVE	60000	Cadence de lecture de l'opérateur (ms)
 bokati.payment.pawaypay.reconciliation-cron	PAYMENT	CRON	LIVE	0 0 6 * * *	Planification du rapprochement mobile money
 bokati.payment.self-service.confirmation-email	PAYMENT	EMAIL	LIVE		Adresse de confirmation du libre-service
-bokati.payment.workers.dunning-delay-ms	PAYMENT	INTEGER	LIVE	60000	Cadence des relances de paiement (ms)
 bokati.payment.workers.expiry-alert-delay-ms	PAYMENT	INTEGER	LIVE	1800000	Cadence des alertes d'expiration (ms)
 bokati.payment.workers.intent-expiry-delay-ms	PAYMENT	INTEGER	LIVE	300000	Cadence d'expiration des intentions de paiement (ms)
-bokati.payment.workers.reconciliation-cron	PAYMENT	CRON	LIVE	0 30 2 * * *	Planification du rapprochement des paiements
 bokati.payment.workers.wallet-hold-expiry-delay-ms	PAYMENT	INTEGER	LIVE	300000	Cadence d'expiration des retenues (ms)
 bokati.payment.workers.wallet-reconciliation-cron	PAYMENT	CRON	LIVE	0 15 3 * * *	Planification du rapprochement des portefeuilles
 bokati.payment.workers.wallet-reconciliation-enabled	PAYMENT	BOOLEAN	LIVE	true	Rapprochement des portefeuilles actif

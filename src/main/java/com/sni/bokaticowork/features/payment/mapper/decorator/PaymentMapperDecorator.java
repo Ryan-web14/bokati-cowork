@@ -4,14 +4,12 @@ import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashRegisterResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionResponse;
-import com.sni.bokaticowork.features.payment.dto.response.ReconciliationBatchResponse;
 import com.sni.bokaticowork.features.payment.dto.response.WalletHoldResponse;
 import com.sni.bokaticowork.features.payment.dto.response.WalletLedgerEntryResponse;
 import com.sni.bokaticowork.features.payment.dto.response.WalletResponse;
 import com.sni.bokaticowork.features.payment.mapper.interfaces.PaymentMapper;
 import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.features.payment.model.CashSession;
-import com.sni.bokaticowork.features.payment.model.PaymentReconciliationBatch;
 import com.sni.bokaticowork.features.payment.model.PaymentIntent;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
@@ -201,18 +199,6 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 cashSession.getOpenedAt(),
                 cashSession.getClosingRequestedAt(),
                 cashSession.getClosedAt()
-        );
-    }
-
-    @Override
-    public ReconciliationBatchResponse toReconciliationBatchResponse(PaymentReconciliationBatch batch) {
-        return new ReconciliationBatchResponse(
-                batch.getBatchNumber(),
-                batch.getProvider(),
-                batch.getStatus(),
-                batch.getCreatedBy(),
-                batch.getCreatedAt(),
-                batch.getCompletedAt()
         );
     }
 }

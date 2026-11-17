@@ -32,9 +32,10 @@ Montants de `PaymentIntentResponse` utiles à l'écran : `amount` (total), `paid
 | `EXPIRED` | Échéance `expiresAt` dépassée sans paiement complet. | Worker toutes les 5 min (`PaymentIntentExpiryWorker`) ; échec mobile money après échéance | `SUCCEEDED` si un dépôt en cours aboutit après coup (le rapprochement de l'intention réécrit le statut, `PawapayCallbackProcessor.java:288`) |
 | `REFUNDED` | Totalement remboursée. | Remboursement couvrant tout le montant de la transaction d'origine | aucun |
 | `REVERSED` | Totalement annulée. | Route `reverse` couvrant tout le montant | aucun |
-| `AUTHORIZED`, `FAILED`, `CANCELLED`, `PARTIALLY_REFUNDED` | Déclarés dans l'énumération, **jamais écrits** par le code. | | |
+| `CANCELLED` | Annulée avant paiement. | `POST /payments/intents/{intentNumber}/cancel` | relance (`relaunch`) |
+| `PARTIALLY_REFUNDED` | Payée puis remboursée en partie. | Remboursement partiel d'une transaction d'une intention `SUCCEEDED` | `REFUNDED` si le reste est remboursé |
 
-Un remboursement partiel ne change pas le statut de l'intention (elle reste `SUCCEEDED`).
+Un remboursement partiel fait passer l'intention `SUCCEEDED` en `PARTIALLY_REFUNDED` (17/11/2026). `AUTHORIZED` et `FAILED` ont été retirés : aucun traitement ne les produisait.
 
 ### Transaction (`PaymentTransactionStatus`)
 
@@ -45,7 +46,6 @@ Un remboursement partiel ne change pas le statut de l'intention (elle reste `SUC
 | `FAILED` | Refusée par l'opérateur (dépôt ou remboursement). | Refus, échec confirmé, résolution manuelle | aucun |
 | `REFUNDED` | Sur une transaction de remboursement : remboursement effectué. Sur l'originale : totalement remboursée. | Route `refund` (immédiat hors mobile money ; au rappel pour le mobile money) | aucun |
 | `REVERSED` | Même chose pour une annulation. | Route `reverse` | aucun |
-| `PENDING`, `CANCELLED` | Jamais écrits. | | |
 
 `paymentMethod` : `CASH`, `WALLET`, `MOBILE_MONEY` sont produits par les routes de ce module ; `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` arrivent par `POST /sni/api/v1/billing/invoices/{documentNumber}/pay` (module `billing`). `channel` : `SELF_SERVICE` (le client depuis son espace), `BACK_OFFICE` (un agent), `SYSTEM` (automate), nul pour les anciennes transactions.
 
@@ -59,7 +59,7 @@ Trois façons, selon l'écran :
 2. **Depuis plusieurs factures** : `POST /sni/api/v1/payments/intents/from-billing-documents` ([route](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-from-billing-documents)) avec `{ "documentNumbers": [...] }`. Les factures soldées sont ignorées en silence ; les autres doivent avoir le même client et la même devise. L'encaissement solde les factures dans l'ordre de la liste.
 3. **Libre** : `POST /sni/api/v1/payments/intents` ([route](routes/PaymentController.md#r-post-sni-api-v1-payments-intents)) avec `customerType`, `customerCode`, `amount`, `currency` (obligatoires) et `purpose`, `sourceType`, `sourceCode`, `idempotencyKey`, `expiresAt`, `metadataJson`. `createdBy` est accepté et ignoré. Un paiement sur une intention dont l'origine n'est pas une facture (ni `WALLET_TOPUP`) crée automatiquement une facture d'après le paiement (`BillingAutoInvoiceService.shouldAutoInvoice`, module `billing`).
 
-Dans les trois cas, **`expiresAt` vaut 15 minutes après la création s'il est absent** (`PaymentServiceImpl.java:1092`). Pour un encaissement immédiat au guichet, c'est suffisant ; pour un lien de paiement ou un paiement différé, envoyer une échéance explicite (date-heure ISO avec fuseau).
+Dans les trois cas, **`expiresAt` vaut 15 minutes après la création s'il est absent**. Pour un encaissement immédiat au guichet, c'est suffisant ; un lien de paiement prolonge l'intention jusqu'à sa propre échéance ; pour un paiement différé sans lien, envoyer une échéance explicite (date-heure ISO avec fuseau).
 
 Pour trouver les factures payables d'un client : `GET /sni/api/v1/payments/payable-documents?customerType=&customerCode=` ([route](routes/PaymentController.md#r-get-sni-api-v1-payments-payable-documents)), filtres `documentType`, `lineSourceType`, `lineSourceCode` (origine d'une ligne, par exemple un abonnement), `searchText`. Renvoie une page de `BillingDocumentResponse` (modèle du module `billing`).
 
@@ -113,7 +113,7 @@ L'aperçu n'est donc pas neutre à la confirmation : prévenir l'utilisateur qu'
 
 ### 8. Lots de rapprochement
 
-`POST /sni/api/v1/payments/reconciliation-batches` avec `{ "provider": "...", "createdBy"? }` crée un lot `OPEN` ; `PATCH /sni/api/v1/payments/reconciliation-batches/{batchNumber}/complete` le passe `COMPLETED` (`400` « Reconciliation batch is not open » sinon). Aucun calcul n'est fait et aucune route ne liste les lots : ne pas construire d'écran dessus. Le vrai rapprochement mobile money est dans [parcours-mobile-money.md](parcours-mobile-money.md#5-superviser-et-rapprocher-les-paiements-mobile-money-back-office).
+Les lots de rapprochement (`/payments/reconciliation-batches`) ont été retirés le 17/11/2026 : ils ne contenaient rien. Le vrai rapprochement mobile money est dans [parcours-mobile-money.md](parcours-mobile-money.md#5-superviser-et-rapprocher-les-paiements-mobile-money-back-office).
 
 ## Règles et erreurs à refléter dans l'écran
 
@@ -161,8 +161,8 @@ Voir aussi la section commune du [README.md](README.md#écarts-relevés).
 - La clé d'idempotence `WALLET_PAYMENT:<intentNumber>` est fixe par intention : un second paiement partiel au portefeuille sur la même intention retombe sur la première écriture (pas de débit) alors qu'une nouvelle transaction `SUCCEEDED` est créée. `PaymentServiceImpl.java:315` ; au rejeu, `WalletLedgerService` renvoie l'écriture d'origine sans débiter (`src/main/java/com/sni/bokaticowork/features/payment/service/support/WalletLedgerService.java:131`).
 - `creditOverpayment` du service crédite au portefeuille tout reste non imputé, quelle que soit l'origine ; pour une intention `WALLET_TOPUP` payée en espèces ou au portefeuille depuis le back-office, le montant entier serait crédité en `OVERPAYMENT_CREDIT` en plus du crédit de rechargement (`WalletTopUpService.settle`). Le processeur des rappels mobile money, lui, limite ce crédit aux origines de facturation. `PaymentServiceImpl.java:1067` contre `PawapayCallbackProcessor.java:249` (risque déduit du code, non vérifié en exécution).
 - `pendingIntent` passe l'intention `EXPIRED` puis lève une exception dans la même transaction : l'écriture est annulée et seul le worker l'expirera. `PaymentServiceImpl.java:832`.
-- **Partiellement réglé (avant les lots finance, c6089dc)** : une intention passe `CANCELLED` par `POST /payments/intents/{intentNumber}/cancel` (`PaymentIntentLifecycleServiceImpl#cancel`) ; reste : `AUTHORIZED`, `FAILED`, `PARTIALLY_REFUNDED` (intention), `PENDING`, `CANCELLED` (transaction) jamais posés. Constat d'origine : Statuts jamais atteints : `AUTHORIZED`, `FAILED`, `CANCELLED`, `PARTIALLY_REFUNDED` (intention), `PENDING`, `CANCELLED` (transaction). `src/main/java/com/sni/bokaticowork/features/payment/enums/PaymentIntentStatus.java`.
+- **Réglé (c6089dc et 17/11/2026)** : intention `CANCELLED` et `PARTIALLY_REFUNDED` atteintes ; intention `AUTHORIZED`, `FAILED` et transaction `PENDING`, `CANCELLED` retirées des énumérations.
 - Le remboursement d'une transaction en espèces ne crée aucun mouvement de sortie dans la caisse. `PaymentServiceImpl.java:890`.
-- Lots de rapprochement sans contenu ni liste ; le worker quotidien en crée et clôt un vide chaque nuit. `src/main/java/com/sni/bokaticowork/features/payment/service/implementation/PaymentReconciliationServiceImpl.java` et `worker/PaymentReconciliationWorker.java:17`.
-- Relances (`DunningServiceImpl.scheduleForFailedIntent`) jamais appelées : le `DunningWorker` tourne toutes les minutes sur une file toujours vide. `src/main/java/com/sni/bokaticowork/features/payment/service/implementation/DunningServiceImpl.java:59`.
-- `resolveMemberProcessing` lève une `NullPointerException` si `processedBy` est nul sur un paiement de facture au portefeuille par `POST /sni/api/v1/billing/invoices/{documentNumber}/pay`. `PaymentServiceImpl.java:522`.
+- **Réglé (17/11/2026)** : lots de rapprochement sans contenu retirés (routes, service, tâche de nuit qui créait un lot vide).
+- **Réglé (17/11/2026)** : relances de paiement jamais planifiées retirées (`DunningService`, `DunningWorker`).
+- **Réglé en pratique (17/11/2026)** : pour un appel authentifié, l'auteur du paiement de facture au portefeuille vient du jeton, il n'est plus nul. Reste : un appel interne sans auteur. Constat d'origine : `resolveMemberProcessing` levait une `NullPointerException` si `processedBy` était nul sur `POST /billing/invoices/{documentNumber}/pay`.

@@ -45,6 +45,17 @@ public record MobileMoneyDepositResponse(
         Instant updatedAt,
         PaymentTransactionResponse transaction
 ) {
+    /**
+     * Vue du portail client : sans l'adresse de rappel ni les echanges bruts avec PawaPay
+     * ({@code callbackUrl}, {@code requestPayloadJson}, {@code providerResponseJson}).
+     */
+    public MobileMoneyDepositResponse forPortal() {
+        return new MobileMoneyDepositResponse(depositId, clientReferenceId, customerMessage, metadata, payer, provider, amount,
+                currency, status, phase, providerMessage, failureReason, failureCode, userMessage, retryable, nextStatusCheckAt,
+                intentNumber, transactionNumber, customerType, customerCode, null, null, null, lastStatusCheckedAt,
+                completedAt, failedAt, createdAt, updatedAt, transaction);
+    }
+
     public record PayerResponse(
             String type,
             AccountDetailsResponse accountDetails

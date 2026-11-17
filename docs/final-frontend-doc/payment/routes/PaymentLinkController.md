@@ -41,7 +41,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `remainingAmount` | nombre décimal |  |  |
 | `payableAmount` | nombre décimal |  |  |
 | `currency` | texte |  |  |
-| `status` | enum : `PENDING`, `PROCESSING`, `AUTHORIZED`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED` |  |  |
+| `status` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED` |  |  |
 | `purpose` | texte |  |  |
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |

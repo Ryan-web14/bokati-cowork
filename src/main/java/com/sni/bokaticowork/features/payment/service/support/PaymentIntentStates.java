@@ -12,11 +12,11 @@ public final class PaymentIntentStates {
 
     /** Une intention encore en cours, que l'on peut annuler. */
     public static final Set<PaymentIntentStatus> OPEN =
-            Set.of(PaymentIntentStatus.PENDING, PaymentIntentStatus.PROCESSING, PaymentIntentStatus.AUTHORIZED);
+            Set.of(PaymentIntentStatus.PENDING, PaymentIntentStatus.PROCESSING);
 
     /** Une intention close sans avoir ete reglee, que l'on peut relancer. */
     public static final Set<PaymentIntentStatus> RELAUNCHABLE =
-            Set.of(PaymentIntentStatus.EXPIRED, PaymentIntentStatus.CANCELLED, PaymentIntentStatus.FAILED);
+            Set.of(PaymentIntentStatus.EXPIRED, PaymentIntentStatus.CANCELLED);
 
     private PaymentIntentStates() {
     }

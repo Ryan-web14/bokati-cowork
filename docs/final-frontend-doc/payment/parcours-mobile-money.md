@@ -82,7 +82,7 @@ Côté portail membre, le sondage passe par `GET /sni/api/v1/client/billing/mobi
 
 ### 3. Envoyer un lien de paiement (paiement sans compte)
 
-1. L'intention doit être `PENDING`, `PROCESSING` ou `AUTHORIZED` avec un reste dû positif. **Attention à son échéance** : une intention créée sans `expiresAt` expire 15 minutes après sa création (`PaymentServiceImpl.java:1092`), et la page du lien se ferme alors (« Ce lien de paiement n'est plus valable »). Pour un lien, créer l'intention avec un `expiresAt` au moins égal à la durée du lien.
+1. L'intention doit être `PENDING` ou `PROCESSING` avec un reste dû positif. Le lien prolonge l'intention jusqu'à sa propre échéance (24 h par défaut) : plus besoin de créer l'intention avec un `expiresAt` long.
 2. `POST /sni/api/v1/payments/intents/{intentNumber}/link` ([route](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-intentnumber-link)) avec un corps facultatif `{ "expiresInMinutes": 1440 }` (défaut 1440, minimum effectif 5). Un nouvel appel remplace le jeton précédent : l'ancien lien cesse de fonctionner.
 3. Réponse `PaymentLinkResponse` : `checkoutUrl` (`<app.api-base-url>/public/pay/<token>`), `token`, `expiresAt`, `emailedTo`. Si l'intention a une adresse de client (`customerEmail`), le lien lui est envoyé par courriel après validation de la transaction ; `emailedTo` est alors renseigné, sinon nul. `depositId` et `transactionNumber` sont toujours nuls.
 4. L'écran affiche `checkoutUrl` avec un bouton « Copier » et, si `emailedTo` est nul, l'indique (aucun courriel envoyé).
@@ -170,8 +170,8 @@ Aucune route de ce parcours ne lit l'en-tête `Idempotency-Key` (aucune annotati
 - **Écrans.** Formulaire de paiement mobile money (opérateur, numéro, montant) ; écran d'attente avec message, minuterie et bouton « Relire » ; écran de supervision (liste filtrable, synthèse par statut, fiche comparée à PawaPay, action de résolution avec motif) ; écran de génération de lien (URL à copier, échéance).
 - **Liste de référence** : `GET /sni/api/v1/payments/mobile-money/providers`, publique, à charger une fois.
 - **Montant** : entier, sans décimales ; par défaut ne rien envoyer (le serveur prend tout le reste payable).
-- **Champs à ne pas envoyer** : `createdBy` est accepté mais n'est qu'une étiquette ; `intentNumber` dans le corps du `PATCH` est inutile.
-- **Champs à ne pas montrer à un payeur** : `requestPayloadJson`, `providerResponseJson`, `callbackUrl`, `providerMessage`, `failureReason`, `metadata`.
+- **Champs à ne pas envoyer** : `createdBy` (l'auteur est le compte connecté) ; `intentNumber` dans le corps du `PATCH` est inutile.
+- **Champs à ne pas montrer à un payeur** : `providerMessage`, `failureReason`, `metadata` (montrer `userMessage`). Les routes du portail renvoient déjà `requestPayloadJson`, `providerResponseJson` et `callbackUrl` nuls.
 - **Temps réel** : aucun sujet WebSocket ne publie l'état d'un dépôt dans ce module ; le sondage est la seule voie.
 
 ## Effets automatiques
@@ -190,11 +190,11 @@ Aucune route de ce parcours ne lit l'en-tête `Idempotency-Key` (aucune annotati
 ## Écarts relevés
 
 - Dédoublonnage d'un dépôt en cours presque inatteignable : `requestedIntentAmount` (contrôle du reste payable) est appelé avant `inFlight`, donc un second envoi sur une intention dont le premier dépôt couvre tout le reste dû échoue en `400` au lieu de rendre le dépôt existant. `src/main/java/com/sni/bokaticowork/features/payment/service/implementation/PaymentServiceImpl.java:331` et `:337`.
-- Lien de paiement plus long que l'intention : le lien vaut 24 h par défaut mais l'intention créée sans `expiresAt` expire au bout de 15 minutes, et `createLink` ne prolonge pas l'intention. `src/main/java/com/sni/bokaticowork/features/payment/service/implementation/PaymentLinkServiceImpl.java:59` et `PaymentServiceImpl.java:1092`.
+- **Réglé (17/11/2026)** : le lien prolonge l'intention. Constat d'origine : le lien valait 24 h mais l'intention créée sans `expiresAt` expirait au bout de 15 minutes.
 - `CreatePaymentLinkRequest.expiresInMinutes` porte `@Min(5)` mais le contrôleur n'a pas `@Valid` : la contrainte n'est pas appliquée (le service ramène à 5 en silence). `src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java:153`.
 - `PaymentLinkResponse.depositId` et `transactionNumber` sont toujours nuls. `PaymentLinkServiceImpl.java:72`.
-- Le portail membre reçoit la même `MobileMoneyDepositResponse` que le back-office, avec `requestPayloadJson`, `providerResponseJson` et `callbackUrl` (URL interne du serveur). `src/main/java/com/sni/bokaticowork/features/portal/billing/service/ClientBillingService.java:139`, construit par `PawapayDepositService.java:316`.
+- **Réglé (17/11/2026)** : le portail ne reçoit plus `requestPayloadJson`, `providerResponseJson` ni `callbackUrl` (filtre de réponse sur tout le portail).
 - Rôle `ROLE_MANAGER` autorisé par `@PreAuthorize` alors que les autres rôles d'administration (`ROLE_FINANCE`, `ROLE_CASHIER`…) sont refusés même avec `PAYMENT:READ` : règle d'accès à deux niveaux, invisible dans le droit seul. `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java:53`, `MobileMoneyOperationsController.java` (constante `STAFF`).
-- `GET /sni/api/v1/payments/mobile-money/pawapay/return` redirige vers `payment-page-result-url` avec `status` lu de la `phase` ; ce retour servait la page hébergée de PawaPay, que le lien de paiement n'utilise plus (`PaymentLinkServiceImpl.java:55`). Route publique probablement morte. `MobileMoneyController.java:204`.
+- **Réglé (17/11/2026)** : `GET /payments/mobile-money/pawapay/return` retiré (il servait la page hébergée de PawaPay, plus utilisée).
 - Sans fournisseur configuré (`bokati.payment.pawaypay.enabled` = `false`), l'envoi reçoit `NOT_IMPLEMENTED` : la transaction passe `FAILED` mais le dépôt reste `PROCESSING` (phase `WAITING_FOR_PAYER`) pour toujours, le worker étant désactivé. `PawapayDepositService.java:160` et `PaymentServiceImpl.java:384`.
 - Messages d'erreur en anglais sur l'intention (« Payment intent is not payable », etc.), alors que les contrôles de l'opérateur sont en français. `PaymentServiceImpl.java:829`, `:1101`.

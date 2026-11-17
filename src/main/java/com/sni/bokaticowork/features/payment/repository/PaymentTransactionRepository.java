@@ -21,8 +21,7 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             SELECT COUNT(t) > 0 FROM PaymentTransaction t
             WHERE t.paymentIntent.sourceType = 'BILLING_DOCUMENT'
               AND t.paymentIntent.sourceCode = :documentNumber
-              AND t.status IN (com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.PENDING,
-                               com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.PROCESSING)
+              AND t.status = com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.PROCESSING
               AND t.createdAt >= :since
             """)
     boolean existsInFlightForDocument(@Param("documentNumber") String documentNumber, @Param("since") java.time.Instant since);
