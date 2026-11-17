@@ -399,7 +399,7 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             // Avant, ces ecritures ne demandaient que KYC:READ.
             if (HttpMethod.GET.matches(method)) return permission("KYC", "READ");
             if (endsWithAny(path, "/approve", "/bulk-approve")) return permission("KYC", "APPROVE");
-            if (endsWithAny(path, "/reject", "/bulk-reject", "/bulk-disapprove", "/bulk-desapprove", "/request-correction")) {
+            if (endsWithAny(path, "/reject", "/reject-final", "/bulk-reject", "/bulk-disapprove", "/bulk-desapprove", "/request-correction")) {
                 return permission("KYC", "REJECT");
             }
             return permission("KYC", "MANAGE");

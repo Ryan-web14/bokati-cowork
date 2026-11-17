@@ -86,6 +86,10 @@ public class KycDocument {
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
 
+    /** Lot KG7 : derniere relance de renouvellement groupee. */
+    @Column(name = "renewal_reminded_at")
+    private java.time.Instant renewalRemindedAt;
+
     @Column(name = "status", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private KycDocumentVerificationStatus status;

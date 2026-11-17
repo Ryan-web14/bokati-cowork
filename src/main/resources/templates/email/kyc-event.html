@@ -51,10 +51,10 @@
       <!-- Correction / mise &#224; jour demand&#233;e -->
       <div th:case="'KYC_CASE_REJECTED'">
         <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
-        <p>Nous avons examin&#233; votre dossier et une petite mise &#224; jour est n&#233;cessaire avant de pouvoir le
-          valider. Rien d&#8217;inqui&#233;tant&#8202;: il s&#8217;agit simplement de corriger ou de renvoyer une ou plusieurs
-          pi&#232;ces.</p>
-        <p>Rendez-vous dans votre espace personnel, o&#249; le d&#233;tail des &#233;l&#233;ments attendus vous est indiqu&#233;.</p>
+        <p>Apr&#232;s examen, nous ne sommes pas en mesure de valider votre dossier de v&#233;rification.</p>
+        <p th:if="${reason}">Motif&#8202;: <span th:text="${reason}">Motif</span></p>
+        <p>Si vous pensez qu&#8217;il s&#8217;agit d&#8217;une erreur, ou pour toute question, contactez notre &#233;quipe&#8202;:
+          elle pourra r&#233;examiner votre dossier.</p>
       </div>
       <!-- Niveau de v&#233;rification relev&#233; (lot KG1) -->
       <div th:case="'KYC_CASE_LEVEL_CHANGED'">

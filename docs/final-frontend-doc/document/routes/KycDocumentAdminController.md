@@ -48,6 +48,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
+| `duplicateOf` | texte[] |  |  |
 | `id` | code identifiant (texte) |  |  |
 | `documentCode` | texte |  |  |
 | `documentType` | texte |  |  |

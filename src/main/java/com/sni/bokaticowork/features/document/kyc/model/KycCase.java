@@ -59,6 +59,10 @@ public class KycCase {
     @Column(name = "decision_comment")
     private String decisionComment;
 
+    /** Lot KG7 : motif normalise de la derniere decision (refus definitif ou correction). */
+    @Column(name = "decision_reason_code", length = 60)
+    private String decisionReasonCode;
+
     @Column(name = "assigned_to")
     private Long assignedTo;
 

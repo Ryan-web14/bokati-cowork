@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-205 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+215 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -167,6 +167,14 @@
 | POST | `/sni/api/v1/ged/trash/{batch}/restore` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash-batch-restore) |
 | GET | `/sni/api/v1/ged/tree` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-tree) |
 | GET | `/sni/api/v1/ged/usage` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-usage) |
+| GET | `/sni/api/v1/kyc/dashboard/center` | KYC:READ | [KycCenterController](routes/KycCenterController.md#r-get-sni-api-v1-kyc-dashboard-center) |
+| GET | `/sni/api/v1/kyc/duplicates` | KYC:READ | [KycCenterController](routes/KycCenterController.md#r-get-sni-api-v1-kyc-duplicates) |
+| GET | `/sni/api/v1/kyc/reasons` | KYC:READ | [KycCenterController](routes/KycCenterController.md#r-get-sni-api-v1-kyc-reasons) |
+| POST | `/sni/api/v1/kyc/reasons` | KYC:MANAGE | [KycCenterController](routes/KycCenterController.md#r-post-sni-api-v1-kyc-reasons) |
+| DELETE | `/sni/api/v1/kyc/reasons/{code}` | KYC:MANAGE | [KycCenterController](routes/KycCenterController.md#r-delete-sni-api-v1-kyc-reasons-code) |
+| PUT | `/sni/api/v1/kyc/reasons/{code}` | KYC:MANAGE | [KycCenterController](routes/KycCenterController.md#r-put-sni-api-v1-kyc-reasons-code) |
+| GET | `/sni/api/v1/kyc/renewals` | KYC:READ | [KycCenterController](routes/KycCenterController.md#r-get-sni-api-v1-kyc-renewals) |
+| POST | `/sni/api/v1/kyc/renewals/remind` | KYC:MANAGE | [KycCenterController](routes/KycCenterController.md#r-post-sni-api-v1-kyc-renewals-remind) |
 | GET | `/sni/api/v1/kyc/cases` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases) |
 | POST | `/sni/api/v1/kyc/cases` | KYC:MANAGE | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases) |
 | GET | `/sni/api/v1/kyc/cases/dashboard` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-dashboard) |
@@ -186,6 +194,8 @@
 | GET | `/sni/api/v1/kyc/cases/{code}/notes` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code-notes) |
 | POST | `/sni/api/v1/kyc/cases/{code}/notes` | KYC:MANAGE | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-notes) |
 | POST | `/sni/api/v1/kyc/cases/{code}/reject` | KYC:REJECT | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-reject) |
+| POST | `/sni/api/v1/kyc/cases/{code}/reject-final` | KYC:REJECT | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-reject-final) |
+| POST | `/sni/api/v1/kyc/cases/{code}/reopen` | KYC:MANAGE | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-reopen) |
 | GET | `/sni/api/v1/kyc/cases/{code}/requirements` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code-requirements) |
 | POST | `/sni/api/v1/kyc/cases/{code}/requirements` | KYC:MANAGE | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-requirements) |
 | DELETE | `/sni/api/v1/kyc/cases/{code}/requirements/{documentTypeCode}` | KYC:MANAGE | [KycController](routes/KycController.md#r-delete-sni-api-v1-kyc-cases-code-requirements-documenttypecode) |

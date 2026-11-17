@@ -24,6 +24,18 @@
 - `byOwnerType` : nombre de dossiers et dossiers en attente par type de propriétaire.
 - `recentActivity` : dossiers approuvés et refusés sur 7 jours.
 
+### Tableau de bord du centre (lot KG7)
+
+`GET /sni/api/v1/kyc/dashboard/center?from=AAAA-MM-JJ&to=AAAA-MM-JJ` ([route](routes/KycCenterController.md)), droit `KYC:READ` ; période des décisions par défaut : les 30 derniers jours.
+
+- `byStatus` : nombre de dossiers par statut (tous les statuts, zéro compris).
+- `waitingReview` : dossiers `SUBMITTED` ou `UNDER_REVIEW` par ancienneté depuis la soumission : `underTwoDays`, `twoToSevenDays`, `overSevenDays`.
+- `averageProcessingHours`, `medianProcessingHours` : de la soumission à la décision (approuvé ou refusé définitivement) sur la période, en heures ; `null` sans décision. `decidedInPeriod` : nombre de décisions.
+- `overdue` : dossiers ouverts dont `slaDeadline` est dépassée (`code`, `status`, `ownerType`, `ownerId`, `since`, `detail`).
+- `agents` : par compte (`userId`, `name`), dossiers ouverts affectés (`assignedOpen`) et décidés sur la période (`decidedInPeriod`).
+- `blocked` : en correction depuis plus de 14 jours, ou sans aucune pièce 14 jours après l'ouverture (`detail` dit lequel).
+- `duplicateGroups` : nombre de groupes de pièces en double (voir plus bas).
+
 ## Lister et filtrer les dossiers
 
 1. `GET /sni/api/v1/kyc/cases` ([route](routes/KycController.md#r-get-sni-api-v1-kyc-cases)), droit `KYC:READ`, tri par défaut `startedAt` croissant, 20 par page. Filtres :
@@ -142,13 +154,27 @@ Quand toutes les pièces exigées sont vérifiées, le recalcul passe le dossier
 3. Un dossier déjà `APPROVED` ne se réapprouve pas (`400` « Ce dossier KYC est déjà approuvé ») ; un dossier `REJECTED` ou `EXPIRED` doit être rouvert avant (`400`). **Réglé** (KG1).
 4. Les mêmes effets (titulaire actif, portefeuille, courriel) s'appliquent quand le recalcul approuve le dossier de lui-même.
 
-### Refuser le dossier (renvoyer en correction)
+### Renvoyer le dossier en correction
 
-`POST /sni/api/v1/kyc/cases/{code}/reject` ([route](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-reject)), droit `KYC:REJECT`, corps `{ "reviewedBy": "…", "comment": "Motif" }` (`comment` obligatoire).
+`POST /sni/api/v1/kyc/cases/{code}/reject` ([route](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-reject)), droit `KYC:REJECT`, corps `{ "reasonCode": "PIECE_ILLISIBLE", "comment": "Précision facultative" }`. Malgré son nom, cette route **ne refuse pas** le dossier : elle le renvoie en correction.
 
-- Le dossier passe **`PENDING_CORRECTION`** (pas `REJECTED`), le membre `PENDING_CORRECTION`, le client `PENDING`. Une trace de vérification est ajoutée pour chaque pièce `PENDING` ou `REJECTED`. Courriel « Une petite mise à jour est nécessaire sur votre dossier KYC ».
-- Le refus du dossier ne refuse aucune pièce : indiquer au membre lesquelles refaire en refusant ou en faisant corriger les pièces concernées.
-- Le recalcul ne fait plus quitter un dossier renvoyé en correction sans nouvelle pièce ; il ne touche plus un dossier `REJECTED` et garde `SUBMITTED`. **Réglé** (KG1).
+- Motif : `reasonCode` pris dans `GET /kyc/reasons?kind=CORRECTION` (lot KG7), complété par `comment` ; sans `reasonCode`, `comment` seul reste accepté (ancienne forme). « Autre, préciser » exige `comment`. Le texte enregistré (`decisionComment`) est « libellé : précision ».
+- Le dossier passe **`PENDING_CORRECTION`**, le membre `PENDING_CORRECTION`, le client `PENDING`. Courriel « Une petite mise à jour est nécessaire sur votre dossier KYC », et WhatsApp (voir plus bas).
+- Le renvoi ne refuse aucune pièce : faire corriger les pièces concernées pour dire au titulaire lesquelles refaire.
+- `400` sur un dossier refusé définitivement : le rouvrir d'abord.
+
+### Refuser définitivement (lot KG7)
+
+`POST /sni/api/v1/kyc/cases/{code}/reject-final`, droit `KYC:REJECT`, corps `{ "reasonCode": "DOCUMENT_FALSIFIE", "comment": "…" }`.
+
+- `reasonCode` **obligatoire**, pris dans `GET /kyc/reasons?kind=REJECTION`.
+- Le dossier passe **`REJECTED`** (`completedAt`, `reviewedBy`, `decisionReasonCode`, `decisionReasonLabel`, `decisionComment`) ; un membre non actif passe `REJECTED`. Courriel « Votre dossier KYC n'a pas été retenu », avec le motif.
+- Le dossier est **fermé aux dépôts** (portail et équipe : `400` « Le dossier KYC … est refusé »), et le recalcul n'y touche plus.
+- Écran conseillé : deux boutons distincts, « Demander une correction » et « Refuser définitivement » (confirmation, liste des motifs).
+
+### Rouvrir un dossier refusé (lot KG7)
+
+`POST /sni/api/v1/kyc/cases/{code}/reopen`, corps facultatif `{ "comment": "…" }`, route `KYC:MANAGE` et **administrateur seulement** (`403` sinon). Le dossier repasse `IN_PROGRESS`, le membre refusé repasse `PENDING` ; les dépôts sont de nouveau acceptés. `400` si le dossier n'est pas `REJECTED`.
 
 ## Notes internes
 
@@ -165,6 +191,35 @@ Quand toutes les pièces exigées sont vérifiées, le recalcul passe le dossier
 - Après un ajout ou un retrait, le dossier est recalculé : un dossier approuvé se rouvre (`IN_PROGRESS`) si une pièce obligatoire manque ; la pièce apparaît aussitôt dans l'espace client du titulaire, qui peut la déposer.
 - Dépôt : seules les pièces demandées pour le dossier se déposent (équipe et titulaire) : `400` « Cette pièce n'est pas demandée pour ce dossier … ».
 
+## Motifs de refus et de correction (lot KG7)
+
+Liste tenue dans le backend : `GET /sni/api/v1/kyc/reasons?kind=REJECTION|CORRECTION&activeOnly=true` (droit `KYC:READ`) renvoie `code`, `label`, `kind` (`REJECTION`, `CORRECTION` ou `BOTH`), `requiresText`, `active`, `sortOrder`, `systemReason`. Sans `kind`, toute la liste.
+
+Paramétrage (`KYC:MANAGE`) : `POST /kyc/reasons` `{ "code", "label", "kind", "requiresText", "active", "sortOrder" }` ; `PUT /kyc/reasons/{code}` (mêmes champs, tous facultatifs) ; `DELETE /kyc/reasons/{code}`, refusé (`400`) pour un motif préenregistré (`systemReason`) : le désactiver.
+
+Préenregistrés : `PIECE_ILLISIBLE`, `PIECE_INCOMPLETE`, `MAUVAIS_TYPE`, `JUSTIFICATIF_ANCIEN` (correction) ; `DOCUMENT_FALSIFIE`, `IDENTITE_NON_CONFIRMEE`, `DOUBLON`, `HORS_POLITIQUE` (refus) ; `PIECE_EXPIREE`, `INFOS_INCOHERENTES`, `AUTRE` (les deux, `AUTRE` exige un texte).
+
+## Renouvellements (lot KG7)
+
+- Calendrier : `GET /sni/api/v1/kyc/renewals?days=90` (`KYC:READ`) : pièces en attente ou vérifiées qui expirent dans les `days` jours, par semaine (`weekStart`, lundi) ; chaque pièce : `kycDocumentId` (code identifiant), `kycCaseCode`, `documentType`, `documentNumber`, `ownerType`, `ownerId`, `expiryDate`, `daysLeft`, `lastRemindedAt`.
+- Relance groupée : `POST /sni/api/v1/kyc/renewals/remind` (`KYC:MANAGE`), corps facultatif `{ "days": 90, "kycDocumentIds": ["KD-…"] }` (sans liste : toutes les pièces de la période). Un rappel d'échéance (courriel) par pièce ; une pièce relancée il y a moins de 7 jours est sautée. Réponse `{ "reminded": 3, "skippedRecentlyReminded": 1 }`.
+
+## Doublons de pièces (lot KG7)
+
+Même type de pièce et même numéro (casse, accents, espaces et ponctuation ignorés) chez deux titulaires différents : signal, **jamais bloquant**.
+
+- Sur la fiche : chaque pièce de `documents[]` porte `duplicateOf`, la liste des codes de dossiers des autres titulaires (vide sinon). Afficher un avertissement.
+- Liste : `GET /sni/api/v1/kyc/duplicates` (`KYC:READ`) : groupes `{ documentType, normalizedNumber, pieces: [{ kycDocumentId, kycCaseCode, ownerType, ownerId, documentNumber, status }] }`.
+- Le tableau de bord en donne le nombre (`duplicateGroups`).
+
+## WhatsApp au titulaire (lot KG7)
+
+En plus du courriel, quand une pièce est ajoutée au dossier, que le niveau KYC demande des pièces, ou qu'un dossier ou une pièce est renvoyé en correction : modèle `kyc_pieces_demandees` (objet `KYC_DOCUMENTS_REQUESTED`), avec le prénom, les pièces demandées et la référence du dossier, bouton vers la page KYC de l'espace client (`bokati.whatsapp.portal-path.kyc`, `client/kyc` par défaut). Rien ne part tant que le modèle n'est pas approuvé par Meta et enregistré, ni si les envois WhatsApp automatiques sont coupés, ni si le membre a coupé ce message (préférence `KYC_DOCUMENTS_REQUESTED`, canal WhatsApp).
+
+## Historique (lot KG7)
+
+Dossiers, pièces, exigences et documents sont des entités principales du centre d'audit : chaque modification garde l'avant et l'après. Onglet « Historique » d'une fiche : chronologie du centre d'audit filtrée sur le code (`GET /sni/api/v1/admin/audit/timeline?entityCode=<code du dossier ou du document>`, voir [audit](../audit/README.md)).
+
 ## Courriels au titulaire
 
 Envoyés par la boîte d'envoi (un échec de mise en file est réessayé, lot KG3) :
@@ -174,6 +229,7 @@ Envoyés par la boîte d'envoi (un échec de mise en file est réessayé, lot KG
 | `KYC_CASE_CREATED` | Votre dossier KYC est ouvert |
 | `KYC_CASE_APPROVED` (manuel ou par recalcul) | Bonne nouvelle : votre dossier KYC est validé |
 | `KYC_CASE_CORRECTION_REQUESTED` | Une petite mise à jour est nécessaire sur votre dossier KYC |
+| `KYC_CASE_REJECTED` (refus définitif, lot KG7) | Votre dossier KYC n'a pas été retenu (avec le motif) |
 | `KYC_DOCUMENT_CORRECTION_REQUESTED` | Une pièce de votre dossier KYC est à corriger (avec le motif) |
 | `KYC_CASE_REQUIREMENT_ADDED` | Une pièce de plus pour votre dossier KYC (nom de la pièce, facultative ou non) |
 | `KYC_CASE_LEVEL_CHANGED` | Quelques pièces complémentaires pour votre dossier KYC (liste) |
@@ -232,35 +288,3 @@ Lecture `KYC:READ`, création, modification et suppression `KYC:MANAGE` : `GET/P
 - `ruleType` absent = `FIELD_MATCH` (comme avant). `documentTypeCode1` : un ou plusieurs types séparés par des virgules, vide = toutes les pièces.
 - Champs exigés : `FIELD_MATCH` : deux types et `fieldToCompare` parmi `first_name`, `last_name`, `date_of_birth`, `expiry_date`, `document_number`, `nationality` ; `DECLARED_VS_OCR` : `document_number` ou `expiry_date` ; `PROFILE_MATCH` : `niu`, `rccm`, `last_name`, `first_name` ; `MIN_VALIDITY` : `parameter` en jours. Sinon `400` qui nomme les valeurs admises.
 - Réponse : en plus, `id`, `code`, `name`, `description`, `ruleType`, `parameter`, `systemRule`.
-
-## Courriels au titulaire
-
-Envoyés par la boîte d'envoi (un échec de mise en file est réessayé, lot KG3) :
-
-| Événement | Objet |
-| --- | --- |
-| `KYC_CASE_CREATED` | Votre dossier KYC est ouvert |
-| `KYC_CASE_APPROVED` (manuel ou par recalcul) | Bonne nouvelle : votre dossier KYC est validé |
-| `KYC_CASE_CORRECTION_REQUESTED` | Une petite mise à jour est nécessaire sur votre dossier KYC |
-| `KYC_DOCUMENT_CORRECTION_REQUESTED` | Une pièce de votre dossier KYC est à corriger (avec le motif) |
-| `KYC_CASE_REQUIREMENT_ADDED` | Une pièce de plus pour votre dossier KYC (nom de la pièce, facultative ou non) |
-| `KYC_CASE_LEVEL_CHANGED` | Quelques pièces complémentaires pour votre dossier KYC (liste) |
-| `KYC_INCOMPLETE_REMINDER` | Petit rappel : votre dossier KYC vous attend (après 3, 7, 14 jours, 3 au plus) |
-| `KYC_DOCUMENT_EXPIRY_REMINDER` | Échéance d'une pièce : un rappel par seuil (60, 30, 7 jours) |
-| `KYC_RENEWAL_REQUIRED` | Votre dossier KYC est à renouveler (pièce échue, après 15 jours de grâce) |
-
-Les autres événements (soumission, affectation, note, risque, recalcul…) sont consignés dans la chronologie du dossier sans courriel ; ils ne finissent plus en erreur dans la boîte d'envoi.
-
-## Export PDF
-
-`GET /sni/api/v1/kyc/cases/{code}/export/pdf?includeInternalNotes=true` ([route](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code-export-pdf)) : fichier `kyc-<code>.pdf` (`attachment`), avec dossier, chronologie, échéances et notes. Télécharger par `fetch` avec Bearer puis `blob`.
-
-## Règles de contrôle croisé
-
-Paramétrage (lecture `KYC:READ`, création, modification et suppression `KYC:MANAGE`) : `GET/POST /sni/api/v1/kyc/cross-validation-rules`, `GET/PUT/DELETE /sni/api/v1/kyc/cross-validation-rules/{id}` ([routes](routes/KycCrossValidationRuleController.md)). `{id}` est un code identifiant (texte, voir le README racine).
-
-- Corps : `{ "documentTypeCode1": "CNI", "documentTypeCode2": "PASSEPORT", "fieldToCompare": "last_name", "blocking": true, "active": true }`. Codes mis en majuscules, champ en minuscules.
-- Champs comparables : `first_name`/`firstname`, `last_name`/`lastname`/`name`, `date_of_birth`/`dob`, `expiry_date`, `document_number`, `nationality`. Toute autre valeur est acceptée à l'enregistrement mais ne compare rien.
-- À l'approbation manuelle d'un dossier, pour chaque règle active : si les deux types de pièces sont présents, que l'OCR a lu le champ sur les deux et que les valeurs diffèrent (sans tenir compte de la casse), une règle `blocking` refuse l'approbation (`400` « KYC cross-validation failed for field last_name »). Sans OCR, aucune règle ne bloque.
-- `DELETE` supprime réellement la règle ; `PUT` exige tous les champs obligatoires.
-- `GET` sans `activeOnly` renvoie toutes les règles.

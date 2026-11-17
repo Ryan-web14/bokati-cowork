@@ -10,4 +10,10 @@ public class KycDecisionRequest {
     private Long reviewedBy;
 
     private String comment;
+
+    /**
+     * Lot KG7 : motif de la liste ({@code GET /kyc/reasons}) ; le commentaire le complete. Pour un
+     * refus definitif, motif obligatoire.
+     */
+    private String reasonCode;
 }

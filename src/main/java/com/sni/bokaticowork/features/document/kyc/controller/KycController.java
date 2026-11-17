@@ -142,6 +142,27 @@ public class KycController {
     }
 
     /**
+     * Lot KG7 : refus definitif (a distinguer de {@code /reject}, qui demande une correction).
+     * Corps : {@code { "reasonCode": "DOCUMENT_FALSIFIE", "comment": "…" }}.
+     */
+    @PostMapping("/{code}/reject-final")
+    @Audited(module = "KYC", action = "REJECT_CASE_FINAL", ressource = "kyc_case")
+    @Idempotent(operation = "KYC_CASE_REJECT_FINAL")
+    public ResponseEntity<KycCaseResponse> rejectFinal(@PathVariable String code, @Valid @RequestBody KycDecisionRequest request) {
+        return ResponseEntity.ok(service.rejectFinal(code, request));
+    }
+
+    public record ReopenRequest(String comment) {
+    }
+
+    /** Lot KG7 : reouverture d'un dossier refuse, administrateur seulement. */
+    @PostMapping("/{code}/reopen")
+    @Audited(module = "KYC", action = "REOPEN_CASE", ressource = "kyc_case")
+    public ResponseEntity<KycCaseResponse> reopen(@PathVariable String code, @RequestBody(required = false) ReopenRequest request) {
+        return ResponseEntity.ok(service.reopen(code, request == null ? null : request.comment()));
+    }
+
+    /**
      * Controles croises du dossier : une ligne par regle active et par piece visee, resultat
      * PASSED, FAILED ou SKIPPED (donnee absente, OCR indisponible). Les regles bloquantes en echec
      * empechent l'approbation. Lecture seule, droit KYC:READ.

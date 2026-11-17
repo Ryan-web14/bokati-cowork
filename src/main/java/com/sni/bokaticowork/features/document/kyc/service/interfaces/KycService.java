@@ -42,6 +42,12 @@ public interface KycService {
     KycCaseResponse submit(String code);
     KycCaseResponse approve(String code, KycDecisionRequest request);
     KycCaseResponse reject(String code, KycDecisionRequest request);
+
+    /** Lot KG7 : refus definitif (statut REJECTED, motif de la liste obligatoire). */
+    KycCaseResponse rejectFinal(String code, KycDecisionRequest request);
+
+    /** Lot KG7 : reouverture d'un dossier refuse, par un administrateur. */
+    KycCaseResponse reopen(String code, String comment);
     List<KycRequirementStatus> getMissingRequirements(String code);
     KycDashboardResponse dashboard();
     KycCaseResponse assign(String code, KycAssignRequest request);

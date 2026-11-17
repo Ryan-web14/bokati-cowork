@@ -20,6 +20,8 @@ public class WhatsAppPortalPaths {
     public static final String BOOKINGS = "bookings";
     public static final String SUBSCRIPTIONS = "subscriptions";
     public static final String WALLET = "wallet";
+    /** Lot KG7 : pieces KYC a deposer. */
+    public static final String KYC = "kyc";
 
     static final String PREFIX = "bokati.whatsapp.portal-path.";
     static final Map<String, String> DEFAULTS = Map.of(
@@ -27,7 +29,8 @@ public class WhatsAppPortalPaths {
             QUOTES, "client/quotes",
             BOOKINGS, "client/bookings",
             SUBSCRIPTIONS, "client/subscriptions",
-            WALLET, "client/wallet");
+            WALLET, "client/wallet",
+            KYC, "client/kyc");
 
     private final ObjectProvider<PlatformSettings> settings;
 

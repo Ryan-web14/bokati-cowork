@@ -71,6 +71,10 @@ public class KycPieceLinker {
     /** Rattache le document et renvoie sa piece. */
     public KycDocument link(Document document, DocumentOwnerType ownerType, Long ownerId, Details details) {
         KycCase kycCase = kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(ownerType, ownerId).orElse(null);
+        // Lot KG7 : un dossier refuse definitivement est ferme aux depots (reouverture par un administrateur).
+        if (kycCase != null && kycCase.getStatus() == com.sni.bokaticowork.features.document.kyc.KycCaseStatus.REJECTED) {
+            throw new BadRequestException("Le dossier KYC " + kycCase.getCode() + " est refusé : aucun dépôt possible, contactez l'équipe");
+        }
         String typeCode = document.getDocumentType().getCode();
         KycDocument existing = kycCase == null ? null
                 : kycDocumentRepository.findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, typeCode).stream()

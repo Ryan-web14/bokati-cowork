@@ -493,6 +493,7 @@ bokati.websocket.use-stomp-relay	WEBSOCKET	BOOLEAN	RESTART	false	Relais de messa
 bokati.whatsapp.auto-notifications.enabled	NOTIFICATIONS	BOOLEAN	LIVE	true	Messages WhatsApp automatiques aux clients (réservation, abonnement, facture soldée, portefeuille)
 bokati.whatsapp.portal-path.bookings	NOTIFICATIONS	TEXT	LIVE	client/bookings	Page de l'espace client ouverte par le bouton WhatsApp : réservations
 bokati.whatsapp.portal-path.invoices	NOTIFICATIONS	TEXT	LIVE	client/invoices	Page de l'espace client ouverte par le bouton WhatsApp : factures, proformas et avoirs
+bokati.whatsapp.portal-path.kyc	NOTIFICATIONS	TEXT	LIVE	client/kyc	Page de l'espace client ouverte par le bouton WhatsApp : pièces KYC à déposer
 bokati.whatsapp.portal-path.quotes	NOTIFICATIONS	TEXT	LIVE	client/quotes	Page de l'espace client ouverte par le bouton WhatsApp : devis
 bokati.whatsapp.portal-path.subscriptions	NOTIFICATIONS	TEXT	LIVE	client/subscriptions	Page de l'espace client ouverte par le bouton WhatsApp : abonnements
 bokati.whatsapp.portal-path.wallet	NOTIFICATIONS	TEXT	LIVE	client/wallet	Page de l'espace client ouverte par le bouton WhatsApp : portefeuille

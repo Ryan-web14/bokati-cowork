@@ -315,15 +315,20 @@ public class KycServiceImpl implements KycService {
 
     @Override
     public KycCaseResponse reject(String code, KycDecisionRequest request) {
-        if (!StringUtils.hasText(request.getComment())) {
-            throw new BadRequestException("Le motif du refus est requis");
-        }
+        // Demande de correction (le dossier reste ouvert). Lot KG7 : motif de la liste ou texte.
+        String reason = reasons().describe(request.getReasonCode(), request.getComment(),
+                com.sni.bokaticowork.features.document.kyc.service.support.KycReasons.CORRECTION);
+        request.setComment(reason);
 
         KycCase kycCase = serviceCase(code);
+        if (kycCase.getStatus() == KycCaseStatus.REJECTED) {
+            throw new BadRequestException("Le dossier " + code + " est refusé définitivement : le rouvrir d'abord");
+        }
         kycCase.setStatus(KycCaseStatus.PENDING_CORRECTION);
         kycCase.setReviewedBy(actor(request.getReviewedBy()));
         kycCase.setReviewedAt(Instant.now());
-        kycCase.setDecisionComment(request.getComment().trim());
+        kycCase.setDecisionComment(reason);
+        kycCase.setDecisionReasonCode(normalizedCode(request.getReasonCode()));
         caseRepository.save(kycCase);
 
         documentRepository.findAllByKycCaseOrderByIdAsc(kycCase).stream()
@@ -347,6 +352,90 @@ public class KycServiceImpl implements KycService {
         publishCaseEvent("KYC_CASE_CORRECTION_REQUESTED", kycCase, actor(request.getReviewedBy()));
 
         return toResponse(kycCase);
+    }
+
+    /**
+     * Lot KG7 : refus definitif. Statut REJECTED, motif de la liste obligatoire, courriel au
+     * titulaire, depots fermes ; seul un administrateur rouvre le dossier.
+     */
+    @Override
+    public KycCaseResponse rejectFinal(String code, KycDecisionRequest request) {
+        if (request == null || !StringUtils.hasText(request.getReasonCode())) {
+            throw new BadRequestException("Le motif du refus définitif est requis (reasonCode, voir GET /kyc/reasons?kind=REJECTION)");
+        }
+        String reason = reasons().describe(request.getReasonCode(), request.getComment(),
+                com.sni.bokaticowork.features.document.kyc.service.support.KycReasons.REJECTION);
+        KycCase kycCase = serviceCase(code);
+        if (kycCase.getStatus() == KycCaseStatus.REJECTED) {
+            throw new BadRequestException("Le dossier " + code + " est déjà refusé");
+        }
+        Long actor = actor(request.getReviewedBy());
+        Instant now = Instant.now();
+        kycCase.setStatus(KycCaseStatus.REJECTED);
+        kycCase.setReviewedBy(actor);
+        kycCase.setReviewedAt(now);
+        kycCase.setCompletedAt(now);
+        kycCase.setDecisionComment(reason);
+        kycCase.setDecisionReasonCode(normalizedCode(request.getReasonCode()));
+        caseRepository.save(kycCase);
+        if (kycCase.getOwnerType() == DocumentOwnerType.MEMBER) {
+            Member member = memberById(kycCase.getOwnerId());
+            if (member.getStatus() != MemberStatus.ACTIVE) {
+                member.setStatus(MemberStatus.REJECTED);
+            }
+        }
+        publishCaseEvent("KYC_CASE_REJECTED", kycCase, actor, java.util.Map.of("reason", reason,
+                "reasonCode", kycCase.getDecisionReasonCode()));
+        return toResponse(kycCase);
+    }
+
+    /** Lot KG7 : reouverture d'un dossier refuse, par un administrateur ; le dossier repart en cours. */
+    @Override
+    public KycCaseResponse reopen(String code, String comment) {
+        org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean admin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()) || "ROLE_SUPER_ADMIN".equals(a.getAuthority()));
+        if (!admin) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException("Seul un administrateur rouvre un dossier refusé");
+        }
+        KycCase kycCase = serviceCase(code);
+        if (kycCase.getStatus() != KycCaseStatus.REJECTED) {
+            throw new BadRequestException("Le dossier " + code + " n'est pas refusé (" + kycCase.getStatus() + ")");
+        }
+        kycCase.setStatus(KycCaseStatus.IN_PROGRESS);
+        kycCase.setCompletedAt(null);
+        kycCase.setDecisionComment(StringUtils.hasText(comment) ? "Rouvert : " + comment.trim() : "Rouvert");
+        caseRepository.save(kycCase);
+        if (kycCase.getOwnerType() == DocumentOwnerType.MEMBER) {
+            Member member = memberById(kycCase.getOwnerId());
+            if (member.getStatus() == MemberStatus.REJECTED) {
+                member.setStatus(MemberStatus.PENDING);
+            }
+        }
+        publishCaseEvent("KYC_CASE_REOPENED", kycCase, actor(null), java.util.Map.of("reason",
+                StringUtils.hasText(comment) ? comment.trim() : ""));
+        return toResponse(kycCase);
+    }
+
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycReasons reasons;
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService center;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setKg7(com.sni.bokaticowork.features.document.kyc.service.support.KycReasons reasons,
+                com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService center) {
+        this.reasons = reasons;
+        this.center = center;
+    }
+
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycReasons reasons() {
+        if (reasons == null) {
+            throw new IllegalStateException("Liste des motifs KYC indisponible");
+        }
+        return reasons;
+    }
+
+    private static String normalizedCode(String code) {
+        return StringUtils.hasText(code) ? code.trim().toUpperCase(java.util.Locale.ROOT) : null;
     }
 
     @Override
@@ -931,7 +1020,14 @@ public class KycServiceImpl implements KycService {
                 .toList();
 
         List<KycDocumentResponse> documents = uploadedDocuments.stream()
-                .map(mapper::toDocumentResponse)
+                .map(piece -> {
+                    KycDocumentResponse item = mapper.toDocumentResponse(piece);
+                    // Lot KG7 : meme piece chez un autre titulaire.
+                    if (center != null && item != null) {
+                        item.setDuplicateOf(center.duplicateOf(piece));
+                    }
+                    return item;
+                })
                 .toList();
 
         KycCaseResponse response = mapper.toResponse(kycCase);
@@ -940,6 +1036,8 @@ public class KycServiceImpl implements KycService {
         response.setMissingDocumentTypeCodes(assessment.missingDocumentTypeCodes());
         response.setRequirements(requirementStatuses);
         response.setDocuments(documents);
+        response.setDecisionReasonCode(kycCase.getDecisionReasonCode());
+        response.setDecisionReasonLabel(reasons == null ? null : reasons.label(kycCase.getDecisionReasonCode()));
         return response;
     }
 

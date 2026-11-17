@@ -25,6 +25,9 @@ public class KycCaseResponse {
     private String reviewedByEmail;
     private Instant reviewedAt;
     private String decisionComment;
+    /** Lot KG7 : motif normalise de la derniere decision et son libelle. */
+    private String decisionReasonCode;
+    private String decisionReasonLabel;
     private Long assignedTo;
     private String assignedToEmail;
     private Instant assignedAt;

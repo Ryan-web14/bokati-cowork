@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [document](../README.md) · 26 route(s).
+Module [document](../README.md) · 28 route(s).
 
 ## Routes
 
@@ -250,6 +250,33 @@ Module [document](../README.md) · 26 route(s).
 | --- | --- | --- | --- | --- |
 | `code` | chemin | `String` | oui |  |
 
+<a id="r-post-sni-api-v1-kyc-cases-code-reject-final"></a>
+### POST /sni/api/v1/kyc/cases/{code}/reject-final
+
+- Accès : back-office : rôle d'administration et droit `KYC:REJECT`
+- En-tête `Idempotency-Key` : conseillé (opération `KYC_CASE_REJECT_FINAL`, voir le README racine)
+- Corps JSON (obligatoire) : `KycDecisionRequest`
+- Réponse : `KycCaseResponse`
+- Modèles : [KycCaseResponse](#m-KycCaseResponse), [KycDecisionRequest](#m-KycDecisionRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java`, méthode `rejectFinal`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-kyc-cases-code-reopen"></a>
+### POST /sni/api/v1/kyc/cases/{code}/reopen
+
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
+- Corps JSON (facultatif) : `KycController.ReopenRequest`
+- Réponse : `KycCaseResponse`
+- Modèles : [KycCaseResponse](#m-KycCaseResponse), [KycController.ReopenRequest](#m-KycController-ReopenRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java`, méthode `reopen`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
 <a id="r-get-sni-api-v1-kyc-cases-code-requirements"></a>
 ### GET /sni/api/v1/kyc/cases/{code}/requirements
 
@@ -359,6 +386,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `reviewedByEmail` | texte |  |  |
 | `reviewedAt` | date-heure ISO 8601 UTC |  |  |
 | `decisionComment` | texte |  |  |
+| `decisionReasonCode` | texte |  |  |
+| `decisionReasonLabel` | texte |  |  |
 | `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `assignedToEmail` | texte |  |  |
 | `assignedAt` | date-heure ISO 8601 UTC |  |  |
@@ -412,6 +441,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `comment` | texte |  |  |
+| `reasonCode` | texte |  |  |
 
 <a id="m-KycAssignRequest"></a>
 #### KycAssignRequest
@@ -465,6 +495,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
+| `duplicateOf` | texte[] |  |  |
 | `id` | code identifiant (texte) |  |  |
 | `documentCode` | texte |  |  |
 | `documentType` | texte |  |  |
@@ -557,6 +588,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `content` | texte | oui | longueur min `1` |
 | `authorId` | code identifiant (texte) |  |  |
 | `internal` | booléen |  |  |
+
+<a id="m-KycController-ReopenRequest"></a>
+#### KycController.ReopenRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `comment` | texte |  |  |
 
 <a id="m-KycCaseRequirementResponse"></a>
 #### KycCaseRequirementResponse

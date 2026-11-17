@@ -108,7 +108,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `eventType` | enum : `BOOKING_CONFIRMED`, `BOOKING_CANCELLED`, `BOOKING_REMINDER`, `BOOKING_FAILED`, `INVOICE_ISSUED`, `PAYMENT_RECEIVED`, `PAYMENT_FAILED` |  |  |
+| `eventType` | enum : `BOOKING_CONFIRMED`, `BOOKING_CANCELLED`, `BOOKING_REMINDER`, `BOOKING_FAILED`, `INVOICE_ISSUED`, `PAYMENT_RECEIVED`, `PAYMENT_FAILED`, `KYC_DOCUMENTS_REQUESTED` |  |  |
 | `channel` | enum : `SMS`, `WHATSAPP`, `IN_APP`, `PUSH`, `EMAIL` |  |  |
 | `enabled` | booléen |  |  |
 

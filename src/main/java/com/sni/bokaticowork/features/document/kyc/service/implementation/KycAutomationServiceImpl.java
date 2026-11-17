@@ -91,7 +91,9 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         KycCaseStatus targetStatus = switch (member.getStatus()) {
             case PENDING -> KycCaseStatus.IN_PROGRESS;
             case UNDER_REVIEW -> KycCaseStatus.UNDER_REVIEW;
-            case PENDING_CORRECTION, REJECTED -> KycCaseStatus.PENDING_CORRECTION;
+            case PENDING_CORRECTION -> KycCaseStatus.PENDING_CORRECTION;
+            // Lot KG7 : un membre refuse garde un dossier refuse ; sinon, correction comme avant.
+            case REJECTED -> kycCase.getStatus() == KycCaseStatus.REJECTED ? KycCaseStatus.REJECTED : KycCaseStatus.PENDING_CORRECTION;
             case ACTIVE -> kycCase.getStatus();
             case ARCHIVED -> KycCaseStatus.EXPIRED;
             case INACTIVE, SUSPENDED -> kycCase.getStatus();
@@ -400,7 +402,8 @@ public class KycAutomationServiceImpl implements KycAutomationService {
             MemberStatus target = switch (kycCase.getStatus()) {
                 case IN_PROGRESS, NOT_STARTED -> MemberStatus.PENDING;
                 case SUBMITTED, UNDER_REVIEW -> MemberStatus.UNDER_REVIEW;
-                case PENDING_CORRECTION, REJECTED -> MemberStatus.PENDING_CORRECTION;
+                case PENDING_CORRECTION -> MemberStatus.PENDING_CORRECTION;
+                case REJECTED -> MemberStatus.REJECTED;
                 case APPROVED -> MemberStatus.ACTIVE;
                 case RENEWAL_REQUIRED, EXPIRED -> MemberStatus.PENDING_CORRECTION;
             };

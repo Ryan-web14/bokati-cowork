@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-208 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+212 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -74,8 +74,14 @@
 | GET | `/sni/api/v1/cash-registers/requests` | CASH:READ | [CashRequestController](routes/CashRequestController.md#r-get-sni-api-v1-cash-registers-requests) |
 | GET | `/sni/api/v1/cash-registers/requests/{requestNumber}` | CASH:READ | [CashRequestController](routes/CashRequestController.md#r-get-sni-api-v1-cash-registers-requests-requestnumber) |
 | PATCH | `/sni/api/v1/cash-registers/requests/{requestNumber}/approve` | CASH_MOVEMENT:APPROVE | [CashRequestController](routes/CashRequestController.md#r-patch-sni-api-v1-cash-registers-requests-requestnumber-approve) |
+| PATCH | `/sni/api/v1/cash-registers/requests/{requestNumber}/cancel` | CASH_MOVEMENT:CREATE | [CashRequestController](routes/CashRequestController.md#r-patch-sni-api-v1-cash-registers-requests-requestnumber-cancel) |
 | PATCH | `/sni/api/v1/cash-registers/requests/{requestNumber}/reject` | CASH_MOVEMENT:APPROVE | [CashRequestController](routes/CashRequestController.md#r-patch-sni-api-v1-cash-registers-requests-requestnumber-reject) |
 | POST | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/requests` | CASH_MOVEMENT:CREATE | [CashRequestController](routes/CashRequestController.md#r-post-sni-api-v1-cash-registers-sessions-sessionnumber-requests) |
+| GET | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/indicators` | CASH:READ | [CashSessionInsightController](routes/CashSessionInsightController.md#r-get-sni-api-v1-cash-registers-sessions-sessionnumber-indicators) |
+| GET | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/payments` | CASH:READ | [CashSessionInsightController](routes/CashSessionInsightController.md#r-get-sni-api-v1-cash-registers-sessions-sessionnumber-payments) |
+| PATCH | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/payments/{transactionNumber}/reassign` | CASH_VARIANCE:DECIDE | [CashSessionInsightController](routes/CashSessionInsightController.md#r-patch-sni-api-v1-cash-registers-sessions-sessionnumber-payments-transactionnumber-reassign) |
+| POST | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/report/send` | CASH:READ | [CashSessionInsightController](routes/CashSessionInsightController.md#r-post-sni-api-v1-cash-registers-sessions-sessionnumber-report-send) |
+| GET | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/timeline` | CASH:READ | [CashSessionInsightController](routes/CashSessionInsightController.md#r-get-sni-api-v1-cash-registers-sessions-sessionnumber-timeline) |
 | GET | `/sni/api/v1/cash-registers/denominations` | CASH:READ | [CashSessionLifecycleController](routes/CashSessionLifecycleController.md#r-get-sni-api-v1-cash-registers-denominations) |
 | PUT | `/sni/api/v1/cash-registers/denominations/{currency}` | CASH_REGISTER:MANAGE | [CashSessionLifecycleController](routes/CashSessionLifecycleController.md#r-put-sni-api-v1-cash-registers-denominations-currency) |
 | PATCH | `/sni/api/v1/cash-registers/handovers/{handoverNumber}/accept` | CASH_SESSION:OPEN | [CashSessionLifecycleController](routes/CashSessionLifecycleController.md#r-patch-sni-api-v1-cash-registers-handovers-handovernumber-accept) |
@@ -144,7 +150,6 @@
 | POST | `/sni/api/v1/payments/mobile-money/deposits/{depositId}/recheck` | PAYMENT:PROCESS | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-deposits-depositid-recheck) |
 | POST | `/sni/api/v1/payments/mobile-money/pawapay/callback` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawapay-callback) |
 | POST | `/sni/api/v1/payments/mobile-money/pawapay/refund-callback` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawapay-refund-callback) |
-| GET | `/sni/api/v1/payments/mobile-money/pawapay/return` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-get-sni-api-v1-payments-mobile-money-pawapay-return) |
 | POST | `/sni/api/v1/payments/mobile-money/pawaypay/callback` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawaypay-callback) |
 | POST | `/sni/api/v1/payments/mobile-money/pawaypay/refund-callback` | public | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawaypay-refund-callback) |
 | POST | `/sni/api/v1/payments/mobile-money/pawaypay/test/{phoneNumber}` | PAYMENT:PROCESS | [MobileMoneyController](routes/MobileMoneyController.md#r-post-sni-api-v1-payments-mobile-money-pawaypay-test-phonenumber) |
@@ -181,8 +186,6 @@
 | GET | `/sni/api/v1/payments/receipts/{receiptNumber}/pdf` | PAYMENT:READ | [PaymentReceiptController](routes/PaymentReceiptController.md#r-get-sni-api-v1-payments-receipts-receiptnumber-pdf) |
 | GET | `/sni/api/v1/payments/transactions/{transactionNumber}/receipt` | PAYMENT:READ | [PaymentReceiptController](routes/PaymentReceiptController.md#r-get-sni-api-v1-payments-transactions-transactionnumber-receipt) |
 | GET | `/sni/api/v1/payments/transactions/{transactionNumber}/receipt/pdf` | PAYMENT:READ | [PaymentReceiptController](routes/PaymentReceiptController.md#r-get-sni-api-v1-payments-transactions-transactionnumber-receipt-pdf) |
-| POST | `/sni/api/v1/payments/reconciliation-batches` | PAYMENT:PROCESS | [PaymentReconciliationController](routes/PaymentReconciliationController.md#r-post-sni-api-v1-payments-reconciliation-batches) |
-| PATCH | `/sni/api/v1/payments/reconciliation-batches/{batchNumber}/complete` | PAYMENT:PROCESS | [PaymentReconciliationController](routes/PaymentReconciliationController.md#r-patch-sni-api-v1-payments-reconciliation-batches-batchnumber-complete) |
 | GET | `/public/pay/{token}` | public | [PublicPaymentPageController](routes/PublicPaymentPageController.md#r-get-public-pay-token) |
 | POST | `/public/pay/{token}` | public | [PublicPaymentPageController](routes/PublicPaymentPageController.md#r-post-public-pay-token) |
 | GET | `/public/pay/{token}/suivi/{depositId}` | public | [PublicPaymentPageController](routes/PublicPaymentPageController.md#r-get-public-pay-token-suivi-depositid) |
@@ -202,6 +205,7 @@
 | GET | `/sni/api/v1/wallets/control/wallets/{walletNumber}/actions` | PAYMENT:READ | [WalletControlCentreController](routes/WalletControlCentreController.md#r-get-sni-api-v1-wallets-control-wallets-walletnumber-actions) |
 | POST | `/sni/api/v1/wallets/control/wallets/{walletNumber}/actions` | PAYMENT:PROCESS | [WalletControlCentreController](routes/WalletControlCentreController.md#r-post-sni-api-v1-wallets-control-wallets-walletnumber-actions) |
 | GET | `/sni/api/v1/wallets/control/wallets/{walletNumber}/flags` | PAYMENT:READ | [WalletControlCentreController](routes/WalletControlCentreController.md#r-get-sni-api-v1-wallets-control-wallets-walletnumber-flags) |
+| POST | `/sni/api/v1/wallets/control/wallets/{walletNumber}/pay-invoice` | PAYMENT:PROCESS | [WalletControlCentreController](routes/WalletControlCentreController.md#r-post-sni-api-v1-wallets-control-wallets-walletnumber-pay-invoice) |
 | GET | `/sni/api/v1/wallets` | PAYMENT:READ | [WalletController](routes/WalletController.md#r-get-sni-api-v1-wallets) |
 | POST | `/sni/api/v1/wallets/admin/get-or-create` | PAYMENT:PROCESS | [WalletController](routes/WalletController.md#r-post-sni-api-v1-wallets-admin-get-or-create) |
 | POST | `/sni/api/v1/wallets/admin/top-up` | PAYMENT:PROCESS | [WalletController](routes/WalletController.md#r-post-sni-api-v1-wallets-admin-top-up) |

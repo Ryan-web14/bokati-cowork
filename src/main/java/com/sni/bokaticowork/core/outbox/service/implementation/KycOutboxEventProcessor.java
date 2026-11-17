@@ -41,6 +41,12 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
     private final ObjectMapper objectMapper;
     private final OutboxNotificationMailService mailService;
     private final OutboxRecipientResolver recipientResolver;
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycWhatsAppNotifier whatsAppNotifier;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setWhatsAppNotifier(com.sni.bokaticowork.features.document.kyc.service.support.KycWhatsAppNotifier whatsAppNotifier) {
+        this.whatsAppNotifier = whatsAppNotifier;
+    }
 
     @Override
     public boolean supports(OutboxEvent event) {
@@ -103,6 +109,15 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
         // Lot KG3 : un echec de mise en file remonte, la boite d'envoi reessaie (avant, il etait avale).
         mailService.sendKycNotification(recipient.email(), subject, vars);
         log.info("KYC notification queued for {} event={}", recipient.email(), event.getEventType());
+        // Lot KG7 : pieces demandees ou a corriger, aussi par WhatsApp (modele approuve, consentement du membre).
+        if (whatsAppNotifier != null) {
+            java.util.List<String> pieces = new java.util.ArrayList<>(names);
+            String single = textValue(payload, "documentTypeName");
+            if (pieces.isEmpty() && StringUtils.hasText(single)) {
+                pieces.add(single);
+            }
+            whatsAppNotifier.notify(event.getEventType(), ownerType, ownerId, caseCode, pieces);
+        }
     }
 
     private String resolveSubject(String eventType, String caseCode) {
@@ -110,8 +125,8 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
         return switch (eventType) {
             case "KYC_CASE_CREATED"      -> "Votre dossier KYC est ouvert" + ref;
             case "KYC_CASE_APPROVED"     -> "Bonne nouvelle : votre dossier KYC est validé" + ref;
-            case "KYC_CASE_REJECTED",
-                 "KYC_CASE_CORRECTION_REQUESTED" -> "Une petite mise à jour est nécessaire sur votre dossier KYC" + ref;
+            case "KYC_CASE_REJECTED" -> "Votre dossier KYC n'a pas été retenu" + ref;
+            case "KYC_CASE_CORRECTION_REQUESTED" -> "Une petite mise à jour est nécessaire sur votre dossier KYC" + ref;
             case "KYC_INCOMPLETE_REMINDER" -> "Petit rappel : votre dossier KYC vous attend" + ref;
             case "KYC_CASE_LEVEL_CHANGED" -> "Quelques pièces complémentaires pour votre dossier KYC" + ref;
             case "KYC_CASE_REQUIREMENT_ADDED" -> "Une pièce de plus pour votre dossier KYC" + ref;
@@ -125,8 +140,8 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
         return switch (eventType) {
             case "KYC_CASE_CREATED"      -> "Dossier ouvert";
             case "KYC_CASE_APPROVED"     -> "Dossier validé";
-            case "KYC_CASE_REJECTED",
-                 "KYC_CASE_CORRECTION_REQUESTED" -> "Mise à jour demandée";
+            case "KYC_CASE_REJECTED" -> "Dossier non retenu";
+            case "KYC_CASE_CORRECTION_REQUESTED" -> "Mise à jour demandée";
             case "KYC_INCOMPLETE_REMINDER" -> "Rappel";
             case "KYC_CASE_LEVEL_CHANGED" -> "Pièces complémentaires";
             case "KYC_CASE_REQUIREMENT_ADDED" -> "Pièce demandée";

@@ -3923,6 +3923,15 @@
     "closedAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "ownerName": {
+     "type": "string"
+    },
+    "activeHolds": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.WalletResponse.HoldLine"
+     }
     }
    }
   },
@@ -4123,6 +4132,34 @@
      "type": "number"
     }
    }
+  },
+  "WalletResponse.HoldLine": {
+   "type": "object",
+   "properties": {
+    "holdNumber": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "sourceType": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "sourceLabel": {
+     "type": "string"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
   }
  },
  "enums": {
@@ -4208,6 +4245,7 @@
   "CompanyContractsService.AmendmentView": "com.sni.bokaticowork.features.company.contracts.CompanyContractsService.AmendmentView",
   "ContractVersionHistory.Version": "com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.Version",
   "PassSharingDtos.BeneficiaryConsumption": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.BeneficiaryConsumption",
-  "SharingDtos.SeatEntitlement": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SeatEntitlement"
+  "SharingDtos.SeatEntitlement": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SeatEntitlement",
+  "WalletResponse.HoldLine": "com.sni.bokaticowork.features.payment.dto.response.WalletResponse.HoldLine"
  }
 }

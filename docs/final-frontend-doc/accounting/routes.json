@@ -8791,7 +8791,7 @@
     "permission": "PURCHASE:READ"
    },
    "params": [],
-   "response": "ResponseEntity<List<com.sni.bokaticowork.features.accounting.model.AccSupplier>>"
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.accounting.service.implementation.PurchaseService.SupplierView>>"
   },
   {
    "methods": [
@@ -17659,6 +17659,72 @@
     }
    }
   },
+  "PurchaseService.SupplierView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "niu": {
+     "type": "string"
+    },
+    "rccm": {
+     "type": "string"
+    },
+    "address": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "bankDetails": {
+     "type": "string"
+    },
+    "paymentTermsDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "accountNumber": {
+     "type": "string"
+    },
+    "defaultAccount": {
+     "type": "string"
+    },
+    "vatExempt": {
+     "type": "boolean"
+    },
+    "withholdingRate": {
+     "type": "number"
+    },
+    "withholdingAccount": {
+     "type": "string"
+    },
+    "withholdingBase": {
+     "type": "string"
+    },
+    "withholdingLabel": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "source": {
+     "type": "string"
+    },
+    "inventoryCode": {
+     "type": "string"
+    },
+    "linked": {
+     "type": "boolean"
+    }
+   }
+  },
   "AccSupplier": {
    "type": "object",
    "properties": {
@@ -20278,6 +20344,7 @@
   "PurchaseController.FromNeedRequest": "com.sni.bokaticowork.features.accounting.controller.PurchaseController.FromNeedRequest",
   "PurchaseController.Reason": "com.sni.bokaticowork.features.accounting.controller.PurchaseController.Reason",
   "PurchaseService.Payable": "com.sni.bokaticowork.features.accounting.service.implementation.PurchaseService.Payable",
+  "PurchaseService.SupplierView": "com.sni.bokaticowork.features.accounting.service.implementation.PurchaseService.SupplierView",
   "AccSupplier": "com.sni.bokaticowork.features.accounting.model.AccSupplier",
   "PurchaseService.Statement": "com.sni.bokaticowork.features.accounting.service.implementation.PurchaseService.Statement",
   "PurchaseService.WithholdingStatement": "com.sni.bokaticowork.features.accounting.service.implementation.PurchaseService.WithholdingStatement",

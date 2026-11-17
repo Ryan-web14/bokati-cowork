@@ -4633,6 +4633,203 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/kyc/dashboard/center",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCenterController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java",
+   "handler": "dashboard",
+   "declaredIn": "KycCenterController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.CenterDashboard>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/duplicates",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCenterController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java",
+   "handler": "duplicates",
+   "declaredIn": "KycCenterController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.DuplicateGroup>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/reasons",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCenterController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java",
+   "handler": "reasons",
+   "declaredIn": "KycCenterController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "kind",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "activeOnly",
+     "required": false,
+     "default": "true",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.service.support.KycReasons.ReasonView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/reasons",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCenterController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java",
+   "handler": "createReason",
+   "declaredIn": "KycCenterController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.service.support.KycReasons.ReasonRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.service.support.KycReasons.ReasonView>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/kyc/reasons/{code}",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCenterController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java",
+   "handler": "deleteReason",
+   "declaredIn": "KycCenterController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:MANAGE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/kyc/reasons/{code}",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCenterController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java",
+   "handler": "updateReason",
+   "declaredIn": "KycCenterController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.service.support.KycReasons.ReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.service.support.KycReasons.ReasonView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/renewals",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCenterController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java",
+   "handler": "renewals",
+   "declaredIn": "KycCenterController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "days",
+     "required": false,
+     "default": "90",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.RenewalWeek>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/renewals/remind",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCenterController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java",
+   "handler": "remind",
+   "declaredIn": "KycCenterController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.controller.KycCenterController.RemindRequest",
+    "required": false
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.RemindResult>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/kyc/cases",
    "package": "features.document.kyc.controller",
    "controller": "KycController",
@@ -5189,6 +5386,67 @@
    "body": {
     "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest",
     "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/reject-final",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "rejectFinal",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:REJECT"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_CASE_REJECT_FINAL",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/reopen",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "reopen",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:MANAGE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.controller.KycController.ReopenRequest",
+    "required": false
    },
    "params": [
     {
@@ -8652,6 +8910,175 @@
     }
    }
   },
+  "KycCenterService.CenterDashboard": {
+   "type": "object",
+   "properties": {
+    "from": {
+     "type": "string",
+     "format": "date"
+    },
+    "to": {
+     "type": "string",
+     "format": "date"
+    },
+    "byStatus": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "waitingReview": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.AgeBuckets"
+    },
+    "averageProcessingHours": {
+     "type": "number",
+     "format": "double"
+    },
+    "medianProcessingHours": {
+     "type": "number",
+     "format": "double"
+    },
+    "decidedInPeriod": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "overdue": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.CaseRef"
+     }
+    },
+    "agents": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.AgentLoad"
+     }
+    },
+    "blocked": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.CaseRef"
+     }
+    },
+    "duplicateGroups": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "KycCenterService.DuplicateGroup": {
+   "type": "object",
+   "properties": {
+    "documentType": {
+     "type": "string"
+    },
+    "normalizedNumber": {
+     "type": "string"
+    },
+    "pieces": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.DuplicatePiece"
+     }
+    }
+   }
+  },
+  "KycReasons.ReasonView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string"
+    },
+    "requiresText": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "systemReason": {
+     "type": "boolean"
+    }
+   }
+  },
+  "KycReasons.ReasonRequest": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string"
+    },
+    "requiresText": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "KycCenterService.RenewalWeek": {
+   "type": "object",
+   "properties": {
+    "weekStart": {
+     "type": "string",
+     "format": "date"
+    },
+    "items": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.RenewalItem"
+     }
+    }
+   }
+  },
+  "KycCenterService.RemindResult": {
+   "type": "object",
+   "properties": {
+    "reminded": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "skippedRecentlyReminded": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "KycCenterController.RemindRequest": {
+   "type": "object",
+   "properties": {
+    "days": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "kycDocumentIds": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "format": "int64"
+     }
+    }
+   }
+  },
   "KycCaseResponse": {
    "type": "object",
    "properties": {
@@ -8720,6 +9147,12 @@
      "format": "date-time"
     },
     "decisionComment": {
+     "type": "string"
+    },
+    "decisionReasonCode": {
+     "type": "string"
+    },
+    "decisionReasonLabel": {
      "type": "string"
     },
     "assignedTo": {
@@ -8864,6 +9297,9 @@
     },
     "comment": {
      "type": "string"
+    },
+    "reasonCode": {
+     "type": "string"
     }
    }
   },
@@ -8983,6 +9419,12 @@
   "KycDocumentResponse": {
    "type": "object",
    "properties": {
+    "duplicateOf": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
     "id": {
      "type": "integer",
      "format": "int64"
@@ -9236,6 +9678,14 @@
     },
     "internal": {
      "type": "boolean"
+    }
+   }
+  },
+  "KycController.ReopenRequest": {
+   "type": "object",
+   "properties": {
+    "comment": {
+     "type": "string"
     }
    }
   },
@@ -10002,6 +10452,147 @@
     }
    }
   },
+  "KycCenterService.AgeBuckets": {
+   "type": "object",
+   "properties": {
+    "underTwoDays": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "twoToSevenDays": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "overSevenDays": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "KycCenterService.CaseRef": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "NOT_STARTED",
+      "IN_PROGRESS",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "APPROVED",
+      "REJECTED",
+      "PENDING_CORRECTION",
+      "RENEWAL_REQUIRED",
+      "EXPIRED"
+     ]
+    },
+    "ownerType": {
+     "type": "string"
+    },
+    "ownerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "since": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "detail": {
+     "type": "string"
+    }
+   }
+  },
+  "KycCenterService.AgentLoad": {
+   "type": "object",
+   "properties": {
+    "userId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "name": {
+     "type": "string"
+    },
+    "assignedOpen": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "decidedInPeriod": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "KycCenterService.DuplicatePiece": {
+   "type": "object",
+   "properties": {
+    "kycDocumentId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "kycCaseCode": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string"
+    },
+    "ownerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "VERIFIED",
+      "REJECTED",
+      "EXPIRED"
+     ]
+    }
+   }
+  },
+  "KycCenterService.RenewalItem": {
+   "type": "object",
+   "properties": {
+    "kycDocumentId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "kycCaseCode": {
+     "type": "string"
+    },
+    "documentType": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string"
+    },
+    "ownerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "expiryDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "daysLeft": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lastRemindedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
   "KycDashboardResponse.SlaMetrics": {
    "type": "object",
    "properties": {
@@ -10251,6 +10842,13 @@
   "GedDtos.GedTrashBatch": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashBatch",
   "GedDtos.GedTrashResult": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResult",
   "GedDtos.GedSelectionRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSelectionRequest",
+  "KycCenterService.CenterDashboard": "com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.CenterDashboard",
+  "KycCenterService.DuplicateGroup": "com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.DuplicateGroup",
+  "KycReasons.ReasonView": "com.sni.bokaticowork.features.document.kyc.service.support.KycReasons.ReasonView",
+  "KycReasons.ReasonRequest": "com.sni.bokaticowork.features.document.kyc.service.support.KycReasons.ReasonRequest",
+  "KycCenterService.RenewalWeek": "com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.RenewalWeek",
+  "KycCenterService.RemindResult": "com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.RemindResult",
+  "KycCenterController.RemindRequest": "com.sni.bokaticowork.features.document.kyc.controller.KycCenterController.RemindRequest",
   "KycCaseResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse",
   "KycRiskLevel": "com.sni.bokaticowork.features.document.kyc.KycRiskLevel",
   "CreateKycCaseRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest",
@@ -10268,6 +10866,7 @@
   "KycRequirementStatus": "com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus",
   "KycCaseNoteResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse",
   "KycCaseNoteRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseNoteRequest",
+  "KycController.ReopenRequest": "com.sni.bokaticowork.features.document.kyc.controller.KycController.ReopenRequest",
   "KycCaseRequirementResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseRequirementResponse",
   "KycCaseRequirementRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseRequirementRequest",
   "KycRiskLevelRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycRiskLevelRequest",
@@ -10299,6 +10898,11 @@
   "GedDtos.GedPage": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPage",
   "GedDtos.GedAccessSummary": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedAccessSummary",
   "GedDtos.GedSearchHit": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSearchHit",
+  "KycCenterService.AgeBuckets": "com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.AgeBuckets",
+  "KycCenterService.CaseRef": "com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.CaseRef",
+  "KycCenterService.AgentLoad": "com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.AgentLoad",
+  "KycCenterService.DuplicatePiece": "com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.DuplicatePiece",
+  "KycCenterService.RenewalItem": "com.sni.bokaticowork.features.document.kyc.service.support.KycCenterService.RenewalItem",
   "KycDashboardResponse.SlaMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.SlaMetrics",
   "KycDashboardResponse.ExpiringSoonMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.ExpiringSoonMetrics",
   "KycDashboardResponse.OwnerTypeMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.OwnerTypeMetrics",

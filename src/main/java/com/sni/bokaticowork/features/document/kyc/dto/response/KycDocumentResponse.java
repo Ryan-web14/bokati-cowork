@@ -10,6 +10,9 @@ import java.time.LocalDate;
 @Data
 @Builder
 public class KycDocumentResponse {
+
+    /** Lot KG7 : dossiers d'autres titulaires qui ont la meme piece (type et numero) ; signal, sans blocage. */
+    private java.util.List<String> duplicateOf;
     private Long id;
     private String documentCode;
     private String documentType;
