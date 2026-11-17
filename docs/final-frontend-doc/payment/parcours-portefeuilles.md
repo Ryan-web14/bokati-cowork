@@ -113,7 +113,12 @@ Deux chemins coexistent :
    - `RESET_PIN` : immédiat, même effet que le parcours 8.
    - `RAISE_LIMIT` : `reference` = code d'une politique de plafond existante, `until` (fin de la dérogation) obligatoire.
    - `CLOSE` : refusé tant qu'il reste une retenue ; avec un solde positif, `reference` (référence de restitution) est obligatoire et l'action passe en double visa.
+   - `RELEASE_HOLD` (17/11/2026) : `reference` = numéro de la retenue à lever (elle doit appartenir au portefeuille) ; immédiat ; les fonds redeviennent disponibles. Pour une retenue bloquée (réservation annulée, retenue orpheline).
+   - `TRANSFER` (17/11/2026) : `amount` positif, `reference` = numéro du portefeuille cible (même devise) ; sortie `TRANSFER_OUT` et entrée `TRANSFER_IN` ; double visa au-delà du seuil (100 000).
+   - `RESTITUTE` (17/11/2026) : `amount` positif, `reference` = `CASH:<session de caisse>` pour rendre en espèces (sortie `CASH_OUT` de la session, bon de sortie, catégorie `WALLET_RESTITUTION`) ou la référence d'un virement ou d'un envoi mobile money fait par ailleurs ; **toujours en double visa** ; le titulaire est prévenu. La session doit être ouverte au moment du second visa.
    - Toute action sur un portefeuille clôturé : `409` « ce portefeuille est clôturé ».
+
+5. **Payer une facture depuis le portefeuille** (17/11/2026) : `POST /sni/api/v1/wallets/control/wallets/{walletNumber}/pay-invoice` avec `{ "documentNumber": "FAC-…", "amount": 15000 }` (`amount` absent : tout le solde restant). Droit `PAYMENT:PROCESS`. Même règlement que `POST /billing/invoices/{documentNumber}/pay` en mode `WALLET` : le portefeuille doit appartenir au client de la facture, un double clic rend le même paiement. Réponse : la facture à jour et la transaction.
 
 ### 5. Traiter les signalements de risque
 

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-205 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+211 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -76,6 +76,11 @@
 | PATCH | `/sni/api/v1/cash-registers/requests/{requestNumber}/approve` | CASH_MOVEMENT:APPROVE | [CashRequestController](routes/CashRequestController.md#r-patch-sni-api-v1-cash-registers-requests-requestnumber-approve) |
 | PATCH | `/sni/api/v1/cash-registers/requests/{requestNumber}/reject` | CASH_MOVEMENT:APPROVE | [CashRequestController](routes/CashRequestController.md#r-patch-sni-api-v1-cash-registers-requests-requestnumber-reject) |
 | POST | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/requests` | CASH_MOVEMENT:CREATE | [CashRequestController](routes/CashRequestController.md#r-post-sni-api-v1-cash-registers-sessions-sessionnumber-requests) |
+| GET | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/indicators` | CASH:READ | [CashSessionInsightController](routes/CashSessionInsightController.md#r-get-sni-api-v1-cash-registers-sessions-sessionnumber-indicators) |
+| GET | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/payments` | CASH:READ | [CashSessionInsightController](routes/CashSessionInsightController.md#r-get-sni-api-v1-cash-registers-sessions-sessionnumber-payments) |
+| PATCH | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/payments/{transactionNumber}/reassign` | CASH_VARIANCE:DECIDE | [CashSessionInsightController](routes/CashSessionInsightController.md#r-patch-sni-api-v1-cash-registers-sessions-sessionnumber-payments-transactionnumber-reassign) |
+| POST | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/report/send` | CASH:READ | [CashSessionInsightController](routes/CashSessionInsightController.md#r-post-sni-api-v1-cash-registers-sessions-sessionnumber-report-send) |
+| GET | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/timeline` | CASH:READ | [CashSessionInsightController](routes/CashSessionInsightController.md#r-get-sni-api-v1-cash-registers-sessions-sessionnumber-timeline) |
 | GET | `/sni/api/v1/cash-registers/denominations` | CASH:READ | [CashSessionLifecycleController](routes/CashSessionLifecycleController.md#r-get-sni-api-v1-cash-registers-denominations) |
 | PUT | `/sni/api/v1/cash-registers/denominations/{currency}` | CASH_REGISTER:MANAGE | [CashSessionLifecycleController](routes/CashSessionLifecycleController.md#r-put-sni-api-v1-cash-registers-denominations-currency) |
 | PATCH | `/sni/api/v1/cash-registers/handovers/{handoverNumber}/accept` | CASH_SESSION:OPEN | [CashSessionLifecycleController](routes/CashSessionLifecycleController.md#r-patch-sni-api-v1-cash-registers-handovers-handovernumber-accept) |
@@ -199,6 +204,7 @@
 | GET | `/sni/api/v1/wallets/control/wallets/{walletNumber}/actions` | PAYMENT:READ | [WalletControlCentreController](routes/WalletControlCentreController.md#r-get-sni-api-v1-wallets-control-wallets-walletnumber-actions) |
 | POST | `/sni/api/v1/wallets/control/wallets/{walletNumber}/actions` | PAYMENT:PROCESS | [WalletControlCentreController](routes/WalletControlCentreController.md#r-post-sni-api-v1-wallets-control-wallets-walletnumber-actions) |
 | GET | `/sni/api/v1/wallets/control/wallets/{walletNumber}/flags` | PAYMENT:READ | [WalletControlCentreController](routes/WalletControlCentreController.md#r-get-sni-api-v1-wallets-control-wallets-walletnumber-flags) |
+| POST | `/sni/api/v1/wallets/control/wallets/{walletNumber}/pay-invoice` | PAYMENT:PROCESS | [WalletControlCentreController](routes/WalletControlCentreController.md#r-post-sni-api-v1-wallets-control-wallets-walletnumber-pay-invoice) |
 | GET | `/sni/api/v1/wallets` | PAYMENT:READ | [WalletController](routes/WalletController.md#r-get-sni-api-v1-wallets) |
 | POST | `/sni/api/v1/wallets/admin/get-or-create` | PAYMENT:PROCESS | [WalletController](routes/WalletController.md#r-post-sni-api-v1-wallets-admin-get-or-create) |
 | POST | `/sni/api/v1/wallets/admin/top-up` | PAYMENT:PROCESS | [WalletController](routes/WalletController.md#r-post-sni-api-v1-wallets-admin-top-up) |

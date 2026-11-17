@@ -2234,6 +2234,152 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/indicators",
+   "package": "features.payment.controller",
+   "controller": "CashSessionInsightController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionInsightController.java",
+   "handler": "indicators",
+   "declaredIn": "CashSessionInsightController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.Indicators>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/payments",
+   "package": "features.payment.controller",
+   "controller": "CashSessionInsightController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionInsightController.java",
+   "handler": "payments",
+   "declaredIn": "CashSessionInsightController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "paymentMethod",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "receivedBy",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.SessionPayments>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/payments/{transactionNumber}/reassign",
+   "package": "features.payment.controller",
+   "controller": "CashSessionInsightController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionInsightController.java",
+   "handler": "reassign",
+   "declaredIn": "CashSessionInsightController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_VARIANCE:DECIDE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.controller.CashSessionInsightController.ReassignRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "transactionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService.ReassignedPayment>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/report/send",
+   "package": "features.payment.controller",
+   "controller": "CashSessionInsightController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionInsightController.java",
+   "handler": "sendReport",
+   "declaredIn": "CashSessionInsightController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.controller.CashSessionInsightController.SendReportRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.controller.CashSessionInsightController.SentReport>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/cash-registers/sessions/{sessionNumber}/timeline",
+   "package": "features.payment.controller",
+   "controller": "CashSessionInsightController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashSessionInsightController.java",
+   "handler": "timeline",
+   "declaredIn": "CashSessionInsightController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "sessionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.TimelineEvent>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/cash-registers/denominations",
    "package": "features.payment.controller",
    "controller": "CashSessionLifecycleController",
@@ -5671,6 +5817,40 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/wallets/control/wallets/{walletNumber}/pay-invoice",
+   "package": "features.payment.control.controller",
+   "controller": "WalletControlCentreController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/control/controller/WalletControlCentreController.java",
+   "handler": "payInvoice",
+   "declaredIn": "WalletControlCentreController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "PAYMENT:PROCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "WALLET_PAY_INVOICE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.control.controller.WalletControlCentreController.PayInvoiceFromWalletRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "walletNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.PayInvoiceResponse>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/wallets",
@@ -8438,6 +8618,197 @@
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.request.CreateCashRequestRequest.CashRequestAttachmentInput"
      }
+    }
+   }
+  },
+  "CashSessionInsightService.Indicators": {
+   "type": "object",
+   "properties": {
+    "sessionNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "expectedBalance": {
+     "type": "number"
+    },
+    "expectedHidden": {
+     "type": "boolean"
+    },
+    "paymentCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "customersServed": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "paymentTotal": {
+     "type": "number"
+    },
+    "averageTicket": {
+     "type": "number"
+    },
+    "refundCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "refundTotal": {
+     "type": "number"
+    },
+    "movementCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lastMovementAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "activeMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "pauseMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "detentionCap": {
+     "type": "number"
+    },
+    "detentionRemaining": {
+     "type": "number"
+    },
+    "openAnomalies": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "CashSessionInsightService.SessionPayments": {
+   "type": "object",
+   "properties": {
+    "sessionNumber": {
+     "type": "string"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.PaymentLine"
+     }
+    },
+    "byMethod": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.MethodTotal"
+     }
+    },
+    "byHour": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.HourTotal"
+     }
+    },
+    "paymentCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "paymentTotal": {
+     "type": "number"
+    },
+    "refundCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "refundTotal": {
+     "type": "number"
+    }
+   }
+  },
+  "CashRegisterService.ReassignedPayment": {
+   "type": "object",
+   "properties": {
+    "transactionNumber": {
+     "type": "string"
+    },
+    "fromSession": {
+     "type": "string"
+    },
+    "toSession": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "exitMovementNumber": {
+     "type": "string"
+    },
+    "entryMovementNumber": {
+     "type": "string"
+    }
+   }
+  },
+  "CashSessionInsightController.ReassignRequest": {
+   "required": [
+    "reason",
+    "targetSessionNumber"
+   ],
+   "type": "object",
+   "properties": {
+    "targetSessionNumber": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "CashSessionInsightController.SentReport": {
+   "type": "object",
+   "properties": {
+    "sessionNumber": {
+     "type": "string"
+    },
+    "recipients": {
+     "uniqueItems": true,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "CashSessionInsightController.SendReportRequest": {
+   "type": "object",
+   "properties": {
+    "extraRecipients": {
+     "type": "string"
+    }
+   }
+  },
+  "CashSessionInsightService.TimelineEvent": {
+   "type": "object",
+   "properties": {
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "kind": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "actor": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "reference": {
+     "type": "string"
     }
    }
   },
@@ -11351,7 +11722,10 @@
       "RESET_PIN",
       "RAISE_LIMIT",
       "CLOSE",
-      "REVIEW_FLAG"
+      "REVIEW_FLAG",
+      "RELEASE_HOLD",
+      "TRANSFER",
+      "RESTITUTE"
      ]
     },
     "amount": {
@@ -11682,7 +12056,10 @@
       "RESET_PIN",
       "RAISE_LIMIT",
       "CLOSE",
-      "REVIEW_FLAG"
+      "REVIEW_FLAG",
+      "RELEASE_HOLD",
+      "TRANSFER",
+      "RESTITUTE"
      ]
     },
     "amount": {
@@ -11698,6 +12075,32 @@
     "until": {
      "type": "string",
      "format": "date-time"
+    }
+   }
+  },
+  "PayInvoiceResponse": {
+   "type": "object",
+   "properties": {
+    "invoice": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse"
+    },
+    "transaction": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse"
+    }
+   }
+  },
+  "WalletControlCentreController.PayInvoiceFromWalletRequest": {
+   "required": [
+    "documentNumber"
+   ],
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
     }
    }
   },
@@ -12405,6 +12808,91 @@
     },
     "label": {
      "type": "string"
+    }
+   }
+  },
+  "CashSessionInsightService.PaymentLine": {
+   "type": "object",
+   "properties": {
+    "transactionNumber": {
+     "type": "string"
+    },
+    "paymentMethod": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "tenderedAmount": {
+     "type": "number"
+    },
+    "changeAmount": {
+     "type": "number"
+    },
+    "receivedBy": {
+     "type": "string"
+    },
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "sourceType": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "sourceLabel": {
+     "type": "string"
+    },
+    "receiptNumber": {
+     "type": "string"
+    },
+    "refund": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CashSessionInsightService.MethodTotal": {
+   "type": "object",
+   "properties": {
+    "paymentMethod": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "amount": {
+     "type": "number"
+    }
+   }
+  },
+  "CashSessionInsightService.HourTotal": {
+   "type": "object",
+   "properties": {
+    "hour": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "amount": {
+     "type": "number"
     }
    }
   },
@@ -13403,6 +13891,13 @@
   "CashRequestStatus": "com.sni.bokaticowork.features.payment.enums.CashRequestStatus",
   "ReviewCashRequestRequest": "com.sni.bokaticowork.features.payment.dto.request.ReviewCashRequestRequest",
   "CreateCashRequestRequest": "com.sni.bokaticowork.features.payment.dto.request.CreateCashRequestRequest",
+  "CashSessionInsightService.Indicators": "com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.Indicators",
+  "CashSessionInsightService.SessionPayments": "com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.SessionPayments",
+  "CashRegisterService.ReassignedPayment": "com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService.ReassignedPayment",
+  "CashSessionInsightController.ReassignRequest": "com.sni.bokaticowork.features.payment.controller.CashSessionInsightController.ReassignRequest",
+  "CashSessionInsightController.SentReport": "com.sni.bokaticowork.features.payment.controller.CashSessionInsightController.SentReport",
+  "CashSessionInsightController.SendReportRequest": "com.sni.bokaticowork.features.payment.controller.CashSessionInsightController.SendReportRequest",
+  "CashSessionInsightService.TimelineEvent": "com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.TimelineEvent",
   "CashDenominationResponse": "com.sni.bokaticowork.features.payment.dto.response.CashDenominationResponse",
   "CashDenominationRequest": "com.sni.bokaticowork.features.payment.dto.request.CashDenominationRequest",
   "CashSessionStepResponse": "com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse",
@@ -13488,6 +13983,8 @@
   "WalletControlDtos.TreasuryRequest": "com.sni.bokaticowork.features.payment.control.dto.WalletControlDtos.TreasuryRequest",
   "WalletTreasuryReconciliationService.Snapshot": "com.sni.bokaticowork.features.payment.control.service.WalletTreasuryReconciliationService.Snapshot",
   "WalletControlDtos.AdminActionRequest": "com.sni.bokaticowork.features.payment.control.dto.WalletControlDtos.AdminActionRequest",
+  "PayInvoiceResponse": "com.sni.bokaticowork.features.payment.dto.response.PayInvoiceResponse",
+  "WalletControlCentreController.PayInvoiceFromWalletRequest": "com.sni.bokaticowork.features.payment.control.controller.WalletControlCentreController.PayInvoiceFromWalletRequest",
   "WalletResponse": "com.sni.bokaticowork.features.payment.dto.response.WalletResponse",
   "WalletLookupRequest": "com.sni.bokaticowork.features.payment.dto.request.WalletLookupRequest",
   "WalletTopUpRequest": "com.sni.bokaticowork.features.payment.dto.request.WalletTopUpRequest",
@@ -13508,6 +14005,9 @@
   "CashSessionSummaryResponse.NonCashPaymentTotal": "com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResponse.NonCashPaymentTotal",
   "CashRequestResponse.AttachmentRef": "com.sni.bokaticowork.features.payment.dto.response.CashRequestResponse.AttachmentRef",
   "CreateCashRequestRequest.CashRequestAttachmentInput": "com.sni.bokaticowork.features.payment.dto.request.CreateCashRequestRequest.CashRequestAttachmentInput",
+  "CashSessionInsightService.PaymentLine": "com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.PaymentLine",
+  "CashSessionInsightService.MethodTotal": "com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.MethodTotal",
+  "CashSessionInsightService.HourTotal": "com.sni.bokaticowork.features.payment.service.support.CashSessionInsightService.HourTotal",
   "CashCountResponse.Line": "com.sni.bokaticowork.features.payment.dto.response.CashCountResponse.Line",
   "CashRegisterStatisticsResponse.HourlyVolume": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterStatisticsResponse.HourlyVolume",
   "ComplianceDashboardService.RuleStat": "com.sni.bokaticowork.features.payment.compliance.service.ComplianceDashboardService.RuleStat",
