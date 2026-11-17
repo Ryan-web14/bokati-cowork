@@ -54,7 +54,7 @@ class DocumentFormatDetectionTest {
     void kycTypesKeepTheirFormats() {
         assertThatThrownBy(() -> detect("cni.docx", ZIP, KYC))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Unsupported document MIME type");
+                .hasMessageContaining("Format de fichier non accepté");
         assertThat(detect("cni.pdf", "%PDF-1.7".getBytes(StandardCharsets.US_ASCII), KYC)).isEqualTo("application/pdf");
     }
 }

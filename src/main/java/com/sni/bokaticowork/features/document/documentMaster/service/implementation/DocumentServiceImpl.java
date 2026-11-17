@@ -102,6 +102,20 @@ public class DocumentServiceImpl implements DocumentService {
 
     private PlatformSettings platformSettings;
 
+    private com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard reviewGuard;
+    private com.sni.bokaticowork.features.document.explorer.access.GedAccessService gedAccess;
+
+    @Autowired(required = false)
+    void setGedAccess(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.document.explorer.access.GedAccessService gedAccess) {
+        this.gedAccess = gedAccess;
+    }
+
+    /** Lot KG0 : droit de decider controle pour toutes les voies (unitaire, masse, circuits). */
+    @Autowired(required = false)
+    void setReviewGuard(com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard reviewGuard) {
+        this.reviewGuard = reviewGuard;
+    }
+
     @Autowired(required = false)
     void setPlatformSettings(PlatformSettings platformSettings) {
         this.platformSettings = platformSettings;
@@ -119,7 +133,11 @@ public class DocumentServiceImpl implements DocumentService {
         DocumentFolder folder = targetFolder(metadata.getFolderCode());
         applyDefaultExpiryDate(metadata, documentType);
         validateDocumentMetadata(metadata, documentType, file.getSize());
-        enforceMultipleAllowed(documentType, owner);
+        // Lot KG2 : une piece KYC se remplace (l'ancien fichier passe SUPERSEDED) et un verso
+        // s'ajoute a son recto ; la regle « un seul document du type » ne s'applique qu'ailleurs.
+        if (documentType.getCategory() != DocumentCategory.KYC) {
+            enforceMultipleAllowed(documentType, owner);
+        }
         List<String> allowedMimeTypes = parseAllowedMimeTypes(documentType.getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspect(file, allowedMimeTypes);
 
@@ -142,7 +160,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentRepository.save(document);
         autoFiler.file(document);
         createVersion(document, uploadedBy, metadata.getTitle(), metadata.getDocumentNumber(), file, inspection);
-        attachKycDocumentIfNeeded(document, owner, metadata);
+        attachKycDocumentIfNeeded(document, owner, metadata, qualityOf(document, file));
         kycAutomationService.syncFromDocumentUpload(document);
         publishDocumentEvent("DOCUMENT_UPLOADED", document, uploadedBy);
         return getByCode(document.getCode());
@@ -185,7 +203,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentRepository.save(document);
         autoFiler.file(document);
         createVersionFromBytes(document, uploadedBy, originalFileName, content, inspection);
-        attachKycDocumentIfNeeded(document, owner, metadata);
+        attachKycDocumentIfNeeded(document, owner, metadata, null);
         kycAutomationService.syncFromDocumentUpload(document);
         publishDocumentEvent("DOCUMENT_GENERATED", document, uploadedBy);
         return getByCode(document.getCode());
@@ -198,10 +216,18 @@ public class DocumentServiceImpl implements DocumentService {
         // Un document verrouille par quelqu'un d'autre, ou sous gel juridique, ne se remplace pas
         lockService.assertEditable(document);
         holdService.assertNotHeld(document, "remplace");
+        // Lot KG4 : un document archive, expire, remplace ou signe ne recoit plus de nouvelle version
+        // (en deposer un nouveau) ; avant, il etait remis en revue.
+        if (java.util.EnumSet.of(DocumentStatus.ARCHIVED, DocumentStatus.EXPIRED, DocumentStatus.SUPERSEDED, DocumentStatus.SIGNED)
+                .contains(document.getStatus())) {
+            throw new BadRequestException("Le document " + document.getCode() + " est " + document.getStatus()
+                    + " : il ne se remplace pas, déposez un nouveau document");
+        }
         List<String> allowedMimeTypes = parseAllowedMimeTypes(document.getDocumentType().getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspect(file, allowedMimeTypes);
 
-        document.setStatus(document.getDocumentType().getRequiresReview() ? DocumentStatus.PENDING_REVIEW : DocumentStatus.APPROVED);
+        // Meme regle qu'au depot (autoApprove, delai, revue) ; avant, autoApprove etait ignore.
+        document.setStatus(initialDocumentStatus(document.getDocumentType()));
         createVersion(document, uploadedBy, document.getTitle(), null, file, inspection);
 
         kycDocumentRepository.findAllByDocument(document).forEach(item -> {
@@ -246,6 +272,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse approve(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
+        guard(document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision.APPROVE);
+        lockService.assertEditable(document);
+        request.setReviewedBy(reviewer(request.getReviewedBy()));
         assertReviewable(document, DocumentStatus.APPROVED);
         boolean liftsRejection = document.getStatus() == DocumentStatus.REJECTED;
         document.setStatus(DocumentStatus.APPROVED);
@@ -271,6 +300,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse reject(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
+        guard(document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision.REJECT);
+        lockService.assertEditable(document);
+        request.setReviewedBy(reviewer(request.getReviewedBy()));
         assertReviewable(document, DocumentStatus.REJECTED);
         document.setStatus(DocumentStatus.REJECTED);
         documentRepository.save(document);
@@ -285,6 +317,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse requestCorrection(String documentCode, DocumentCorrectionRequest request) {
         Document document = serviceDocument(documentCode);
+        guard(document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision.CORRECTION);
+        lockService.assertEditable(document);
+        request.setReviewedBy(reviewer(request.getReviewedBy()));
         assertReviewable(document, DocumentStatus.NEEDS_CORRECTION);
 
         Instant deadline = Instant.now().plus(
@@ -308,7 +343,8 @@ public class DocumentServiceImpl implements DocumentService {
                 .build();
         documentReviewRepository.save(review);
 
-        syncKycDocumentStatus(document, KycDocumentVerificationStatus.PENDING);
+        // Lot KG1 : piece renvoyee en correction = a refaire (le dossier attend une correction).
+        syncKycDocumentStatus(document, KycDocumentVerificationStatus.REJECTED);
         publishDocumentEvent("DOCUMENT_CORRECTION_REQUESTED", document, request.getReviewedBy());
         return getByCode(documentCode);
     }
@@ -373,7 +409,7 @@ public class DocumentServiceImpl implements DocumentService {
         lockService.assertEditable(document);
         holdService.assertNotHeld(document, "archive");
         if (document.getStatus() == DocumentStatus.ARCHIVED) {
-            throw new BadRequestException("Document is already archived");
+            throw new BadRequestException("Ce document est déjà archivé");
         }
         document.setStatus(DocumentStatus.ARCHIVED);
         documentRepository.save(document);
@@ -419,7 +455,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentFileResult getFileWithMeta(String documentCode) {
         Document document = serviceDocument(documentCode);
         if (!StringUtils.hasText(document.getFileUrl())) {
-            throw new BadRequestException("Document has no file stored");
+            throw new BadRequestException("Aucun fichier enregistré pour ce document");
         }
         DocumentVersion currentVersion = documentVersionRepository.findByDocumentAndCurrentTrue(document).orElse(null);
         String storageProvider = currentVersion == null ? "FILESYSTEM" : currentVersion.getStorageProvider();
@@ -447,6 +483,7 @@ public class DocumentServiceImpl implements DocumentService {
         int nextVersion = document.getCurrentVersionNumber() == null ? 1 : document.getCurrentVersionNumber() + 1;
         String ownerFolder = storageFolder(document);
         DocumentStorageService.StoredDocument stored = storageService.store(ownerFolder, document.getCode(), nextVersion, file);
+        removeOnRollback(stored);
 
         DocumentVersion version = DocumentVersion.builder()
                 .document(document)
@@ -493,6 +530,7 @@ public class DocumentServiceImpl implements DocumentService {
         int nextVersion = document.getCurrentVersionNumber() == null ? 1 : document.getCurrentVersionNumber() + 1;
         String ownerFolder = storageFolder(document);
         DocumentStorageService.StoredDocument stored = storageService.storeBytes(ownerFolder, document.getCode(), nextVersion, originalFileName, content);
+        removeOnRollback(stored);
 
         DocumentVersion version = DocumentVersion.builder()
                 .document(document)
@@ -523,25 +561,41 @@ public class DocumentServiceImpl implements DocumentService {
         documentRepository.save(document);
     }
 
-    private void attachKycDocumentIfNeeded(Document document, OwnerResolution owner, DocumentUploadMetadataRequest metadata) {
-        if (document.getCategory() != DocumentCategory.KYC) {
+    /** Lot KG2 : rattachement recto / verso et remplacement, en un seul endroit (KycPieceLinker). */
+    private void attachKycDocumentIfNeeded(Document document, OwnerResolution owner, DocumentUploadMetadataRequest metadata,
+                                           com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService.Report quality) {
+        if (document.getCategory() != DocumentCategory.KYC || pieceLinker == null) {
             return;
         }
-        KycCase kycCase = kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(owner.ownerType(), owner.ownerId())
-                .orElse(null);
+        pieceLinker.link(document, owner.ownerType(), owner.ownerId(),
+                new com.sni.bokaticowork.features.document.kyc.service.support.KycPieceLinker.Details(
+                        metadata.getKycSide(), metadata.getDocumentNumber(), metadata.getIssueDate(), metadata.getExpiryDate(), quality));
+    }
 
-        KycDocument kycDocument = KycDocument.builder()
-                .kycCase(kycCase)
-                .ownerType(owner.ownerType())
-                .ownerId(owner.ownerId())
-                .document(document)
-                .documentType(document.getDocumentType().getCode())
-                .documentNumber(trimToNull(metadata.getDocumentNumber()))
-                .issueDate(metadata.getIssueDate())
-                .expiryDate(metadata.getExpiryDate())
-                .status(KycDocumentVerificationStatus.PENDING)
-                .build();
-        kycDocumentRepository.save(kycDocument);
+    /** Qualite d'image d'une piece KYC deposee (nettete, resolution, exposition) : avertissement seulement. */
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService.Report qualityOf(Document document, MultipartFile file) {
+        if (document.getCategory() != DocumentCategory.KYC || imageQuality == null) {
+            return null;
+        }
+        try {
+            return imageQuality.check(file.getBytes(), file.getOriginalFilename(), file.getContentType());
+        } catch (java.io.IOException ex) {
+            return null;
+        }
+    }
+
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService imageQuality;
+
+    @Autowired(required = false)
+    void setImageQuality(com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService imageQuality) {
+        this.imageQuality = imageQuality;
+    }
+
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycPieceLinker pieceLinker;
+
+    @Autowired
+    void setPieceLinker(com.sni.bokaticowork.features.document.kyc.service.support.KycPieceLinker pieceLinker) {
+        this.pieceLinker = pieceLinker;
     }
 
     private void syncKycDocumentStatus(Document document, KycDocumentVerificationStatus status) {
@@ -597,7 +651,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     private void validateDocumentMetadata(DocumentUploadMetadataRequest metadata, DocumentType documentType, long fileSizeBytes) {
         if (documentType.getRequiresExpiryDate() && metadata.getExpiryDate() == null) {
-            throw new BadRequestException("Expiry date is required for this document type");
+            throw new BadRequestException("La date d'expiration est obligatoire pour ce type de document");
         }
         if (documentType.getMaxFileSizeBytes() != null && documentType.getMaxFileSizeBytes() > 0
                 && fileSizeBytes > documentType.getMaxFileSizeBytes()) {
@@ -623,20 +677,55 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private DocumentStatus initialDocumentStatus(DocumentType documentType) {
-        if (Boolean.TRUE.equals(documentType.getAutoApprove())) {
+        // Lot KG3 : avec un delai (autoApproveAfterDays), le document attend la revue ; la tache du
+        // cycle de vie l'approuve apres le delai. Sans delai, autoApprove approuve au depot.
+        boolean delayed = documentType.getAutoApproveAfterDays() != null && documentType.getAutoApproveAfterDays() > 0;
+        if (Boolean.TRUE.equals(documentType.getAutoApprove()) && !delayed) {
             return DocumentStatus.APPROVED;
+        }
+        if (delayed) {
+            return DocumentStatus.PENDING_REVIEW;
         }
         return Boolean.TRUE.equals(documentType.getRequiresReview()) ? DocumentStatus.PENDING_REVIEW : DocumentStatus.APPROVED;
     }
 
     private DocumentType documentType(String code) {
         return documentTypeRepository.findByCode(code.trim().toUpperCase(Locale.ROOT))
-                .orElseThrow(() -> new ResourceNotFoundException("Document type not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Type de document introuvable"));
     }
 
     private Document serviceDocument(String code) {
         return documentRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
+    }
+
+    /**
+     * Lot KG4 : un fichier ecrit dans le stockage pendant une transaction annulee est supprime ;
+     * avant, il restait orphelin.
+     */
+    private void removeOnRollback(DocumentStorageService.StoredDocument stored) {
+        if (stored == null || !org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCompletion(int status) {
+                        if (status == STATUS_ROLLED_BACK) {
+                            try {
+                                storageService.delete(stored.provider(), stored.storagePath());
+                            } catch (RuntimeException ex) {
+                                log.warn("Fichier orphelin non supprime {} : {}", stored.storagePath(), ex.getMessage());
+                            }
+                        }
+                    }
+                });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentResponse summarize(Document document) {
+        return toResponse(document, false);
     }
 
     private DocumentResponse toResponse(Document document, boolean includeVersions) {
@@ -666,7 +755,26 @@ public class DocumentServiceImpl implements DocumentService {
         response.setMetadata(metadata);
         response.setSpace(document.getSpace());
         response.setSpaceReferenceCode(document.getSpaceReferenceCode());
+        // Lot KG4 : etat du verrou et proprietaire par son code metier.
+        boolean locked = DocumentLockService.active(document);
+        response.setLocked(locked);
+        response.setLockedById(locked ? document.getLockedBy() : null);
+        response.setLockedByName(locked ? lockService.lockerName(document) : null);
+        response.setLockExpiresAt(locked ? document.getLockExpiresAt() : null);
+        if (ownerCodes != null) {
+            ownerCodes.codeAndLabel(document.getOwnerType(), document.getOwnerId()).ifPresent(owner -> {
+                response.setOwnerCode(owner[0]);
+                response.setOwnerLabel(owner[1]);
+            });
+        }
         return response;
+    }
+
+    private com.sni.bokaticowork.features.document.documentMaster.service.support.DocumentOwnerCodes ownerCodes;
+
+    @Autowired(required = false)
+    void setOwnerCodes(com.sni.bokaticowork.features.document.documentMaster.service.support.DocumentOwnerCodes ownerCodes) {
+        this.ownerCodes = ownerCodes;
     }
 
     private DocumentSpace deriveSpace(DocumentOwnerType ownerType, DocumentCategory category) {
@@ -683,7 +791,7 @@ public class DocumentServiceImpl implements DocumentService {
             return new OwnerResolution(DocumentOwnerType.INTERNAL, null);
         }
         if (ownerType == null || !StringUtils.hasText(ownerCode)) {
-            throw new BadRequestException("Document owner is required");
+            throw new BadRequestException("Le propriétaire du document est requis");
         }
 
         return switch (ownerType) {
@@ -701,10 +809,17 @@ public class DocumentServiceImpl implements DocumentService {
                 yield new OwnerResolution(DocumentOwnerType.BUSINESS, business.getId());
             }
             default -> {
+                // Lot KG4 : contrat, facture, paiement, proposition, actif par leur code metier
+                // (contractCode, documentNumber, transactionNumber...) ; l'identifiant numerique reste accepte.
+                if (ownerCodes != null && ownerCodes.handles(ownerType)) {
+                    Long id = ownerCodes.idOf(ownerType, ownerCode).orElseThrow(() -> new BadRequestException(
+                            "Propriétaire introuvable : " + ownerType + " " + ownerCode.trim()));
+                    yield new OwnerResolution(ownerType, id);
+                }
                 try {
                     yield new OwnerResolution(ownerType, Long.parseLong(ownerCode.trim()));
                 } catch (NumberFormatException ex) {
-                    throw new BadRequestException("Owner code must be numeric for owner type " + ownerType);
+                    throw new BadRequestException("Code du propriétaire invalide pour le type " + ownerType);
                 }
             }
         };
@@ -721,8 +836,13 @@ public class DocumentServiceImpl implements DocumentService {
         if (!StringUtils.hasText(folderCode)) {
             return null;
         }
-        return folderRepository.findByCode(folderCode.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Folder not found: " + folderCode));
+        DocumentFolder folder = folderRepository.findByCode(folderCode.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable : " + folderCode));
+        // Lot KG0 : deposer dans un dossier restreint demande le droit d'y ecrire.
+        if (gedAccess != null) {
+            gedAccess.require(folder, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.EDIT);
+        }
+        return folder;
     }
 
     /** Le classement physique du stockage : par proprietaire, ou dans « internal » sans proprietaire. */
@@ -775,6 +895,24 @@ public class DocumentServiceImpl implements DocumentService {
         payload.put("version", document.getCurrentVersionNumber());
         payload.put("actorId", actorId);
         outboxService.publish(eventType, "DOCUMENT", document.getCode(), payload);
+    }
+
+    private void guard(Document document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision decision) {
+        if (reviewGuard != null) {
+            reviewGuard.check(document.getSpace(), decision);
+        }
+    }
+
+    /**
+     * Auteur d'une decision (lot KG0) : toujours le compte connecte ; la valeur fournie par le corps
+     * de la requete n'est retenue que pour une tache du systeme, sans compte.
+     */
+    private Long reviewer(Long declared) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+            return principal.getUser().getId();
+        }
+        return declared != null ? declared : SystemActors.SYSTEM_USER_ID;
     }
 
     private Long currentUserId() {

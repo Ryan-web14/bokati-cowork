@@ -80,7 +80,7 @@ public class KycDocumentReviewController {
             case "APPROVED", "VERIFIED" -> List.of(KycDocumentVerificationStatus.VERIFIED);
             case "REJECTED", "REJECT", "DISAPPROVED", "DISAPPROVE", "DESAPPROVED", "DESAPPROVE" ->
                     List.of(KycDocumentVerificationStatus.REJECTED);
-            default -> throw new BadRequestException("Unsupported KYC document review status: " + status);
+            default -> throw new BadRequestException("Statut de revue de pièce KYC non pris en charge : " + status);
         };
     }
 }

@@ -9,7 +9,7 @@ public class KycCaseNoteRequest {
     @NotBlank
     private String content;
 
-    @NotNull
+    /** Ignore pour un compte connecte : l\'auteur est toujours le compte connecte (lot KG0). */
     private Long authorId;
 
     private Boolean internal = Boolean.TRUE;

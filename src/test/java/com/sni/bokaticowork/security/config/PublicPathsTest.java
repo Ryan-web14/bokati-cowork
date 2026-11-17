@@ -41,7 +41,6 @@ class PublicPathsTest {
             ApiPath.V1 + "/payments/mobile-money/providers",
             "/verify/doc/INV-1",
             "/verify/receipt/REC-1",
-            ApiPath.V1 + "/shares/abcdef",
             ApiPath.V1 + "/public/crm/leads",
             "/public/quotes/sign"
     })

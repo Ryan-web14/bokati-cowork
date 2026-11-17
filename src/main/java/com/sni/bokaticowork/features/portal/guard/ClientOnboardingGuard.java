@@ -66,6 +66,15 @@ public class ClientOnboardingGuard implements HandlerInterceptor {
         if (kycCase.map(k -> k.getStatus() == KycCaseStatus.APPROVED).orElse(false)) {
             return true;
         }
+        // Lot KG1 : un membre deja valide dont le dossier est rouvert pour des pieces de plus (niveau
+        // KYC releve, piece ajoutee) garde son acces pendant qu'il les depose. Un refus, une
+        // correction ou une echeance le bloquent toujours.
+        if (member.getStatus() == com.sni.bokaticowork.features.client.member.enums.MemberStatus.ACTIVE
+                && kycCase.map(k -> k.getStatus() == KycCaseStatus.IN_PROGRESS
+                        || k.getStatus() == KycCaseStatus.SUBMITTED
+                        || k.getStatus() == KycCaseStatus.UNDER_REVIEW).orElse(false)) {
+            return true;
+        }
 
         Instant gracePeriodEnd = member.getKycGracePeriodEndAt();
         boolean inGracePeriod = gracePeriodEnd != null && Instant.now().isBefore(gracePeriodEnd);

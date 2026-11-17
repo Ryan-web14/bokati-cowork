@@ -17,5 +17,8 @@ public interface DocumentRetentionService {
 
     void deactivate(String code);
 
+    /** Reactive une politique desactivee (lot KG4). */
+    void activate(String code);
+
     int applyPolicies();
 }

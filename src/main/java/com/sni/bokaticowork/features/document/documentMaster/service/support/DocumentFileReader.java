@@ -24,12 +24,12 @@ public class DocumentFileReader {
     @Transactional(readOnly = true)
     public DocumentFileResult read(String documentCode) {
         if (!StringUtils.hasText(documentCode)) {
-            throw new BadRequestException("Document code is required");
+            throw new BadRequestException("Le code du document est requis");
         }
         Document document = documentRepository.findByCode(documentCode.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + documentCode));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable : " + documentCode));
         if (!StringUtils.hasText(document.getFileUrl())) {
-            throw new BadRequestException("Document has no file stored: " + documentCode);
+            throw new BadRequestException("Aucun fichier enregistré pour le document : " + documentCode);
         }
         DocumentVersion currentVersion = documentVersionRepository.findByDocumentAndCurrentTrue(document).orElse(null);
         String storageProvider = currentVersion == null ? "FILESYSTEM" : currentVersion.getStorageProvider();

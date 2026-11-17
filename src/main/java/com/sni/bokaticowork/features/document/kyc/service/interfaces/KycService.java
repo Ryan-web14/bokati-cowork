@@ -42,6 +42,12 @@ public interface KycService {
     KycCaseResponse submit(String code);
     KycCaseResponse approve(String code, KycDecisionRequest request);
     KycCaseResponse reject(String code, KycDecisionRequest request);
+
+    /** Lot KG7 : refus definitif (statut REJECTED, motif de la liste obligatoire). */
+    KycCaseResponse rejectFinal(String code, KycDecisionRequest request);
+
+    /** Lot KG7 : reouverture d'un dossier refuse, par un administrateur. */
+    KycCaseResponse reopen(String code, String comment);
     List<KycRequirementStatus> getMissingRequirements(String code);
     KycDashboardResponse dashboard();
     KycCaseResponse assign(String code, KycAssignRequest request);
@@ -52,6 +58,15 @@ public interface KycService {
     PaginatedResponse<KycCaseResponse> expiringSoon(Integer days, Pageable pageable);
     List<KycExpiryDocumentStatus> expiryStatus(String code);
     KycCaseResponse updateRiskLevel(String code, KycRiskLevelRequest request);
+
+    /**
+     * Change le niveau KYC demande (lot KG1) : les pieces de ce niveau deviennent exigees, le dossier
+     * se rouvre s'il en manque, et le titulaire est prevenu des pieces a fournir.
+     */
+    KycCaseResponse changeLevel(String code, int level, String reason);
+
+    /** Resultat des regles de controle croise sur le dossier (lecture, sans effet). */
+    List<com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService.Result> crossChecks(String code);
     List<KycDocumentResponse> reviewQueue();
     List<KycDocumentResponse> reviewedDocuments(List<KycDocumentVerificationStatus> statuses);
     KycDocumentOcrResultResponse getOcrResult(String documentCode);

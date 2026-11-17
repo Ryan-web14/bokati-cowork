@@ -10,6 +10,9 @@ import java.time.LocalDate;
 @Data
 @Builder
 public class KycDocumentResponse {
+
+    /** Lot KG7 : dossiers d'autres titulaires qui ont la meme piece (type et numero) ; signal, sans blocage. */
+    private java.util.List<String> duplicateOf;
     private Long id;
     private String documentCode;
     private String documentType;
@@ -22,6 +25,11 @@ public class KycDocumentResponse {
     private String downloadUrl;
     private Boolean requiresBackSide;
     private String backDocumentCode;
+    /** Qualite d'image au depot : OK, WARNING, UNKNOWN (nul avant la mesure). */
+    private String qualityStatus;
+    private java.util.List<String> qualityWarnings;
+    private String backQualityStatus;
+    private java.util.List<String> backQualityWarnings;
     private String backFileName;
     private Long backFileSize;
     private String backMimeType;

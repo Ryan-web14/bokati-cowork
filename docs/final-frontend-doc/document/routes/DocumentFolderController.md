@@ -9,7 +9,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-post-sni-api-v1-document-folders"></a>
 ### POST /sni/api/v1/document-folders
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Corps JSON (obligatoire) : `CreateFolderRequest`
 - Réponse : `FolderDetailResponse`
 - Modèles : [FolderDetailResponse](#m-FolderDetailResponse), [CreateFolderRequest](#m-CreateFolderRequest)
@@ -18,7 +18,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-document-folders-roots"></a>
 ### GET /sni/api/v1/document-folders/roots
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `List<FolderDetailResponse>`
 - Modèles : [FolderDetailResponse](#m-FolderDetailResponse), [DocumentSpace](#m-DocumentSpace)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java`, méthode `roots`
@@ -30,7 +30,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-delete-sni-api-v1-document-folders-code"></a>
 ### DELETE /sni/api/v1/document-folders/{code}
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java`, méthode `delete`
 
@@ -41,7 +41,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-document-folders-code"></a>
 ### GET /sni/api/v1/document-folders/{code}
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `FolderDetailResponse`
 - Modèles : [FolderDetailResponse](#m-FolderDetailResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java`, méthode `getByCode`
@@ -53,7 +53,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-patch-sni-api-v1-document-folders-code"></a>
 ### PATCH /sni/api/v1/document-folders/{code}
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Corps JSON (obligatoire) : `UpdateFolderRequest`
 - Réponse : `FolderDetailResponse`
 - Modèles : [FolderDetailResponse](#m-FolderDetailResponse), [UpdateFolderRequest](#m-UpdateFolderRequest)
@@ -66,7 +66,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-document-folders-code-breadcrumb"></a>
 ### GET /sni/api/v1/document-folders/{code}/breadcrumb
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `List<BreadcrumbItem>`
 - Modèles : [BreadcrumbItem](#m-BreadcrumbItem)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java`, méthode `breadcrumb`
@@ -78,7 +78,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-document-folders-code-children"></a>
 ### GET /sni/api/v1/document-folders/{code}/children
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `List<FolderDetailResponse>`
 - Modèles : [FolderDetailResponse](#m-FolderDetailResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java`, méthode `children`
@@ -90,7 +90,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-document-folders-code-documents"></a>
 ### GET /sni/api/v1/document-folders/{code}/documents
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `PaginatedResponse<DocumentResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [DocumentResponse](#m-DocumentResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java`, méthode `documents`
@@ -103,7 +103,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-post-sni-api-v1-document-folders-code-move"></a>
 ### POST /sni/api/v1/document-folders/{code}/move
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Corps JSON (obligatoire) : `MoveFolderRequest`
 - Réponse : `FolderDetailResponse`
 - Modèles : [FolderDetailResponse](#m-FolderDetailResponse), [MoveFolderRequest](#m-MoveFolderRequest)
@@ -116,7 +116,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-document-folders-code-tree"></a>
 ### GET /sni/api/v1/document-folders/{code}/tree
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `DocumentFolderTreeNode`
 - Modèles : [DocumentFolderTreeNode](#m-DocumentFolderTreeNode)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java`, méthode `tree`
@@ -128,7 +128,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-post-sni-api-v1-document-folders-documentcode-move-document"></a>
 ### POST /sni/api/v1/document-folders/{documentCode}/move-document
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Corps JSON (obligatoire) : `MoveDocumentToFolderRequest`
 - Réponse : `DocumentResponse`
 - Modèles : [DocumentResponse](#m-DocumentResponse), [MoveDocumentToFolderRequest](#m-MoveDocumentToFolderRequest)
@@ -213,6 +213,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `code` | texte |  |  |
 | `ownerId` | code identifiant (texte) |  |  |
+| `ownerCode` | texte |  |  |
+| `ownerLabel` | texte |  |  |
+| `locked` | booléen |  |  |
+| `lockedById` | code identifiant (texte) |  |  |
+| `lockedByName` | texte |  |  |
+| `lockExpiresAt` | date-heure ISO 8601 UTC |  |  |
 | `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
 | `category` | enum : `KYC`, `LEGAL`, `SYSTEM`, `FINANCIAL`, `ASSET`, `OTHER` |  |  |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |

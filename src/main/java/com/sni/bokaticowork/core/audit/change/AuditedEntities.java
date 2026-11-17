@@ -36,7 +36,12 @@ public final class AuditedEntities {
             Map.entry("RoleUser", List.of("users.userId", "role.name")),
             Map.entry("PlatformSetting", List.of("key")),
             Map.entry("DocumentTemplate", List.of("code")),
-            Map.entry("NotificationTemplate", List.of("templateCode")));
+            Map.entry("NotificationTemplate", List.of("templateCode")),
+            // Lot KG7 : historique KYC et GED dans le centre d'audit (avant / apres).
+            Map.entry("KycCase", List.of("code")),
+            Map.entry("KycDocument", List.of("kycCase.code", "documentType")),
+            Map.entry("KycCaseRequirement", List.of("kycCase.code", "documentTypeCode")),
+            Map.entry("Document", List.of("code")));
 
     private static final String CORE_PACKAGE = "com.sni.bokaticowork.core.";
     private static final List<String> FALLBACK_CODE_FIELDS = List.of("code", "number", "reference");

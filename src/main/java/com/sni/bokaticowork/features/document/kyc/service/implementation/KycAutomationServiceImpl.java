@@ -53,7 +53,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     @Override
     public void initializeMemberKyc(String memberId) {
         Member member = memberRepository.findByMemberIdAndDeletedFalse(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membre introuvable"));
         if (!hasActiveRequirements(DocumentOwnerType.MEMBER, null)) {
             return;
         }
@@ -68,7 +68,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     @Override
     public void initializeCustomerKyc(String customerId) {
         Customer customer = customerRepository.findByCustomerId(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Client introuvable"));
         if (!hasActiveRequirements(DocumentOwnerType.CUSTOMER, customer.getType() == null ? null : customer.getType().name())) {
             return;
         }
@@ -83,7 +83,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     @Override
     public void syncMemberKyc(String memberId) {
         Member member = memberRepository.findByMemberIdAndDeletedFalse(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membre introuvable"));
         if (!hasActiveRequirements(DocumentOwnerType.MEMBER, null)) {
             return;
         }
@@ -91,7 +91,9 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         KycCaseStatus targetStatus = switch (member.getStatus()) {
             case PENDING -> KycCaseStatus.IN_PROGRESS;
             case UNDER_REVIEW -> KycCaseStatus.UNDER_REVIEW;
-            case PENDING_CORRECTION, REJECTED -> KycCaseStatus.PENDING_CORRECTION;
+            case PENDING_CORRECTION -> KycCaseStatus.PENDING_CORRECTION;
+            // Lot KG7 : un membre refuse garde un dossier refuse ; sinon, correction comme avant.
+            case REJECTED -> kycCase.getStatus() == KycCaseStatus.REJECTED ? KycCaseStatus.REJECTED : KycCaseStatus.PENDING_CORRECTION;
             case ACTIVE -> kycCase.getStatus();
             case ARCHIVED -> KycCaseStatus.EXPIRED;
             case INACTIVE, SUSPENDED -> kycCase.getStatus();
@@ -102,24 +104,47 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     @Override
     public void syncCustomerKyc(String customerId) {
         Customer customer = customerRepository.findByCustomerId(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Client introuvable"));
         if (!hasActiveRequirements(DocumentOwnerType.CUSTOMER, customer.getType() == null ? null : customer.getType().name())) {
             return;
         }
         KycCase kycCase = ensureCase(DocumentOwnerType.CUSTOMER, customer.getId());
         KycCaseStatus targetStatus = switch (customer.getStatus()) {
             case PENDING -> KycCaseStatus.IN_PROGRESS;
-            case ACTIVE -> KycCaseStatus.APPROVED;
+            // Lot KG1 : activer un client n'approuve plus son dossier (avant : APPROVED, sans courriel
+            // ni portefeuille, meme pour un dossier tout juste cree). Le dossier se decide sur ses pieces.
+            case ACTIVE -> kycCase.getStatus();
             case ARCHIVED -> KycCaseStatus.EXPIRED;
             case INACTIVE, SUSPENDED -> kycCase.getStatus();
         };
         applyCaseStatus(kycCase, targetStatus, "Synced from customer status");
     }
 
-    @Async
+    /** Lot KG2 : programmee apres validation, une fois par document et par transaction. */
+    @Override
+    public void syncFromDocumentUpload(Document document) {
+        scheduleSync(document);
+    }
+
+    @Override
+    public void syncFromDocumentReview(Document document) {
+        scheduleSync(document);
+    }
+
+    private void scheduleSync(Document document) {
+        if (document == null || document.getCategory() != DocumentCategory.KYC) {
+            return;
+        }
+        if (syncRunner != null) {
+            syncRunner.schedule(document.getId());
+        } else {
+            applyDocumentSync(document);
+        }
+    }
+
     @Override
     @Transactional
-    public void syncFromDocumentUpload(Document document) {
+    public void applyDocumentSync(Document document) {
         if (document == null || document.getCategory() != DocumentCategory.KYC) {
             return;
         }
@@ -128,15 +153,31 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         recomputeCaseState(kycCase);
     }
 
-    @Async
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycDocumentSyncRunner syncRunner;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSyncRunner(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.document.kyc.service.support.KycDocumentSyncRunner syncRunner) {
+        this.syncRunner = syncRunner;
+    }
+
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementResolver requirementResolver;
+    private com.sni.bokaticowork.features.payment.service.interfaces.WalletService walletService;
+
+    /** Lot KG1 : exigences du dossier (globales et propres au dossier) calculees en un seul endroit. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setRequirementResolver(com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementResolver requirementResolver) {
+        this.requirementResolver = requirementResolver;
+    }
+
+    /** Lot KG1 : portefeuille par defaut cree aussi quand le dossier est approuve par le recalcul. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setWalletService(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.payment.service.interfaces.WalletService walletService) {
+        this.walletService = walletService;
+    }
+
     @Override
     @Transactional
-    public void syncFromDocumentReview(Document document) {
-        if (document == null || document.getCategory() != DocumentCategory.KYC) {
-            return;
-        }
-        KycCase kycCase = ensureCase(document.getOwnerType(), document.getOwnerId());
-        attachOrRefreshKycDocument(kycCase, document);
+    public void recompute(KycCase kycCase) {
         recomputeCaseState(kycCase);
     }
 
@@ -231,6 +272,12 @@ public class KycAutomationServiceImpl implements KycAutomationService {
             kycCase.setCompletedAt(Instant.now());
         }
         kycCaseRepository.save(kycCase);
+        if (targetStatus == KycCaseStatus.APPROVED && previousStatus != KycCaseStatus.APPROVED) {
+            // Lot KG1 : memes effets que l'approbation par l'equipe (portefeuille, courriel d'approbation).
+            provisionDefaultWallet(kycCase);
+            publishAutomationEvent("KYC_CASE_APPROVED", kycCase);
+            return;
+        }
         String eventType = previousStatus == KycCaseStatus.APPROVED && targetStatus != KycCaseStatus.EXPIRED
                 ? "KYC_CASE_REOPENED"
                 : "KYC_CASE_AUTO_STATUS_SYNC";
@@ -238,6 +285,20 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     }
 
     private void attachOrRefreshKycDocument(KycCase kycCase, Document document) {
+        // Lot KG2 : un verso met a jour sa piece, il n'en cree jamais une.
+        java.util.Optional<KycDocument> ofBack = kycDocumentRepository.findAllByBackDocument(document).stream().findFirst();
+        if (ofBack.isPresent()) {
+            KycDocument piece = ofBack.get();
+            if (piece.getDocument() != null) {
+                piece.setStatus(pieceStatus(piece));
+                kycDocumentRepository.save(piece);
+            }
+            return;
+        }
+        if (document.getStatus() == DocumentStatus.SUPERSEDED) {
+            // Ancien fichier d'une piece remplacee : la piece porte deja le nouveau.
+            return;
+        }
         KycDocument kycDocument = kycDocumentRepository.findAllByDocument(document).stream()
                 .filter(item -> item.getKycCase() != null
                         && kycCase.getId() != null
@@ -255,14 +316,19 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         kycDocument.setDocumentType(document.getDocumentType().getCode());
         kycDocument.setIssueDate(document.getIssueDate());
         kycDocument.setExpiryDate(document.getExpiryDate());
-        kycDocument.setStatus(mapDocumentStatus(document.getStatus()));
+        kycDocument.setStatus(pieceStatus(kycDocument));
         kycDocumentRepository.save(kycDocument);
         kycOcrService.process(kycDocument);
     }
 
     private void recomputeCaseState(KycCase kycCase) {
-        String businessLegalForm = resolveBusinessLegalForm(kycCase.getOwnerType(), kycCase.getOwnerId());
-        List<DocumentRequirement> requirements = filteredRequirements(kycCase.getOwnerType(), null, businessLegalForm);
+        if (kycCase.getStatus() == KycCaseStatus.REJECTED) {
+            // Refus definitif : le recalcul n'y touche jamais.
+            return;
+        }
+        List<DocumentRequirement> requirements = requirementResolver != null
+                ? requirementResolver.resolve(kycCase)
+                : filteredRequirements(kycCase.getOwnerType(), null, resolveBusinessLegalForm(kycCase.getOwnerType(), kycCase.getOwnerId()));
         List<KycDocument> documents = kycDocumentRepository.findAllByKycCaseOrderByIdAsc(kycCase);
 
         boolean hasRequiredRequirements = requirements.stream().anyMatch(item -> Boolean.TRUE.equals(item.getRequired()));
@@ -275,7 +341,8 @@ public class KycAutomationServiceImpl implements KycAutomationService {
                 .filter(item -> Boolean.TRUE.equals(item.getRequired()))
                 .allMatch(req -> documents.stream().anyMatch(doc ->
                         req.getDocumentTypeCode().equalsIgnoreCase(doc.getDocumentType())
-                                && doc.getStatus() == KycDocumentVerificationStatus.VERIFIED));
+                                && doc.getStatus() == KycDocumentVerificationStatus.VERIFIED
+                                && backSideVerified(doc)));
 
         KycCaseStatus targetStatus;
         if (!hasRequiredRequirements) {
@@ -290,21 +357,60 @@ public class KycAutomationServiceImpl implements KycAutomationService {
             targetStatus = KycCaseStatus.IN_PROGRESS;
         }
 
+        // Un dossier soumis par son titulaire reste soumis tant qu'il attend la revue.
+        if (targetStatus == KycCaseStatus.UNDER_REVIEW && kycCase.getStatus() == KycCaseStatus.SUBMITTED) {
+            targetStatus = KycCaseStatus.SUBMITTED;
+        }
         applyCaseStatus(kycCase, targetStatus, "Synced from KYC document lifecycle");
         syncOwnerStatusFromCase(kycCase);
+    }
+
+    /** Verso exige approuve quand le type a un verso (lot KG1). */
+    private static boolean backSideVerified(KycDocument piece) {
+        Document front = piece.getDocument();
+        boolean requiresBack = front != null && front.getDocumentType() != null
+                && Boolean.TRUE.equals(front.getDocumentType().getRequiresBackSide());
+        if (piece.getBackDocument() == null) {
+            return !requiresBack;
+        }
+        return piece.getBackDocument().getStatus() == DocumentStatus.APPROVED || piece.getBackDocument().getStatus() == DocumentStatus.SIGNED;
+    }
+
+    private void provisionDefaultWallet(KycCase kycCase) {
+        if (walletService == null) {
+            return;
+        }
+        try {
+            if (kycCase.getOwnerType() == DocumentOwnerType.MEMBER) {
+                memberRepository.findById(kycCase.getOwnerId())
+                        .ifPresent(member -> walletService.getOrCreate("MEMBER", member.getMemberId(), "XAF"));
+            } else if (kycCase.getOwnerType() == DocumentOwnerType.CUSTOMER) {
+                customerRepository.findById(kycCase.getOwnerId())
+                        .ifPresent(customer -> walletService.getOrCreate("CUSTOMER", customer.getCustomerId(), "XAF"));
+            }
+        } catch (RuntimeException exception) {
+            // Comme l'approbation par l'equipe : un echec du portefeuille n'annule pas l'approbation.
+            org.slf4j.LoggerFactory.getLogger(KycAutomationServiceImpl.class)
+                    .warn("Portefeuille par defaut non cree pour le dossier {} : {}", kycCase.getCode(), exception.getMessage());
+        }
     }
 
     private void syncOwnerStatusFromCase(KycCase kycCase) {
         if (kycCase.getOwnerType() == DocumentOwnerType.MEMBER) {
             Member member = memberRepository.findById(kycCase.getOwnerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Membre introuvable"));
             MemberStatus target = switch (kycCase.getStatus()) {
                 case IN_PROGRESS, NOT_STARTED -> MemberStatus.PENDING;
                 case SUBMITTED, UNDER_REVIEW -> MemberStatus.UNDER_REVIEW;
-                case PENDING_CORRECTION, REJECTED -> MemberStatus.PENDING_CORRECTION;
+                case PENDING_CORRECTION -> MemberStatus.PENDING_CORRECTION;
+                case REJECTED -> MemberStatus.REJECTED;
                 case APPROVED -> MemberStatus.ACTIVE;
                 case RENEWAL_REQUIRED, EXPIRED -> MemberStatus.PENDING_CORRECTION;
             };
+            // Lot KG1 : un membre actif dont le dossier est rouvert pour une piece de plus reste actif.
+            if (member.getStatus() == MemberStatus.ACTIVE && (target == MemberStatus.PENDING || target == MemberStatus.UNDER_REVIEW)) {
+                return;
+            }
             if (member.getStatus() != target) {
                 member.setStatus(target);
                 memberRepository.save(member);
@@ -314,12 +420,19 @@ public class KycAutomationServiceImpl implements KycAutomationService {
 
         if (kycCase.getOwnerType() == DocumentOwnerType.CUSTOMER) {
             Customer customer = customerRepository.findById(kycCase.getOwnerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Client introuvable"));
             CustomerStatus target = switch (kycCase.getStatus()) {
                 case IN_PROGRESS, NOT_STARTED, SUBMITTED, UNDER_REVIEW, PENDING_CORRECTION, REJECTED -> CustomerStatus.PENDING;
                 case APPROVED -> CustomerStatus.ACTIVE;
                 case RENEWAL_REQUIRED, EXPIRED -> CustomerStatus.PENDING;
             };
+            // Lot KG1 : un client actif dont le dossier est rouvert pour une piece de plus reste actif
+            // (comme un membre) ; une piece refusee, une expiration ou un refus le remettent en attente.
+            if (customer.getStatus() == CustomerStatus.ACTIVE && (kycCase.getStatus() == KycCaseStatus.IN_PROGRESS
+                    || kycCase.getStatus() == KycCaseStatus.NOT_STARTED || kycCase.getStatus() == KycCaseStatus.SUBMITTED
+                    || kycCase.getStatus() == KycCaseStatus.UNDER_REVIEW)) {
+                return;
+            }
             if (customer.getStatus() != target) {
                 customer.setStatus(target);
                 customerRepository.save(customer);
@@ -327,12 +440,25 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         }
     }
 
+    /** Lot KG2 : etat de la piece d'apres son recto, refusee si son verso l'est. */
+    private KycDocumentVerificationStatus pieceStatus(KycDocument piece) {
+        KycDocumentVerificationStatus front = mapDocumentStatus(piece.getDocument().getStatus());
+        Document back = piece.getBackDocument();
+        if (back != null && (back.getStatus() == DocumentStatus.REJECTED || back.getStatus() == DocumentStatus.ARCHIVED)) {
+            return KycDocumentVerificationStatus.REJECTED;
+        }
+        return front;
+    }
+
     private KycDocumentVerificationStatus mapDocumentStatus(DocumentStatus status) {
         return switch (status) {
             case APPROVED, SIGNED -> KycDocumentVerificationStatus.VERIFIED;
             case REJECTED, ARCHIVED -> KycDocumentVerificationStatus.REJECTED;
             case EXPIRED -> KycDocumentVerificationStatus.EXPIRED;
-            case DRAFT, UPLOADED, PENDING_REVIEW, NEEDS_CORRECTION, SUPERSEDED -> KycDocumentVerificationStatus.PENDING;
+            // Lot KG1 : une piece renvoyee en correction est a refaire (le dossier attend une correction),
+            // et l'approbation automatique ne la prend plus.
+            case NEEDS_CORRECTION -> KycDocumentVerificationStatus.REJECTED;
+            case DRAFT, UPLOADED, PENDING_REVIEW, SUPERSEDED -> KycDocumentVerificationStatus.PENDING;
         };
     }
 

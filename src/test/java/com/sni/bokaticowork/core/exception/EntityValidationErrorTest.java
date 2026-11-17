@@ -40,11 +40,11 @@ class EntityValidationErrorTest {
     }
 
     @Test
-    @DisplayName("Autre echec de transaction : reste une erreur serveur")
-    void otherFailureStaysServerError() {
+    @DisplayName("Autre echec de transaction : conflit a reessayer (409), plus une erreur serveur (lot KG6)")
+    void otherFailureIsAConflict() {
         ResponseEntity<Object> response = handler.handleTransactionSystem(
                 new TransactionSystemException("boom"), new MockHttpServletRequest("PATCH", "/x"));
 
-        assertThat(response.getStatusCode().value()).isEqualTo(500);
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
     }
 }

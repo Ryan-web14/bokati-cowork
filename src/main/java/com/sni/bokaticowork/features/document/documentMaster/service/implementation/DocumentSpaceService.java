@@ -53,6 +53,18 @@ public class DocumentSpaceService {
             DocumentSpace.ASSET_SPACE, List.of("application/pdf", "image/jpeg", "image/png", "image/webp", "image/tiff")
     );
 
+    private DocumentSecurityService securityService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSecurityService(DocumentSecurityService securityService) {
+        this.securityService = securityService;
+    }
+
+    /** Formats acceptes par un espace (nul : pas de restriction propre a l'espace). */
+    public static List<String> spaceMimeTypes(DocumentSpace space) {
+        return space == null ? null : SPACE_MIME_TYPES.get(space);
+    }
+
     @Transactional
     public DocumentResponse uploadToSpace(DocumentSpace space, SpaceDocumentUploadRequest request, MultipartFile file) {
         validateDocumentTypeForSpace(space, request.getDocumentTypeCode());
@@ -71,14 +83,14 @@ public class DocumentSpaceService {
         DocumentResponse response = documentService.upload(metadata, file);
 
         Document document = documentRepository.findByCode(response.getCode())
-                .orElseThrow(() -> new BadRequestException("Document not found after upload"));
+                .orElseThrow(() -> new BadRequestException("Document introuvable après le dépôt"));
         document.setSpace(space);
         if (request.getReferenceCode() != null) {
             document.setSpaceReferenceCode(request.getReferenceCode().trim());
         }
         if (request.getFolderCode() != null) {
             DocumentFolder folder = folderRepository.findByCode(request.getFolderCode().trim())
-                    .orElseThrow(() -> new BadRequestException("Folder not found: " + request.getFolderCode()));
+                    .orElseThrow(() -> new BadRequestException("Dossier introuvable : " + request.getFolderCode()));
             document.setFolder(folder);
         }
         documentRepository.save(document);
@@ -100,7 +112,7 @@ public class DocumentSpaceService {
         if (space == DocumentSpace.GENERIC) return;
 
         DocumentType docType = documentTypeRepository.findByCode(documentTypeCode.trim())
-                .orElseThrow(() -> new BadRequestException("Unknown document type: " + documentTypeCode));
+                .orElseThrow(() -> new BadRequestException("Type de document inconnu : " + documentTypeCode));
 
         Set<DocumentCategory> allowedCategories = SPACE_CATEGORIES.getOrDefault(space, Set.of());
         if (!allowedCategories.contains(docType.getCategory())) {
@@ -114,11 +126,12 @@ public class DocumentSpaceService {
         List<String> allowed = SPACE_MIME_TYPES.get(space);
         if (allowed == null) return;
 
-        String contentType = file.getContentType();
+        // Lot KG4 : le format reel (signature du fichier), pas celui que declare le navigateur.
+        String contentType = securityService == null ? file.getContentType() : securityService.detectedMime(file);
         if (contentType == null || !allowed.contains(contentType.toLowerCase())) {
             throw new BadRequestException(
-                    "File type " + contentType + " is not allowed in space " + space
-                            + ". Accepted: " + String.join(", ", allowed));
+                    "Format " + contentType + " non accepté dans l'espace " + space
+                            + ". Formats acceptés : " + String.join(", ", allowed));
         }
     }
 }

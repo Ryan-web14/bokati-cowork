@@ -12,6 +12,9 @@ import java.util.Optional;
 public interface DocumentWorkflowInstanceRepository extends JpaRepository<DocumentWorkflowInstance, Long> {
     Optional<DocumentWorkflowInstance> findByDocumentAndStatusIn(Document document, List<String> statuses);
     Optional<DocumentWorkflowInstance> findByDocumentAndStatusNot(Document document, String status);
+
+    /** Lot KG5 : la derniere instance d'un document (un document peut en avoir eu plusieurs). */
+    Optional<DocumentWorkflowInstance> findFirstByDocumentOrderByStartedAtDesc(Document document);
     List<DocumentWorkflowInstance> findAllByStatusInOrderByStartedAtAsc(List<String> statuses);
 
     @Query("""

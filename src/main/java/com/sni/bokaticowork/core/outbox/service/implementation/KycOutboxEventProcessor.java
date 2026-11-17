@@ -31,21 +31,37 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
             "KYC_CASE_APPROVED",
             "KYC_CASE_REJECTED",
             "KYC_CASE_CORRECTION_REQUESTED",
-            "KYC_INCOMPLETE_REMINDER"
+            "KYC_INCOMPLETE_REMINDER",
+            "KYC_CASE_LEVEL_CHANGED",
+            "KYC_CASE_REQUIREMENT_ADDED",
+            "KYC_DOCUMENT_CORRECTION_REQUESTED",
+            "KYC_RENEWAL_REQUIRED"
     );
 
     private final ObjectMapper objectMapper;
     private final OutboxNotificationMailService mailService;
     private final OutboxRecipientResolver recipientResolver;
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycWhatsAppNotifier whatsAppNotifier;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setWhatsAppNotifier(com.sni.bokaticowork.features.document.kyc.service.support.KycWhatsAppNotifier whatsAppNotifier) {
+        this.whatsAppNotifier = whatsAppNotifier;
+    }
 
     @Override
     public boolean supports(OutboxEvent event) {
-        return "KYC_CASE".equalsIgnoreCase(event.getAggregateType())
-                && NOTIFIABLE_EVENTS.contains(event.getEventType());
+        // Lot KG3 : tous les evenements de dossier ont un processeur. Les autres (soumission,
+        // affectation, note, recalcul...) sont consignes, sans courriel : avant, faute de
+        // processeur, ils etaient retentes puis abandonnes (DEAD).
+        return "KYC_CASE".equalsIgnoreCase(event.getAggregateType());
     }
 
     @Override
     public void process(OutboxEvent event) {
+        if (!NOTIFIABLE_EVENTS.contains(event.getEventType())) {
+            log.debug("KYC event {} recorded without notification", event.getEventType());
+            return;
+        }
         JsonNode payload = readPayload(event);
         DocumentOwnerType ownerType = enumValue(payload, "ownerType", DocumentOwnerType.class);
         Long ownerId = longValue(payload, "ownerId");
@@ -74,13 +90,33 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
         vars.put("eventType",     event.getEventType());
         vars.put("eventLabel",    resolveEventLabel(event.getEventType()));
         vars.put("status",        status != null ? status : "N/A");
+        // Lot KG1 : niveau KYC change, pieces a fournir.
+        vars.put("level", textValue(payload, "level"));
+        vars.put("reason", textValue(payload, "reason"));
+        java.util.List<String> names = new java.util.ArrayList<>();
+        JsonNode missing = payload.get("missingDocumentNames");
+        if (missing != null && missing.isArray()) {
+            missing.forEach(node -> names.add(node.asText()));
+        }
+        vars.put("missingDocuments", names);
+        vars.put("documentTypeName", textValue(payload, "documentTypeName"));
+        JsonNode required = payload.get("required");
+        vars.put("required", required == null || required.isNull() ? null : required.asBoolean());
+        if (vars.get("reason") == null) {
+            vars.put("reason", textValue(payload, "comment"));
+        }
 
-        try {
-            mailService.sendKycNotification(recipient.email(), subject, vars);
-            log.info("KYC notification sent to {} for event={}", recipient.email(), event.getEventType());
-        } catch (Exception ex) {
-            log.warn("Failed to send KYC notification for event={} to {}: {}",
-                    event.getEventType(), recipient.email(), ex.getMessage());
+        // Lot KG3 : un echec de mise en file remonte, la boite d'envoi reessaie (avant, il etait avale).
+        mailService.sendKycNotification(recipient.email(), subject, vars);
+        log.info("KYC notification queued for {} event={}", recipient.email(), event.getEventType());
+        // Lot KG7 : pieces demandees ou a corriger, aussi par WhatsApp (modele approuve, consentement du membre).
+        if (whatsAppNotifier != null) {
+            java.util.List<String> pieces = new java.util.ArrayList<>(names);
+            String single = textValue(payload, "documentTypeName");
+            if (pieces.isEmpty() && StringUtils.hasText(single)) {
+                pieces.add(single);
+            }
+            whatsAppNotifier.notify(event.getEventType(), ownerType, ownerId, caseCode, pieces);
         }
     }
 
@@ -89,9 +125,13 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
         return switch (eventType) {
             case "KYC_CASE_CREATED"      -> "Votre dossier KYC est ouvert" + ref;
             case "KYC_CASE_APPROVED"     -> "Bonne nouvelle : votre dossier KYC est validé" + ref;
-            case "KYC_CASE_REJECTED",
-                 "KYC_CASE_CORRECTION_REQUESTED" -> "Une petite mise à jour est nécessaire sur votre dossier KYC" + ref;
+            case "KYC_CASE_REJECTED" -> "Votre dossier KYC n'a pas été retenu" + ref;
+            case "KYC_CASE_CORRECTION_REQUESTED" -> "Une petite mise à jour est nécessaire sur votre dossier KYC" + ref;
             case "KYC_INCOMPLETE_REMINDER" -> "Petit rappel : votre dossier KYC vous attend" + ref;
+            case "KYC_CASE_LEVEL_CHANGED" -> "Quelques pièces complémentaires pour votre dossier KYC" + ref;
+            case "KYC_CASE_REQUIREMENT_ADDED" -> "Une pièce de plus pour votre dossier KYC" + ref;
+            case "KYC_DOCUMENT_CORRECTION_REQUESTED" -> "Une pièce de votre dossier KYC est à corriger" + ref;
+            case "KYC_RENEWAL_REQUIRED" -> "Votre dossier KYC est à renouveler" + ref;
             default                      -> "Votre dossier KYC" + ref;
         };
     }
@@ -100,9 +140,13 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
         return switch (eventType) {
             case "KYC_CASE_CREATED"      -> "Dossier ouvert";
             case "KYC_CASE_APPROVED"     -> "Dossier validé";
-            case "KYC_CASE_REJECTED",
-                 "KYC_CASE_CORRECTION_REQUESTED" -> "Mise à jour demandée";
+            case "KYC_CASE_REJECTED" -> "Dossier non retenu";
+            case "KYC_CASE_CORRECTION_REQUESTED" -> "Mise à jour demandée";
             case "KYC_INCOMPLETE_REMINDER" -> "Rappel";
+            case "KYC_CASE_LEVEL_CHANGED" -> "Pièces complémentaires";
+            case "KYC_CASE_REQUIREMENT_ADDED" -> "Pièce demandée";
+            case "KYC_DOCUMENT_CORRECTION_REQUESTED" -> "Pièce à corriger";
+            case "KYC_RENEWAL_REQUIRED" -> "Renouvellement";
             default                      -> "Notification";
         };
     }

@@ -14,6 +14,6 @@ public class KycCaseBulkRejectRequest {
     @NotEmpty
     private List<KycBulkRejectItemRequest> items;
 
-    @NotNull
+    /** Ignore pour un compte connecte : l\'auteur est toujours le compte connecte (lot KG0). */
     private Long reviewedBy;
 }

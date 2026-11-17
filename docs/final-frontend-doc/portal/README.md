@@ -70,6 +70,7 @@ Trois contrôles s'enchaînent sur chaque appel `/sni/api/v1/client/**`.
 3. **Barrière d'accueil** (`ClientOnboardingGuard`, `src/main/java/com/sni/bokaticowork/features/portal/guard/ClientOnboardingGuard.java:39`) : intercepteur posé sur `/sni/api/v1/client/**`, **sauf** `/sni/api/v1/client/documents/kyc/**` et toute adresse finissant par `/me/onboarding-status`. L'alias `/sni/api/v1/portal/kyc/**` n'est pas sous `/client`, il n'est donc pas intercepté non plus. Règles :
    - compte utilisateur verrouillé (`isAccountLocked`) : `403`, `errorCode = "EMAIL_NOT_VERIFIED"` ;
    - dossier KYC `APPROVED` : passe ;
+   - membre `ACTIVE` dont le dossier est rouvert pour des pièces de plus (`IN_PROGRESS`, `SUBMITTED` ou `UNDER_REVIEW`, après un changement de niveau KYC ou l'ajout d'une pièce au dossier) : passe, le temps de déposer les pièces (lot KG1) ;
    - sinon, période de grâce KYC en cours (`kycGracePeriodEndAt` dans le futur) : passe ;
    - sinon : `403`, `errorCode = "KYC_REQUIRED"`, `message` en français qui nomme l'étape (dossier non commencé, en cours d'examen, pièces refusées, échu) et `errors` = noms des pièces refusées.
 

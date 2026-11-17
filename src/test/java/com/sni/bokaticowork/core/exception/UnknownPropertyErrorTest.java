@@ -82,7 +82,7 @@ class UnknownPropertyErrorTest {
         ApiError body = (ApiError) handler.handleMessageNotReadable(ex, request).getBody();
 
         assertThat(body).isNotNull();
-        assertThat(body.getMessage()).isEqualTo("Request body is missing or malformed.");
+        assertThat(body.getMessage()).isEqualTo("Corps de la requête absent ou illisible.");
     }
 
     // =================================================================================

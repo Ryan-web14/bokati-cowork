@@ -38,6 +38,8 @@ public interface DocumentRepository extends JpaRepository<Document, Long>, JpaSp
 
     Page<Document> findAllBySpaceAndStatus(DocumentSpace space, DocumentStatus status, Pageable pageable);
 
+    Page<Document> findAllBySpaceInAndStatus(java.util.Collection<DocumentSpace> spaces, DocumentStatus status, Pageable pageable);
+
     Page<Document> findAllByStatus(DocumentStatus status, Pageable pageable);
 
     List<Document> findAllByStatusInAndExpiryDateBetween(List<DocumentStatus> statuses, LocalDate from, LocalDate to);

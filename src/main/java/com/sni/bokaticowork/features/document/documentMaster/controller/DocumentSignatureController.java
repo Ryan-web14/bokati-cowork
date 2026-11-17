@@ -20,16 +20,19 @@ import java.util.List;
 public class DocumentSignatureController {
 
     private final DocumentSignatureService signatureService;
+    private final com.sni.bokaticowork.features.document.explorer.access.GedAccessService gedAccess;
 
     @PostMapping
     public ResponseEntity<DocumentSignatureResponse> requestSignature(
             @PathVariable String documentCode,
             @Valid @RequestBody CreateDocumentSignatureRequest request) {
+        gedAccess.requireDocumentCode(documentCode, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.EDIT);
         return ResponseEntity.status(HttpStatus.CREATED).body(signatureService.requestSignature(documentCode, request));
     }
 
     @GetMapping
     public ResponseEntity<List<DocumentSignatureResponse>> list(@PathVariable String documentCode) {
+        gedAccess.requireDocumentCode(documentCode, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         return ResponseEntity.ok(signatureService.list(documentCode));
     }
 
@@ -39,6 +42,7 @@ public class DocumentSignatureController {
             @PathVariable Long signatureId,
             @Valid @RequestBody SignDocumentRequest request,
             HttpServletRequest httpRequest) {
+        gedAccess.requireDocumentCode(documentCode, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         return ResponseEntity.ok(signatureService.sign(
                 documentCode,
                 signatureId,

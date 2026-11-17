@@ -71,7 +71,15 @@ public class DocumentTypeController {
     }
 
     @GetMapping("/{code}/upload-config")
-    public ResponseEntity<DocumentUploadConfigResponse> uploadConfig(@PathVariable String code) {
-        return ResponseEntity.ok(service.getUploadConfig(code));
+    public ResponseEntity<DocumentUploadConfigResponse> uploadConfig(@PathVariable String code,
+                                                                     @RequestParam(required = false)
+                                                                     com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace space) {
+        DocumentUploadConfigResponse config = service.getUploadConfig(code);
+        // Lot KG4 : pour un depot dans un espace, les formats sont ceux du type ET de l'espace.
+        List<String> spaceMimes = com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentSpaceService.spaceMimeTypes(space);
+        if (spaceMimes != null && config.getAllowedMimeTypes() != null) {
+            config.setAllowedMimeTypes(config.getAllowedMimeTypes().stream().filter(spaceMimes::contains).toList());
+        }
+        return ResponseEntity.ok(config);
     }
 }

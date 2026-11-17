@@ -353,7 +353,8 @@
       "BOOKING_FAILED",
       "INVOICE_ISSUED",
       "PAYMENT_RECEIVED",
-      "PAYMENT_FAILED"
+      "PAYMENT_FAILED",
+      "KYC_DOCUMENTS_REQUESTED"
      ]
     },
     "channel": {

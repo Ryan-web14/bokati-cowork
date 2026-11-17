@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.document.documentMaster.service.implementation;
 
+import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus;
+import org.springframework.util.StringUtils;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -83,11 +85,28 @@ public class DocumentWorkflowService {
 
     public WorkflowInstanceResponse startWorkflow(String documentCode, String workflowCode) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         DocumentWorkflow workflow = findWorkflow(workflowCode);
+        // Lot KG5 : un circuit inactif, d'un autre espace ou d'un autre type ne demarre pas ;
+        // un document deja tranche non plus.
+        if (!Boolean.TRUE.equals(workflow.getActive())) {
+            throw new BadRequestException("Le circuit " + workflow.getCode() + " est désactivé");
+        }
+        if (workflow.getSpace() != null && workflow.getSpace() != document.getSpace()) {
+            throw new BadRequestException("Le circuit " + workflow.getCode() + " concerne l'espace " + workflow.getSpace()
+                    + ", pas l'espace " + document.getSpace() + " du document");
+        }
+        if (StringUtils.hasText(workflow.getDocumentTypeCode()) && (document.getDocumentType() == null
+                || !workflow.getDocumentTypeCode().equalsIgnoreCase(document.getDocumentType().getCode()))) {
+            throw new BadRequestException("Le circuit " + workflow.getCode() + " concerne le type " + workflow.getDocumentTypeCode());
+        }
+        if (java.util.EnumSet.of(DocumentStatus.APPROVED, DocumentStatus.SIGNED, DocumentStatus.REJECTED, DocumentStatus.ARCHIVED,
+                DocumentStatus.EXPIRED, DocumentStatus.SUPERSEDED).contains(document.getStatus())) {
+            throw new BadRequestException("Le document est " + document.getStatus() + " : il ne passe plus en circuit d'approbation");
+        }
 
         instanceRepository.findByDocumentAndStatusIn(document, List.of("PENDING", "IN_PROGRESS"))
-                .ifPresent(i -> { throw new BadRequestException("Document already has an active workflow"); });
+                .ifPresent(i -> { throw new BadRequestException("Ce document a déjà un circuit d'approbation en cours"); });
 
         DocumentWorkflowInstance instance = DocumentWorkflowInstance.builder()
                 .workflow(workflow)
@@ -111,10 +130,10 @@ public class DocumentWorkflowService {
     @Transactional(readOnly = true)
     public WorkflowInstanceResponse getStatus(String documentCode) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
-        DocumentWorkflowInstance instance = instanceRepository.findByDocumentAndStatusIn(
-                        document, List.of("PENDING", "IN_PROGRESS", "APPROVED", "REJECTED"))
-                .orElseThrow(() -> new ResourceNotFoundException("No workflow found for this document"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
+        // Lot KG5 : la derniere instance (avant : erreur 500 des le deuxieme circuit du document).
+        DocumentWorkflowInstance instance = instanceRepository.findFirstByDocumentOrderByStartedAtDesc(document)
+                .orElseThrow(() -> new ResourceNotFoundException("Aucun circuit d'approbation pour ce document"));
         return toInstanceResponse(instance);
     }
 
@@ -127,11 +146,112 @@ public class DocumentWorkflowService {
     }
 
     private WorkflowInstanceResponse processAction(String documentCode, String action, WorkflowActionRequest request) {
+        return processAction(documentCode, action, request, false);
+    }
+
+    private com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService documentService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setDocumentService(@org.springframework.context.annotation.Lazy
+                            com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService documentService) {
+        this.documentService = documentService;
+    }
+
+    /** Decision du circuit sur le document, par l'approbation normale (trace, KYC, evenements). */
+    private void decideDocument(Document document, boolean approved, String comment) {
+        if (documentService == null || document.getStatus() != DocumentStatus.PENDING_REVIEW && document.getStatus() != DocumentStatus.UPLOADED
+                && document.getStatus() != DocumentStatus.NEEDS_CORRECTION) {
+            return;
+        }
+        var decision = new com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentReviewDecisionRequest();
+        decision.setComment(comment);
+        if (!approved) {
+            decision.setRejectionReasonDetail(comment);
+        }
+        com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.asWorkflow(() -> {
+            if (approved) {
+                documentService.approve(document.getCode(), decision);
+            } else {
+                documentService.reject(document.getCode(), decision);
+            }
+        });
+    }
+
+    /** Le compte connecte est-il l'approbateur de l'etape (compte designe, par courriel ou identifiant, ou role) ? */
+    private boolean isApprover(DocumentWorkflowStep step) {
+        String value = step.getApproverValue() == null ? "" : step.getApproverValue().trim();
+        if ("USER".equalsIgnoreCase(step.getApproverType())) {
+            Long id = currentUserId();
+            return value.equalsIgnoreCase(currentUserEmail()) || (id != null && value.equals(String.valueOf(id)));
+        }
+        if ("ROLE".equalsIgnoreCase(step.getApproverType())) {
+            String bare = value.toUpperCase(java.util.Locale.ROOT).replaceFirst("^ROLE_", "");
+            return currentUserRoles().stream().anyMatch(r -> r.equalsIgnoreCase("ROLE_" + bare) || r.equalsIgnoreCase(bare));
+        }
+        return false;
+    }
+
+    /**
+     * Lot KG5 : etapes dont le delai {@code autoApproveDays} est ecoule, approuvees par le systeme
+     * (tache du cycle de vie des documents). Une transaction par instance.
+     *
+     * @return nombre d'etapes approuvees
+     */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    public int autoApproveDueSteps() {
+        int count = 0;
+        for (DocumentWorkflowInstance instance : instanceRepository.findAllByStatusInOrderByStartedAtAsc(List.of("PENDING", "IN_PROGRESS"))) {
+            try {
+                DocumentWorkflowStep step = stepRepository.findAllByWorkflowOrderByStepOrderAsc(instance.getWorkflow()).stream()
+                        .filter(s -> s.getStepOrder().equals(instance.getCurrentStep())).findFirst().orElse(null);
+                if (step == null || step.getAutoApproveDays() == null || step.getAutoApproveDays() <= 0) {
+                    continue;
+                }
+                Instant since = actionRepository.findAllByInstanceOrderByActedAtAsc(instance).stream()
+                        .map(DocumentWorkflowAction::getActedAt).reduce((a, b) -> b).orElse(instance.getStartedAt());
+                if (since == null || since.plus(step.getAutoApproveDays(), java.time.temporal.ChronoUnit.DAYS).isAfter(Instant.now())) {
+                    continue;
+                }
+                WorkflowActionRequest auto = new WorkflowActionRequest();
+                auto.setComment("Étape approuvée automatiquement après " + step.getAutoApproveDays() + " jour(s)");
+                self().processAction(instance.getDocument().getCode(), "APPROVE", auto, true);
+                count++;
+            } catch (RuntimeException ex) {
+                org.slf4j.LoggerFactory.getLogger(DocumentWorkflowService.class)
+                        .warn("Approbation automatique de l'etape impossible pour {} : {}", instance.getId(), ex.getMessage());
+            }
+        }
+        return count;
+    }
+
+    private org.springframework.beans.factory.ObjectProvider<DocumentWorkflowService> selfProvider;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSelf(org.springframework.beans.factory.ObjectProvider<DocumentWorkflowService> selfProvider) {
+        this.selfProvider = selfProvider;
+    }
+
+    private DocumentWorkflowService self() {
+        return selfProvider == null ? this : selfProvider.getObject();
+    }
+
+    WorkflowInstanceResponse processAction(String documentCode, String action, WorkflowActionRequest request, boolean systemActor) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         DocumentWorkflowInstance instance = instanceRepository.findByDocumentAndStatusIn(
                         document, List.of("PENDING", "IN_PROGRESS"))
-                .orElseThrow(() -> new BadRequestException("No active workflow for this document"));
+                .orElseThrow(() -> new BadRequestException("Aucun circuit d'approbation en cours pour ce document"));
+        List<DocumentWorkflowStep> allSteps = stepRepository.findAllByWorkflowOrderByStepOrderAsc(instance.getWorkflow());
+        DocumentWorkflowStep current = allSteps.stream().filter(s -> s.getStepOrder().equals(instance.getCurrentStep()))
+                .findFirst().orElse(null);
+        // Lot KG5 : seul l'approbateur de l'etape (compte designe ou role) decide ; avant, n'importe qui.
+        if (!systemActor && current != null && !isApprover(current)) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException(
+                    "Cette étape (" + current.getStepName() + ") revient à " + current.getApproverValue());
+        }
+        if ("REJECT".equals(action) && (request == null || !StringUtils.hasText(request.getComment()))) {
+            throw new BadRequestException("Le motif du refus est requis");
+        }
 
         DocumentWorkflowAction wfAction = DocumentWorkflowAction.builder()
                 .instance(instance)
@@ -142,26 +262,33 @@ public class DocumentWorkflowService {
                 .build();
         actionRepository.save(wfAction);
 
+        String comment = request != null ? request.getComment() : null;
         if ("REJECT".equals(action)) {
             instance.setStatus("REJECTED");
             instance.setCompletedAt(Instant.now());
+            instanceRepository.save(instance);
+            // Lot KG5 : un refus refuse le document.
+            decideDocument(document, false, "Refusé par le circuit " + instance.getWorkflow().getName() + " : " + comment);
         } else {
-            List<DocumentWorkflowStep> steps = stepRepository.findAllByWorkflowOrderByStepOrderAsc(instance.getWorkflow());
-            int maxStep = steps.stream().mapToInt(DocumentWorkflowStep::getStepOrder).max().orElse(1);
+            int maxStep = allSteps.stream().mapToInt(DocumentWorkflowStep::getStepOrder).max().orElse(1);
             if (instance.getCurrentStep() >= maxStep) {
                 instance.setStatus("APPROVED");
                 instance.setCompletedAt(Instant.now());
+                instanceRepository.save(instance);
+                // Lot KG5 : la derniere approbation approuve le document.
+                decideDocument(document, true, "Approuvé par le circuit " + instance.getWorkflow().getName()
+                        + (StringUtils.hasText(comment) ? " : " + comment : ""));
             } else {
                 instance.setCurrentStep(instance.getCurrentStep() + 1);
+                instanceRepository.save(instance);
             }
         }
-        instanceRepository.save(instance);
         return toInstanceResponse(instance);
     }
 
     private DocumentWorkflow findWorkflow(String code) {
         return workflowRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Workflow not found: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Circuit d'approbation introuvable : " + code));
     }
 
     private WorkflowResponse toResponse(DocumentWorkflow wf) {
@@ -202,7 +329,7 @@ public class DocumentWorkflowService {
                     return WorkflowInstanceResponse.ActionResponse.builder()
                             .stepOrder(a.getStepOrder()).stepName(stepName).action(a.getAction())
                             .actorId(a.getActorId())
-                            .actorEmail(userRepository.findById(a.getActorId()).map(u -> u.getEmail()).orElse(null))
+                            .actorEmail(a.getActorId() == null ? null : userRepository.findById(a.getActorId()).map(u -> u.getEmail()).orElse(null))
                             .actedAt(a.getActedAt()).comment(a.getComment()).build();
                 }).toList())
                 .build();

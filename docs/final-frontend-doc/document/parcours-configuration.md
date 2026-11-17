@@ -24,8 +24,8 @@ Droit commun : `SYSTEM:SETTINGS` (règle d'URL). Les politiques de rétention ex
 | `ownerType` | propriétaire visé (filtre de liste, aucun contrôle au dépôt) | aucun |
 | `description`, `helpText`, `documentDetails` | textes | |
 | `requiresReview` | dépôt en `PENDING_REVIEW` au lieu d'`APPROVED` | `false` (**dépôts approuvés d'office**) |
-| `autoApprove` | dépôt en `APPROVED` même si `requiresReview` | `false` |
-| `autoApproveAfterDays` | approbation automatique après N jours (workers, voir README) | aucun |
+| `autoApprove` | dépôt en `APPROVED` même si `requiresReview`, quand `autoApproveAfterDays` est vide | `false` |
+| `autoApproveAfterDays` | le document attend la revue, puis est approuvé automatiquement si personne ne l'a examiné en N jours (compté depuis la dernière version) ; jamais s'il a été refusé ou renvoyé en correction. Suffit seul (lot KG3) | aucun |
 | `requiresExpiryDate` | expiration complétée à émission + 5 ans si absente | `false` |
 | `requiresIssueDate`, `requiresDocumentNumber` | imposés au dépôt par le portail membre seulement | `false` |
 | `requiresSignature` | crée une demande de signature à l'approbation | `false` |
@@ -43,18 +43,19 @@ Droit commun : `SYSTEM:SETTINGS` (règle d'URL). Les politiques de rétention ex
 
 ### Configuration de téléversement
 
-`GET /sni/api/v1/document-types/{code}/upload-config` : accessible à tout compte connecté, membres compris. Détail dans [parcours-televersement-et-apercus.md](parcours-televersement-et-apercus.md#préparer-un-formulaire-de-dépôt).
+`GET /sni/api/v1/document-types/{code}/upload-config?space=` : accessible à tout compte connecté, membres compris. Sans formats propres au type, la liste par défaut est celle que le dépôt applique vraiment (PDF, JPEG, PNG, WebP). Avec `space`, les formats sont ceux du type **et** de l'espace (17/11/2026, lot KG4). Détail dans [parcours-televersement-et-apercus.md](parcours-televersement-et-apercus.md#préparer-un-formulaire-de-dépôt).
 
 ## Exigences documentaires
 
 Elles disent quels types chaque propriétaire doit fournir ; elles pilotent le KYC (pièces manquantes, soumission, approbation, recalcul automatique) et la vue « pièces manquantes » d'un propriétaire.
 
 1. Lister : `GET /sni/api/v1/document-requirements?ownerType=MEMBER&active=true` ([route](routes/DocumentRequirementController.md#r-get-sni-api-v1-document-requirements)).
-2. Créer : `POST /sni/api/v1/document-requirements`, `Idempotency-Key` conseillé. Corps : `{ "ownerType": "CUSTOMER", "documentTypeCode": "RCCM", "documentTypeName": "Registre du commerce", "customerType": "COMPANY", "businessLegalForm": null, "required": true, "active": true }`.
+2. Créer : `POST /sni/api/v1/document-requirements`, `Idempotency-Key` conseillé. Corps : `{ "ownerType": "CUSTOMER", "documentTypeCode": "RCCM", "documentTypeName": "Registre du commerce", "customerType": "COMPANY", "businessLegalForm": null, "required": true, "active": true, "kycLevel": 1 }`.
    - `documentTypeCode` doit exister (`404` « Document type not found »).
    - `documentTypeName` : libellé affiché dans les check-lists, par défaut le code.
    - `customerType` (pour `CUSTOMER`) et `businessLegalForm` (pour `BUSINESS`) restreignent l'exigence ; mis en majuscules ; vides = tous. Valeurs attendues : celles des modules `client` et `company` (non listées ici).
    - `required` (défaut `true`) : seules les exigences obligatoires bloquent la soumission et l'approbation KYC.
+   - `kycLevel` (1 à 4, défaut 1) : niveau KYC à partir duquel la pièce est demandée. Un dossier de niveau 2 demande les pièces de niveau 1 et 2 ; voir [Niveau KYC demandé](parcours-kyc.md#niveau-kyc-demandé).
    - Doublon (même propriétaire, type, type de client, forme juridique) : `409` « Document requirement already exists ».
 3. Modifier : `PATCH /sni/api/v1/document-requirements/{id}` avec le corps complet (`ownerType` et `documentTypeCode` obligatoires). Le doublon n'y est pas contrôlé.
 4. Activer, désactiver : `PATCH /document-requirements/{id}/activate`, `/deactivate` ; `DELETE /document-requirements/{id}` désactive.
@@ -62,11 +63,11 @@ Elles disent quels types chaque propriétaire doit fournir ; elles pilotent le K
 
 Effets à connaître :
 - S'il n'existe **aucune** exigence obligatoire active pour un type de propriétaire, le recalcul automatique considère tout dossier KYC de ce type comme approuvé (et active le membre ou le client).
-- Ajouter une exigence ne relance pas les dossiers existants : ils ne seront recalculés qu'au prochain dépôt ou à la prochaine revue d'une de leurs pièces.
+- Ajouter une exigence globale ne relance pas les dossiers existants : ils ne seront recalculés qu'au prochain dépôt ou à la prochaine revue d'une de leurs pièces. Pour un dossier précis, ajouter la pièce au dossier ou changer son niveau KYC (le titulaire est prévenu).
 
 ## Politiques de rétention
 
-`/sni/api/v1/document-retention-policies/**` ([routes](routes/DocumentRetentionPolicyController.md)), droits `SYSTEM:SETTINGS` et `DOCUMENT:REVIEW`.
+`/sni/api/v1/document-retention-policies/**` ([routes](routes/DocumentRetentionPolicyController.md)), droit `SYSTEM:SETTINGS` seul (le second contrôle `DOCUMENT:REVIEW` a été retiré au lot KG6).
 
 1. Lister : `GET /document-retention-policies` (actives et inactives). Détail : `GET /document-retention-policies/{code}`.
 2. Créer : `POST /document-retention-policies`, corps `{ "code": "FIN-10ANS", "name": "Pièces financières 10 ans", "space": "FINANCIAL_SPACE", "documentTypeCode": null, "retentionDays": 3650, "retentionReference": "UPLOAD_DATE", "action": "ARCHIVE" }`.
@@ -76,5 +77,5 @@ Effets à connaître :
    - `action` : `ARCHIVE` (défaut) ; `PURGE_FLAG` est accepté mais n'a aucun effet.
    - `space` et `documentTypeCode` facultatifs : sans eux, la politique vise tous les documents. Le code du type est comparé tel quel (sensible à la casse).
 3. Modifier : `PUT /document-retention-policies/{code}` avec le corps complet (le `code` du corps est ignoré, l'état actif est conservé).
-4. Désactiver : `DELETE /document-retention-policies/{code}` (`204`). Aucune route ne réactive.
+4. Désactiver : `DELETE /document-retention-policies/{code}` (`204`). Réactiver : `PATCH /document-retention-policies/{code}/activate` (réponse : la politique) (17/11/2026). L'application nocturne traite chaque document dans sa propre transaction : un échec n'annule plus le reste.
 5. Application : chaque nuit à 02 h 30, les documents `APPROVED`, `SIGNED` ou `EXPIRED` qui correspondent et ont dépassé le délai passent `ARCHIVED`. Prévenir dans l'écran que l'effet n'est pas immédiat et qu'un document archivé ne compte plus comme valide dans la vue « pièces manquantes » du propriétaire.

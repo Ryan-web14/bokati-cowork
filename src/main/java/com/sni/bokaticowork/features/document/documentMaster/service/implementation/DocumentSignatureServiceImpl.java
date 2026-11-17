@@ -30,10 +30,25 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
     private final DocumentRepository documentRepository;
     private final DocumentSignatureRepository signatureRepository;
     private final OutboxService outboxService;
+    private DocumentLockService lockService;
+
+    /** Lot KG4 : un document verrouille par un autre ne se signe pas. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setLockService(DocumentLockService lockService) {
+        this.lockService = lockService;
+    }
 
     @Override
     public DocumentSignatureResponse requestSignature(String documentCode, CreateDocumentSignatureRequest request) {
         Document document = document(documentCode);
+        // Lot KG5 : pas de signature sur un document refuse, archive, expire ou remplace.
+        if (java.util.EnumSet.of(com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.REJECTED,
+                com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.ARCHIVED,
+                com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.EXPIRED,
+                com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.SUPERSEDED).contains(document.getStatus())) {
+            throw new BadRequestException("Le document " + document.getCode() + " est " + document.getStatus()
+                    + " : il ne peut pas être soumis à signature");
+        }
         DocumentSignature signature = DocumentSignature.builder()
                 .document(document)
                 .signerType(request.signerType().trim().toUpperCase())
@@ -50,14 +65,18 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
     @Override
     public DocumentSignatureResponse sign(String documentCode, Long signatureId, SignDocumentRequest request, String ipAddress, String userAgent) {
         if (request == null || !Boolean.TRUE.equals(request.accepted())) {
-            throw new BadRequestException("Signature acceptance is required");
+            throw new BadRequestException("L'acceptation de la signature est requise");
         }
         DocumentSignature signature = signatureRepository.findById(signatureId)
                 .filter(item -> item.getDocument().getCode().equals(documentCode))
-                .orElseThrow(() -> new ResourceNotFoundException("Document signature request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Demande de signature introuvable"));
         if (signature.getSignatureStatus() != DocumentSignatureStatus.PENDING) {
-            throw new BadRequestException("Document signature is not pending");
+            throw new BadRequestException("Cette signature n'est plus en attente");
         }
+        if (lockService != null) {
+            lockService.assertEditable(signature.getDocument());
+        }
+        requireSigner(signature);
         signature.setSignatureStatus(DocumentSignatureStatus.SIGNED);
         signature.setSignedAt(Instant.now());
         signature.setIpAddress(trim(ipAddress));
@@ -65,6 +84,14 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
         signature.setSignatureData(trim(request.signatureData()));
         DocumentSignature saved = signatureRepository.save(signature);
         publishSignatureEvent("DOCUMENT_SIGNED", saved);
+        // Lot KG5 : la derniere signature attendue passe le document SIGNED.
+        Document document = saved.getDocument();
+        boolean stillPending = !signatureRepository.findAllByDocumentAndSignatureStatus(document, DocumentSignatureStatus.PENDING).isEmpty();
+        if (!stillPending && document.getStatus() != com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.SIGNED) {
+            document.setStatus(com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.SIGNED);
+            documentRepository.save(document);
+            publishSignatureEvent("DOCUMENT_FULLY_SIGNED", saved);
+        }
         return toResponse(saved);
     }
 
@@ -76,12 +103,32 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
                 .toList();
     }
 
+    /**
+     * Lot KG0 : seul le signataire designe signe, avec son propre compte (meme identifiant, ou meme
+     * courriel). Personne ne signe a la place d'un autre, administrateur compris.
+     */
+    private void requireSigner(DocumentSignature signature) {
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof com.sni.bokaticowork.security.admin.user.model.UserPrincipal principal)) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException("Signature réservée au signataire connecté");
+        }
+        com.sni.bokaticowork.security.admin.user.model.Users user = principal.getUser();
+        boolean sameUser = "USER".equalsIgnoreCase(signature.getSignerType()) && signature.getSignerId() != null && signature.getSignerId() == user.getId();
+        boolean sameEmail = StringUtils.hasText(signature.getSignerEmail()) && user.getEmail() != null
+                && signature.getSignerEmail().trim().equalsIgnoreCase(user.getEmail().trim());
+        if (!sameUser && !sameEmail) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException(
+                    "Seul le signataire désigné (" + signature.getSignerName() + ") peut signer");
+        }
+    }
+
     private Document document(String documentCode) {
         if (!StringUtils.hasText(documentCode)) {
-            throw new BadRequestException("Document code is required");
+            throw new BadRequestException("Le code du document est requis");
         }
         return documentRepository.findByCode(documentCode.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
     }
 
     private DocumentSignatureResponse toResponse(DocumentSignature signature) {

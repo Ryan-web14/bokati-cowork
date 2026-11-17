@@ -11,7 +11,7 @@ public class KycCaseCorrectionRequest {
     @NotBlank
     private String documentCode;
 
-    @NotNull
+    /** Ignore pour un compte connecte : l\'auteur est toujours le compte connecte (lot KG0). */
     private Long reviewedBy;
 
     @NotBlank

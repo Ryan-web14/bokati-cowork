@@ -344,7 +344,7 @@ Les corps sont stricts : n'envoyer que les champs listés ci-dessus. Pas de `kin
 - Les sauvegardes de l'hébergement ne sont pas touchées par la destruction : leur durée de conservation se règle chez l'hébergeur.
 - Le quota compte la corbeille : vider la corbeille libère de la place.
 
-- Les droits se posent sur des dossiers, pas sur un fichier isolé : pour un fichier confidentiel, le ranger dans un dossier restreint. Les anciens droits sur un document (`/document-permissions`, cible `DOCUMENT`) ne sont pas appliqués.
+- Les droits se posent sur des dossiers, pas sur un fichier isolé : pour un fichier confidentiel, le ranger dans un dossier restreint. Les anciens droits sur un document (`/document-permissions`, retirés au lot KG5, cible `DOCUMENT`) ne sont pas appliqués.
 - Dans `/documents` (liste et recherche), les documents cachés sont retirés de la page après coup : une page peut compter moins de lignes que `size`, et `totalElements` les compte encore.
 - L'OCR exige Tesseract sur le serveur. En production il est coupé par défaut (`GED_OCR_ENABLED=false`) : les scans y sont alors en `FAILED` (« OCR désactivé »), les PDF numériques et les fichiers bureautiques restent lus et cherchables.
 - Le PDF d'une numérisation contient les images des pages, pas de couche texte : son texte est dans la GED (recherche, onglet « Texte »), pas dans le fichier téléchargé.

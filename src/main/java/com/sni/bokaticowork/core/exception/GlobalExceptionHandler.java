@@ -162,7 +162,8 @@ public class GlobalExceptionHandler {
             return respond(errorResponse.build(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
                     "Valeur refusée à l'enregistrement.", request, ex, errors));
         }
-        return handleGeneric(ex, request);
+        // Lot KG6 : transaction annulee a la validation (contrainte, conflit) : 409, pas 500.
+        return handleRolledBack(ex, request);
     }
 
     @ExceptionHandler(BindException.class)
@@ -182,8 +183,59 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<Object> handleMissingRequestParam(MissingServletRequestParameterException ex, HttpServletRequest request) {
-        return respond(errorResponse.build(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
-                "Missing required parameter: " + ex.getParameterName() + ".", request, ex, null));
+        return respond(errorResponse.build(ErrorCode.MISSING_PARAMETER, HttpStatus.BAD_REQUEST,
+                "Paramètre obligatoire manquant : " + ex.getParameterName() + ".", request, ex, null));
+    }
+
+    /** Lot KG6 : fichier ou requete trop lourds : 413 (avant : repli en 500). */
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<Object> handleMaxUploadSize(org.springframework.web.multipart.MaxUploadSizeExceededException ex,
+                                                      HttpServletRequest request) {
+        long max = ex.getMaxUploadSize();
+        String limit = max > 0 ? " (maximum " + (max >= 1024 * 1024 ? (max / (1024 * 1024)) + " Mo" : (max / 1024) + " Ko") + ")" : "";
+        return respond(errorResponse.build(ErrorCode.FILE_SIZE_EXCEEDED, HttpStatus.PAYLOAD_TOO_LARGE,
+                "Fichier ou envoi trop volumineux" + limit + ".", request, ex, null));
+    }
+
+    /**
+     * Lot KG6 : valeur de parametre ou de chemin impossible a convertir (nombre, date, enumeration) :
+     * 400 qui nomme le parametre et, pour une enumeration, les valeurs admises (avant : 500).
+     */
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Object> handleTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex,
+                                                     HttpServletRequest request) {
+        Class<?> type = ex.getRequiredType();
+        String allowed = allowedValues(type);
+        String message = "Valeur « " + ex.getValue() + " » invalide pour le paramètre " + ex.getName()
+                + (allowed == null ? (type == null ? "" : " (type attendu : " + type.getSimpleName() + ")") : " · valeurs admises : " + allowed) + ".";
+        return respond(errorResponse.build(ErrorCode.TYPE_MISMATCH, HttpStatus.BAD_REQUEST, message, request, ex,
+                List.of(ex.getName() + " : " + (allowed == null ? "valeur invalide" : "attendu parmi " + allowed))));
+    }
+
+    /**
+     * Lot KG6 : une transaction annulee en cours de route (verrou optimiste, annulation forcee) est
+     * un conflit a reessayer : 409 au lieu de 500.
+     */
+    @ExceptionHandler({org.springframework.transaction.UnexpectedRollbackException.class,
+            org.springframework.orm.ObjectOptimisticLockingFailureException.class,
+            org.springframework.dao.PessimisticLockingFailureException.class})
+    public ResponseEntity<Object> handleRolledBack(Exception ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.CONFLICT, HttpStatus.CONFLICT,
+                "L'opération n'a pas pu aboutir car les données ont changé entre-temps ou une étape a échoué. Rechargez puis réessayez.",
+                request, ex, null));
+    }
+
+    private static String allowedValues(Class<?> type) {
+        if (type == null || !type.isEnum()) {
+            return null;
+        }
+        Object[] constants = type.getEnumConstants();
+        StringBuilder values = new StringBuilder();
+        for (Object constant : constants) {
+            if (values.length() > 0) values.append(", ");
+            values.append(((Enum<?>) constant).name());
+        }
+        return values.toString();
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -209,8 +261,34 @@ public class GlobalExceptionHandler {
                     "Propriete inconnue dans le corps de la requete : " + unknown.getPropertyName() + ".",
                     request, ex, errors));
         }
+        // Lot KG6 : une valeur d'enumeration ou un format invalide dans le corps est nomme, avec les
+        // valeurs admises.
+        tools.jackson.databind.exc.InvalidFormatException invalid = invalidFormat(ex);
+        if (invalid != null) {
+            String field = invalid.getPath() == null || invalid.getPath().isEmpty() ? "?"
+                    : invalid.getPath().stream()
+                    .map(ref -> ref.getPropertyName() != null ? ref.getPropertyName() : "[" + ref.getIndex() + "]")
+                    .collect(java.util.stream.Collectors.joining("."));
+            String allowed = allowedValues(invalid.getTargetType());
+            return respond(errorResponse.build(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
+                    "Valeur « " + invalid.getValue() + " » invalide pour " + field
+                            + (allowed == null ? "." : " · valeurs admises : " + allowed + "."),
+                    request, ex, List.of(field + " : " + (allowed == null ? "format invalide" : "attendu parmi " + allowed))));
+        }
         return respond(errorResponse.build(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
-                "Request body is missing or malformed.", request, ex, null));
+                "Corps de la requête absent ou illisible.", request, ex, null));
+    }
+
+    private tools.jackson.databind.exc.InvalidFormatException invalidFormat(Throwable ex) {
+        for (Throwable current = ex; current != null; current = current.getCause()) {
+            if (current instanceof tools.jackson.databind.exc.InvalidFormatException invalid) {
+                return invalid;
+            }
+            if (current.getCause() == current) {
+                break;
+            }
+        }
+        return null;
     }
 
     private UnrecognizedPropertyException unrecognizedProperty(Throwable ex) {

@@ -15,7 +15,8 @@ import java.util.Locale;
 @Service
 public class DocumentSecurityService {
 
-    private static final List<String> DEFAULT_ALLOWED_MIME_TYPES = List.of(
+    /** Formats acceptes quand le type de document n'en precise pas : une seule liste (lot KG4). */
+    public static final List<String> DEFAULT_ALLOWED_MIME_TYPES = List.of(
             "application/pdf",
             "image/jpeg",
             "image/png",
@@ -24,14 +25,14 @@ public class DocumentSecurityService {
 
     public SecurityInspection inspect(MultipartFile file, List<String> allowedMimeTypes) {
         if (file == null || file.isEmpty()) {
-            throw new BadRequestException("Document file is required");
+            throw new BadRequestException("Le fichier du document est requis");
         }
 
         byte[] bytes;
         try {
             bytes = file.getBytes();
         } catch (IOException ex) {
-            throw new BadRequestException("Unable to read document file", ex);
+            throw new BadRequestException("Lecture du fichier du document impossible", ex);
         }
 
         return inspectBytes(file.getOriginalFilename(), file.getContentType(), bytes, allowedMimeTypes);
@@ -39,7 +40,7 @@ public class DocumentSecurityService {
 
     public SecurityInspection inspectBytes(String fileName, String declaredMimeType, byte[] bytes, List<String> allowedMimeTypes) {
         if (bytes == null || bytes.length == 0) {
-            throw new BadRequestException("Document file is required");
+            throw new BadRequestException("Le fichier du document est requis");
         }
 
         String detectedMime = detectMime(bytes, fileName);
@@ -48,12 +49,12 @@ public class DocumentSecurityService {
                 : allowedMimeTypes;
 
         if (!effectiveAllowed.contains(detectedMime)) {
-            throw new BadRequestException("Unsupported document MIME type: " + detectedMime);
+            throw new BadRequestException("Format de fichier non accepté : " + detectedMime);
         }
 
         DocumentAntivirusStatus antivirusStatus = scanForThreats(bytes);
         if (antivirusStatus != DocumentAntivirusStatus.CLEAN) {
-            throw new BadRequestException("Document failed security scan");
+            throw new BadRequestException("Le document n'a pas passé le contrôle de sécurité");
         }
 
         return new SecurityInspection(
@@ -81,6 +82,15 @@ public class DocumentSecurityService {
     private static final java.util.Map<String, String> TEXT_FORMATS = java.util.Map.of(
             "txt", "text/plain",
             "csv", "text/csv");
+
+    /** Le format reel d'un fichier (signature), pas celui que declare le navigateur. */
+    public String detectedMime(MultipartFile file) {
+        try {
+            return detectMime(file.getBytes(), file.getOriginalFilename());
+        } catch (IOException ex) {
+            throw new BadRequestException("Lecture du fichier du document impossible", ex);
+        }
+    }
 
     private String detectMime(byte[] bytes, String fileName) {
         String extension = normalizeExtension(fileName);
@@ -121,7 +131,7 @@ public class DocumentSecurityService {
         if (TEXT_FORMATS.containsKey(extension) && looksLikeText(bytes)) {
             return TEXT_FORMATS.get(extension);
         }
-        throw new BadRequestException("Unsupported or unrecognized file content");
+        throw new BadRequestException("Contenu de fichier non pris en charge ou non reconnu");
     }
 
     private DocumentAntivirusStatus scanForThreats(byte[] bytes) {

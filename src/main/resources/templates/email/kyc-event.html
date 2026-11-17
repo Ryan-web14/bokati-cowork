@@ -51,10 +51,21 @@
       <!-- Correction / mise &#224; jour demand&#233;e -->
       <div th:case="'KYC_CASE_REJECTED'">
         <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
-        <p>Nous avons examin&#233; votre dossier et une petite mise &#224; jour est n&#233;cessaire avant de pouvoir le
-          valider. Rien d&#8217;inqui&#233;tant&#8202;: il s&#8217;agit simplement de corriger ou de renvoyer une ou plusieurs
-          pi&#232;ces.</p>
-        <p>Rendez-vous dans votre espace personnel, o&#249; le d&#233;tail des &#233;l&#233;ments attendus vous est indiqu&#233;.</p>
+        <p>Apr&#232;s examen, nous ne sommes pas en mesure de valider votre dossier de v&#233;rification.</p>
+        <p th:if="${reason}">Motif&#8202;: <span th:text="${reason}">Motif</span></p>
+        <p>Si vous pensez qu&#8217;il s&#8217;agit d&#8217;une erreur, ou pour toute question, contactez notre &#233;quipe&#8202;:
+          elle pourra r&#233;examiner votre dossier.</p>
+      </div>
+      <!-- Niveau de v&#233;rification relev&#233; (lot KG1) -->
+      <div th:case="'KYC_CASE_LEVEL_CHANGED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Votre dossier de v&#233;rification passe au <strong th:text="'niveau ' + ${level}">niveau 2</strong>.
+          Pour le compl&#233;ter, nous avons besoin de quelques pi&#232;ces suppl&#233;mentaires.</p>
+        <p th:if="${reason}" th:text="${reason}">Motif</p>
+        <ul th:if="${missingDocuments != null and !missingDocuments.isEmpty()}" style="margin:0 0 18px 18px;">
+          <li th:each="name : ${missingDocuments}" th:text="${name}">Pi&#232;ce</li>
+        </ul>
+        <p>Vous pouvez les d&#233;poser depuis votre espace personnel. Votre acc&#232;s reste ouvert pendant ce temps.</p>
       </div>
       <div th:case="'KYC_CASE_CORRECTION_REQUESTED'">
         <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
@@ -62,6 +73,30 @@
           valider. Rien d&#8217;inqui&#233;tant&#8202;: il s&#8217;agit simplement de corriger ou de renvoyer une ou plusieurs
           pi&#232;ces.</p>
         <p>Rendez-vous dans votre espace personnel, o&#249; le d&#233;tail des &#233;l&#233;ments attendus vous est indiqu&#233;.</p>
+      </div>
+
+      <!-- Piece ajoutee au dossier (lot KG3) -->
+      <div th:case="'KYC_CASE_REQUIREMENT_ADDED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Pour compl&#233;ter votre dossier de v&#233;rification, nous avons besoin d&#8217;une pi&#232;ce suppl&#233;mentaire&#8202;:
+          <strong th:text="${documentTypeName}">Pi&#232;ce</strong><span th:if="${required == false}"> (facultative)</span>.</p>
+        <p>Vous pouvez la d&#233;poser depuis votre espace personnel.</p>
+      </div>
+
+      <!-- Piece renvoyee en correction (lot KG3) -->
+      <div th:case="'KYC_DOCUMENT_CORRECTION_REQUESTED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Une de vos pi&#232;ces doit &#234;tre corrig&#233;e avant que nous puissions la valider.</p>
+        <p th:if="${reason}" th:text="${reason}">Motif</p>
+        <p>D&#233;posez une nouvelle version depuis votre espace personnel.</p>
+      </div>
+
+      <!-- Renouvellement (lot KG3) -->
+      <div th:case="'KYC_RENEWAL_REQUIRED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Une pi&#232;ce de votre dossier de v&#233;rification est arriv&#233;e &#224; &#233;ch&#233;ance<span th:if="${documentTypeName}">&#8202;:
+          <strong th:text="${documentTypeName}">Pi&#232;ce</strong></span>. Pour continuer &#224; profiter de nos services,
+          d&#233;posez une pi&#232;ce &#224; jour depuis votre espace personnel.</p>
       </div>
 
       <!-- Rappel amical : dossier incomplet -->

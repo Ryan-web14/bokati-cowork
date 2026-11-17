@@ -81,7 +81,7 @@ public class DocumentStorageService {
 
     public byte[] read(String storageProvider, String storagePath) {
         if (!StringUtils.hasText(storagePath)) {
-            throw new BadRequestException("Document storage path is missing");
+            throw new BadRequestException("Chemin de stockage du document manquant");
         }
         String effectiveProvider = normalizeProvider(storageProvider);
         if ("MINIO".equals(effectiveProvider) || "S3".equals(effectiveProvider)) {
@@ -92,7 +92,7 @@ public class DocumentStorageService {
             // pointer hors de la racine. On le confine aussi en lecture.
             return Files.readAllBytes(confine(Path.of(storagePath).toAbsolutePath().normalize()));
         } catch (IOException ex) {
-            throw new BadRequestException("Unable to read document file", ex);
+            throw new BadRequestException("Lecture du fichier du document impossible", ex);
         }
     }
 
@@ -166,7 +166,7 @@ public class DocumentStorageService {
                 .build())) {
             return stream.readAllBytes();
         } catch (Exception ex) {
-            throw new BadRequestException("Unable to read document file from MinIO", ex);
+            throw new BadRequestException("Lecture du fichier du document impossible from MinIO", ex);
         }
     }
 

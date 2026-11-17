@@ -9,7 +9,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-document-tags"></a>
 ### GET /sni/api/v1/document-tags
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `List<DocumentTagResponse>`
 - Modèles : [DocumentTagResponse](#m-DocumentTagResponse), [DocumentSpace](#m-DocumentSpace)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java`, méthode `listTags`
@@ -21,7 +21,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-post-sni-api-v1-document-tags"></a>
 ### POST /sni/api/v1/document-tags
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Corps JSON (obligatoire) : `DocumentTagRequest`
 - Réponse : `DocumentTagResponse`
 - Modèles : [DocumentTagResponse](#m-DocumentTagResponse), [DocumentTagRequest](#m-DocumentTagRequest)
@@ -30,7 +30,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-delete-sni-api-v1-document-tags-code"></a>
 ### DELETE /sni/api/v1/document-tags/{code}
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java`, méthode `deleteTag`
 
@@ -41,7 +41,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-get-sni-api-v1-document-tags-code"></a>
 ### GET /sni/api/v1/document-tags/{code}
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `DocumentTagResponse`
 - Modèles : [DocumentTagResponse](#m-DocumentTagResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java`, méthode `getTag`
@@ -53,7 +53,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-put-sni-api-v1-document-tags-code"></a>
 ### PUT /sni/api/v1/document-tags/{code}
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Corps JSON (obligatoire) : `DocumentTagUpdateRequest`
 - Réponse : `DocumentTagResponse`
 - Modèles : [DocumentTagResponse](#m-DocumentTagResponse), [DocumentTagUpdateRequest](#m-DocumentTagUpdateRequest)
@@ -77,7 +77,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-patch-sni-api-v1-documents-code-metadata"></a>
 ### PATCH /sni/api/v1/documents/{code}/metadata
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Corps JSON (obligatoire) : `Map<String, String>`
 - Réponse : `Map<String, String>`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java`, méthode `setMetadata`
@@ -89,7 +89,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-delete-sni-api-v1-documents-code-metadata-key"></a>
 ### DELETE /sni/api/v1/documents/{code}/metadata/{key}
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java`, méthode `deleteMetadataKey`
 
@@ -126,7 +126,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-delete-sni-api-v1-documents-code-tags-tagcode"></a>
 ### DELETE /sni/api/v1/documents/{code}/tags/{tagCode}
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java`, méthode `removeTag`
 

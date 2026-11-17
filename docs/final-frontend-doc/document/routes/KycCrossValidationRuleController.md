@@ -21,7 +21,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-post-sni-api-v1-kyc-cross-validation-rules"></a>
 ### POST /sni/api/v1/kyc/cross-validation-rules
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Corps JSON (obligatoire) : `KycCrossValidationRuleRequest`
 - Réponse : `KycCrossValidationRuleResponse`
 - Modèles : [KycCrossValidationRuleResponse](#m-KycCrossValidationRuleResponse), [KycCrossValidationRuleRequest](#m-KycCrossValidationRuleRequest)
@@ -30,7 +30,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-delete-sni-api-v1-kyc-cross-validation-rules-id"></a>
 ### DELETE /sni/api/v1/kyc/cross-validation-rules/{id}
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCrossValidationRuleController.java`, méthode `delete`
 
@@ -53,7 +53,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-put-sni-api-v1-kyc-cross-validation-rules-id"></a>
 ### PUT /sni/api/v1/kyc/cross-validation-rules/{id}
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:MANAGE`
 - Corps JSON (obligatoire) : `KycCrossValidationRuleRequest`
 - Réponse : `KycCrossValidationRuleResponse`
 - Modèles : [KycCrossValidationRuleResponse](#m-KycCrossValidationRuleResponse), [KycCrossValidationRuleRequest](#m-KycCrossValidationRuleRequest)
@@ -73,6 +73,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `id` | code identifiant (texte) |  |  |
+| `code` | texte |  |  |
+| `name` | texte |  |  |
+| `description` | texte |  |  |
+| `ruleType` | enum : `FIELD_MATCH`, `DECLARED_VS_OCR`, `PROFILE_MATCH`, `DOCUMENT_NOT_EXPIRED`, `ISSUE_BEFORE_EXPIRY`, `MIN_VALIDITY`, `UNIQUE_DOCUMENT_NUMBER` |  |  |
+| `parameter` | texte |  |  |
+| `systemRule` | booléen |  |  |
 | `documentTypeCode1` | texte |  |  |
 | `documentTypeCode2` | texte |  |  |
 | `fieldToCompare` | texte |  |  |
@@ -84,8 +90,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `documentTypeCode1` | texte | oui | longueur min `0`, longueur max `150` |
-| `documentTypeCode2` | texte | oui | longueur min `0`, longueur max `150` |
-| `fieldToCompare` | texte | oui | longueur min `0`, longueur max `80` |
+| `code` | texte |  | longueur min `0`, longueur max `80` |
+| `name` | texte |  | longueur min `0`, longueur max `200` |
+| `description` | texte |  |  |
+| `ruleType` | enum : `FIELD_MATCH`, `DECLARED_VS_OCR`, `PROFILE_MATCH`, `DOCUMENT_NOT_EXPIRED`, `ISSUE_BEFORE_EXPIRY`, `MIN_VALIDITY`, `UNIQUE_DOCUMENT_NUMBER` |  |  |
+| `documentTypeCode1` | texte |  | longueur min `0`, longueur max `1000` |
+| `documentTypeCode2` | texte |  | longueur min `0`, longueur max `1000` |
+| `fieldToCompare` | texte |  | longueur min `0`, longueur max `80` |
+| `parameter` | texte |  | longueur min `0`, longueur max `200` |
 | `blocking` | booléen |  |  |
 | `active` | booléen |  |  |

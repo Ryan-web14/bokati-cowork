@@ -73,6 +73,9 @@ public class TesseractKycOcrService implements KycOcrService {
 
     private static final int TOTAL_EXTRACTABLE_FIELDS = 6;
 
+    /** Bibliotheque native absente : plus d'essai jusqu'au prochain demarrage. */
+    private volatile boolean unavailable;
+
     private final KycAutomationProperties properties;
     private final KycDocumentOcrResultRepository ocrResultRepository;
     private final DocumentVersionRepository documentVersionRepository;
@@ -94,6 +97,11 @@ public class TesseractKycOcrService implements KycOcrService {
             return;
         }
 
+        if (unavailable) {
+            upsertSkipped(kycDocument, "OCR_UNAVAILABLE");
+            return;
+        }
+
         Document document = kycDocument.getDocument();
         if (document == null || !StringUtils.hasText(document.getFileUrl())) {
             upsertSkipped(kycDocument, "NO_FILE");
@@ -112,6 +120,13 @@ public class TesseractKycOcrService implements KycOcrService {
             }
             String text = tesseract.doOCR(tempFile.toFile());
             upsertSuccess(kycDocument, text);
+        } catch (LinkageError ex) {
+            // Bibliotheque native Tesseract absente (cas de Heroku) : on ne reessaie plus jusqu'au
+            // prochain demarrage. Avant, l'erreur (une Error, pas une Exception) remontait et
+            // annulait la synchronisation de la piece et le recalcul du dossier.
+            unavailable = true;
+            log.warn("OCR Tesseract indisponible sur ce serveur ({}) : OCR desactive jusqu'au prochain demarrage", ex.toString());
+            upsertSkipped(kycDocument, "OCR_UNAVAILABLE");
         } catch (Exception ex) {
             log.warn("Tesseract OCR failed for KYC document {}", kycDocument.getId(), ex);
             upsertFailure(kycDocument, ex.getMessage());

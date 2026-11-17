@@ -32,4 +32,10 @@ public class DocumentUploadMetadataRequest {
 
     /** Dossier de la GED ou ranger le document, facultatif. */
     private String folderCode;
+
+    /**
+     * Piece KYC : {@code FRONT} (defaut) ou {@code BACK}. Un verso se rattache a la piece du meme
+     * type deja deposee (lot KG2) ; il ne cree jamais de piece.
+     */
+    private String kycSide;
 }

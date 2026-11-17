@@ -18,6 +18,9 @@ public interface DocumentService {
     DocumentResponse createGeneratedDocument(DocumentUploadMetadataRequest metadata, String originalFileName, String declaredMimeType, byte[] content);
     DocumentResponse replace(String documentCode, MultipartFile file);
     DocumentResponse getByCode(String documentCode);
+
+    /** Reponse d'un document deja charge, sans ses versions (listes, files de revue). */
+    DocumentResponse summarize(com.sni.bokaticowork.features.document.documentMaster.model.Document document);
     PaginatedResponse<DocumentResponse> list(DocumentOwnerType ownerType, String ownerCode, Pageable pageable);
     List<DocumentVersionResponse> listVersions(String documentCode);
     DocumentResponse approve(String documentCode, DocumentReviewDecisionRequest request);

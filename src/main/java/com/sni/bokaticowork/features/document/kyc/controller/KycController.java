@@ -95,7 +95,7 @@ public class KycController {
                 try {
                     yield KycCaseStatus.valueOf(normalized);
                 } catch (IllegalArgumentException ex) {
-                    throw new BadRequestException("Unsupported KYC case status: " + status);
+                    throw new BadRequestException("Statut de dossier KYC non pris en charge : " + status);
                 }
             }
         };
@@ -141,6 +141,37 @@ public class KycController {
         return ResponseEntity.ok(service.reject(code, request));
     }
 
+    /**
+     * Lot KG7 : refus definitif (a distinguer de {@code /reject}, qui demande une correction).
+     * Corps : {@code { "reasonCode": "DOCUMENT_FALSIFIE", "comment": "…" }}.
+     */
+    @PostMapping("/{code}/reject-final")
+    @Audited(module = "KYC", action = "REJECT_CASE_FINAL", ressource = "kyc_case")
+    @Idempotent(operation = "KYC_CASE_REJECT_FINAL")
+    public ResponseEntity<KycCaseResponse> rejectFinal(@PathVariable String code, @Valid @RequestBody KycDecisionRequest request) {
+        return ResponseEntity.ok(service.rejectFinal(code, request));
+    }
+
+    public record ReopenRequest(String comment) {
+    }
+
+    /** Lot KG7 : reouverture d'un dossier refuse, administrateur seulement. */
+    @PostMapping("/{code}/reopen")
+    @Audited(module = "KYC", action = "REOPEN_CASE", ressource = "kyc_case")
+    public ResponseEntity<KycCaseResponse> reopen(@PathVariable String code, @RequestBody(required = false) ReopenRequest request) {
+        return ResponseEntity.ok(service.reopen(code, request == null ? null : request.comment()));
+    }
+
+    /**
+     * Controles croises du dossier : une ligne par regle active et par piece visee, resultat
+     * PASSED, FAILED ou SKIPPED (donnee absente, OCR indisponible). Les regles bloquantes en echec
+     * empechent l'approbation. Lecture seule, droit KYC:READ.
+     */
+    @GetMapping("/{code}/cross-checks")
+    public ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService.Result>> crossChecks(@PathVariable String code) {
+        return ResponseEntity.ok(service.crossChecks(code));
+    }
+
     @GetMapping("/{code}/missing-requirements")
     public ResponseEntity<List<KycRequirementStatus>> missingRequirements(@PathVariable String code) {
         return ResponseEntity.ok(service.getMissingRequirements(code));
@@ -177,6 +208,20 @@ public class KycController {
     @Audited(module = "KYC", action = "UPDATE_RISK_LEVEL", ressource = "kyc_case")
     public ResponseEntity<KycCaseResponse> riskLevel(@PathVariable String code, @Valid @RequestBody KycRiskLevelRequest request) {
         return ResponseEntity.ok(service.updateRiskLevel(code, request));
+    }
+
+    /**
+     * Niveau KYC demande (lot KG1) : {@code { "level": 2, "reason": "..." }}. Les pieces de ce niveau
+     * sont exigees ; le dossier se rouvre s'il en manque et le titulaire est prevenu. Droit KYC:MANAGE.
+     */
+    @PatchMapping("/{code}/level")
+    @Audited(module = "KYC", action = "CHANGE_LEVEL", ressource = "kyc_case")
+    public ResponseEntity<KycCaseResponse> changeLevel(@PathVariable String code, @Valid @RequestBody LevelRequest request) {
+        return ResponseEntity.ok(service.changeLevel(code, request.level(), request.reason()));
+    }
+
+    public record LevelRequest(@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Min(1)
+                               @jakarta.validation.constraints.Max(4) Integer level, String reason) {
     }
 
     @GetMapping("/{code}/export/pdf")

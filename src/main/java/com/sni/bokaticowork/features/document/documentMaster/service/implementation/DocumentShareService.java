@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
-import com.sni.bokaticowork.core.exception.customs.UnauthorizedException;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateShareLinkRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.ShareLinkResponse;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
@@ -58,28 +57,50 @@ public class DocumentShareService {
 
     public ShareLinkResponse shareDocument(String documentCode, CreateShareLinkRequest request) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         return createLink(document, null, request);
     }
 
     public ShareLinkResponse shareFolder(String folderCode, CreateShareLinkRequest request) {
         DocumentFolder folder = folderRepository.findByCode(folderCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Folder not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
         return createLink(null, folder, request);
     }
 
     @Transactional(readOnly = true)
     public ShareLinkResponse access(String token, String password) {
         DocumentShareLink link = shareRepository.findByTokenAndActiveTrue(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Share link not found or expired"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lien de partage introuvable ou expiré"));
         validateLink(link);
         validatePassword(link, password);
         return toResponse(link);
     }
 
+    /** Lot KG5 : le lien vise par un jeton (document ou dossier), pour controler les droits. */
+    @Transactional(readOnly = true)
+    public DocumentShareLink activeLink(String token) {
+        return shareRepository.findByTokenAndActiveTrue(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Lien de partage introuvable ou expiré"));
+    }
+
+    /** Lot KG5 : le fichier d'un lien de document, si le lien permet le telechargement. */
+    @Transactional(readOnly = true)
+    public String fileDocumentCode(String token, String password) {
+        DocumentShareLink link = activeLink(token);
+        validateLink(link);
+        validatePassword(link, password);
+        if (link.getDocument() == null) {
+            throw new BadRequestException("Ce lien partage un dossier : ouvrez-le dans l'explorateur");
+        }
+        if (!Boolean.TRUE.equals(link.getAllowDownload())) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException("Ce lien ne permet pas le téléchargement");
+        }
+        return link.getDocument().getCode();
+    }
+
     public void recordAccess(String token) {
         DocumentShareLink link = shareRepository.findByTokenAndActiveTrue(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Share link not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lien de partage introuvable"));
         validateLink(link);
         link.setAccessCount(link.getAccessCount() + 1);
         link.setLastAccessedAt(Instant.now());
@@ -88,7 +109,12 @@ public class DocumentShareService {
 
     public void revoke(String token) {
         DocumentShareLink link = shareRepository.findByTokenAndActiveTrue(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Share link not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lien de partage introuvable"));
+        // Lot KG5 : seul l'auteur du lien ou un administrateur le revoque (avant : n'importe qui, sans connexion).
+        Long me = currentUserId();
+        if (!isAdmin() && (me == null || !me.equals(link.getCreatedBy()))) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException("Seul l'auteur du lien ou un administrateur peut le révoquer");
+        }
         link.setActive(false);
         shareRepository.save(link);
     }
@@ -96,7 +122,7 @@ public class DocumentShareService {
     @Transactional(readOnly = true)
     public List<ShareLinkResponse> listByDocument(String documentCode) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         return shareRepository.findAllByDocumentAndActiveTrueOrderByCreatedAtDesc(document)
                 .stream().map(this::toResponse).toList();
     }
@@ -122,10 +148,10 @@ public class DocumentShareService {
 
     private void validateLink(DocumentShareLink link) {
         if (Instant.now().isAfter(link.getExpiresAt())) {
-            throw new BadRequestException("This share link has expired");
+            throw new BadRequestException("Ce lien de partage a expiré");
         }
         if (link.getMaxAccessCount() != null && link.getAccessCount() >= link.getMaxAccessCount()) {
-            throw new BadRequestException("This share link has reached its maximum access count");
+            throw new BadRequestException("Ce lien de partage a atteint son nombre maximal d'accès");
         }
     }
 
@@ -134,7 +160,7 @@ public class DocumentShareService {
             return;
         }
         if (!StringUtils.hasText(password) || !passwordEncoder.matches(password, link.getPasswordHash())) {
-            throw new UnauthorizedException("This share link requires a valid password");
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException("Ce lien de partage demande un mot de passe valide");
         }
     }
 
@@ -153,7 +179,10 @@ public class DocumentShareService {
                 .expiresAt(link.getExpiresAt())
                 .createdAt(link.getCreatedAt())
                 .createdBy(link.getCreatedBy())
-                .createdByEmail(userRepository.findById(link.getCreatedBy()).map(u -> u.getEmail()).orElse(null))
+                // Lot KG5 : le nom de l'auteur, plus son courriel ; auteur inconnu sans erreur.
+                .createdByName(link.getCreatedBy() == null ? null : userRepository.findById(link.getCreatedBy())
+                        .map(u -> ((u.getFirstname() == null ? "" : u.getFirstname()) + " " + (u.getLastname() == null ? "" : u.getLastname())).trim())
+                        .filter(name -> !name.isEmpty()).orElse(null))
                 .active(link.getActive())
                 .build();
     }
@@ -162,5 +191,11 @@ public class DocumentShareService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof UserPrincipal p) return p.getUser().getId();
         return null;
+    }
+
+    private boolean isAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()) || "ROLE_SUPER_ADMIN".equals(a.getAuthority()));
     }
 }

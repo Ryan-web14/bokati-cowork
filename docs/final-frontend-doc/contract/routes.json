@@ -2012,6 +2012,26 @@
      "type": "integer",
      "format": "int64"
     },
+    "ownerCode": {
+     "type": "string"
+    },
+    "ownerLabel": {
+     "type": "string"
+    },
+    "locked": {
+     "type": "boolean"
+    },
+    "lockedById": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lockedByName": {
+     "type": "string"
+    },
+    "lockExpiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
     "ownerType": {
      "type": "string",
      "enum": [

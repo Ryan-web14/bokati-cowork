@@ -9,7 +9,7 @@ Module [document](../README.md) · 9 route(s).
 <a id="r-get-sni-api-v1-document-workflows"></a>
 ### GET /sni/api/v1/document-workflows
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `List<WorkflowResponse>`
 - Modèles : [WorkflowResponse](#m-WorkflowResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java`, méthode `list`
@@ -21,7 +21,7 @@ Module [document](../README.md) · 9 route(s).
 <a id="r-post-sni-api-v1-document-workflows"></a>
 ### POST /sni/api/v1/document-workflows
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Corps JSON (obligatoire) : `CreateWorkflowRequest`
 - Réponse : `WorkflowResponse`
 - Modèles : [WorkflowResponse](#m-WorkflowResponse), [CreateWorkflowRequest](#m-CreateWorkflowRequest)
@@ -30,7 +30,7 @@ Module [document](../README.md) · 9 route(s).
 <a id="r-get-sni-api-v1-document-workflows-my-pending"></a>
 ### GET /sni/api/v1/document-workflows/my-pending
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `List<WorkflowInstanceResponse>`
 - Modèles : [WorkflowInstanceResponse](#m-WorkflowInstanceResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java`, méthode `myPending`
@@ -38,7 +38,7 @@ Module [document](../README.md) · 9 route(s).
 <a id="r-delete-sni-api-v1-document-workflows-code"></a>
 ### DELETE /sni/api/v1/document-workflows/{code}
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java`, méthode `delete`
 
@@ -49,7 +49,7 @@ Module [document](../README.md) · 9 route(s).
 <a id="r-get-sni-api-v1-document-workflows-code"></a>
 ### GET /sni/api/v1/document-workflows/{code}
 
-- Accès : back-office : rôle d'administration et droit `ADMIN:ACCESS`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `WorkflowResponse`
 - Modèles : [WorkflowResponse](#m-WorkflowResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java`, méthode `getByCode`
@@ -74,7 +74,7 @@ Module [document](../README.md) · 9 route(s).
 <a id="r-post-sni-api-v1-documents-documentcode-workflow-approve"></a>
 ### POST /sni/api/v1/documents/{documentCode}/workflow/approve
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Corps JSON (facultatif) : `WorkflowActionRequest`
 - Réponse : `WorkflowInstanceResponse`
 - Modèles : [WorkflowInstanceResponse](#m-WorkflowInstanceResponse), [WorkflowActionRequest](#m-WorkflowActionRequest)
@@ -87,7 +87,7 @@ Module [document](../README.md) · 9 route(s).
 <a id="r-post-sni-api-v1-documents-documentcode-workflow-reject"></a>
 ### POST /sni/api/v1/documents/{documentCode}/workflow/reject
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Corps JSON (facultatif) : `WorkflowActionRequest`
 - Réponse : `WorkflowInstanceResponse`
 - Modèles : [WorkflowInstanceResponse](#m-WorkflowInstanceResponse), [WorkflowActionRequest](#m-WorkflowActionRequest)

@@ -25,6 +25,9 @@ public class KycCaseResponse {
     private String reviewedByEmail;
     private Instant reviewedAt;
     private String decisionComment;
+    /** Lot KG7 : motif normalise de la derniere decision et son libelle. */
+    private String decisionReasonCode;
+    private String decisionReasonLabel;
     private Long assignedTo;
     private String assignedToEmail;
     private Instant assignedAt;
@@ -33,6 +36,8 @@ public class KycCaseResponse {
     private Integer reminderCount;
     private KycRiskLevel riskLevel;
     private Integer kycLevel;
+    /** Niveau demande (les pieces de ce niveau sont exigees) ; {@code kycLevel} est le niveau atteint. */
+    private Integer requestedKycLevel;
     private boolean complete;
     private boolean approved;
     private List<String> missingDocumentTypeCodes;

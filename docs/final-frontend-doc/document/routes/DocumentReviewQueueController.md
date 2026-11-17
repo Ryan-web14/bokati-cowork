@@ -9,7 +9,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-get-sni-api-v1-review-queue"></a>
 ### GET /sni/api/v1/review/queue
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW` ; contrôle supplémentaire sur la méthode : `hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*` ; contrôle supplémentaire sur la méthode : `@docSpaceSecurity.canReviewAny(authentication)`
 - Réponse : `PaginatedResponse<DocumentResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [DocumentResponse](#m-DocumentResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentReviewQueueController.java`, méthode `globalQueue`
@@ -21,7 +21,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-get-sni-api-v1-review-space"></a>
 ### GET /sni/api/v1/review/{space}
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW` ; contrôle supplémentaire sur la méthode : `@docSpaceSecurity.canReview(authentication, #space)`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*` ; contrôle supplémentaire sur la méthode : `@docSpaceSecurity.canReview(authentication, #space)`
 - Réponse : `PaginatedResponse<DocumentResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [DocumentResponse](#m-DocumentResponse), [DocumentSpace](#m-DocumentSpace)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentReviewQueueController.java`, méthode `spaceQueue`
@@ -34,7 +34,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-post-sni-api-v1-review-space-bulk-approve"></a>
 ### POST /sni/api/v1/review/{space}/bulk-approve
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW` ; contrôle supplémentaire sur la méthode : `@docSpaceSecurity.canReview(authentication, #space)`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*` ; contrôle supplémentaire sur la méthode : `@docSpaceSecurity.canReview(authentication, #space)`
 - Corps JSON (obligatoire) : `DocumentBulkApproveRequest`
 - Réponse : `DocumentBulkActionResponse`
 - Modèles : [DocumentBulkActionResponse](#m-DocumentBulkActionResponse), [DocumentBulkApproveRequest](#m-DocumentBulkApproveRequest), [DocumentSpace](#m-DocumentSpace)
@@ -47,7 +47,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-post-sni-api-v1-review-space-bulk-reject"></a>
 ### POST /sni/api/v1/review/{space}/bulk-reject
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW` ; contrôle supplémentaire sur la méthode : `@docSpaceSecurity.canReview(authentication, #space)`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*` ; contrôle supplémentaire sur la méthode : `@docSpaceSecurity.canReview(authentication, #space)`
 - Corps JSON (obligatoire) : `DocumentBulkRejectRequest`
 - Réponse : `DocumentBulkActionResponse`
 - Modèles : [DocumentBulkActionResponse](#m-DocumentBulkActionResponse), [DocumentBulkRejectRequest](#m-DocumentBulkRejectRequest), [DocumentSpace](#m-DocumentSpace)
@@ -60,7 +60,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-post-sni-api-v1-review-space-bulk-request-correction"></a>
 ### POST /sni/api/v1/review/{space}/bulk-request-correction
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW` ; contrôle supplémentaire sur la méthode : `@docSpaceSecurity.canReview(authentication, #space)`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*` ; contrôle supplémentaire sur la méthode : `@docSpaceSecurity.canReview(authentication, #space)`
 - Corps JSON (obligatoire) : `DocumentBulkCorrectionRequest`
 - Réponse : `DocumentBulkActionResponse`
 - Modèles : [DocumentBulkActionResponse](#m-DocumentBulkActionResponse), [DocumentBulkCorrectionRequest](#m-DocumentBulkCorrectionRequest), [DocumentSpace](#m-DocumentSpace)
@@ -81,6 +81,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `code` | texte |  |  |
 | `ownerId` | code identifiant (texte) |  |  |
+| `ownerCode` | texte |  |  |
+| `ownerLabel` | texte |  |  |
+| `locked` | booléen |  |  |
+| `lockedById` | code identifiant (texte) |  |  |
+| `lockedByName` | texte |  |  |
+| `lockExpiresAt` | date-heure ISO 8601 UTC |  |  |
 | `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
 | `category` | enum : `KYC`, `LEGAL`, `SYSTEM`, `FINANCIAL`, `ASSET`, `OTHER` |  |  |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
@@ -130,7 +136,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `codes` | texte[] | oui | éléments min `1` |
-| `reviewedBy` | entier int64 (texte au-delà de 2^53) | oui |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `comment` | texte |  |  |
 
 <a id="m-DocumentBulkRejectRequest"></a>
@@ -139,7 +145,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `codes` | texte[] | oui | éléments min `1` |
-| `reviewedBy` | entier int64 (texte au-delà de 2^53) | oui |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `rejectionReasonCode` | texte |  |  |
 | `rejectionReasonDetail` | texte |  |  |
 | `comment` | texte |  |  |
@@ -150,7 +156,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `codes` | texte[] | oui | éléments min `1` |
-| `reviewedBy` | entier int64 (texte au-delà de 2^53) | oui |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `correctionNote` | texte | oui | longueur min `1` |
 | `deadlineDays` | entier |  | min `1` |
 

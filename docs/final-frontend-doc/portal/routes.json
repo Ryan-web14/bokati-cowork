@@ -8127,6 +8127,24 @@
     "backDocumentCode": {
      "type": "string"
     },
+    "qualityStatus": {
+     "type": "string"
+    },
+    "qualityWarnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "backQualityStatus": {
+     "type": "string"
+    },
+    "backQualityWarnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
     "backFileName": {
      "type": "string"
     },
@@ -8823,7 +8841,8 @@
       "BOOKING_FAILED",
       "INVOICE_ISSUED",
       "PAYMENT_RECEIVED",
-      "PAYMENT_FAILED"
+      "PAYMENT_FAILED",
+      "KYC_DOCUMENTS_REQUESTED"
      ]
     },
     "channel": {

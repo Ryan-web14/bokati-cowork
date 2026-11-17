@@ -1,8 +1,10 @@
 package com.sni.bokaticowork.features.portal.document.kyc;
 
 import com.sni.bokaticowork.features.client.member.model.Member;
+import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentUploadMetadataRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
+import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,16 +38,15 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Un envoi depuis le portail donne une seule piece · et un dossier complet ne reclame plus rien.
- *
- * <p>L'envoi d'un document KYC creait deja sa ligne de dossier ; le portail en ajoutait une seconde
- * pour le meme fichier, et chaque piece apparaissait deux fois.</p>
+ * Le portail confie le rattachement recto / verso au depot documentaire (lot KG2) : il indique la
+ * face, reprend la piece rattachee, ne cree ni ne supprime de ligne lui-meme.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -64,7 +66,6 @@ class ClientKycServiceUploadTest {
     private Member member;
     private KycCase kycCase;
     private Document uploaded;
-    private KycDocument autoCreated;
     private final MockMultipartFile file = new MockMultipartFile("file", "cni.pdf", "application/pdf", new byte[]{1});
 
     @BeforeEach
@@ -85,57 +86,60 @@ class ClientKycServiceUploadTest {
         when(response.getCode()).thenReturn("DOC-2");
         when(documentService.upload(any(), any())).thenReturn(response);
         when(documentRepository.findByCode("DOC-2")).thenReturn(Optional.of(uploaded));
+        when(kycDocumentRepository.findByDocument(any())).thenReturn(Optional.empty());
+        when(kycDocumentRepository.findAllByBackDocument(any())).thenReturn(List.of());
+    }
 
-        // La ligne que documentService.upload cree lui-meme pour un document de categorie KYC.
-        autoCreated = KycDocument.builder().id(20L).kycCase(kycCase).document(uploaded).documentType("CNI")
+    @Test
+    @DisplayName("Recto : la face est transmise et la piece rattachee est renvoyee, sans ligne en plus")
+    void frontReturnsTheLinkedPiece() {
+        KycDocument piece = KycDocument.builder().id(10L).shortId(3L).kycCase(kycCase).document(uploaded).documentType("CNI")
                 .status(KycDocumentVerificationStatus.PENDING).build();
-        when(kycDocumentRepository.findByDocument(uploaded)).thenReturn(Optional.of(autoCreated));
-    }
+        when(kycDocumentRepository.findByDocument(uploaded)).thenReturn(Optional.of(piece));
 
-    @Test
-    @DisplayName("Premier envoi : la ligne creee par l'envoi est reprise, aucune seconde")
-    void firstUploadReusesTheAutoCreatedLine() {
-        when(kycDocumentRepository.findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, "CNI")).thenReturn(List.of(autoCreated));
+        var result = service.uploadDocument(member, "CNI", "123", null, null, file, "FRONT");
 
-        service.uploadDocument(member, "CNI", "123", null, null, file, "FRONT");
-
-        verify(kycDocumentRepository).save(autoCreated);
+        ArgumentCaptor<DocumentUploadMetadataRequest> metadata = ArgumentCaptor.forClass(DocumentUploadMetadataRequest.class);
+        verify(documentService).upload(metadata.capture(), any());
+        assertThat(metadata.getValue().getKycSide()).isEqualTo("FRONT");
+        assertThat(result.getId()).isEqualTo(3L);
         verify(kycDocumentRepository, never()).delete(any());
-        verify(kycDocumentRepository, never()).save(org.mockito.ArgumentMatchers.argThat(doc -> doc != autoCreated));
+        verify(kycAutomationService).recompute(kycCase);
     }
 
     @Test
-    @DisplayName("Nouvel envoi du meme type : la piece existante est remplacee, le doublon retire")
-    void reuploadReplacesTheExistingPiece() {
-        Document previous = new Document();
-        previous.setCode("DOC-1");
-        KycDocument existing = KycDocument.builder().id(10L).kycCase(kycCase).document(previous).documentType("CNI")
-                .status(KycDocumentVerificationStatus.REJECTED).build();
-        when(kycDocumentRepository.findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, "CNI"))
-                .thenReturn(List.of(existing, autoCreated));
-
-        service.uploadDocument(member, "CNI", "123", null, null, file, "FRONT");
-
-        assertThat(existing.getDocument()).isSameAs(uploaded);
-        assertThat(existing.getStatus()).isEqualTo(KycDocumentVerificationStatus.PENDING);
-        verify(kycDocumentRepository).delete(autoCreated);
-        verify(kycDocumentRepository).save(existing);
-    }
-
-    @Test
-    @DisplayName("Verso : rattache au recto, sans devenir une piece a part")
-    void backSideAttachesToTheFront() {
+    @DisplayName("Verso : la piece est retrouvee par son verso, aucune piece n'est creee")
+    void backReturnsTheFrontPiece() {
         Document frontFile = new Document();
         frontFile.setCode("DOC-1");
-        KycDocument front = KycDocument.builder().id(10L).kycCase(kycCase).document(frontFile).documentType("CNI")
-                .status(KycDocumentVerificationStatus.PENDING).build();
-        when(kycDocumentRepository.findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, "CNI"))
-                .thenReturn(List.of(front, autoCreated));
+        KycDocument front = KycDocument.builder().id(10L).shortId(3L).kycCase(kycCase).document(frontFile)
+                .backDocument(uploaded).documentType("CNI").status(KycDocumentVerificationStatus.PENDING).build();
+        when(kycDocumentRepository.findAllByBackDocument(uploaded)).thenReturn(List.of(front));
 
-        service.uploadDocument(member, "CNI", null, null, null, file, "BACK");
+        var result = service.uploadDocument(member, "CNI", null, null, null, file, "BACK");
 
-        assertThat(front.getBackDocument()).isSameAs(uploaded);
-        verify(kycDocumentRepository).delete(autoCreated);
+        ArgumentCaptor<DocumentUploadMetadataRequest> metadata = ArgumentCaptor.forClass(DocumentUploadMetadataRequest.class);
+        verify(documentService).upload(metadata.capture(), any());
+        assertThat(metadata.getValue().getKycSide()).isEqualTo("BACK");
+        assertThat(result.getDocumentCode()).isEqualTo("DOC-1");
+        verify(kycDocumentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Retrait d'une piece en attente : fichiers archives, piece retiree, dossier recalcule")
+    void deletingArchivesTheFilesSoANewUploadIsPossible() {
+        Document frontFile = Document.builder().code("DOC-1").status(DocumentStatus.PENDING_REVIEW).build();
+        Document backFile = Document.builder().code("DOC-3").status(DocumentStatus.PENDING_REVIEW).build();
+        KycDocument piece = KycDocument.builder().id(10L).shortId(3L).kycCase(kycCase).document(frontFile)
+                .backDocument(backFile).documentType("CNI").status(KycDocumentVerificationStatus.PENDING).build();
+        when(kycDocumentRepository.findByShortId(3L)).thenReturn(Optional.of(piece));
+
+        service.deleteDocument(member, 3L);
+
+        verify(documentService).archive(org.mockito.ArgumentMatchers.eq("DOC-1"), anyString());
+        verify(documentService).archive(org.mockito.ArgumentMatchers.eq("DOC-3"), anyString());
+        verify(kycDocumentRepository).delete(piece);
+        verify(kycAutomationService).recompute(kycCase);
     }
 
     @Test

@@ -98,12 +98,13 @@ Module [document](../README.md) · 8 route(s).
 
 - Accès : tout compte connecté
 - Réponse : `DocumentUploadConfigResponse`
-- Modèles : [DocumentUploadConfigResponse](#m-DocumentUploadConfigResponse)
+- Modèles : [DocumentUploadConfigResponse](#m-DocumentUploadConfigResponse), [DocumentSpace](#m-DocumentSpace)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTypeController.java`, méthode `uploadConfig`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `code` | chemin | `String` | oui |  |
+| `space` | requête | `DocumentSpace` |  |  |
 
 ## Modèles
 
@@ -181,3 +182,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `allowedMimeTypes` | texte[] |  |  |
 | `maxFileSizeBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `category` | texte |  |  |
+
+<a id="m-DocumentSpace"></a>
+#### DocumentSpace
+
+Énumération : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC`

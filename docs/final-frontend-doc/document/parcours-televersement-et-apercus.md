@@ -49,7 +49,7 @@ Pas de route d'espace pour `KYC_SPACE` : les pièces KYC passent par `/documents
 `POST /sni/api/v1/documents/upload-batch` ([route](routes/DocumentController.md#r-post-sni-api-v1-documents-upload-batch)), droit `DOCUMENT:UPLOAD`.
 
 1. Parties : `files` répétée (une par fichier, 20 au plus), `ownerType`, `ownerCode`, `documentTypeCode` (obligatoires), `space`, `folderCode`, `referenceCode`, `tagCodes` (facultatifs). Le total ne doit pas dépasser 10 Mo.
-2. Chaque fichier devient un document distinct ; son titre est le nom du fichier sans extension, `_` remplacés par des espaces. Un `folderCode` inconnu est ignoré sans erreur.
+2. Chaque fichier devient un document distinct ; son titre est le nom du fichier sans extension, `_` remplacés par des espaces. Chaque fichier est enregistré d'un bloc (document, dossier, étiquettes) : un échec n'en laisse pas une moitié. Le `folderCode` passe par les contrôles du dépôt (dossier inconnu ou restreint : le fichier échoue). `space` ne peut ni imposer ni quitter l'espace KYC (lot KG4).
 3. Réponse `201` `DocumentBulkActionResponse` : `total`, `succeeded`, `failed`, `results[]` avec `code`, `status` (`UPLOADED` ou `FAILED`) et `reason` (nom du fichier, suivi du message d'erreur en cas d'échec). Afficher le détail par fichier.
 4. Avec un type `multipleAllowed = false`, seul le premier fichier passe ; les suivants échouent.
 
@@ -58,7 +58,7 @@ Pas de route d'espace pour `KYC_SPACE` : les pièces KYC passent par `/documents
 `POST /sni/api/v1/documents/import-zip` ([route](routes/DocumentController.md#r-post-sni-api-v1-documents-import-zip)), droit `DOCUMENT:UPLOAD`.
 
 1. La partie fichier s'appelle **`file`** (le code lit `@RequestPart("file")` ; le fichier généré l'affiche sous le nom de variable `zipFile`). Autres parties : comme le lot.
-2. 50 fichiers au plus ; au-delà, une ligne d'erreur et l'arrêt. Chaque répertoire de l'archive devient un dossier de classement (créé sous `folderCode` s'il est fourni, dans l'espace `space` ou `GENERIC`) ; un dossier de même nom existant est réutilisé.
+2. Taille de l'archive : au plus la taille maximale d'une requête du serveur (10 Mo aujourd'hui ; 100 Mo au maximum) ; une fois décompressée, 25 Mo par fichier et 200 Mo pour toute l'archive (archive piégée refusée), chemins avec `..` ou absolus refusés (17/11/2026). 50 fichiers au plus ; au-delà, une ligne d'erreur et l'arrêt. Chaque répertoire de l'archive devient un dossier de classement (créé sous `folderCode` s'il est fourni, dans l'espace `space` ou `GENERIC`) ; un dossier de même nom existant est réutilisé.
 3. Le type MIME de chaque fichier est deviné d'après son nom ; la signature binaire reste contrôlée.
 4. Réponse `201` `ZipImportResponse` : `totalFiles`, `succeeded`, `failed`, `foldersCreated`, `items[]` (`originalPath`, `documentCode`, `folderCode`, `success`, `error`).
 
@@ -67,8 +67,8 @@ Pas de route d'espace pour `KYC_SPACE` : les pièces KYC passent par `/documents
 `POST /sni/api/v1/documents/{code}/replace` ([route](routes/DocumentController.md#r-post-sni-api-v1-documents-code-replace)), droit `DOCUMENT:UPLOAD`, partie `file` seule, `Idempotency-Key` conseillé.
 
 1. Le fichier est contrôlé contre les formats du type (pas contre sa taille maximale).
-2. Une nouvelle version devient courante ; le statut repasse à `PENDING_REVIEW` si le type exige une revue, sinon `APPROVED`. Les pièces KYC liées repassent `PENDING`.
-3. Aucun contrôle de statut ni de verrou : un document archivé, expiré ou refusé est remis en circuit. Proposer ce bouton surtout pour `NEEDS_CORRECTION`, `REJECTED` et `EXPIRED`.
+2. Une nouvelle version devient courante ; le statut suit la même règle qu'au dépôt (`autoApprove`, délai, revue). Les pièces KYC liées repassent `PENDING`.
+3. Refusé (`400` « … il ne se remplace pas, déposez un nouveau document ») sur un document `ARCHIVED`, `EXPIRED`, `SUPERSEDED` ou `SIGNED` ; refusé (`409`) si un autre utilisateur le verrouille ou sous gel juridique. Proposer ce bouton pour `PENDING_REVIEW`, `NEEDS_CORRECTION`, `REJECTED` et `APPROVED` (17/11/2026, lot KG4).
 4. Réponse `200` `DocumentResponse` à jour.
 
 ## Consulter et restaurer les versions
@@ -116,7 +116,7 @@ Chaque appel des trois routes est inscrit au journal d'accès (`PREVIEW` ou `DOW
 
 1. `POST /sni/api/v1/documents/{code}/lock` ([route](routes/DocumentController.md#r-post-sni-api-v1-documents-code-lock)), droit `DOCUMENT:UPLOAD`, sans corps : verrou d'une heure au nom de l'utilisateur. `400` « Document is locked by another user » si un autre utilisateur détient un verrou non expiré.
 2. `POST /sni/api/v1/documents/{code}/unlock` : par le détenteur, ou par un compte `ROLE_ADMIN`/`ROLE_SUPER_ADMIN`, sinon `400` « Only the user who locked the document or an admin can unlock it ». Sans verrou : `200` sans effet.
-3. Réponses vides `200`. L'état du verrou n'est lisible nulle part et n'empêche aucune autre action : ne pas construire d'interface qui en dépende.
+3. Réponses vides `200`. Depuis le 17/11/2026 (lot KG4), chaque `DocumentResponse` porte `locked`, `lockedById`, `lockedByName`, `lockExpiresAt` ; tant que le verrou court, un autre utilisateur ne peut ni remplacer, ni restaurer une version, ni archiver, ni décider (approuver, refuser, faire corriger), ni changer étiquettes et métadonnées, ni signer (`409`). Afficher un cadenas avec le nom du détenteur et masquer ces actions.
 
 ## Archiver un document
 
