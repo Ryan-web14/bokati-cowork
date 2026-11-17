@@ -2178,6 +2178,34 @@
    "methods": [
     "PATCH"
    ],
+   "path": "/sni/api/v1/cash-registers/requests/{requestNumber}/cancel",
+   "package": "features.payment.controller",
+   "controller": "CashRequestController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/CashRequestController.java",
+   "handler": "cancel",
+   "declaredIn": "CashRequestController",
+   "access": {
+    "kind": "admin",
+    "permission": "CASH_MOVEMENT:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.ReviewCashRequestRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "requestNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashRequestResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
    "path": "/sni/api/v1/cash-registers/requests/{requestNumber}/reject",
    "package": "features.payment.controller",
    "controller": "CashRequestController",
@@ -7016,6 +7044,9 @@
      "type": "string"
     },
     "closeReason": {
+     "type": "string"
+    },
+    "confirmationNote": {
      "type": "string"
     }
    }

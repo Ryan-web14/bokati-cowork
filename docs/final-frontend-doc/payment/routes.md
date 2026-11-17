@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-211 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+212 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -74,6 +74,7 @@
 | GET | `/sni/api/v1/cash-registers/requests` | CASH:READ | [CashRequestController](routes/CashRequestController.md#r-get-sni-api-v1-cash-registers-requests) |
 | GET | `/sni/api/v1/cash-registers/requests/{requestNumber}` | CASH:READ | [CashRequestController](routes/CashRequestController.md#r-get-sni-api-v1-cash-registers-requests-requestnumber) |
 | PATCH | `/sni/api/v1/cash-registers/requests/{requestNumber}/approve` | CASH_MOVEMENT:APPROVE | [CashRequestController](routes/CashRequestController.md#r-patch-sni-api-v1-cash-registers-requests-requestnumber-approve) |
+| PATCH | `/sni/api/v1/cash-registers/requests/{requestNumber}/cancel` | CASH_MOVEMENT:CREATE | [CashRequestController](routes/CashRequestController.md#r-patch-sni-api-v1-cash-registers-requests-requestnumber-cancel) |
 | PATCH | `/sni/api/v1/cash-registers/requests/{requestNumber}/reject` | CASH_MOVEMENT:APPROVE | [CashRequestController](routes/CashRequestController.md#r-patch-sni-api-v1-cash-registers-requests-requestnumber-reject) |
 | POST | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/requests` | CASH_MOVEMENT:CREATE | [CashRequestController](routes/CashRequestController.md#r-post-sni-api-v1-cash-registers-sessions-sessionnumber-requests) |
 | GET | `/sni/api/v1/cash-registers/sessions/{sessionNumber}/indicators` | CASH:READ | [CashSessionInsightController](routes/CashSessionInsightController.md#r-get-sni-api-v1-cash-registers-sessions-sessionnumber-indicators) |

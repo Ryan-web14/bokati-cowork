@@ -18,6 +18,10 @@ public interface CashRequestService {
 
     CashRequestResponse get(String requestNumber);
 
+    CashRequestResponse cancel(String requestNumber, ReviewCashRequestRequest request);
+
+    int cancelPendingOfSession(String sessionNumber);
+
     PaginatedResponse<CashRequestResponse> list(String registerCode, String sessionNumber, CashRequestType requestType,
                                                 CashRequestStatus status, String requestedBy, String searchText, Pageable pageable);
 }

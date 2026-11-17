@@ -28,7 +28,10 @@ public record CashPaymentDeclarationResponse(
         String transactionNumber,
         Instant closedAt,
         String closedBy,
-        String closeReason
+        /** Motif d'une annulation ou d'une expiration ; nul pour une annonce confirmee. */
+        String closeReason,
+        /** Note de la caisse a la confirmation ; nulle sinon. */
+        String confirmationNote
 ) {
     public static CashPaymentDeclarationResponse of(CashPaymentDeclaration declaration) {
         return new CashPaymentDeclarationResponse(
@@ -52,6 +55,7 @@ public record CashPaymentDeclarationResponse(
                 declaration.getTransactionNumber(),
                 declaration.getClosedAt(),
                 declaration.getClosedBy(),
-                declaration.getCloseReason());
+                declaration.getStatus() == CashDeclarationStatus.CONFIRMED ? null : declaration.getCloseReason(),
+                declaration.getStatus() == CashDeclarationStatus.CONFIRMED ? declaration.getCloseReason() : null);
     }
 }

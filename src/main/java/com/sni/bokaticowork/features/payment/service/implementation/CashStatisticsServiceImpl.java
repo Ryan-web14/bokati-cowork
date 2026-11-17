@@ -263,7 +263,7 @@ public class CashStatisticsServiceImpl implements CashStatisticsService {
     private List<CashRegisterStatisticsResponse.HourlyVolume> computePeakHours(List<CashMovement> movements) {
         Map<Integer, List<CashMovement>> byHour = movements.stream()
                 .filter(m -> m.getCreatedAt() != null)
-                .collect(Collectors.groupingBy(m -> m.getCreatedAt().atZone(ZoneOffset.UTC).getHour()));
+                .collect(Collectors.groupingBy(m -> m.getCreatedAt().atZone(com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.ZONE).getHour()));
 
         return byHour.entrySet().stream()
                 .map(entry -> new CashRegisterStatisticsResponse.HourlyVolume(

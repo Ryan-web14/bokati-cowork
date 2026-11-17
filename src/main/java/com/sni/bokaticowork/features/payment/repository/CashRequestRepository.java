@@ -13,6 +13,9 @@ public interface CashRequestRepository extends JpaRepository<CashRequest, Long> 
 
     Optional<CashRequest> findByRequestNumber(String requestNumber);
 
+    java.util.List<CashRequest> findAllByCashSession_SessionNumberAndStatus(String sessionNumber,
+                                                                           com.sni.bokaticowork.features.payment.enums.CashRequestStatus status);
+
     @Query(nativeQuery = true,
             value = """
                     SELECT cr.*
