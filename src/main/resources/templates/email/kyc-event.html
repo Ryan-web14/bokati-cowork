@@ -75,6 +75,30 @@
         <p>Rendez-vous dans votre espace personnel, o&#249; le d&#233;tail des &#233;l&#233;ments attendus vous est indiqu&#233;.</p>
       </div>
 
+      <!-- Piece ajoutee au dossier (lot KG3) -->
+      <div th:case="'KYC_CASE_REQUIREMENT_ADDED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Pour compl&#233;ter votre dossier de v&#233;rification, nous avons besoin d&#8217;une pi&#232;ce suppl&#233;mentaire&#8202;:
+          <strong th:text="${documentTypeName}">Pi&#232;ce</strong><span th:if="${required == false}"> (facultative)</span>.</p>
+        <p>Vous pouvez la d&#233;poser depuis votre espace personnel.</p>
+      </div>
+
+      <!-- Piece renvoyee en correction (lot KG3) -->
+      <div th:case="'KYC_DOCUMENT_CORRECTION_REQUESTED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Une de vos pi&#232;ces doit &#234;tre corrig&#233;e avant que nous puissions la valider.</p>
+        <p th:if="${reason}" th:text="${reason}">Motif</p>
+        <p>D&#233;posez une nouvelle version depuis votre espace personnel.</p>
+      </div>
+
+      <!-- Renouvellement (lot KG3) -->
+      <div th:case="'KYC_RENEWAL_REQUIRED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Une pi&#232;ce de votre dossier de v&#233;rification est arriv&#233;e &#224; &#233;ch&#233;ance<span th:if="${documentTypeName}">&#8202;:
+          <strong th:text="${documentTypeName}">Pi&#232;ce</strong></span>. Pour continuer &#224; profiter de nos services,
+          d&#233;posez une pi&#232;ce &#224; jour depuis votre espace personnel.</p>
+      </div>
+
       <!-- Rappel amical : dossier incomplet -->
       <div th:case="'KYC_INCOMPLETE_REMINDER'">
         <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>

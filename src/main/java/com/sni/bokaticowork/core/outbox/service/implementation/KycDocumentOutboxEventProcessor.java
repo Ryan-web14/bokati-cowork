@@ -59,13 +59,9 @@ public class KycDocumentOutboxEventProcessor implements OutboxEventProcessor {
         vars.put("kycCaseCode",  kycCaseCode != null ? kycCaseCode : "");
         vars.put("eventType",    event.getEventType());
 
-        try {
-            mailService.sendKycDocumentNotification(recipient.email(), vars);
-            log.info("KYC document notification sent to {} for event={}", recipient.email(), event.getEventType());
-        } catch (Exception ex) {
-            log.warn("Failed to send KYC document notification for event={} to {}: {}",
-                    event.getEventType(), recipient.email(), ex.getMessage());
-        }
+        // Lot KG3 : un echec de mise en file remonte, la boite d'envoi reessaie.
+        mailService.sendKycDocumentNotification(recipient.email(), vars);
+        log.info("KYC document notification queued for {} event={}", recipient.email(), event.getEventType());
     }
 
     private JsonNode readPayload(OutboxEvent event) {

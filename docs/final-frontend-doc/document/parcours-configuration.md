@@ -24,8 +24,8 @@ Droit commun : `SYSTEM:SETTINGS` (règle d'URL). Les politiques de rétention ex
 | `ownerType` | propriétaire visé (filtre de liste, aucun contrôle au dépôt) | aucun |
 | `description`, `helpText`, `documentDetails` | textes | |
 | `requiresReview` | dépôt en `PENDING_REVIEW` au lieu d'`APPROVED` | `false` (**dépôts approuvés d'office**) |
-| `autoApprove` | dépôt en `APPROVED` même si `requiresReview` | `false` |
-| `autoApproveAfterDays` | approbation automatique après N jours (workers, voir README) | aucun |
+| `autoApprove` | dépôt en `APPROVED` même si `requiresReview`, quand `autoApproveAfterDays` est vide | `false` |
+| `autoApproveAfterDays` | le document attend la revue, puis est approuvé automatiquement si personne ne l'a examiné en N jours (compté depuis la dernière version) ; jamais s'il a été refusé ou renvoyé en correction. Suffit seul (lot KG3) | aucun |
 | `requiresExpiryDate` | expiration complétée à émission + 5 ans si absente | `false` |
 | `requiresIssueDate`, `requiresDocumentNumber` | imposés au dépôt par le portail membre seulement | `false` |
 | `requiresSignature` | crée une demande de signature à l'approbation | `false` |
@@ -63,7 +63,7 @@ Elles disent quels types chaque propriétaire doit fournir ; elles pilotent le K
 
 Effets à connaître :
 - S'il n'existe **aucune** exigence obligatoire active pour un type de propriétaire, le recalcul automatique considère tout dossier KYC de ce type comme approuvé (et active le membre ou le client).
-- Ajouter une exigence ne relance pas les dossiers existants : ils ne seront recalculés qu'au prochain dépôt ou à la prochaine revue d'une de leurs pièces.
+- Ajouter une exigence globale ne relance pas les dossiers existants : ils ne seront recalculés qu'au prochain dépôt ou à la prochaine revue d'une de leurs pièces. Pour un dossier précis, ajouter la pièce au dossier ou changer son niveau KYC (le titulaire est prévenu).
 
 ## Politiques de rétention
 

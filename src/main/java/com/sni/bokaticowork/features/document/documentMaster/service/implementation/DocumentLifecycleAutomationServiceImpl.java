@@ -36,6 +36,21 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
     private final KycAutomationService kycAutomationService;
     private final OutboxService outboxService;
 
+    private com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService documentService;
+    private com.sni.bokaticowork.features.document.documentMaster.repository.DocumentVersionRepository versionRepository;
+    private com.sni.bokaticowork.features.document.documentMaster.repository.DocumentReviewRepository reviewRepository;
+
+    /** Lot KG3 : l'approbation automatique passe par l'approbation normale (trace de revue, KYC, evenements). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAutoApproveCollaborators(
+            @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService documentService,
+            com.sni.bokaticowork.features.document.documentMaster.repository.DocumentVersionRepository versionRepository,
+            com.sni.bokaticowork.features.document.documentMaster.repository.DocumentReviewRepository reviewRepository) {
+        this.documentService = documentService;
+        this.versionRepository = versionRepository;
+        this.reviewRepository = reviewRepository;
+    }
+
     @Override
     public int expireDocuments() {
         LocalDate today = LocalDate.now();
@@ -43,6 +58,10 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
         int processed = 0;
         for (Document document : documents) {
             if (document.getExpiryDate() == null || !document.getExpiryDate().isBefore(today)) {
+                continue;
+            }
+            // Lot KG3 : une piece KYC expire par la tache KYC (delai de grace, renouvellement).
+            if (isKyc(document)) {
                 continue;
             }
             document.setStatus(DocumentStatus.EXPIRED);
@@ -64,6 +83,10 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
             List<Document> docs = documentRepository.findAllByStatusInAndExpiryDateBetween(
                     EXPIRABLE_STATUSES, target, target);
             for (Document doc : docs) {
+                if (isKyc(doc)) {
+                    // Lot KG3 : rappels des pieces KYC par la tache KYC (un seul courriel).
+                    continue;
+                }
                 // A document sits on a threshold for a whole day, and this worker runs hourly, so
                 // it matches 24 times. Thresholds are walked from the furthest out to the nearest,
                 // hence "strictly closer than the one already sent".
@@ -89,7 +112,22 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
         outboxService.publish("DOCUMENT_AUTO_EXPIRED", "DOCUMENT", document.getCode(), payload);
     }
 
+    /**
+     * Lot KG3 : une seule regle d'approbation automatique, pour tous les documents (KYC compris).
+     *
+     * <ul>
+     *   <li>{@code autoApprove} sans delai : approuve au depot (voir le depot) ;</li>
+     *   <li>{@code autoApproveAfterDays} &gt; 0 : approuve quand la version courante attend depuis ce
+     *       delai, <b>jamais</b> si le document a deja ete refuse ou renvoye en correction ;</li>
+     *   <li>par l'approbation normale (trace de revue, piece KYC, evenements), une transaction par
+     *       document : une erreur n'annule pas les autres.</li>
+     * </ul>
+     *
+     * <p>Avant : il fallait aussi {@code autoApprove}, qui approuvait deja au depot (la regle ne
+     * servait jamais), et la tache KYC approuvait de son cote, y compris des pieces corrigees.</p>
+     */
     @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public int autoApproveDocuments() {
         List<DocumentType> autoApproveTypes = documentTypeRepository.findAllByAutoApproveAfterDaysIsNotNull();
         int approved = 0;
@@ -98,23 +136,51 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
             if (type.getAutoApproveAfterDays() == null || type.getAutoApproveAfterDays() <= 0) {
                 continue;
             }
-            if (!Boolean.TRUE.equals(type.getAutoApprove())) {
-                continue;
-            }
             Instant threshold = now.minus(type.getAutoApproveAfterDays(), ChronoUnit.DAYS);
-            List<Document> candidates = documentRepository
-                    .findAllByStatusAndDocumentTypeAndUploadedAtBefore(
-                            DocumentStatus.PENDING_REVIEW, type, threshold);
+            List<Document> candidates = documentRepository.findAllByStatusAndDocumentTypeAndUploadedAtBefore(
+                    DocumentStatus.PENDING_REVIEW, type, threshold);
             for (Document doc : candidates) {
-                doc.setStatus(DocumentStatus.APPROVED);
-                doc.setUpdatedAt(now);
-                documentRepository.save(doc);
-                kycAutomationService.syncFromDocumentReview(doc);
-                publishAutoApprovedEvent(doc);
-                approved++;
+                if (!eligibleForAutoApproval(doc, threshold)) {
+                    continue;
+                }
+                try {
+                    var decision = new com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentReviewDecisionRequest();
+                    decision.setReviewedBy(com.sni.bokaticowork.core.utils.constant.SystemActors.SYSTEM_USER_ID);
+                    decision.setComment("Approbation automatique après " + type.getAutoApproveAfterDays() + " jour(s) sans revue");
+                    if (documentService != null) {
+                        documentService.approve(doc.getCode(), decision);
+                    }
+                    publishAutoApprovedEvent(doc);
+                    approved++;
+                } catch (RuntimeException ex) {
+                    org.slf4j.LoggerFactory.getLogger(getClass()).warn("Approbation automatique impossible pour {} : {}", doc.getCode(), ex.getMessage());
+                }
             }
         }
         return approved;
+    }
+
+    /** Version courante deposee avant le seuil, et jamais refusee ni renvoyee en correction. */
+    boolean eligibleForAutoApproval(Document doc, Instant threshold) {
+        if (versionRepository != null) {
+            var current = versionRepository.findByDocumentAndCurrentTrue(doc).orElse(null);
+            if (current != null && current.getUploadedAt() != null && current.getUploadedAt().isAfter(threshold)) {
+                return false;
+            }
+        }
+        if (reviewRepository != null) {
+            boolean contested = reviewRepository.findAllByDocumentOrderByReviewedAtDesc(doc).stream()
+                    .anyMatch(review -> review.getReviewStatus() == com.sni.bokaticowork.features.document.documentMaster.enums.DocumentReviewStatus.REJECTED
+                            || review.getReviewStatus() == com.sni.bokaticowork.features.document.documentMaster.enums.DocumentReviewStatus.NEEDS_CORRECTION);
+            if (contested) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isKyc(Document document) {
+        return document.getCategory() == com.sni.bokaticowork.features.document.documentMaster.enums.DocumentCategory.KYC;
     }
 
     private void publishAutoApprovedEvent(Document document) {

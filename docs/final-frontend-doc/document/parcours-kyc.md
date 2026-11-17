@@ -163,6 +163,24 @@ Quand toutes les pièces exigées sont vérifiées, le recalcul passe le dossier
 - Après un ajout ou un retrait, le dossier est recalculé : un dossier approuvé se rouvre (`IN_PROGRESS`) si une pièce obligatoire manque ; la pièce apparaît aussitôt dans l'espace client du titulaire, qui peut la déposer.
 - Dépôt : seules les pièces demandées pour le dossier se déposent (équipe et titulaire) : `400` « Cette pièce n'est pas demandée pour ce dossier … ».
 
+## Courriels au titulaire
+
+Envoyés par la boîte d'envoi (un échec de mise en file est réessayé, lot KG3) :
+
+| Événement | Objet |
+| --- | --- |
+| `KYC_CASE_CREATED` | Votre dossier KYC est ouvert |
+| `KYC_CASE_APPROVED` (manuel ou par recalcul) | Bonne nouvelle : votre dossier KYC est validé |
+| `KYC_CASE_CORRECTION_REQUESTED` | Une petite mise à jour est nécessaire sur votre dossier KYC |
+| `KYC_DOCUMENT_CORRECTION_REQUESTED` | Une pièce de votre dossier KYC est à corriger (avec le motif) |
+| `KYC_CASE_REQUIREMENT_ADDED` | Une pièce de plus pour votre dossier KYC (nom de la pièce, facultative ou non) |
+| `KYC_CASE_LEVEL_CHANGED` | Quelques pièces complémentaires pour votre dossier KYC (liste) |
+| `KYC_INCOMPLETE_REMINDER` | Petit rappel : votre dossier KYC vous attend (après 3, 7, 14 jours, 3 au plus) |
+| `KYC_DOCUMENT_EXPIRY_REMINDER` | Échéance d'une pièce : un rappel par seuil (60, 30, 7 jours) |
+| `KYC_RENEWAL_REQUIRED` | Votre dossier KYC est à renouveler (pièce échue, après 15 jours de grâce) |
+
+Les autres événements (soumission, affectation, note, risque, recalcul…) sont consignés dans la chronologie du dossier sans courriel ; ils ne finissent plus en erreur dans la boîte d'envoi.
+
 ## Export PDF
 
 `GET /sni/api/v1/kyc/cases/{code}/export/pdf?includeInternalNotes=true` ([route](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code-export-pdf)) : fichier `kyc-<code>.pdf` (`attachment`), avec dossier, chronologie, échéances et notes. Télécharger par `fetch` avec Bearer puis `blob`.

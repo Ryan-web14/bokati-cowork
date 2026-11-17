@@ -2,7 +2,7 @@
 
 Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan validé avec les décisions de l'exploitant du 16/11/2026 (voir plus bas).
 
-État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)), **KG2 fait** ([lot-kg2-recto-verso.md](lot-kg2-recto-verso.md)).
+État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)), **KG2 fait** ([lot-kg2-recto-verso.md](lot-kg2-recto-verso.md)), **KG3 fait** ([lot-kg3-evenements-relances.md](lot-kg3-evenements-relances.md)).
 
 ## Constat (vérifié dans le code le 16/11/2026)
 
@@ -86,22 +86,22 @@ Critères de validation (testés) :
 | K4 | Verso et `multipleAllowed`, recto jamais `SUPERSEDED` | Réglé (KG2) |
 | K5 | Verso recréé en pièce distincte | Réglé (KG2) |
 | K6 | `KycDocumentResponse.id` incohérent, `documentIds` = codes | Réglé (KG2) |
-| K7 | Événements KYC sans processeur, `KYC_CASE_REJECTED` jamais publié, courriels en échec perdus | confirmé |
-| K8 | Relances d'expiration à date exacte du lundi | confirmé |
-| K9 | Approbation automatique incohérente | confirmé |
+| K7 | Événements KYC sans processeur, `KYC_CASE_REJECTED` jamais publié, courriels en échec perdus | Réglé (KG3) |
+| K8 | Relances d'expiration à date exacte du lundi | Réglé (KG3) |
+| K9 | Approbation automatique incohérente | Réglé (KG3) |
 | K10 | `reviewedBy`, `authorId` fournis par le client | confirmé (plus large) |
 | K-n1 | Écritures KYC en `KYC:READ` ; `DOCUMENT:REVIEW` contourne `KYC:APPROVE` | nouveau |
 | K-n2 | Activer un client approuve son dossier | Réglé (KG1) |
 | K-n3 | Synchronisation asynchrone dans la transaction de l'appelant | Réglé (KG2) |
-| K-n4 | Approbation automatique de pièces renvoyées en correction ; une transaction pour tout le passage | nouveau |
-| K-n5 | Expiration horaire des documents court-circuite le renouvellement KYC | nouveau |
+| K-n4 | Approbation automatique de pièces renvoyées en correction ; une transaction pour tout le passage | Réglé (KG3) |
+| K-n5 | Expiration horaire des documents court-circuite le renouvellement KYC | Réglé (KG3) |
 | K-n6 | Verso jamais exigé approuvé | Réglé (KG1) |
 | K-n7 | Exigence retirée non ré-ajoutable ; pas de recalcul | Réglé (KG1) |
 | K-n8 | Statut de correction écrasé | Réglé (KG1) |
 | K-n9 | Liste des pièces du portail sans statut | Réglé (KG1) |
 | K-n10 | Suppression au portail bloque un nouveau dépôt | Réglé (KG2) |
 | K-n11 | Décisions manuelles écrasées, approbation sans garde | Réglé (KG1) |
-| K-n12 | Relances envoyées à des pièces refusées ou remplacées | nouveau |
+| K-n12 | Relances envoyées à des pièces refusées ou remplacées | Réglé (KG3) |
 | G1 | Opérations en masse en une transaction ; `{space}` sans effet | confirmé |
 | G2 | Droits `DOCUMENT:REVIEW_<ESPACE>` sans effet | confirmé |
 | G3 | Écritures en `DOCUMENT:READ` ; signature sans contrôle ni statut `SIGNED` | confirmé |
@@ -117,7 +117,7 @@ Critères de validation (testés) :
 | G13 | Messages en anglais ; erreurs de taille et de conversion en 500 | confirmé |
 | G-n1 | Dossiers restreints contournés (dépôt, étiquettes, file de revue...) | nouveau |
 | G-n2 | Archive ZIP piégée (taille décompressée non bornée) | nouveau |
-| G-n3 | `autoApproveAfterDays` presque inutilisé, sans trace de revue | nouveau |
+| G-n3 | `autoApproveAfterDays` presque inutilisé, sans trace de revue | Réglé (KG3) |
 | G-n4 | `folderCode`, `folderName` jamais remplis | nouveau |
 | G-n5 | Demande de signature sur un document refusé ou archivé | nouveau |
 | G-n6 | Fichiers orphelins après annulation | nouveau |

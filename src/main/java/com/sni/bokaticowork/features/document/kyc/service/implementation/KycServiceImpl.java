@@ -1055,7 +1055,7 @@ public class KycServiceImpl implements KycService {
                 again.setDocumentTypeName(request.getDocumentTypeName().trim());
             }
             caseRequirementRepository.save(again);
-            publishCaseEvent("KYC_CASE_REQUIREMENT_ADDED", kycCase, actor(null));
+            publishRequirementAdded(kycCase, again);
             kycAutomationService.recompute(kycCase);
             return toCaseRequirementResponse(again);
         }
@@ -1074,7 +1074,7 @@ public class KycServiceImpl implements KycService {
                 .required(request.getRequired() != null ? request.getRequired() : Boolean.TRUE)
                 .build();
         caseRequirementRepository.save(entity);
-        publishCaseEvent("KYC_CASE_REQUIREMENT_ADDED", kycCase, actor(null));
+        publishRequirementAdded(kycCase, entity);
         // Lot KG1 : la piece est aussitot demandee et comptee (un dossier approuve se rouvre si elle est obligatoire).
         kycAutomationService.recompute(kycCase);
         return toCaseRequirementResponse(entity);
@@ -1170,7 +1170,10 @@ public class KycServiceImpl implements KycService {
         kycDoc.setStatus(KycDocumentVerificationStatus.REJECTED);
         documentRepository.save(kycDoc);
 
-        publishCaseEvent("KYC_DOCUMENT_CORRECTION_REQUESTED", kycCase, actor(request.getReviewedBy()));
+        publishCaseEvent("KYC_DOCUMENT_CORRECTION_REQUESTED", kycCase, actor(request.getReviewedBy()), java.util.Map.of(
+                "reason", request.getCorrectionNote() == null ? "" : request.getCorrectionNote(),
+                "documentCode", kycDoc.getDocument().getCode(),
+                "documentTypeName", documentTypeRepository.findByCode(kycDoc.getDocumentType()).map(DocumentType::getName).orElse(kycDoc.getDocumentType())));
         return mapper.toDocumentResponse(kycDoc);
     }
 
@@ -1236,8 +1239,27 @@ public class KycServiceImpl implements KycService {
         }
     }
 
-    private void publishCaseEvent(String eventType, KycCase kycCase, Long actorId) {
+    /** Lot KG3 : « piece demandee », avec le nom de la piece pour le courriel au titulaire. */
+    private void publishRequirementAdded(KycCase kycCase, KycCaseRequirement requirement) {
         HashMap<String, Object> payload = new HashMap<>();
+        payload.put("kycCaseCode", kycCase.getCode());
+        payload.put("ownerType", kycCase.getOwnerType());
+        payload.put("ownerId", kycCase.getOwnerId());
+        payload.put("status", kycCase.getStatus());
+        payload.put("documentTypeCode", requirement.getDocumentTypeCode());
+        payload.put("documentTypeName", documentTypeRepository.findByCode(requirement.getDocumentTypeCode())
+                .map(DocumentType::getName).orElse(requirement.getDocumentTypeName()));
+        payload.put("required", Boolean.TRUE.equals(requirement.getRequired()));
+        payload.put("actorId", actor(null));
+        outboxService.publish("KYC_CASE_REQUIREMENT_ADDED", "KYC_CASE", kycCase.getCode(), payload);
+    }
+
+    private void publishCaseEvent(String eventType, KycCase kycCase, Long actorId) {
+        publishCaseEvent(eventType, kycCase, actorId, java.util.Map.of());
+    }
+
+    private void publishCaseEvent(String eventType, KycCase kycCase, Long actorId, java.util.Map<String, Object> extra) {
+        HashMap<String, Object> payload = new HashMap<>(extra);
         payload.put("kycCaseCode", kycCase.getCode());
         payload.put("ownerType", kycCase.getOwnerType());
         payload.put("ownerId", kycCase.getOwnerId());

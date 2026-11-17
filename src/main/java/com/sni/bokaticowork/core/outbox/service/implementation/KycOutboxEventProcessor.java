@@ -32,7 +32,10 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
             "KYC_CASE_REJECTED",
             "KYC_CASE_CORRECTION_REQUESTED",
             "KYC_INCOMPLETE_REMINDER",
-            "KYC_CASE_LEVEL_CHANGED"
+            "KYC_CASE_LEVEL_CHANGED",
+            "KYC_CASE_REQUIREMENT_ADDED",
+            "KYC_DOCUMENT_CORRECTION_REQUESTED",
+            "KYC_RENEWAL_REQUIRED"
     );
 
     private final ObjectMapper objectMapper;
@@ -41,12 +44,18 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
 
     @Override
     public boolean supports(OutboxEvent event) {
-        return "KYC_CASE".equalsIgnoreCase(event.getAggregateType())
-                && NOTIFIABLE_EVENTS.contains(event.getEventType());
+        // Lot KG3 : tous les evenements de dossier ont un processeur. Les autres (soumission,
+        // affectation, note, recalcul...) sont consignes, sans courriel : avant, faute de
+        // processeur, ils etaient retentes puis abandonnes (DEAD).
+        return "KYC_CASE".equalsIgnoreCase(event.getAggregateType());
     }
 
     @Override
     public void process(OutboxEvent event) {
+        if (!NOTIFIABLE_EVENTS.contains(event.getEventType())) {
+            log.debug("KYC event {} recorded without notification", event.getEventType());
+            return;
+        }
         JsonNode payload = readPayload(event);
         DocumentOwnerType ownerType = enumValue(payload, "ownerType", DocumentOwnerType.class);
         Long ownerId = longValue(payload, "ownerId");
@@ -84,14 +93,16 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
             missing.forEach(node -> names.add(node.asText()));
         }
         vars.put("missingDocuments", names);
-
-        try {
-            mailService.sendKycNotification(recipient.email(), subject, vars);
-            log.info("KYC notification sent to {} for event={}", recipient.email(), event.getEventType());
-        } catch (Exception ex) {
-            log.warn("Failed to send KYC notification for event={} to {}: {}",
-                    event.getEventType(), recipient.email(), ex.getMessage());
+        vars.put("documentTypeName", textValue(payload, "documentTypeName"));
+        JsonNode required = payload.get("required");
+        vars.put("required", required == null || required.isNull() ? null : required.asBoolean());
+        if (vars.get("reason") == null) {
+            vars.put("reason", textValue(payload, "comment"));
         }
+
+        // Lot KG3 : un echec de mise en file remonte, la boite d'envoi reessaie (avant, il etait avale).
+        mailService.sendKycNotification(recipient.email(), subject, vars);
+        log.info("KYC notification queued for {} event={}", recipient.email(), event.getEventType());
     }
 
     private String resolveSubject(String eventType, String caseCode) {
@@ -103,6 +114,9 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
                  "KYC_CASE_CORRECTION_REQUESTED" -> "Une petite mise à jour est nécessaire sur votre dossier KYC" + ref;
             case "KYC_INCOMPLETE_REMINDER" -> "Petit rappel : votre dossier KYC vous attend" + ref;
             case "KYC_CASE_LEVEL_CHANGED" -> "Quelques pièces complémentaires pour votre dossier KYC" + ref;
+            case "KYC_CASE_REQUIREMENT_ADDED" -> "Une pièce de plus pour votre dossier KYC" + ref;
+            case "KYC_DOCUMENT_CORRECTION_REQUESTED" -> "Une pièce de votre dossier KYC est à corriger" + ref;
+            case "KYC_RENEWAL_REQUIRED" -> "Votre dossier KYC est à renouveler" + ref;
             default                      -> "Votre dossier KYC" + ref;
         };
     }
@@ -115,6 +129,9 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
                  "KYC_CASE_CORRECTION_REQUESTED" -> "Mise à jour demandée";
             case "KYC_INCOMPLETE_REMINDER" -> "Rappel";
             case "KYC_CASE_LEVEL_CHANGED" -> "Pièces complémentaires";
+            case "KYC_CASE_REQUIREMENT_ADDED" -> "Pièce demandée";
+            case "KYC_DOCUMENT_CORRECTION_REQUESTED" -> "Pièce à corriger";
+            case "KYC_RENEWAL_REQUIRED" -> "Renouvellement";
             default                      -> "Notification";
         };
     }

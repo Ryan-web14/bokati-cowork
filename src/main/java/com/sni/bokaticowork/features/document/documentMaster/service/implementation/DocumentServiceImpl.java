@@ -644,8 +644,14 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private DocumentStatus initialDocumentStatus(DocumentType documentType) {
-        if (Boolean.TRUE.equals(documentType.getAutoApprove())) {
+        // Lot KG3 : avec un delai (autoApproveAfterDays), le document attend la revue ; la tache du
+        // cycle de vie l'approuve apres le delai. Sans delai, autoApprove approuve au depot.
+        boolean delayed = documentType.getAutoApproveAfterDays() != null && documentType.getAutoApproveAfterDays() > 0;
+        if (Boolean.TRUE.equals(documentType.getAutoApprove()) && !delayed) {
             return DocumentStatus.APPROVED;
+        }
+        if (delayed) {
+            return DocumentStatus.PENDING_REVIEW;
         }
         return Boolean.TRUE.equals(documentType.getRequiresReview()) ? DocumentStatus.PENDING_REVIEW : DocumentStatus.APPROVED;
     }
