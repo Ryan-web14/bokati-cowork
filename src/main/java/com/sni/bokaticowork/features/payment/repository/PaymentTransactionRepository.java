@@ -87,15 +87,15 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             """)
     Optional<PaymentTransaction> findSucceededByPaymentIntentId(@Param("paymentIntentId") Long paymentIntentId);
 
+    /** Transactions rattachees a une session de caisse (encaissements, remboursements). */
+    List<PaymentTransaction> findAllByCashSessionNumberOrderByCreatedAtAsc(String cashSessionNumber);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM payment_transaction
             WHERE metadata_json ->> 'originalTransactionNumber' = :transactionNumber
             ORDER BY created_at ASC
             """)
-    /** Transactions rattachees a une session de caisse (encaissements, remboursements). */
-    List<PaymentTransaction> findAllByCashSessionNumberOrderByCreatedAtAsc(String cashSessionNumber);
-
     List<PaymentTransaction> findAllByOriginalTransactionNumber(@Param("transactionNumber") String transactionNumber);
 
     /** Paiements recents d'une facture (toutes ses intentions) : detection d'un double envoi. */
