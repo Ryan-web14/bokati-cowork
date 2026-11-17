@@ -81,9 +81,56 @@ public class PurchaseService {
 
     // ------------------------------------------------------------------ fournisseurs
 
+    /**
+     * Un fournisseur tel que la comptabilite le voit : fiche comptable, ou fiche d'inventaire pas
+     * encore liee (elle le sera a la premiere commande ou facture).
+     */
+    public record SupplierView(String code, String name, String niu, String rccm, String address, String phone, String email,
+                               String bankDetails, Integer paymentTermsDays, String accountNumber, String defaultAccount,
+                               Boolean vatExempt, java.math.BigDecimal withholdingRate, String withholdingAccount,
+                               String withholdingBase, String withholdingLabel, String status,
+                               /** ACCOUNTING (fiche comptable) ou INVENTORY (fiche d'inventaire pas encore liee). */
+                               String source, String inventoryCode, boolean linked) {
+
+        static SupplierView of(AccSupplier s, String inventoryCode) {
+            return new SupplierView(s.getCode(), s.getName(), s.getNiu(), s.getRccm(), s.getAddress(), s.getPhone(), s.getEmail(),
+                    s.getBankDetails(), s.getPaymentTermsDays(), s.getAccountNumber(), s.getDefaultAccount(), s.getVatExempt(),
+                    s.getWithholdingRate(), s.getWithholdingAccount(), s.getWithholdingBase(), s.getWithholdingLabel(), s.getStatus(),
+                    "ACCOUNTING", inventoryCode, inventoryCode != null);
+        }
+
+        static SupplierView of(Supplier s, String accountNumber) {
+            return new SupplierView(s.getSupplierCode().trim().toUpperCase(Locale.ROOT), s.getName(), s.getTaxId(), null, s.getAddress(),
+                    s.getPhone(), s.getEmail(), null, 30, accountNumber, null, Boolean.FALSE, java.math.BigDecimal.ZERO, null, "HT", null,
+                    "ACTIVE", "INVENTORY", s.getSupplierCode(), false);
+        }
+    }
+
+    /**
+     * Fournisseurs comptables et fournisseurs actifs de l'inventaire (17/11/2026). Avant, seuls ceux
+     * deja lies a la comptabilite apparaissaient : un fournisseur saisi dans l'inventaire restait
+     * invisible tant qu'on ne l'avait pas importe a la main.
+     */
     @Transactional(readOnly = true)
-    public List<AccSupplier> suppliers() {
-        return suppliers.findAllByOrderByNameAsc();
+    public List<SupplierView> suppliers() {
+        List<AccSupplier> accounting = suppliers.findAllByOrderByNameAsc();
+        java.util.Map<Long, Supplier> inventoryById = new java.util.HashMap<>();
+        for (Supplier s : inventorySuppliers.findAllByStatusOrderByNameAsc(SupplierStatus.ACTIVE)) {
+            inventoryById.put(s.getId(), s);
+        }
+        java.util.List<SupplierView> views = new java.util.ArrayList<>();
+        for (AccSupplier s : accounting) {
+            Supplier inventory = s.getInventorySupplierId() == null ? null : inventoryById.remove(s.getInventorySupplierId());
+            views.add(SupplierView.of(s, inventory == null ? null : inventory.getSupplierCode()));
+        }
+        java.util.Set<String> taken = new java.util.HashSet<>();
+        accounting.forEach(s -> taken.add(s.getCode()));
+        String account = settings.text("accounting.purchase.supplier-account", "401");
+        inventoryById.values().stream()
+                .filter(s -> s.getSupplierCode() != null && !taken.contains(s.getSupplierCode().trim().toUpperCase(Locale.ROOT)))
+                .forEach(s -> views.add(SupplierView.of(s, account)));
+        views.sort(java.util.Comparator.comparing(v -> v.name() == null ? "" : v.name().toLowerCase(Locale.ROOT)));
+        return views;
     }
 
     public AccSupplier saveSupplier(AccSupplier request) {
@@ -850,7 +897,11 @@ public class PurchaseService {
     }
 
     private AccSupplier activeSupplier(String code) {
+        // Un fournisseur d'inventaire pas encore lie l'est a sa premiere commande ou facture.
         AccSupplier supplier = suppliers.findByCode(code == null ? "" : code.trim().toUpperCase(Locale.ROOT))
+                .or(() -> LinkedSupplier.find(inventorySuppliers, code)
+                        .filter(inventory -> inventory.getStatus() == SupplierStatus.ACTIVE)
+                        .map(this::linkedSupplier))
                 .orElseThrow(() -> new BadRequestException("Fournisseur inconnu : " + code));
         if (!"ACTIVE".equals(supplier.getStatus())) {
             throw new BadRequestException("Le fournisseur " + supplier.getName() + " est inactif");

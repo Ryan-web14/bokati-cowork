@@ -61,6 +61,7 @@ Rôles : `SUPER_ADMIN`, `ADMIN` et `FINANCE` tout ; `MANAGER` la lecture, la pr�
 
 Voir [finance-suggestion-fournisseurs](../../backend/finance-suggestion-fournisseurs/README.md). La fiche fournisseur de référence est celle de l'inventaire ; `acc_supplier` gagne `inventory_supplier_id` (facultatif, unique) :
 - `POST /suppliers` accepte `inventorySupplierId` ; `POST /suppliers/from-inventory/{code}` retrouve ou crée le fournisseur comptable d'une fiche d'inventaire (nom, NIU, adresse, téléphone, courriel copiés ; `401` et `447` par défaut) ;
+- **`GET /suppliers` liste aussi les fournisseurs de l'inventaire (17/11/2026)** : chaque ligne porte `source` (`ACCOUNTING` : fiche comptable ; `INVENTORY` : fiche d'inventaire active pas encore liée), `inventoryCode` et `linked`. Une fiche d'inventaire déjà liée n'apparaît qu'une fois, sous son fournisseur comptable. Une fiche `INVENTORY` s'utilise telle quelle : son `code` (celui de l'inventaire) est accepté par les commandes et les factures fournisseur, et le fournisseur comptable est créé à ce moment-là (plus besoin de `from-inventory` avant). La réponse n'expose plus l'identifiant interne ni `inventorySupplierId`.
 - `POST /orders/from-need` : `supplierCode` devient facultatif ; absent, la fiche fournisseur portée par les lignes retenues (toutes la même) donne le fournisseur de la commande ; un code de fiche d'inventaire est aussi accepté.
 
 ### Paramètres (domaine Comptabilité)
