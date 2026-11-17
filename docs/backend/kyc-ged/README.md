@@ -2,7 +2,7 @@
 
 Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan validé avec les décisions de l'exploitant du 16/11/2026 (voir plus bas).
 
-État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)), **KG2 fait** ([lot-kg2-recto-verso.md](lot-kg2-recto-verso.md)), **KG3 fait** ([lot-kg3-evenements-relances.md](lot-kg3-evenements-relances.md)), **KG4 fait** ([lot-kg4-ged.md](lot-kg4-ged.md)), **KG5 fait** ([lot-kg5-partage-signature-circuits.md](lot-kg5-partage-signature-circuits.md)), **KG6 fait** ([lot-kg6-erreurs.md](lot-kg6-erreurs.md)), **KG7 fait** ([lot-kg7-centre.md](lot-kg7-centre.md)), **KG9 première partie faite** ([lot-kg9-controles-qualite.md](lot-kg9-controles-qualite.md) : contrôles croisés préenregistrés, qualité d'image au dépôt).
+État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)), **KG2 fait** ([lot-kg2-recto-verso.md](lot-kg2-recto-verso.md)), **KG3 fait** ([lot-kg3-evenements-relances.md](lot-kg3-evenements-relances.md)), **KG4 fait** ([lot-kg4-ged.md](lot-kg4-ged.md)), **KG5 fait** ([lot-kg5-partage-signature-circuits.md](lot-kg5-partage-signature-circuits.md)), **KG6 fait** ([lot-kg6-erreurs.md](lot-kg6-erreurs.md)), **KG7 fait** ([lot-kg7-centre.md](lot-kg7-centre.md)), **KG8 fait** ([lot-kg8-doc-tests.md](lot-kg8-doc-tests.md)), **KG9 première partie faite** ([lot-kg9-controles-qualite.md](lot-kg9-controles-qualite.md) : contrôles croisés préenregistrés, qualité d'image au dépôt).
 
 ## Constat (vérifié dans le code le 16/11/2026)
 
@@ -80,7 +80,7 @@ Critères de validation (testés) :
 
 | N° | Écart | État |
 | --- | --- | --- |
-| K1 | `/disapproved`, `/desapproved` en `KYC:READ` | confirmé |
+| K1 | `/disapproved`, `/desapproved` en `KYC:READ` | Réglé (KG0) |
 | K2 | Approbation par recalcul sans courriel ni portefeuille | Réglé (KG1) |
 | K3 | Exigences du dossier et type de client ignorés | Réglé (KG1) |
 | K4 | Verso et `multipleAllowed`, recto jamais `SUPERSEDED` | Réglé (KG2) |
@@ -89,8 +89,8 @@ Critères de validation (testés) :
 | K7 | Événements KYC sans processeur, `KYC_CASE_REJECTED` jamais publié, courriels en échec perdus | Réglé (KG3) |
 | K8 | Relances d'expiration à date exacte du lundi | Réglé (KG3) |
 | K9 | Approbation automatique incohérente | Réglé (KG3) |
-| K10 | `reviewedBy`, `authorId` fournis par le client | confirmé (plus large) |
-| K-n1 | Écritures KYC en `KYC:READ` ; `DOCUMENT:REVIEW` contourne `KYC:APPROVE` | nouveau |
+| K10 | `reviewedBy`, `authorId` fournis par le client | Réglé (KG0) |
+| K-n1 | Écritures KYC en `KYC:READ` ; `DOCUMENT:REVIEW` contourne `KYC:APPROVE` | Réglé (KG0) |
 | K-n2 | Activer un client approuve son dossier | Réglé (KG1) |
 | K-n3 | Synchronisation asynchrone dans la transaction de l'appelant | Réglé (KG2) |
 | K-n4 | Approbation automatique de pièces renvoyées en correction ; une transaction pour tout le passage | Réglé (KG3) |
@@ -115,7 +115,7 @@ Critères de validation (testés) :
 | G11 | Politique de rétention non réactivable ; rétention en une transaction | Réglé (KG4) |
 | G12 | `reviewedBy` fourni par le client | Réglé (KG0) |
 | G13 | Messages en anglais ; erreurs de taille et de conversion en 500 | Réglé (KG6) |
-| G-n1 | Dossiers restreints contournés (dépôt, étiquettes, file de revue...) | nouveau |
+| G-n1 | Dossiers restreints contournés (dépôt, étiquettes, file de revue...) | Réglé (KG0) |
 | G-n2 | Archive ZIP piégée (taille décompressée non bornée) | Réglé (KG4) |
 | G-n3 | `autoApproveAfterDays` presque inutilisé, sans trace de revue | Réglé (KG3) |
 | G-n4 | `folderCode`, `folderName` jamais remplis | Réglé (KG4) |
