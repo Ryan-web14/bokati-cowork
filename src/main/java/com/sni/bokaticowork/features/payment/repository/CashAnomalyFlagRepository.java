@@ -13,6 +13,8 @@ public interface CashAnomalyFlagRepository extends JpaRepository<CashAnomalyFlag
 
     Optional<CashAnomalyFlag> findByFlagNumber(String flagNumber);
 
+    java.util.List<CashAnomalyFlag> findByCashSession_IdOrderByDetectedAtAsc(Long cashSessionId);
+
     boolean existsByCashSession_IdAndAnomalyType(Long cashSessionId, com.sni.bokaticowork.features.payment.enums.CashAnomalyType anomalyType);
 
     @Query(nativeQuery = true,

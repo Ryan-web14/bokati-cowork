@@ -179,6 +179,22 @@ Autres chemins qui écrivent un paiement espèces en caisse : la confirmation d'
 
 `GET /sni/api/v1/cash-registers/sessions/{sessionNumber}/closing-report` ([route](routes/CashDocumentController.md#r-get-sni-api-v1-cash-registers-sessions-sessionnumber-closing-report)) : synthèse, statistiques de session et liste des mouvements. Disponible quel que soit le statut, y compris `OPEN` (rapport provisoire). Le même PDF part en pièce jointe à chaque clôture définitive.
 
+### 9 bis. Suivre une session en détail (17/11/2026)
+
+Routes sous `/sni/api/v1/cash-registers/sessions/{sessionNumber}` ([routes](routes/CashSessionInsightController.md)) :
+
+| Route | Droit | Contenu |
+| --- | --- | --- |
+| `GET .../payments?paymentMethod=&receivedBy=` | `CASH:READ` | `lines[]` : chaque encaissement et remboursement rattaché à la session (`transactionNumber`, `paymentMethod`, `status`, `amount`, `tenderedAmount`, `changeAmount`, `receivedBy`, `at`, client `customerType`/`customerCode`/`customerName`, objet `sourceType`/`sourceCode`/`sourceLabel` comme la facture, `receiptNumber`, `refund`) ; `byMethod[]` (`paymentMethod`, `count`, `amount`) ; `byHour[]` (heure de Brazzaville, `count`, `amount`) ; `paymentCount`, `paymentTotal`, `refundCount`, `refundTotal`. |
+| `GET .../timeline` | `CASH:READ` | Fil horodaté : `at`, `kind` (`OPENED`, `OPENING_VARIANCE`, `PAUSED`, `SUSPENDED`, `MOVEMENT_<type>`, `COUNT`, `VARIANCE`, `VARIANCE_DECIDED`, `ANOMALY`, `HANDOVER`, `CLOSING_REQUESTED`, `CLOSED`, `REVIEWED`), `label` en français, `actor`, `amount`, `reference`. Un mouvement annulé l'indique dans son libellé. |
+| `GET .../indicators` | `CASH:READ` | `expectedBalance` (solde théorique, nul et `expectedHidden = true` sous clôture à l'aveugle pour qui n'a pas `CASH_VARIANCE:DECIDE`), `paymentCount`, `customersServed`, `paymentTotal`, `averageTicket`, `refundCount`, `refundTotal`, `movementCount`, `lastMovementAt`, `activeMinutes` (hors pauses), `pauseMinutes`, `detentionCap` et `detentionRemaining` (plafond de détention de la caisse), `openAnomalies`. |
+| `PATCH .../payments/{transactionNumber}/reassign` | `CASH_VARIANCE:DECIDE` | Corps `{ "targetSessionNumber": "…", "reason": "…" }` (motif d'au moins 5 caractères). Un paiement en espèces saisi dans la mauvaise session passe dans la bonne : sortie `TRANSFER_OUT` dans l'origine, entrée `TRANSFER_IN` dans la cible (même montant, motif, catégorie `PAYMENT_REASSIGNMENT`), transaction rattachée à la cible. Origine ouverte, en pause ou suspendue ; cible ouverte. Réponse : `transactionNumber`, `fromSession`, `toSession`, `amount`, `exitMovementNumber`, `entryMovementNumber`. |
+| `POST .../report/send` | `CASH:READ` | Corps facultatif `{ "extraRecipients": "a@x.com,b@y.com" }`. Envoie le rapport PDF de la session (ouverte ou close) au responsable de la caisse, sinon au superviseur, et aux adresses indiquées. Réponse : `recipients`. |
+
+Annuler un bon avec motif : `PATCH /cash-registers/movements/{movementNumber}/cancel` (voir parcours 3). Rapport PDF à l'écran : parcours 9.
+
+Écran conseillé pour une session : onglets « Encaissements » (tableau filtrable, totaux par mode et graphique par heure), « Chronologie », « Indicateurs » (cartes rafraîchies toutes les minutes) ; actions « Réaffecter » sur une ligne d'espèces, « Envoyer le rapport ».
+
 ### 10. Anomalies
 
 1. Liste : `GET /sni/api/v1/cash-registers/anomalies` ([route](routes/CashAnomalyFlagController.md#r-get-sni-api-v1-cash-registers-anomalies)) avec filtres `registerCode`, `sessionNumber`, `severity`, `status`, `anomalyType`.

@@ -52,6 +52,7 @@ public class WalletControlCentreController {
 
     private final WalletControlCentreService controlCentreService;
     private final WalletAdminActionService adminActionService;
+    private final com.sni.bokaticowork.features.payment.service.interfaces.PaymentService paymentService;
     private final WalletRiskFlagService flagService;
     private final WalletTreasuryReconciliationService treasuryService;
     private final com.sni.bokaticowork.features.payment.repository.WalletAccountRepository walletRepository;
@@ -89,6 +90,25 @@ public class WalletControlCentreController {
                 new WalletAdminActionService.ActionRequest(request.type(), request.amount(), request.reference(),
                         request.reason(), request.until()),
                 actor(authentication))));
+    }
+
+    public record PayInvoiceFromWalletRequest(@jakarta.validation.constraints.NotBlank String documentNumber,
+                                              java.math.BigDecimal amount) {
+    }
+
+    /**
+     * Regle une facture du titulaire depuis son portefeuille (17/11/2026). Le portefeuille doit
+     * appartenir au client de la facture ; {@code amount} absent : tout le solde restant. Meme
+     * reglement que {@code POST /billing/invoices/{documentNumber}/pay} en mode WALLET, doublons compris.
+     */
+    @com.sni.bokaticowork.core.idempotency.aop.Idempotent(operation = "WALLET_PAY_INVOICE", requestBodyArgIndex = 1)
+    @PostMapping("/wallets/{walletNumber}/pay-invoice")
+    public ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.PayInvoiceResponse> payInvoice(
+            @PathVariable String walletNumber, @Valid @RequestBody PayInvoiceFromWalletRequest request) {
+        return ResponseEntity.ok(paymentService.payInvoice(request.documentNumber().trim(),
+                new com.sni.bokaticowork.features.payment.dto.request.PayInvoiceRequest(
+                        com.sni.bokaticowork.features.payment.enums.PaymentMethod.WALLET, request.amount(), walletNumber,
+                        null, null, null, null, null)));
     }
 
     @GetMapping("/wallets/{walletNumber}/actions")

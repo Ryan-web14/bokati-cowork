@@ -256,4 +256,40 @@ class WalletAdminActionServiceTest {
         assertEquals(WalletStatus.CLOSED, wallet.getStatus());
         verify(ledgerService, never()).debit(any(), any(), any(), any(), any(), any(), any(), any());
     }
+
+    // ---- Actions ajoutees le 17/11/2026 ------------------------------------------------------
+
+    @Test
+    void aTransferMovesMoneyBetweenTwoWalletsOfTheSameCurrency() {
+        WalletAccount target = WalletAccount.builder().id(2L).walletNumber("WAL-2").currency("XAF").status(WalletStatus.ACTIVE).build();
+        when(walletRepository.findByWalletNumber("WAL-2")).thenReturn(Optional.of(target));
+
+        WalletAdminAction action = service.request("WAL-1", request(WalletAdminAction.Type.TRANSFER, "20000", "WAL-2"), "agent@x.com");
+
+        org.assertj.core.api.Assertions.assertThat(action.getStatus()).isEqualTo(WalletAdminAction.Status.EXECUTED);
+        org.mockito.Mockito.verify(ledgerService).debit(org.mockito.ArgumentMatchers.eq(wallet), org.mockito.ArgumentMatchers.eq(new BigDecimal("20000.0000")),
+                org.mockito.ArgumentMatchers.eq(com.sni.bokaticowork.features.payment.enums.WalletEntryType.TRANSFER_OUT), any(), any(), any(), any(), any());
+        org.mockito.Mockito.verify(ledgerService).credit(org.mockito.ArgumentMatchers.eq(target), org.mockito.ArgumentMatchers.eq(new BigDecimal("20000.0000")),
+                org.mockito.ArgumentMatchers.eq(com.sni.bokaticowork.features.payment.enums.WalletEntryType.TRANSFER_IN), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void aLargeTransferWaitsForASecondVisa() {
+        WalletAdminAction action = service.request("WAL-1", request(WalletAdminAction.Type.TRANSFER, "150000", "WAL-2"), "agent@x.com");
+        org.assertj.core.api.Assertions.assertThat(action.getStatus()).isEqualTo(WalletAdminAction.Status.PENDING_APPROVAL);
+        org.mockito.Mockito.verify(ledgerService, org.mockito.Mockito.never()).debit(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void aRestitutionAlwaysNeedsASecondVisa() {
+        WalletAdminAction action = service.request("WAL-1", request(WalletAdminAction.Type.RESTITUTE, "1000", "CASH:CS-1"), "agent@x.com");
+        org.assertj.core.api.Assertions.assertThat(action.getStatus()).isEqualTo(WalletAdminAction.Status.PENDING_APPROVAL);
+    }
+
+    @Test
+    void aTransferWithoutTargetIsRefused() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                service.request("WAL-1", request(WalletAdminAction.Type.TRANSFER, "1000", null), "agent@x.com"))
+                .isInstanceOf(com.sni.bokaticowork.core.exception.customs.BadRequestException.class);
+    }
 }

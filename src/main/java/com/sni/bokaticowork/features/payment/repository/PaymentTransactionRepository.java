@@ -87,6 +87,9 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             """)
     Optional<PaymentTransaction> findSucceededByPaymentIntentId(@Param("paymentIntentId") Long paymentIntentId);
 
+    /** Transactions rattachees a une session de caisse (encaissements, remboursements). */
+    List<PaymentTransaction> findAllByCashSessionNumberOrderByCreatedAtAsc(String cashSessionNumber);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM payment_transaction

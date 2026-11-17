@@ -751,6 +751,67 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, actors.resolve(createdBy), null);
     }
 
+    private com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository paymentTransactions;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPaymentTransactions(com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository paymentTransactions) {
+        this.paymentTransactions = paymentTransactions;
+    }
+
+    @Override
+    public ReassignedPayment reassignPayment(String sessionNumber, String transactionNumber, String targetSessionNumber,
+                                             String reason, String actor) {
+        if (!StringUtils.hasText(reason) || reason.trim().length() < 5) {
+            throw new BadRequestException("Un motif d'au moins cinq caractères est requis pour réaffecter un paiement");
+        }
+        CashSession source = session(sessionNumber);
+        if (!java.util.EnumSet.of(CashSessionStatus.OPEN, CashSessionStatus.PAUSED, CashSessionStatus.SUSPENDED).contains(source.getStatus())) {
+            throw new BadRequestException("La session " + source.getSessionNumber() + " est " + source.getStatus()
+                    + " : un paiement ne se réaffecte que depuis une session ouverte, en pause ou suspendue");
+        }
+        CashSession target = requireOpenSession(targetSessionNumber);
+        if (target.getId().equals(source.getId())) {
+            throw new BadRequestException("La session cible est la même que la session d'origine");
+        }
+        if (paymentTransactions == null) {
+            throw new BadRequestException("Réaffectation indisponible");
+        }
+        var transaction = paymentTransactions.findByTransactionNumber(transactionNumber == null ? null : transactionNumber.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction de paiement introuvable"));
+        if (transaction.getPaymentMethod() != PaymentMethod.CASH || transaction.getStatus() != PaymentTransactionStatus.SUCCEEDED) {
+            throw new BadRequestException("Seul un paiement en espèces réussi se réaffecte d'une session à l'autre");
+        }
+        if (!source.getSessionNumber().equals(transaction.getCashSessionNumber())) {
+            throw new BadRequestException("Le paiement " + transaction.getTransactionNumber() + " n'est pas rattaché à la session "
+                    + source.getSessionNumber());
+        }
+        String by = actors.resolve(actor);
+        String note = "Réaffectation du paiement " + transaction.getTransactionNumber() + " : " + reason.trim();
+        BigDecimal amount = money(transaction.getAmount());
+        CashMovement exit = saveMovement(source, CashMovementType.TRANSFER_OUT, amount, CashDocumentType.EXIT_VOUCHER,
+                transaction.getTransactionNumber(), "PAYMENT_REASSIGNMENT", "PAYMENT_TRANSACTION", transaction.getTransactionNumber(),
+                "CASH_SESSION", target.getSessionNumber(), null, note, by, null);
+        CashMovement entry = saveMovement(target, CashMovementType.TRANSFER_IN, amount, CashDocumentType.ENTRY_VOUCHER,
+                transaction.getTransactionNumber(), "PAYMENT_REASSIGNMENT", "PAYMENT_TRANSACTION", transaction.getTransactionNumber(),
+                "CASH_SESSION", source.getSessionNumber(), null, note, by, null);
+        transaction.setCashSessionNumber(target.getSessionNumber());
+        paymentTransactions.save(transaction);
+        org.slf4j.LoggerFactory.getLogger(CashRegisterServiceImpl.class).info("Paiement {} reaffecte de {} a {} par {}", transaction.getTransactionNumber(), source.getSessionNumber(),
+                target.getSessionNumber(), by);
+        return new ReassignedPayment(transaction.getTransactionNumber(), source.getSessionNumber(), target.getSessionNumber(),
+                amount, exit.getMovementNumber(), entry.getMovementNumber());
+    }
+
+    @Override
+    public void recordWalletRestitution(String sessionNumber, BigDecimal amount, String walletNumber, String actionNumber, String createdBy) {
+        CashSession session = requireOpenSession(sessionNumber);
+        assertManualEntryAllowed(session.getCashRegister());
+        validatePositive(amount);
+        saveMovement(session, CashMovementType.CASH_OUT, amount, CashDocumentType.EXIT_VOUCHER, trim(actionNumber), "WALLET_RESTITUTION",
+                "WALLET_ADMIN_ACTION", trim(actionNumber), "WALLET", trim(walletNumber), null,
+                "Restitution du solde du portefeuille " + walletNumber, actors.resolve(createdBy), null);
+    }
+
     @Override
     public void recordRefund(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy) {
         CashSession session = requireOpenSession(sessionNumber);
