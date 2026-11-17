@@ -74,7 +74,7 @@ Module [document](../README.md) · 9 route(s).
 <a id="r-post-sni-api-v1-documents-documentcode-workflow-approve"></a>
 ### POST /sni/api/v1/documents/{documentCode}/workflow/approve
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Corps JSON (facultatif) : `WorkflowActionRequest`
 - Réponse : `WorkflowInstanceResponse`
 - Modèles : [WorkflowInstanceResponse](#m-WorkflowInstanceResponse), [WorkflowActionRequest](#m-WorkflowActionRequest)
@@ -87,7 +87,7 @@ Module [document](../README.md) · 9 route(s).
 <a id="r-post-sni-api-v1-documents-documentcode-workflow-reject"></a>
 ### POST /sni/api/v1/documents/{documentCode}/workflow/reject
 
-- Accès : back-office : rôle d'administration et droit `DOCUMENT:REVIEW*`
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Corps JSON (facultatif) : `WorkflowActionRequest`
 - Réponse : `WorkflowInstanceResponse`
 - Modèles : [WorkflowInstanceResponse](#m-WorkflowInstanceResponse), [WorkflowActionRequest](#m-WorkflowActionRequest)

@@ -74,7 +74,6 @@ class KycGedRightsKg0Test {
         assertThat(required("GET", BASE + "/documents/DOC-1")).isEqualTo("DOCUMENT:READ");
         assertThat(required("POST", BASE + "/document-tags")).isEqualTo("DOCUMENT:WRITE");
         assertThat(required("POST", BASE + "/document-workflows")).isEqualTo("SYSTEM:SETTINGS");
-        assertThat(required("POST", BASE + "/document-permissions")).isEqualTo("SYSTEM:SETTINGS");
         assertThat(required("POST", BASE + "/spaces/financial/documents/upload")).isEqualTo("DOCUMENT:UPLOAD");
     }
 

@@ -19,6 +19,7 @@ public class ShareLinkResponse {
     private Instant expiresAt;
     private Instant createdAt;
     private Long createdBy;
-    private String createdByEmail;
+    /** Nom de l'auteur (son courriel n'est plus expose). */
+    private String createdByName;
     private Boolean active;
 }

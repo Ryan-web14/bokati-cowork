@@ -31,7 +31,26 @@ public class DocumentReviewGuard {
 
     private final DocumentSpaceSecurityService spaceSecurity;
 
+    private static final ThreadLocal<Boolean> WORKFLOW = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    /**
+     * Lot KG5 : la decision finale d'un circuit d'approbation est prise par l'approbateur designe
+     * de l'etape (controle par le circuit), meme sans droit de revue de l'espace.
+     */
+    public static void asWorkflow(Runnable decision) {
+        boolean previous = WORKFLOW.get();
+        WORKFLOW.set(Boolean.TRUE);
+        try {
+            decision.run();
+        } finally {
+            WORKFLOW.set(previous);
+        }
+    }
+
     public void check(DocumentSpace space, Decision decision) {
+        if (Boolean.TRUE.equals(WORKFLOW.get())) {
+            return;
+        }
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal)) {
             return;

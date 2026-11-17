@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [document](../README.md) · 5 route(s).
+Module [document](../README.md) · 6 route(s).
 
 ## Routes
 
@@ -47,7 +47,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-delete-sni-api-v1-shares-token"></a>
 ### DELETE /sni/api/v1/shares/{token}
 
-- Accès : public, sans jeton
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentShareController.java`, méthode `revoke`
 
@@ -58,7 +58,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-get-sni-api-v1-shares-token"></a>
 ### GET /sni/api/v1/shares/{token}
 
-- Accès : public, sans jeton
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
 - Réponse : `ShareLinkResponse`
 - Modèles : [ShareLinkResponse](#m-ShareLinkResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentShareController.java`, méthode `access`
@@ -66,7 +66,19 @@ Module [document](../README.md) · 5 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `token` | chemin | `String` | oui |  |
-| `password` | requête | `String` |  |  |
+| `X-Share-Password` | en-tête | `String` |  |  |
+
+<a id="r-get-sni-api-v1-shares-token-file"></a>
+### GET /sni/api/v1/shares/{token}/file
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
+- Réponse : `fichier (octets)`
+- Code : `src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentShareController.java`, méthode `file`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `token` | chemin | `String` | oui |  |
+| `X-Share-Password` | en-tête | `String` |  |  |
 
 ## Modèles
 
@@ -88,7 +100,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `createdBy` | entier int64 ⚠ |  |  |
-| `createdByEmail` | texte |  |  |
+| `createdByName` | texte |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-CreateShareLinkRequest"></a>

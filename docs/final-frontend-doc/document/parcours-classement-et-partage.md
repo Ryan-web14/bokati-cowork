@@ -95,20 +95,18 @@ Sur un document :
 3. Supprimer une clé : `DELETE /sni/api/v1/documents/{code}/metadata/{key}`, `204` même si la clé n'existait pas.
 4. La recherche filtre par `metaKey`/`metaValue`.
 
-## Permissions par document ou dossier
+## Droits d'accès
 
-`/sni/api/v1/document-permissions/**`, droit `ADMIN:ACCESS` ([routes](routes/DocumentPermissionController.md)). Ces permissions sont enregistrées mais **appliquées nulle part** : ne pas présenter l'écran comme un contrôle d'accès effectif.
+Les droits se posent sur les dossiers (dossiers restreints de l'explorateur, voir [explorateur](explorateur/README.md)). Les anciennes permissions par document (`/document-permissions`) sont **retirées** (lot KG5) : pour un fichier confidentiel, le ranger dans un dossier restreint.
 
-- Accorder : `POST /document-permissions`, corps `{ "targetType": "DOCUMENT", "targetCode": "DOC…", "granteeType": "USER", "granteeId": "…", "permission": "READ" }`. Valeurs exactes en majuscules : `targetType` `DOCUMENT` ou `FOLDER` ; `granteeType` `USER` ou `ROLE` ; `permission` `READ`, `DOWNLOAD`, `EDIT`, `REVIEW`, `DELETE`, `ADMIN`. `granteeId` int64. Doublon : `400` « Permission already granted ».
-- Lister : `GET /document-permissions?targetType=DOCUMENT&targetCode=DOC…`.
-- Révoquer : `DELETE /document-permissions?targetType=…&targetCode=…&granteeType=…&granteeId=…&permission=…`, `204`.
-- Permissions effectives d'un compte : `GET /document-permissions/effective?userId=…&documentCode=…` : ensemble des permissions `USER` du document et de ses dossiers parents (pas celles des rôles).
+## Liens de partage (internes)
 
-## Liens de partage
+Un lien de partage sert à désigner un document ou un dossier à un collègue de l'équipe : il exige la connexion et les droits du compte sur le document ou le dossier (dossiers restreints compris). Il n'y a **aucun accès public** (lot KG5).
 
-1. Créer pour un document : `POST /sni/api/v1/documents/{documentCode}/share` ([route](routes/DocumentShareController.md#r-post-sni-api-v1-documents-documentcode-share)), droit `DOCUMENT:UPLOAD` ; pour un dossier : `POST /sni/api/v1/document-folders/{folderCode}/share`, droit `ADMIN:ACCESS`. Corps : `{ "expiresInHours": 48, "password": "…", "allowDownload": true, "maxAccessCount": 10 }` (`expiresInHours` obligatoire, aucune borne côté serveur). Réponse `201` `ShareLinkResponse` : `token`, `shareUrl` (`/sni/api/v1/shares/<token>`, préfixé par `app.api-base-url` s'il est défini), `expiresAt`, `passwordProtected`, `accessCount`.
-2. Lister les liens actifs d'un document : `GET /sni/api/v1/documents/{documentCode}/shares` (droit `DOCUMENT:READ`). Pas de liste pour les dossiers.
-3. Consulter (public, sans jeton) : `GET /sni/api/v1/shares/{token}?password=…`. Renvoie **seulement les informations du lien** (code du document ou du dossier, expiration, compteur), pas le fichier ; chaque consultation incrémente `accessCount`. Erreurs : `404` « Share link not found or expired » (inconnu ou révoqué), `400` « This share link has expired », `400` « This share link has reached its maximum access count », `401` « This share link requires a valid password ».
-4. Révoquer : `DELETE /sni/api/v1/shares/{token}` (public), `204` ; `404` si déjà révoqué.
+1. Créer pour un document : `POST /sni/api/v1/documents/{documentCode}/share` ([route](routes/DocumentShareController.md#r-post-sni-api-v1-documents-documentcode-share)), droit `DOCUMENT:UPLOAD` et téléchargement permis sur le document ; pour un dossier : `POST /sni/api/v1/document-folders/{folderCode}/share`. Corps : `{ "expiresInHours": 48, "password": "…", "allowDownload": true, "maxAccessCount": 10 }` (`expiresInHours` obligatoire). Réponse `201` `ShareLinkResponse` : `token`, `shareUrl`, `documentCode` ou `folderCode`, `allowDownload`, `passwordProtected`, `maxAccessCount`, `accessCount`, `expiresAt`, `createdAt`, `createdBy`, `createdByName` (le courriel de l'auteur n'est plus renvoyé), `active`.
+2. Lister les liens actifs d'un document : `GET /sni/api/v1/documents/{documentCode}/shares` (droit `DOCUMENT:READ`).
+3. Ouvrir un lien : `GET /sni/api/v1/shares/{token}` ([route](routes/DocumentShareController.md#r-get-sni-api-v1-shares-token)), connecté, droit `DOCUMENT:READ` et lecture du document ou du dossier visé. Mot de passe éventuel dans l'en-tête `X-Share-Password` (plus dans l'URL). Renvoie les informations du lien ; pour un dossier, ouvrir ensuite `folderCode` dans l'explorateur. Chaque ouverture compte un accès.
+4. Télécharger le fichier d'un lien de document : `GET /sni/api/v1/shares/{token}/file`, mêmes conditions plus le téléchargement permis sur le document ; `403` « Ce lien ne permet pas le téléchargement » si `allowDownload = false`, `400` pour un lien de dossier. Compte un accès.
+5. Révoquer : `DELETE /sni/api/v1/shares/{token}`, droit `DOCUMENT:WRITE`, **par l'auteur du lien ou un administrateur** seulement (`403` sinon), `204` ; `404` si déjà révoqué.
 
-Aucune route ne permet à un tiers d'ouvrir le fichier partagé : un écran public de partage ne peut afficher que des métadonnées. Le mot de passe passe dans l'URL (il apparaît dans les journaux et l'historique) : ne pas le présenter comme une protection forte.
+Erreurs d'un lien : `404` « Lien de partage introuvable ou expiré » (inconnu ou révoqué), `400` « Ce lien de partage a expiré », `400` « … nombre maximal d'accès », `403` « Ce lien de partage demande un mot de passe valide » (ce n'est pas une fin de session : ne pas rafraîchir le jeton), `403` sans droit sur le document ou le dossier.

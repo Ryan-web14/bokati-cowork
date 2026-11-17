@@ -403,6 +403,8 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/documents")) {
             // Decisions : DOCUMENT:REVIEW ou le droit de revue d'un espace (DOCUMENT:REVIEW_<ESPACE>) ;
             // le service controle l'espace du document, et KYC:APPROVE / KYC:REJECT pour une piece KYC.
+            // Lot KG5 : un circuit d'approbation designe ses approbateurs ; le service les controle.
+            if (path.contains("/workflow/")) return permission("DOCUMENT", "READ");
             if (endsWithAny(path, "/approve", "/reject", "/request-correction")) return ANY_DOCUMENT_REVIEW;
             if (path.contains("/restore") || path.contains("/archive") || path.contains("/analytics")
                     || path.contains("/export") || path.contains("/access-logs")) {
@@ -421,8 +423,10 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/document-workflows")) {
             return HttpMethod.GET.matches(method) ? permission("DOCUMENT", "READ") : permission("SYSTEM", "SETTINGS");
         }
-        if (path.startsWith("/document-permissions")) {
-            return permission("SYSTEM", "SETTINGS");
+        // Lot KG5 : partage interne seulement. Lire un lien demande la lecture des documents ;
+        // le revoquer, l'ecriture (et le service verifie l'auteur ou un administrateur).
+        if (path.startsWith("/shares")) {
+            return permission("DOCUMENT", HttpMethod.GET.matches(method) ? "READ" : "WRITE");
         }
         if (path.startsWith("/spaces")) {
             if (HttpMethod.GET.matches(method)) return permission("DOCUMENT", "READ");

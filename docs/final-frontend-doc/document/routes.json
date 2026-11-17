@@ -1360,135 +1360,6 @@
   },
   {
    "methods": [
-    "DELETE"
-   ],
-   "path": "/sni/api/v1/document-permissions",
-   "package": "features.document.documentMaster.controller",
-   "controller": "DocumentPermissionController",
-   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java",
-   "handler": "revoke",
-   "declaredIn": "DocumentPermissionController",
-   "access": {
-    "kind": "admin",
-    "permission": "SYSTEM:SETTINGS"
-   },
-   "params": [
-    {
-     "in": "query",
-     "name": "targetType",
-     "required": true,
-     "type": "String"
-    },
-    {
-     "in": "query",
-     "name": "targetCode",
-     "required": true,
-     "type": "String"
-    },
-    {
-     "in": "query",
-     "name": "granteeType",
-     "required": true,
-     "type": "String"
-    },
-    {
-     "in": "query",
-     "name": "granteeId",
-     "required": true,
-     "type": "Long"
-    },
-    {
-     "in": "query",
-     "name": "permission",
-     "required": true,
-     "type": "String"
-    }
-   ],
-   "response": "ResponseEntity<void>"
-  },
-  {
-   "methods": [
-    "GET"
-   ],
-   "path": "/sni/api/v1/document-permissions",
-   "package": "features.document.documentMaster.controller",
-   "controller": "DocumentPermissionController",
-   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java",
-   "handler": "list",
-   "declaredIn": "DocumentPermissionController",
-   "access": {
-    "kind": "admin",
-    "permission": "SYSTEM:SETTINGS"
-   },
-   "params": [
-    {
-     "in": "query",
-     "name": "targetType",
-     "required": true,
-     "type": "String"
-    },
-    {
-     "in": "query",
-     "name": "targetCode",
-     "required": true,
-     "type": "String"
-    }
-   ],
-   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentPermissionResponse>>"
-  },
-  {
-   "methods": [
-    "POST"
-   ],
-   "path": "/sni/api/v1/document-permissions",
-   "package": "features.document.documentMaster.controller",
-   "controller": "DocumentPermissionController",
-   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java",
-   "handler": "grant",
-   "declaredIn": "DocumentPermissionController",
-   "access": {
-    "kind": "admin",
-    "permission": "SYSTEM:SETTINGS"
-   },
-   "body": {
-    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.GrantPermissionRequest",
-    "required": true
-   },
-   "params": [],
-   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentPermissionResponse>"
-  },
-  {
-   "methods": [
-    "GET"
-   ],
-   "path": "/sni/api/v1/document-permissions/effective",
-   "package": "features.document.documentMaster.controller",
-   "controller": "DocumentPermissionController",
-   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java",
-   "handler": "effective",
-   "declaredIn": "DocumentPermissionController",
-   "access": {
-    "kind": "admin",
-    "permission": "SYSTEM:SETTINGS"
-   },
-   "params": [
-    {
-     "in": "query",
-     "name": "userId",
-     "required": true,
-     "type": "Long"
-    },
-    {
-     "in": "query",
-     "name": "documentCode",
-     "required": true,
-     "type": "String"
-    }
-   ],
-   "response": "ResponseEntity<Set<String>>"
-  },
-  {
-   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/document-requirements",
@@ -2059,7 +1930,8 @@
    "handler": "revoke",
    "declaredIn": "DocumentShareController",
    "access": {
-    "kind": "public"
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
    },
    "params": [
     {
@@ -2082,7 +1954,8 @@
    "handler": "access",
    "declaredIn": "DocumentShareController",
    "access": {
-    "kind": "public"
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
    },
    "params": [
     {
@@ -2092,13 +1965,43 @@
      "type": "String"
     },
     {
-     "in": "query",
-     "name": "password",
+     "in": "header",
+     "name": "X-Share-Password",
      "required": false,
      "type": "String"
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.ShareLinkResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/shares/{token}/file",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentShareController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentShareController.java",
+   "handler": "file",
+   "declaredIn": "DocumentShareController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "header",
+     "name": "X-Share-Password",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
   },
   {
    "methods": [
@@ -3659,7 +3562,7 @@
    "declaredIn": "DocumentWorkflowController",
    "access": {
     "kind": "admin",
-    "permission": "DOCUMENT:REVIEW*"
+    "permission": "DOCUMENT:READ"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.WorkflowActionRequest",
@@ -3687,7 +3590,7 @@
    "declaredIn": "DocumentWorkflowController",
    "access": {
     "kind": "admin",
-    "permission": "DOCUMENT:REVIEW*"
+    "permission": "DOCUMENT:READ"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.WorkflowActionRequest",
@@ -6854,81 +6757,6 @@
     }
    }
   },
-  "DocumentPermissionResponse": {
-   "type": "object",
-   "properties": {
-    "id": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "targetType": {
-     "type": "string"
-    },
-    "targetId": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "targetCode": {
-     "type": "string"
-    },
-    "granteeType": {
-     "type": "string"
-    },
-    "granteeId": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "granteeEmail": {
-     "type": "string"
-    },
-    "permission": {
-     "type": "string"
-    },
-    "grantedBy": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "grantedByEmail": {
-     "type": "string"
-    },
-    "grantedAt": {
-     "type": "string",
-     "format": "date-time"
-    }
-   }
-  },
-  "GrantPermissionRequest": {
-   "required": [
-    "granteeId",
-    "granteeType",
-    "permission",
-    "targetCode",
-    "targetType"
-   ],
-   "type": "object",
-   "properties": {
-    "targetType": {
-     "minLength": 1,
-     "type": "string"
-    },
-    "targetCode": {
-     "minLength": 1,
-     "type": "string"
-    },
-    "granteeType": {
-     "minLength": 1,
-     "type": "string"
-    },
-    "granteeId": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "permission": {
-     "minLength": 1,
-     "type": "string"
-    }
-   }
-  },
   "DocumentRequirementResponse": {
    "type": "object",
    "properties": {
@@ -7260,7 +7088,7 @@
      "type": "integer",
      "format": "int64"
     },
-    "createdByEmail": {
+    "createdByName": {
      "type": "string"
     },
     "active": {
@@ -10368,8 +10196,6 @@
   "MoveFolderRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.MoveFolderRequest",
   "DocumentFolderTreeNode": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderTreeNode",
   "MoveDocumentToFolderRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.MoveDocumentToFolderRequest",
-  "DocumentPermissionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentPermissionResponse",
-  "GrantPermissionRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.GrantPermissionRequest",
   "DocumentRequirementResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentRequirementResponse",
   "DocumentRequirementRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentRequirementRequest",
   "DocumentRetentionPolicyResponse": "com.sni.bokaticowork.features.document.retention.dto.response.DocumentRetentionPolicyResponse",

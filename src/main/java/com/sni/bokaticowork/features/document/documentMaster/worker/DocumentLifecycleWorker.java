@@ -47,9 +47,23 @@ public class DocumentLifecycleWorker implements SchedulingConfigurer {
             if (autoApproved > 0) {
                 log.info("Auto-approved {} document(s)", autoApproved);
             }
+            // Lot KG5 : etapes de circuit dont le delai d'approbation automatique est ecoule.
+            if (workflowService != null) {
+                int steps = workflowService.autoApproveDueSteps();
+                if (steps > 0) {
+                    log.info("Etapes de circuit approuvees automatiquement : {}", steps);
+                }
+            }
         } catch (Exception ex) {
             log.error("DocumentLifecycleWorker failed: {}", ex.getMessage(), ex);
         }
+    }
+
+    private com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentWorkflowService workflowService;
+
+    @Autowired(required = false)
+    void setWorkflowService(com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentWorkflowService workflowService) {
+        this.workflowService = workflowService;
     }
 
     @Autowired

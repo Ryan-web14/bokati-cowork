@@ -19,6 +19,7 @@ import java.util.List;
 public class DocumentShareController {
 
     private final DocumentShareService service;
+    private final com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService documentService;
     private final com.sni.bokaticowork.features.document.explorer.access.GedAccessService gedAccess;
 
     @PostMapping("/documents/{documentCode}/share")
@@ -39,12 +40,42 @@ public class DocumentShareController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.shareFolder(folderCode, request));
     }
 
+    /**
+     * Lot KG5 : partage interne. Le lien exige la connexion (plus de route publique) et les droits
+     * sur le document ou le dossier vise (dossiers restreints compris). Mot de passe eventuel dans
+     * l'en-tete {@code X-Share-Password} (plus dans l'URL).
+     */
     @GetMapping("/shares/{token}")
     public ResponseEntity<ShareLinkResponse> access(@PathVariable String token,
-                                                     @RequestParam(required = false) String password) {
+                                                     @RequestHeader(value = "X-Share-Password", required = false) String password) {
+        requireTargetAccess(token, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
         ShareLinkResponse response = service.access(token, password);
         service.recordAccess(token);
         return ResponseEntity.ok(response);
+    }
+
+    /** Lot KG5 : le fichier d'un lien de document, si le lien le permet (compte, expiration, telechargement). */
+    @GetMapping("/shares/{token}/file")
+    public ResponseEntity<byte[]> file(@PathVariable String token,
+                                       @RequestHeader(value = "X-Share-Password", required = false) String password) {
+        requireTargetAccess(token, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.DOWNLOAD);
+        String documentCode = service.fileDocumentCode(token, password);
+        com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFileResult result = documentService.getFileWithMeta(documentCode);
+        service.recordAccess(token);
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.parseMediaType(result.mimeType()));
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename(result.fileName()).build());
+        headers.setContentLength(result.content().length);
+        return ResponseEntity.ok().headers(headers).body(result.content());
+    }
+
+    private void requireTargetAccess(String token, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel level) {
+        var link = service.activeLink(token);
+        if (link.getDocument() != null) {
+            gedAccess.requireDocumentCode(link.getDocument().getCode(), level);
+        } else if (link.getFolder() != null) {
+            gedAccess.requireFolderCode(link.getFolder().getCode(), level);
+        }
     }
 
     @DeleteMapping("/shares/{token}")

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-208 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+205 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -50,10 +50,6 @@
 | POST | `/sni/api/v1/document-folders/{code}/move` | DOCUMENT:WRITE | [DocumentFolderController](routes/DocumentFolderController.md#r-post-sni-api-v1-document-folders-code-move) |
 | GET | `/sni/api/v1/document-folders/{code}/tree` | DOCUMENT:READ | [DocumentFolderController](routes/DocumentFolderController.md#r-get-sni-api-v1-document-folders-code-tree) |
 | POST | `/sni/api/v1/document-folders/{documentCode}/move-document` | DOCUMENT:WRITE | [DocumentFolderController](routes/DocumentFolderController.md#r-post-sni-api-v1-document-folders-documentcode-move-document) |
-| DELETE | `/sni/api/v1/document-permissions` | SYSTEM:SETTINGS | [DocumentPermissionController](routes/DocumentPermissionController.md#r-delete-sni-api-v1-document-permissions) |
-| GET | `/sni/api/v1/document-permissions` | SYSTEM:SETTINGS | [DocumentPermissionController](routes/DocumentPermissionController.md#r-get-sni-api-v1-document-permissions) |
-| POST | `/sni/api/v1/document-permissions` | SYSTEM:SETTINGS | [DocumentPermissionController](routes/DocumentPermissionController.md#r-post-sni-api-v1-document-permissions) |
-| GET | `/sni/api/v1/document-permissions/effective` | SYSTEM:SETTINGS | [DocumentPermissionController](routes/DocumentPermissionController.md#r-get-sni-api-v1-document-permissions-effective) |
 | GET | `/sni/api/v1/document-requirements` | SYSTEM:SETTINGS | [DocumentRequirementController](routes/DocumentRequirementController.md#r-get-sni-api-v1-document-requirements) |
 | POST | `/sni/api/v1/document-requirements` | SYSTEM:SETTINGS | [DocumentRequirementController](routes/DocumentRequirementController.md#r-post-sni-api-v1-document-requirements) |
 | DELETE | `/sni/api/v1/document-requirements/{id}` | SYSTEM:SETTINGS | [DocumentRequirementController](routes/DocumentRequirementController.md#r-delete-sni-api-v1-document-requirements-id) |
@@ -75,8 +71,9 @@
 | POST | `/sni/api/v1/document-folders/{folderCode}/share` | DOCUMENT:WRITE | [DocumentShareController](routes/DocumentShareController.md#r-post-sni-api-v1-document-folders-foldercode-share) |
 | POST | `/sni/api/v1/documents/{documentCode}/share` | DOCUMENT:UPLOAD | [DocumentShareController](routes/DocumentShareController.md#r-post-sni-api-v1-documents-documentcode-share) |
 | GET | `/sni/api/v1/documents/{documentCode}/shares` | DOCUMENT:READ | [DocumentShareController](routes/DocumentShareController.md#r-get-sni-api-v1-documents-documentcode-shares) |
-| DELETE | `/sni/api/v1/shares/{token}` | public | [DocumentShareController](routes/DocumentShareController.md#r-delete-sni-api-v1-shares-token) |
-| GET | `/sni/api/v1/shares/{token}` | public | [DocumentShareController](routes/DocumentShareController.md#r-get-sni-api-v1-shares-token) |
+| DELETE | `/sni/api/v1/shares/{token}` | DOCUMENT:WRITE | [DocumentShareController](routes/DocumentShareController.md#r-delete-sni-api-v1-shares-token) |
+| GET | `/sni/api/v1/shares/{token}` | DOCUMENT:READ | [DocumentShareController](routes/DocumentShareController.md#r-get-sni-api-v1-shares-token) |
+| GET | `/sni/api/v1/shares/{token}/file` | DOCUMENT:READ | [DocumentShareController](routes/DocumentShareController.md#r-get-sni-api-v1-shares-token-file) |
 | GET | `/sni/api/v1/documents/{documentCode}/signatures` | DOCUMENT:READ | [DocumentSignatureController](routes/DocumentSignatureController.md#r-get-sni-api-v1-documents-documentcode-signatures) |
 | POST | `/sni/api/v1/documents/{documentCode}/signatures` | DOCUMENT:UPLOAD | [DocumentSignatureController](routes/DocumentSignatureController.md#r-post-sni-api-v1-documents-documentcode-signatures) |
 | PATCH | `/sni/api/v1/documents/{documentCode}/signatures/{signatureId}/sign` | DOCUMENT:READ | [DocumentSignatureController](routes/DocumentSignatureController.md#r-patch-sni-api-v1-documents-documentcode-signatures-signatureid-sign) |
@@ -131,8 +128,8 @@
 | DELETE | `/sni/api/v1/document-workflows/{code}` | SYSTEM:SETTINGS | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-delete-sni-api-v1-document-workflows-code) |
 | GET | `/sni/api/v1/document-workflows/{code}` | DOCUMENT:READ | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-get-sni-api-v1-document-workflows-code) |
 | POST | `/sni/api/v1/documents/{documentCode}/start-workflow` | DOCUMENT:UPLOAD | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-post-sni-api-v1-documents-documentcode-start-workflow) |
-| POST | `/sni/api/v1/documents/{documentCode}/workflow/approve` | DOCUMENT:REVIEW* | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-post-sni-api-v1-documents-documentcode-workflow-approve) |
-| POST | `/sni/api/v1/documents/{documentCode}/workflow/reject` | DOCUMENT:REVIEW* | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-post-sni-api-v1-documents-documentcode-workflow-reject) |
+| POST | `/sni/api/v1/documents/{documentCode}/workflow/approve` | DOCUMENT:READ | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-post-sni-api-v1-documents-documentcode-workflow-approve) |
+| POST | `/sni/api/v1/documents/{documentCode}/workflow/reject` | DOCUMENT:READ | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-post-sni-api-v1-documents-documentcode-workflow-reject) |
 | GET | `/sni/api/v1/documents/{documentCode}/workflow/status` | DOCUMENT:READ | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-get-sni-api-v1-documents-documentcode-workflow-status) |
 | POST | `/sni/api/v1/ged/copy` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-copy) |
 | POST | `/sni/api/v1/ged/files` | DOCUMENT:UPLOAD | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-files) |

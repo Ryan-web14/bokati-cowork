@@ -60,7 +60,6 @@ public final class PublicPaths {
      */
     public static final List<String> TOKEN_GATED = List.of(
             "/verify/**",
-            ApiPath.V1 + "/shares/**",
             ApiPath.V1 + "/public/**",
             "/public/**"
     );

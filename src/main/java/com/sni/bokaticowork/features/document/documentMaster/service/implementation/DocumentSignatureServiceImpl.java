@@ -41,6 +41,14 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
     @Override
     public DocumentSignatureResponse requestSignature(String documentCode, CreateDocumentSignatureRequest request) {
         Document document = document(documentCode);
+        // Lot KG5 : pas de signature sur un document refuse, archive, expire ou remplace.
+        if (java.util.EnumSet.of(com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.REJECTED,
+                com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.ARCHIVED,
+                com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.EXPIRED,
+                com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.SUPERSEDED).contains(document.getStatus())) {
+            throw new BadRequestException("Le document " + document.getCode() + " est " + document.getStatus()
+                    + " : il ne peut pas être soumis à signature");
+        }
         DocumentSignature signature = DocumentSignature.builder()
                 .document(document)
                 .signerType(request.signerType().trim().toUpperCase())
@@ -76,6 +84,14 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
         signature.setSignatureData(trim(request.signatureData()));
         DocumentSignature saved = signatureRepository.save(signature);
         publishSignatureEvent("DOCUMENT_SIGNED", saved);
+        // Lot KG5 : la derniere signature attendue passe le document SIGNED.
+        Document document = saved.getDocument();
+        boolean stillPending = !signatureRepository.findAllByDocumentAndSignatureStatus(document, DocumentSignatureStatus.PENDING).isEmpty();
+        if (!stillPending && document.getStatus() != com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.SIGNED) {
+            document.setStatus(com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus.SIGNED);
+            documentRepository.save(document);
+            publishSignatureEvent("DOCUMENT_FULLY_SIGNED", saved);
+        }
         return toResponse(saved);
     }
 
