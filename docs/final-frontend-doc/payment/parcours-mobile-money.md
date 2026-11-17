@@ -189,10 +189,10 @@ Aucune route de ce parcours ne lit l'en-tête `Idempotency-Key` (aucune annotati
 
 ## Écarts relevés
 
-- Dédoublonnage d'un dépôt en cours presque inatteignable : `requestedIntentAmount` (contrôle du reste payable) est appelé avant `inFlight`, donc un second envoi sur une intention dont le premier dépôt couvre tout le reste dû échoue en `400` au lieu de rendre le dépôt existant. `src/main/java/com/sni/bokaticowork/features/payment/service/implementation/PaymentServiceImpl.java:331` et `:337`.
+- **Réglé (17/11/2026)** : le dépôt déjà en cours sur le même numéro est rendu avant le contrôle du reste payable, et les envois sur une même intention passent l'un après l'autre (verrou).
 - **Réglé (17/11/2026)** : le lien prolonge l'intention. Constat d'origine : le lien valait 24 h mais l'intention créée sans `expiresAt` expirait au bout de 15 minutes.
 - **Réglé (17/11/2026)** : `expiresInMinutes` est validé (`@Min(5)`), et `depositId` et `transactionNumber`, toujours nuls, sont retirés de la réponse du lien.
-- `PaymentLinkResponse.depositId` et `transactionNumber` sont toujours nuls. `PaymentLinkServiceImpl.java:72`.
+- **Réglé (17/11/2026)** : `depositId` et `transactionNumber`, toujours nuls, retirés de la réponse du lien.
 - **Réglé (17/11/2026)** : le portail ne reçoit plus `requestPayloadJson`, `providerResponseJson` ni `callbackUrl` (filtre de réponse sur tout le portail).
 - **Réglé (17/11/2026)** : plus de règle de rôle à côté du droit sur le suivi mobile money.
 - **Réglé (17/11/2026)** : `GET /payments/mobile-money/pawapay/return` retiré (il servait la page hébergée de PawaPay, plus utilisée).
