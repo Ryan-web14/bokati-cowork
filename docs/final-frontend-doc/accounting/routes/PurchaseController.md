@@ -162,8 +162,8 @@ Module [accounting](../README.md) · 20 route(s).
 ### GET /sni/api/v1/accounting/purchases/suppliers
 
 - Accès : back-office : rôle d'administration et droit `PURCHASE:READ`
-- Réponse : `List<AccSupplier>`
-- Modèles : [AccSupplier](#m-AccSupplier)
+- Réponse : `List<PurchaseService.SupplierView>`
+- Modèles : [PurchaseService.SupplierView](#m-PurchaseService-SupplierView)
 - Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/PurchaseController.java`, méthode `suppliers`
 
 <a id="r-post-sni-api-v1-accounting-purchases-suppliers"></a>
@@ -376,6 +376,32 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `netToPay` | nombre décimal |  |  |
 | `remaining` | nombre décimal |  |  |
 | `daysLate` | entier int64 ⚠ |  |  |
+
+<a id="m-PurchaseService-SupplierView"></a>
+#### PurchaseService.SupplierView
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `code` | texte |  |  |
+| `name` | texte |  |  |
+| `niu` | texte |  |  |
+| `rccm` | texte |  |  |
+| `address` | texte |  |  |
+| `phone` | texte |  |  |
+| `email` | texte |  |  |
+| `bankDetails` | texte |  |  |
+| `paymentTermsDays` | entier |  |  |
+| `accountNumber` | texte |  |  |
+| `defaultAccount` | texte |  |  |
+| `vatExempt` | booléen |  |  |
+| `withholdingRate` | nombre décimal |  |  |
+| `withholdingAccount` | texte |  |  |
+| `withholdingBase` | texte |  |  |
+| `withholdingLabel` | texte |  |  |
+| `status` | texte |  |  |
+| `source` | texte |  |  |
+| `inventoryCode` | texte |  |  |
+| `linked` | booléen |  |  |
 
 <a id="m-AccSupplier"></a>
 #### AccSupplier

@@ -33,7 +33,7 @@ public class PurchaseController {
     // ------------------------------------------------------------------ fournisseurs
 
     @GetMapping("/suppliers")
-    public ResponseEntity<List<AccSupplier>> suppliers() {
+    public ResponseEntity<List<com.sni.bokaticowork.features.accounting.service.implementation.PurchaseService.SupplierView>> suppliers() {
         return ResponseEntity.ok(purchases.suppliers());
     }
 
