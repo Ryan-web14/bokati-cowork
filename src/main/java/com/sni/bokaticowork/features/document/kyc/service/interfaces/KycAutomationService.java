@@ -5,6 +5,12 @@ import com.sni.bokaticowork.features.document.documentMaster.model.Document;
 public interface KycAutomationService {
     void initializeMemberKyc(String memberId);
     void initializeCustomerKyc(String customerId);
+
+    /** Entreprise creee : dossier KYC ouvert si une exigence d'entreprise s'applique. */
+    void initializeBusinessKyc(Long businessId);
+
+    /** Dossiers manquants (membres, clients hors membres, entreprises) : comptes, et crees si {@code apply}. */
+    java.util.Map<String, Integer> backfillMissingCases(boolean apply);
     void syncMemberKyc(String memberId);
     void syncCustomerKyc(String customerId);
     void syncFromDocumentUpload(Document document);

@@ -12,6 +12,9 @@
 - Remplacer une pièce garde la même pièce (même `id`) : l'ancien fichier passe `SUPERSEDED` (il reste consultable dans la GED), il ne bloque plus de nouveau dépôt.
 - Le statut de vérification d'une pièce suit le statut du document recto : approuver ou refuser une pièce, c'est approuver ou refuser son document.
 - Le dossier évolue seul quand ses pièces changent (recalcul asynchrone) et peut aussi recevoir une décision manuelle.
+- Création automatique (17/11/2026) : un dossier s'ouvre à la création d'un membre, d'un client hors membre et d'une entreprise dès qu'une exigence active s'applique, obligatoire **ou facultative** (avant : seulement avec une pièce obligatoire, d'où des dossiers à créer à la main). Le client d'un membre relève du dossier du membre.
+- Pièces toutes facultatives (« carte ou passeport ») : le dossier est complet avec au moins une des pièces demandées et approuvé quand au moins une est vérifiée et aucune refusée ; `missingDocumentTypeCodes` liste alors les pièces possibles tant qu'aucune n'est déposée (en afficher une au choix). Avant : approuvé d'office, même vide.
+- Rattrapage des dossiers manquants : `POST /sni/api/v1/kyc/cases/backfill` (`KYC:MANAGE`) compte par type (`{ "MEMBER": 0, "CUSTOMER": 1, "BUSINESS": 1 }`) sans rien créer ; `?apply=true` les crée.
 - Le membre dépose ses pièces depuis le portail (routes `/sni/api/v1/client/documents/kyc/**`, module [portal](../portal/routes.md)) ; elles arrivent dans les mêmes files.
 
 ## Tableau de bord KYC

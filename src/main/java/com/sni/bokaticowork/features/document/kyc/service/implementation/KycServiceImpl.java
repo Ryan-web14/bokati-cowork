@@ -1078,6 +1078,21 @@ public class KycServiceImpl implements KycService {
                                 && backSideVerified(doc)
                 ));
 
+        // Pieces toutes facultatives (« carte ou passeport », 17/11/2026) : complet avec au moins une
+        // des pieces demandees, approuvable avec au moins une verifiee. Avant : complet et approuve
+        // d'office, sans aucune piece.
+        boolean anyRequired = requirements.stream().anyMatch(req -> Boolean.TRUE.equals(req.getRequired()));
+        if (!anyRequired && !requirements.isEmpty()) {
+            java.util.Set<String> asked = requirements.stream().map(req -> req.getDocumentTypeCode().toUpperCase(java.util.Locale.ROOT))
+                    .collect(java.util.stream.Collectors.toSet());
+            List<KycDocument> relevant = documents.stream()
+                    .filter(doc -> asked.contains(doc.getDocumentType().toUpperCase(java.util.Locale.ROOT))).toList();
+            boolean onePresent = !relevant.isEmpty();
+            boolean oneVerified = relevant.stream().anyMatch(doc -> doc.getStatus() == KycDocumentVerificationStatus.VERIFIED && backSideVerified(doc));
+            List<String> oneOf = onePresent ? List.of() : requirements.stream().map(DocumentRequirement::getDocumentTypeCode).toList();
+            return new CaseAssessment(onePresent, oneVerified, oneOf);
+        }
+
         return new CaseAssessment(missing.isEmpty(), allVerified, missing);
     }
 

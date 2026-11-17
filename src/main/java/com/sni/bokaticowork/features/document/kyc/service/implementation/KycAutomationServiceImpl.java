@@ -80,6 +80,76 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         syncCustomerKyc(customerId);
     }
 
+    /** Entreprise creee : dossier ouvert si une exigence d'entreprise s'applique (forme juridique comprise). */
+    @Override
+    public void initializeBusinessKyc(Long businessId) {
+        if (businessId == null) {
+            return;
+        }
+        if (!hasActiveRequirements(DocumentOwnerType.BUSINESS, null, resolveBusinessLegalForm(DocumentOwnerType.BUSINESS, businessId))) {
+            return;
+        }
+        KycCase kycCase = ensureCase(DocumentOwnerType.BUSINESS, businessId);
+        recomputeCaseState(kycCase);
+    }
+
+    /**
+     * Rattrapage : dossiers manquants des membres, des clients hors membres et des entreprises qui
+     * relevent d'une exigence active. {@code apply = false} compte sans rien creer.
+     */
+    @Override
+    public java.util.Map<String, Integer> backfillMissingCases(boolean apply) {
+        java.util.Map<String, Integer> counts = new java.util.LinkedHashMap<>();
+        counts.put("MEMBER", 0);
+        counts.put("CUSTOMER", 0);
+        counts.put("BUSINESS", 0);
+        for (Member member : memberRepository.findAll()) {
+            if (Boolean.TRUE.equals(member.getDeleted()) || hasCase(DocumentOwnerType.MEMBER, member.getId())
+                    || !hasActiveRequirements(DocumentOwnerType.MEMBER, null)) {
+                continue;
+            }
+            counts.merge("MEMBER", 1, Integer::sum);
+            if (apply) {
+                syncMemberKyc(member.getMemberId());
+            }
+        }
+        for (Customer customer : customerRepository.findAll()) {
+            // Le client d'un membre releve du dossier du membre.
+            if (customer.isMember() || customer.isDeleted() || hasCase(DocumentOwnerType.CUSTOMER, customer.getId())
+                    || !hasActiveRequirements(DocumentOwnerType.CUSTOMER, customer.getType() == null ? null : customer.getType().name())) {
+                continue;
+            }
+            counts.merge("CUSTOMER", 1, Integer::sum);
+            if (apply) {
+                syncCustomerKyc(customer.getCustomerId());
+            }
+        }
+        if (businessIds != null) {
+            for (Long businessId : businessIds.get()) {
+                if (hasCase(DocumentOwnerType.BUSINESS, businessId)
+                        || !hasActiveRequirements(DocumentOwnerType.BUSINESS, null, resolveBusinessLegalForm(DocumentOwnerType.BUSINESS, businessId))) {
+                    continue;
+                }
+                counts.merge("BUSINESS", 1, Integer::sum);
+                if (apply) {
+                    initializeBusinessKyc(businessId);
+                }
+            }
+        }
+        return counts;
+    }
+
+    private boolean hasCase(DocumentOwnerType ownerType, Long ownerId) {
+        return kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(ownerType, ownerId).isPresent();
+    }
+
+    private java.util.function.Supplier<List<Long>> businessIds;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setBusinessRepository(com.sni.bokaticowork.features.company.repository.BusinessRepository businessRepository) {
+        this.businessIds = () -> businessRepository.findAll().stream().map(b -> b.getId()).toList();
+    }
+
     @Override
     public void syncMemberKyc(String memberId) {
         Member member = memberRepository.findByMemberIdAndDeletedFalse(memberId)
@@ -185,10 +255,14 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         return hasActiveRequirements(ownerType, customerType, null);
     }
 
+    /**
+     * Un dossier s'ouvre des qu'une exigence active s'applique, obligatoire ou facultative (17/11/2026).
+     * Avant : seulement avec une piece obligatoire ; des exigences toutes facultatives (« carte ou
+     * passeport ») n'ouvraient plus aucun dossier, il fallait les creer a la main.
+     */
     private boolean hasActiveRequirements(DocumentOwnerType ownerType, String customerType, String businessLegalForm) {
         List<DocumentRequirement> requirements = requirementRepository.findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(ownerType);
-        return filterRequirements(requirements, ownerType, customerType, businessLegalForm)
-                .anyMatch(item -> Boolean.TRUE.equals(item.getRequired()));
+        return filterRequirements(requirements, ownerType, customerType, businessLegalForm).findAny().isPresent();
     }
 
     List<DocumentRequirement> filteredRequirements(DocumentOwnerType ownerType, String customerType, String businessLegalForm) {
@@ -346,7 +420,19 @@ public class KycAutomationServiceImpl implements KycAutomationService {
 
         KycCaseStatus targetStatus;
         if (!hasRequiredRequirements) {
-            targetStatus = KycCaseStatus.APPROVED;
+            // Pieces toutes facultatives (« carte ou passeport ») : au moins une verifiee, aucune
+            // refusee. Avant : APPROVED d'office, meme sans aucune piece.
+            if (requirements.isEmpty()) {
+                targetStatus = KycCaseStatus.APPROVED;
+            } else if (anyRejected) {
+                targetStatus = KycCaseStatus.PENDING_CORRECTION;
+            } else if (documents.stream().anyMatch(doc -> doc.getStatus() == KycDocumentVerificationStatus.VERIFIED && backSideVerified(doc))) {
+                targetStatus = KycCaseStatus.APPROVED;
+            } else if (!documents.isEmpty()) {
+                targetStatus = KycCaseStatus.UNDER_REVIEW;
+            } else {
+                targetStatus = KycCaseStatus.IN_PROGRESS;
+            }
         } else if (anyRejected) {
             targetStatus = KycCaseStatus.PENDING_CORRECTION;
         } else if (allVerified) {

@@ -32,6 +32,7 @@ public class KycCenterController {
 
     private final KycCenterService center;
     private final KycReasons reasons;
+    private final com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService automation;
 
     /** Dossiers par statut, files par anciennete, delais, retards, charge par agent, dossiers bloques. */
     @GetMapping("/dashboard/center")
@@ -56,6 +57,16 @@ public class KycCenterController {
     public ResponseEntity<KycCenterService.RemindResult> remind(@RequestBody(required = false) RemindRequest request) {
         int days = request == null || request.days() == null ? 90 : request.days();
         return ResponseEntity.ok(center.remind(days, request == null ? null : request.kycDocumentIds()));
+    }
+
+    /**
+     * Rattrapage des dossiers manquants (membres, clients hors membres, entreprises relevant d'une
+     * exigence active). {@code apply=false} (defaut) compte sans rien creer ; {@code apply=true} cree.
+     */
+    @PostMapping("/cases/backfill")
+    @Audited(module = "KYC", action = "BACKFILL_CASES", ressource = "kyc_case")
+    public ResponseEntity<java.util.Map<String, Integer>> backfill(@RequestParam(defaultValue = "false") boolean apply) {
+        return ResponseEntity.ok(automation.backfillMissingCases(apply));
     }
 
     /** Meme piece (type et numero normalise) sur plusieurs titulaires. */

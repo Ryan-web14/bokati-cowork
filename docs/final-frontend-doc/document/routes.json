@@ -4631,6 +4631,31 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/backfill",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCenterController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCenterController.java",
+   "handler": "backfill",
+   "declaredIn": "KycCenterController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:MANAGE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "apply",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/kyc/dashboard/center",

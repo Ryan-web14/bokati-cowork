@@ -48,6 +48,14 @@ public class BusinessServiceImpl implements BusinessService {
     private final BusinessRepository businessRepo;
     private final AddressService addressService;
     private final CurrencyService currencyService;
+    private com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService kycAutomation;
+
+    /** Paresseux : l'automatisme KYC depend deja de ce service (forme juridique). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setKycAutomation(@org.springframework.context.annotation.Lazy
+                          com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService kycAutomation) {
+        this.kycAutomation = kycAutomation;
+    }
 
     @Override
     public BusinessEntityResponse createBusiness(BusinessEntityRequest request) {
@@ -70,6 +78,10 @@ public class BusinessServiceImpl implements BusinessService {
         business.setCreated_by("SYSTEM");
 
         businessRepo.save(business);
+        // Dossier KYC ouvert a la creation, comme pour un membre ou un client (17/11/2026).
+        if (kycAutomation != null) {
+            kycAutomation.initializeBusinessKyc(business.getId());
+        }
         return businessMapper.toDTO(business);
     }
 
