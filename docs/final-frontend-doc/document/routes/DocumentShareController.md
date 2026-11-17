@@ -87,7 +87,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `accessCount` | entier |  |  |
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
-| `createdBy` | entier int64 ⚠ |  |  |
+| `createdBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdByEmail` | texte |  |  |
 | `active` | booléen |  |  |
 

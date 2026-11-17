@@ -213,12 +213,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
-| `total` | entier int64 ⚠ |  |  |
-| `byStatus` | objet { clé : entier int64 ⚠ } |  |  |
-| `byCategory` | objet { clé : entier int64 ⚠ } |  |  |
-| `pendingReviewOlderThan48h` | entier int64 ⚠ |  |  |
-| `needsCorrectionCount` | entier int64 ⚠ |  |  |
-| `expiringIn30Days` | entier int64 ⚠ |  |  |
+| `total` | entier int64 (texte au-delà de 2^53) |  |  |
+| `byStatus` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `byCategory` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `pendingReviewOlderThan48h` | entier int64 (texte au-delà de 2^53) |  |  |
+| `needsCorrectionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `expiringIn30Days` | entier int64 (texte au-delà de 2^53) |  |  |
 | `rejectionRate30d` | nombre décimal |  |  |
 | `avgReviewTimeHours` | nombre décimal |  |  |
 | `topTags` | [DocumentDashboardResponse.TagCount](#m-DocumentDashboardResponse-TagCount)[] |  |  |
@@ -229,7 +229,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `code` | texte |  |  |
-| `ownerId` | entier int64 ⚠ |  |  |
+| `ownerId` | code identifiant (texte) |  |  |
 | `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
 | `category` | enum : `KYC`, `LEGAL`, `SYSTEM`, `FINANCIAL`, `ASSET`, `OTHER` |  |  |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
@@ -244,14 +244,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `fileUrl` | texte |  |  |
 | `previewUrl` | texte |  |  |
 | `downloadUrl` | texte |  |  |
-| `fileSize` | entier int64 ⚠ |  |  |
+| `fileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `mimeType` | texte |  |  |
 | `checksumSha256` | texte |  |  |
 | `currentVersionNumber` | entier |  |  |
 | `status` | enum : `DRAFT`, `UPLOADED`, `PENDING_REVIEW`, `NEEDS_CORRECTION`, `APPROVED`, `REJECTED`, `SIGNED`, `EXPIRED`, `ARCHIVED`, `SUPERSEDED` |  |  |
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 | `versions` | [DocumentVersionResponse](#m-DocumentVersionResponse)[] |  |  |
@@ -293,7 +293,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `tagCode` | texte |  |  |
 | `tagLabel` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-DocumentVersionResponse"></a>
 #### DocumentVersionResponse
@@ -311,10 +311,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `mimeTypeDetected` | texte |  |  |
 | `fileExtension` | texte |  |  |
 | `checksumSha256` | texte |  |  |
-| `fileSizeBytes` | entier int64 ⚠ |  |  |
+| `fileSizeBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadStatus` | enum : `PENDING_SCAN`, `READY`, `QUARANTINED`, `REJECTED`, `DELETED` |  |  |
 | `antivirusStatus` | enum : `PENDING`, `CLEAN`, `INFECTED`, `ERROR` |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
 | `current` | booléen |  |  |
 
@@ -323,10 +323,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `label` | texte |  |  |
 | `color` | texte |  |  |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
-| `createdBy` | entier int64 ⚠ |  |  |
+| `createdBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |

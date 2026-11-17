@@ -18,7 +18,7 @@ Module [document](../README.md) · 4 route(s).
 | `targetType` | requête | `String` | oui |  |
 | `targetCode` | requête | `String` | oui |  |
 | `granteeType` | requête | `String` | oui |  |
-| `granteeId` | requête | `Long` | oui |  |
+| `granteeId` | requête | `Long` (code identifiant ou nombre) | oui |  |
 | `permission` | requête | `String` | oui |  |
 
 <a id="r-get-sni-api-v1-document-permissions"></a>
@@ -52,7 +52,7 @@ Module [document](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `userId` | requête | `Long` | oui |  |
+| `userId` | requête | `Long` (code identifiant ou nombre) | oui |  |
 | `documentCode` | requête | `String` | oui |  |
 
 ## Modèles
@@ -64,15 +64,15 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `targetType` | texte |  |  |
-| `targetId` | entier int64 ⚠ |  |  |
+| `targetId` | code identifiant (texte) |  |  |
 | `targetCode` | texte |  |  |
 | `granteeType` | texte |  |  |
-| `granteeId` | entier int64 ⚠ |  |  |
+| `granteeId` | code identifiant (texte) |  |  |
 | `granteeEmail` | texte |  |  |
 | `permission` | texte |  |  |
-| `grantedBy` | entier int64 ⚠ |  |  |
+| `grantedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `grantedByEmail` | texte |  |  |
 | `grantedAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -84,5 +84,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `targetType` | texte | oui | longueur min `1` |
 | `targetCode` | texte | oui | longueur min `1` |
 | `granteeType` | texte | oui | longueur min `1` |
-| `granteeId` | entier int64 ⚠ | oui |  |
+| `granteeId` | code identifiant (texte) | oui |  |
 | `permission` | texte | oui | longueur min `1` |

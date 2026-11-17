@@ -482,9 +482,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `totalBalanceDue` | nombre décimal |  |  |
 | `totalCreditAvailable` | nombre décimal |  |  |
 | `netBalanceDue` | nombre décimal |  |  |
-| `invoiceCount` | entier int64 ⚠ |  |  |
-| `unpaidCount` | entier int64 ⚠ |  |  |
-| `overdueCount` | entier int64 ⚠ |  |  |
+| `invoiceCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `unpaidCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `overdueCount` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-BillingDocumentLineResponse"></a>
 #### BillingDocumentLineResponse
@@ -595,7 +595,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `paidAmount` | nombre décimal |  |  |
 | `balanceDue` | nombre décimal |  |  |
 | `impact` | nombre décimal |  |  |
-| `daysOverdue` | entier int64 ⚠ |  |  |
+| `daysOverdue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `inPeriod` | booléen |  |  |
 
 <a id="m-MobileMoneyDepositResponse-AccountDetailsResponse"></a>

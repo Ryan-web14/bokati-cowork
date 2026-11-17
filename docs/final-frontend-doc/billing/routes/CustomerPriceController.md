@@ -47,7 +47,7 @@ Module [billing](../README.md) · 3 route(s).
 | --- | --- | --- | --- | --- |
 | `customerType` | chemin | `String` | oui |  |
 | `customerCode` | chemin | `String` | oui |  |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -58,7 +58,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `customerType` | texte |  |  |
 | `customerCode` | texte |  |  |
 | `itemCode` | texte |  |  |

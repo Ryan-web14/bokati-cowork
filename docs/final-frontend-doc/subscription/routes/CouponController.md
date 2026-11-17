@@ -192,10 +192,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `channel` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `createdBy` | texte |  |  |
-| `totalCoupons` | entier int64 ⚠ |  |  |
-| `countsByStatus` | objet { clé : entier int64 ⚠ } |  |  |
-| `totalRedemptions` | entier int64 ⚠ |  |  |
-| `totalReserved` | entier int64 ⚠ |  |  |
+| `totalCoupons` | entier int64 (texte au-delà de 2^53) |  |  |
+| `countsByStatus` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `totalRedemptions` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalReserved` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-CreateCouponBatchRequest"></a>
 #### CreateCouponBatchRequest

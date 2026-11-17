@@ -177,8 +177,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `sortOrder` | entier |  |  |
 | `natures` | [SupplierSuggestionDtos.TargetView](#m-SupplierSuggestionDtos-TargetView)[] |  |  |
 | `inventoryCategories` | [SupplierSuggestionDtos.TargetView](#m-SupplierSuggestionDtos-TargetView)[] |  |  |
-| `supplierCount` | entier int64 ⚠ |  |  |
-| `childCount` | entier int64 ⚠ |  |  |
+| `supplierCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `childCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdBy` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedBy` | texte |  |  |
@@ -264,7 +264,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `score` | entier |  |  |
 | `reasons` | texte[] |  |  |
 | `declared` | booléen |  |  |
-| `historyCount` | entier int64 ⚠ |  |  |
-| `contractUnitPrice` | entier int64 ⚠ |  |  |
+| `historyCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `contractUnitPrice` | entier int64 (texte au-delà de 2^53) |  |  |
 | `leadTimeDays` | entier |  |  |
 | `categories` | [SupplierSuggestionDtos.SupplierCategoryView](#m-SupplierSuggestionDtos-SupplierCategoryView)[] |  |  |

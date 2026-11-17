@@ -17,7 +17,7 @@ Module [crm](../README.md) · 11 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `status` | requête | `ProposalStatus` |  |  |
-| `opportunityId` | requête | `Long` |  |  |
+| `opportunityId` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `searchText` | requête | `String` |  |  |
 | `page, size, sort` | requête (pagination) | `Pageable` |  | size=20, sort=createdAt,DESC |
 
@@ -52,7 +52,7 @@ Module [crm](../README.md) · 11 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-crm-proposals-id"></a>
 ### PUT /sni/api/v1/crm/proposals/{id}
@@ -65,7 +65,7 @@ Module [crm](../README.md) · 11 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-crm-proposals-id-accept"></a>
 ### PATCH /sni/api/v1/crm/proposals/{id}/accept
@@ -77,7 +77,7 @@ Module [crm](../README.md) · 11 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-crm-proposals-id-lines"></a>
 ### POST /sni/api/v1/crm/proposals/{id}/lines
@@ -90,7 +90,7 @@ Module [crm](../README.md) · 11 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-delete-sni-api-v1-crm-proposals-id-lines-lineid"></a>
 ### DELETE /sni/api/v1/crm/proposals/{id}/lines/{lineId}
@@ -102,8 +102,8 @@ Module [crm](../README.md) · 11 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
-| `lineId` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+| `lineId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-crm-proposals-id-lines-lineid"></a>
 ### PUT /sni/api/v1/crm/proposals/{id}/lines/{lineId}
@@ -116,8 +116,8 @@ Module [crm](../README.md) · 11 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
-| `lineId` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+| `lineId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-crm-proposals-id-reject"></a>
 ### PATCH /sni/api/v1/crm/proposals/{id}/reject
@@ -130,7 +130,7 @@ Module [crm](../README.md) · 11 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-crm-proposals-id-send"></a>
 ### PATCH /sni/api/v1/crm/proposals/{id}/send
@@ -142,7 +142,7 @@ Module [crm](../README.md) · 11 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -153,11 +153,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `proposalNumber` | texte |  |  |
 | `title` | texte |  |  |
-| `opportunityId` | entier int64 ⚠ |  |  |
-| `leadId` | entier int64 ⚠ |  |  |
+| `opportunityId` | code identifiant (texte) |  |  |
+| `leadId` | code identifiant (texte) |  |  |
 | `recipientType` | texte |  |  |
 | `recipientCode` | texte |  |  |
 | `recipientName` | texte |  |  |
@@ -179,8 +179,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `acceptedAt` | date-heure ISO 8601 UTC |  |  |
 | `rejectedAt` | date-heure ISO 8601 UTC |  |  |
 | `rejectionReason` | texte |  |  |
-| `createdBy` | entier int64 ⚠ |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `createdBy` | entier int64 (texte au-delà de 2^53) |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 | `lines` | [ProposalDtos.ProposalLineResponse](#m-ProposalDtos-ProposalLineResponse)[] |  |  |
@@ -196,8 +196,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `title` | texte | oui | longueur min `1` |
-| `opportunityId` | entier int64 ⚠ |  |  |
-| `leadId` | entier int64 ⚠ |  |  |
+| `opportunityId` | code identifiant (texte) |  |  |
+| `leadId` | code identifiant (texte) |  |  |
 | `recipientType` | texte |  |  |
 | `recipientCode` | texte |  |  |
 | `recipientName` | texte |  |  |
@@ -206,7 +206,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `currency` | texte |  |  |
 | `notes` | texte |  |  |
 | `internalNotes` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-ProposalDtos-UpdateProposalRequest"></a>
 #### ProposalDtos.UpdateProposalRequest
@@ -219,7 +219,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validUntil` | date AAAA-MM-JJ |  |  |
 | `notes` | texte |  |  |
 | `internalNotes` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-ProposalDtos-AddProposalLineRequest"></a>
 #### ProposalDtos.AddProposalLineRequest
@@ -264,7 +264,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `sortOrder` | entier |  |  |
 | `serviceType` | texte |  |  |
 | `serviceRefCode` | texte |  |  |

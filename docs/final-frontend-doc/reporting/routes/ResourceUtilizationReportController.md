@@ -90,12 +90,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `resourceCode` | texte |  |  |
 | `resourceName` | texte |  |  |
 | `resourceType` | texte |  |  |
-| `totalBookings` | entier int64 ⚠ |  |  |
-| `morningBookings` | entier int64 ⚠ |  |  |
-| `afternoonBookings` | entier int64 ⚠ |  |  |
-| `eveningBookings` | entier int64 ⚠ |  |  |
-| `bookedMinutes` | entier int64 ⚠ |  |  |
-| `availableMinutes` | entier int64 ⚠ |  |  |
+| `totalBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `morningBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `afternoonBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `eveningBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `bookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
+| `availableMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `occupancyRate` | nombre décimal |  |  |
 | `totalRevenue` | nombre décimal |  |  |
 | `revenuePerHour` | nombre décimal |  |  |
@@ -106,7 +106,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `hour` | entier |  |  |
-| `bookingCount` | entier int64 ⚠ |  |  |
+| `bookingCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `percentage` | nombre décimal |  |  |
 
 <a id="m-ResourceUtilizationReportResponse-UnderutilizedResource"></a>
@@ -117,6 +117,6 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `resourceCode` | texte |  |  |
 | `resourceName` | texte |  |  |
 | `resourceType` | texte |  |  |
-| `bookedMinutes` | entier int64 ⚠ |  |  |
+| `bookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `occupancyRate` | nombre décimal |  |  |
 | `totalRevenue` | nombre décimal |  |  |

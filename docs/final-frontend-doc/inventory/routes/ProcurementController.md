@@ -252,8 +252,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `approvalLevel` | enum : `NONE`, `MANAGER`, `DIRECTOR`, `EXECUTIVE` |  |  |
-| `minAmount` | entier int64 ⚠ |  |  |
-| `maxAmount` | entier int64 ⚠ |  |  |
+| `minAmount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `maxAmount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `requiredApprovals` | entier |  |  |
 | `active` | booléen |  |  |
 
@@ -263,8 +263,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `approvalLevel` | enum : `NONE`, `MANAGER`, `DIRECTOR`, `EXECUTIVE` | oui |  |
-| `minAmount` | entier int64 ⚠ | oui |  |
-| `maxAmount` | entier int64 ⚠ |  |  |
+| `minAmount` | entier int64 (texte au-delà de 2^53) | oui |  |
+| `maxAmount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `requiredApprovals` | entier | oui |  |
 | `active` | booléen |  |  |
 
@@ -317,7 +317,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `approvalLevel` | enum : `NONE`, `MANAGER`, `DIRECTOR`, `EXECUTIVE` |  |  |
 | `approvedBy` | texte |  |  |
 | `approvedAt` | date-heure ISO 8601 UTC |  |  |
-| `totalAmount` | entier int64 ⚠ |  |  |
+| `totalAmount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `expectedDeliveryDate` | date AAAA-MM-JJ |  |  |
 | `orderedBy` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
@@ -411,12 +411,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `supplierCode` | texte |  |  |
 | `supplierName` | texte |  |  |
-| `purchaseOrderCount` | entier int64 ⚠ |  |  |
-| `receivedOrderCount` | entier int64 ⚠ |  |  |
-| `completeReceiptCount` | entier int64 ⚠ |  |  |
+| `purchaseOrderCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `receivedOrderCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `completeReceiptCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `completeReceiptRate` | nombre décimal |  |  |
 | `averageDeliveryDelayDays` | nombre décimal |  |  |
-| `averageUnitCost` | entier int64 ⚠ |  |  |
+| `averageUnitCost` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-ProcurementDtos-ProcurementLineResponse"></a>
 #### ProcurementDtos.ProcurementLineResponse
@@ -431,8 +431,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `backorderQuantity` | nombre décimal |  |  |
 | `qualityAccepted` | booléen |  |  |
 | `rejectionReason` | texte |  |  |
-| `unitCost` | entier int64 ⚠ |  |  |
-| `totalCost` | entier int64 ⚠ |  |  |
+| `unitCost` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `lotNumber` | texte |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
 
@@ -450,7 +450,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `quarantineReason` | texte |  |  |
 | `ownershipType` | enum : `COMPANY`, `CUSTOMER`, `SUPPLIER`, `CONSIGNMENT` |  |  |
 | `ownerCode` | texte |  |  |
-| `unitCost` | entier int64 ⚠ |  |  |
+| `unitCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `lotNumber` | texte |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
 
@@ -470,7 +470,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `itemCode` | texte | oui | longueur min `1` |
 | `quantity` | nombre décimal | oui |  |
-| `unitCost` | entier int64 ⚠ |  |  |
+| `unitCost` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-SupplierSuggestionDtos-SupplierCategoryView"></a>
 #### SupplierSuggestionDtos.SupplierCategoryView

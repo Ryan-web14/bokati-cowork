@@ -24,7 +24,7 @@ Module [socle](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `long` | oui |  |
+| `id` | chemin | `long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-addresses-id"></a>
 ### GET /sni/api/v1/addresses/{id}
@@ -36,7 +36,7 @@ Module [socle](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `long` | oui |  |
+| `id` | chemin | `long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-addresses-id"></a>
 ### PUT /sni/api/v1/addresses/{id}
@@ -49,7 +49,7 @@ Module [socle](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `long` | oui |  |
+| `id` | chemin | `long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 

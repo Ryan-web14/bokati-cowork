@@ -18,7 +18,7 @@ Le module suit les prospects commerciaux (leads) du premier contact jusqu'à leu
 | Devis | `quoteNumber` (numéro de document du module `billing`) | créé depuis un lead | Vit ensuite dans `billing` avec `sourceType = CRM_LEAD` et `sourceCode = <leadNumber>`. |
 | Agent assigné (`assignedTo`) | id numérique du compte utilisateur | lead, opportunité, proposition | C'est l'`id` de `AdminUserResponse` ([securite](../securite/routes/AdminUserController.md#r-get-sni-api-v1-admin-users)), **pas** le `userId` texte de `/auth/me`. |
 
-Tous les identifiants numériques sont des int64 : appliquer la règle [Identifiants](../README.md#identifiants--attention-aux-grands-nombres) (les garder en texte).
+Tous les identifiants numériques sont des int64 : appliquer la règle [Identifiants](../README.md#identifiants--codes-en-texte) (les garder en texte).
 
 Énumérations utiles aux listes déroulantes (valeurs exactes dans les fichiers `routes/`) :
 

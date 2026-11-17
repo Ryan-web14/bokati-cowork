@@ -519,7 +519,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `openingVariance` | nombre décimal |  |  |
 | `openingVarianceReason` | texte |  |  |
 | `pausedAt` | date-heure ISO 8601 UTC |  |  |
-| `pauseSeconds` | entier int64 ⚠ |  |  |
+| `pauseSeconds` | entier int64 (texte au-delà de 2^53) |  |  |
 | `suspendedBy` | texte |  |  |
 | `suspensionReason` | texte |  |  |
 | `keptFloat` | nombre décimal |  |  |

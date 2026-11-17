@@ -44,8 +44,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `issued` | entier int64 ⚠ |  |  |
-| `converted` | entier int64 ⚠ |  |  |
+| `issued` | entier int64 (texte au-delà de 2^53) |  |  |
+| `converted` | entier int64 (texte au-delà de 2^53) |  |  |
 | `conversionRate` | nombre décimal |  |  |
 | `issuedAmount` | nombre décimal |  |  |
 | `convertedAmount` | nombre décimal |  |  |
@@ -56,7 +56,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `invoices` | entier int64 ⚠ |  |  |
+| `invoices` | entier int64 (texte au-delà de 2^53) |  |  |
 | `invoiced` | nombre décimal |  |  |
 | `collected` | nombre décimal |  |  |
 | `outstanding` | nombre décimal |  |  |
@@ -70,7 +70,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `weekStart` | date AAAA-MM-JJ |  |  |
 | `expected` | nombre décimal |  |  |
-| `documents` | entier int64 ⚠ |  |  |
+| `documents` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-BillingDashboardService-DealStage"></a>
 #### BillingDashboardService.DealStage
@@ -78,7 +78,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `stage` | texte |  |  |
-| `deals` | entier int64 ⚠ |  |  |
+| `deals` | entier int64 (texte au-delà de 2^53) |  |  |
 | `expectedAmount` | nombre décimal |  |  |
 | `weightedAmount` | nombre décimal |  |  |
 

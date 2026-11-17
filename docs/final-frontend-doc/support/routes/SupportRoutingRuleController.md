@@ -32,7 +32,7 @@ Module [support](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-support-routing-rules-id"></a>
 ### PUT /sni/api/v1/support/routing-rules/{id}
@@ -45,7 +45,7 @@ Module [support](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -56,14 +56,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `name` | texte |  |  |
 | `active` | booléen |  |  |
 | `category` | enum : `BILLING`, `BOOKING`, `ACCESS`, `TECHNICAL`, `OTHER` |  |  |
 | `priority` | enum : `LOW`, `MEDIUM`, `HIGH`, `URGENT` |  |  |
 | `ownerType` | texte |  |  |
 | `relatedType` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `teamCode` | texte |  |  |
 | `sortOrder` | entier |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
@@ -80,6 +80,6 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `priority` | enum : `LOW`, `MEDIUM`, `HIGH`, `URGENT` |  |  |
 | `ownerType` | texte |  |  |
 | `relatedType` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `teamCode` | texte |  |  |
 | `sortOrder` | entier |  |  |

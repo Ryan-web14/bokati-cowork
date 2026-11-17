@@ -29,7 +29,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `assignedTo` | requête | `Long` |  |  |
+| `assignedTo` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `source` | requête | `LeadSource` |  |  |
 | `interest` | requête | `LeadInterest` |  |  |
 | `searchText` | requête | `String` |  |  |
@@ -45,7 +45,7 @@ Module [crm](../README.md) · 17 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `stage` | requête | `LeadStage` |  |  |
-| `assignedTo` | requête | `Long` |  |  |
+| `assignedTo` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `source` | requête | `LeadSource` |  |  |
 | `searchText` | requête | `String` |  |  |
 | `page, size, sort` | requête (pagination) | `Pageable` |  | size=20 |
@@ -81,7 +81,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-crm-leads-id"></a>
 ### PUT /sni/api/v1/crm/leads/{id}
@@ -94,7 +94,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-crm-leads-id-activities"></a>
 ### POST /sni/api/v1/crm/leads/{id}/activities
@@ -107,7 +107,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-crm-leads-id-convert"></a>
 ### PATCH /sni/api/v1/crm/leads/{id}/convert
@@ -120,7 +120,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-crm-leads-id-generate-quote"></a>
 ### POST /sni/api/v1/crm/leads/{id}/generate-quote
@@ -133,7 +133,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-crm-leads-id-opportunities"></a>
 ### POST /sni/api/v1/crm/leads/{id}/opportunities
@@ -146,7 +146,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-crm-leads-id-qualify"></a>
 ### PATCH /sni/api/v1/crm/leads/{id}/qualify
@@ -158,7 +158,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-crm-leads-id-stage"></a>
 ### PATCH /sni/api/v1/crm/leads/{id}/stage
@@ -171,7 +171,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-crm-metrics"></a>
 ### GET /sni/api/v1/crm/metrics
@@ -205,7 +205,7 @@ Module [crm](../README.md) · 17 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-crm-pipeline"></a>
 ### GET /sni/api/v1/crm/pipeline
@@ -226,13 +226,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `from` | date-heure ISO 8601 UTC |  |  |
 | `to` | date-heure ISO 8601 UTC |  |  |
-| `totalCreated` | entier int64 ⚠ |  |  |
-| `totalWon` | entier int64 ⚠ |  |  |
-| `totalLost` | entier int64 ⚠ |  |  |
+| `totalCreated` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalWon` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalLost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `conversionRate` | nombre décimal |  |  |
 | `avgDaysToWin` | nombre décimal |  |  |
-| `bySource` | objet { clé : entier int64 ⚠ } |  |  |
-| `byStage` | objet { clé : entier int64 ⚠ } |  |  |
+| `bySource` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `byStage` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
 | `pipelineValue` | nombre décimal |  |  |
 
 <a id="m-CrmDtos-KanbanBoardResponse"></a>
@@ -241,7 +241,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `columns` | [CrmDtos.KanbanColumnResponse](#m-CrmDtos-KanbanColumnResponse)[] |  |  |
-| `totalLeads` | entier int64 ⚠ |  |  |
+| `totalLeads` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalPipelineValue` | nombre décimal |  |  |
 
 <a id="m-LeadSource"></a>
@@ -259,7 +259,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `leadNumber` | texte |  |  |
 | `fullName` | texte |  |  |
 | `email` | texte |  |  |
@@ -273,7 +273,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `probability` | entier |  |  |
 | `scoredProbability` | entier |  |  |
 | `expectedCloseDate` | date AAAA-MM-JJ |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `convertedOwnerType` | texte |  |  |
 | `convertedOwnerCode` | texte |  |  |
 | `lostReason` | texte |  |  |
@@ -302,7 +302,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `estimatedAmount` | nombre décimal |  |  |
 | `probability` | entier |  |  |
 | `expectedCloseDate` | date AAAA-MM-JJ |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-CrmDtos-UpdateLeadRequest"></a>
 #### CrmDtos.UpdateLeadRequest
@@ -319,7 +319,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `estimatedAmount` | nombre décimal |  |  |
 | `probability` | entier |  |  |
 | `expectedCloseDate` | date AAAA-MM-JJ |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-CrmDtos-AddLeadActivityRequest"></a>
 #### CrmDtos.AddLeadActivityRequest
@@ -353,9 +353,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `opportunityNumber` | texte |  |  |
-| `leadId` | entier int64 ⚠ |  |  |
+| `leadId` | code identifiant (texte) |  |  |
 | `leadNumber` | texte |  |  |
 | `leadFullName` | texte |  |  |
 | `title` | texte |  |  |
@@ -363,7 +363,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `probability` | entier |  |  |
 | `stage` | enum : `OPEN`, `NEGOTIATION`, `PROPOSAL_SENT`, `WON`, `LOST` |  |  |
 | `expectedCloseDate` | date AAAA-MM-JJ |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `notes` | texte |  |  |
 | `wonAt` | date-heure ISO 8601 UTC |  |  |
 | `lostAt` | date-heure ISO 8601 UTC |  |  |
@@ -380,7 +380,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `estimatedAmount` | nombre décimal |  |  |
 | `probability` | entier |  |  |
 | `expectedCloseDate` | date AAAA-MM-JJ |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `notes` | texte |  |  |
 
 <a id="m-CrmDtos-UpdateLeadStageRequest"></a>
@@ -396,11 +396,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `totalLeads` | entier int64 ⚠ |  |  |
-| `newLeads` | entier int64 ⚠ |  |  |
-| `wonLeads` | entier int64 ⚠ |  |  |
-| `lostLeads` | entier int64 ⚠ |  |  |
-| `activeLeads` | entier int64 ⚠ |  |  |
+| `totalLeads` | entier int64 (texte au-delà de 2^53) |  |  |
+| `newLeads` | entier int64 (texte au-delà de 2^53) |  |  |
+| `wonLeads` | entier int64 (texte au-delà de 2^53) |  |  |
+| `lostLeads` | entier int64 (texte au-delà de 2^53) |  |  |
+| `activeLeads` | entier int64 (texte au-delà de 2^53) |  |  |
 | `pipelineValue` | nombre décimal |  |  |
 | `conversionRate` | nombre décimal |  |  |
 
@@ -430,7 +430,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `stage` | enum : `NEW`, `CONTACTED`, `QUALIFIED`, `PROPOSAL_SENT`, `WON`, `LOST` |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalAmount` | nombre décimal |  |  |
 | `cards` | [CrmDtos.KanbanCardResponse](#m-CrmDtos-KanbanCardResponse)[] |  |  |
 
@@ -439,7 +439,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `activityType` | enum : `CALL`, `EMAIL`, `MEETING`, `VISIT`, `NOTE` |  |  |
 | `subject` | texte |  |  |
 | `notes` | texte |  |  |
@@ -451,7 +451,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `leadNumber` | texte |  |  |
 | `fullName` | texte |  |  |
 | `company` | texte |  |  |
@@ -462,7 +462,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `estimatedAmount` | nombre décimal |  |  |
 | `probability` | entier |  |  |
 | `score` | entier |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `lastActivityAt` | date-heure ISO 8601 UTC |  |  |
 | `activityCount` | entier |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |

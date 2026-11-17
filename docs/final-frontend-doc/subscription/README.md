@@ -36,7 +36,7 @@ Il travaille avec [billing](../billing/README.md) (chaque somme due devient une 
 | Parrainage | `referralNumber`, lien `linkCode`, programme `programCode` | Filleul inscrit par le lien d'un parrain. | |
 | Élément facturable | `billableNumber` | Une somme due, transmise à la facturation. | |
 
-Les identifiants numériques (`id` des versions de plan d'abonnement, des options, des politiques de dépassement) relèvent de la règle des [grands nombres](../README.md#identifiants--attention-aux-grands-nombres) : les garder en texte. Les préfixes cités viennent des définitions de séquences des migrations ; traiter tous les codes comme opaques.
+Les identifiants numériques (`id` des versions de plan d'abonnement, des options, des politiques de dépassement) relèvent de la règle des [grands nombres](../README.md#identifiants--codes-en-texte) : les garder en texte. Les préfixes cités viennent des définitions de séquences des migrations ; traiter tous les codes comme opaques.
 
 Une seule politique d'abonnement (`SubscriptionPolicy`) règle tout le cycle de vie ; ses valeurs par défaut, en l'absence de ligne en base, sont dans `src/main/java/com/sni/bokaticowork/features/subscription/lifecycle/model/SubscriptionPolicy.java` : prorata `DAILY`, préavis 30 jours, rupture `PERCENT_OF_REMAINING` à 50 %, 2 gels par an de 60 jours maximum sans frais, tolérance 1 jour, suspension 3 jours après l'entrée en tolérance, expiration 7 jours après la fin de période, devis valable 30 jours.
 

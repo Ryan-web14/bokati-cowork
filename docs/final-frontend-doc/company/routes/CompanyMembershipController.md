@@ -57,7 +57,7 @@ Module [company](../README.md) · 6 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `linkId` | chemin | `Long` | oui |  |
+| `linkId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-customers-customerid-members-linkid-end"></a>
 ### POST /sni/api/v1/customers/{customerId}/members/{linkId}/end
@@ -71,7 +71,7 @@ Module [company](../README.md) · 6 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `linkId` | chemin | `Long` | oui |  |
+| `linkId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-members-memberid-companies"></a>
 ### GET /sni/api/v1/members/{memberId}/companies
@@ -106,7 +106,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `customerId` | texte |  |  |
 | `companyName` | texte |  |  |
 | `memberId` | texte |  |  |

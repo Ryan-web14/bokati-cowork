@@ -73,7 +73,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `eventType` | texte |  |  |
 | `userCode` | texte |  |  |

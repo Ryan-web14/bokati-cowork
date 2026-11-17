@@ -163,8 +163,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `locationToCode` | texte |  |  |
 | `movementType` | enum : `IN`, `OUT`, `TRANSFER`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT` |  |  |
 | `quantity` | nombre décimal |  |  |
-| `unitCost` | entier int64 ⚠ |  |  |
-| `totalCost` | entier int64 ⚠ |  |  |
+| `unitCost` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `referenceType` | enum : `PURCHASE_ORDER`, `GOODS_RECEIPT`, `POS_SALE`, `BOOKING`, `CONTRACT`, `MANUAL_ADJUSTMENT`, `INVENTORY_COUNT`, `ASSET_ASSIGNMENT`, `OTHER` |  |  |
 | `referenceCode` | texte |  |  |
 | `reasonCode` | enum : `CONSUMPTION`, `DAMAGE`, `LOSS`, `INTERNAL_USE`, `SAMPLE`, `DONATION`, `OTHER` |  |  |
@@ -189,7 +189,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `itemCode` | texte | oui | longueur min `1` |
 | `locationCode` | texte | oui | longueur min `1` |
 | `quantityDelta` | nombre décimal | oui |  |
-| `unitCost` | entier int64 ⚠ |  |  |
+| `unitCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `lotNumber` | texte |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
 | `reasonCode` | enum : `CONSUMPTION`, `DAMAGE`, `LOSS`, `INTERNAL_USE`, `SAMPLE`, `DONATION`, `OTHER` |  |  |
@@ -209,7 +209,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `itemCode` | texte | oui | longueur min `1` |
 | `locationCode` | texte | oui | longueur min `1` |
 | `quantity` | nombre décimal | oui |  |
-| `unitCost` | entier int64 ⚠ |  |  |
+| `unitCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `lotNumber` | texte |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
 | `assetSerialNumbers` | texte[] |  |  |
@@ -235,7 +235,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `quantityOnHand` | nombre décimal |  |  |
 | `quantityReserved` | nombre décimal |  |  |
 | `quantityAvailable` | nombre décimal |  |  |
-| `averageCost` | entier int64 ⚠ |  |  |
+| `averageCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `lastMovementAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-StockMovementType"></a>

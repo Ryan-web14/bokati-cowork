@@ -262,9 +262,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `code` | texte |  |  |
-| `typeId` | entier int64 ⚠ |  |  |
-| `groupId` | entier int64 ⚠ |  |  |
-| `policyId` | entier int64 ⚠ |  |  |
+| `typeId` | code identifiant (texte) |  |  |
+| `groupId` | code identifiant (texte) |  |  |
+| `policyId` | code identifiant (texte) |  |  |
 | `name` | texte |  |  |
 | `zone` | texte |  |  |
 | `locationLabel` | texte |  |  |

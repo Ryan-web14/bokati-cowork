@@ -59,7 +59,7 @@ Module [company](../README.md) · 7 route(s).
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
 | `subscriptionNumber` | chemin | `String` | oui |  |
-| `seatId` | chemin | `Long` | oui |  |
+| `seatId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-companies-customerid-subscriptions-subscriptionnumber-seats-seatid-release"></a>
 ### POST /sni/api/v1/companies/{customerId}/subscriptions/{subscriptionNumber}/seats/{seatId}/release
@@ -74,7 +74,7 @@ Module [company](../README.md) · 7 route(s).
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
 | `subscriptionNumber` | chemin | `String` | oui |  |
-| `seatId` | chemin | `Long` | oui |  |
+| `seatId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-companies-customerid-subscriptions-subscriptionnumber-sharing"></a>
 ### GET /sni/api/v1/companies/{customerId}/subscriptions/{subscriptionNumber}/sharing
@@ -120,7 +120,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `periodEnd` | date AAAA-MM-JJ |  |  |
 | `maxSeats` | entier |  |  |
 | `seatCeiling` | entier |  |  |
-| `activeSeats` | entier int64 ⚠ |  |  |
+| `activeSeats` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-SharingDtos-SharingView"></a>
 #### SharingDtos.SharingView
@@ -159,7 +159,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `seatId` | entier int64 ⚠ |  |  |
+| `seatId` | code identifiant (texte) |  |  |
 | `memberId` | texte |  |  |
 | `futureBookings` | texte[] |  |  |
 | `warning` | texte |  |  |
@@ -203,7 +203,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `memberId` | texte |  |  |
 | `memberName` | texte |  |  |
 | `status` | texte |  |  |

@@ -31,7 +31,7 @@ Module [inventory](../README.md) · 6 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `lotId` | chemin | `Long` | oui |  |
+| `lotId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-inventory-stock-lots-lotid-quarantine"></a>
 ### PATCH /sni/api/v1/inventory/stock/lots/{lotId}/quarantine
@@ -45,7 +45,7 @@ Module [inventory](../README.md) · 6 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `lotId` | chemin | `Long` | oui |  |
+| `lotId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-inventory-stock-lots-lotid-release"></a>
 ### PATCH /sni/api/v1/inventory/stock/lots/{lotId}/release
@@ -59,7 +59,7 @@ Module [inventory](../README.md) · 6 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `lotId` | chemin | `Long` | oui |  |
+| `lotId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-inventory-stock-lots-lotid-unblock"></a>
 ### PATCH /sni/api/v1/inventory/stock/lots/{lotId}/unblock
@@ -72,7 +72,7 @@ Module [inventory](../README.md) · 6 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `lotId` | chemin | `Long` | oui |  |
+| `lotId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `unblockedBy` | requête | `String` |  |  |
 
 <a id="r-get-sni-api-v1-inventory-traceability-lotnumber"></a>
@@ -159,7 +159,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `lotId` | entier int64 ⚠ |  |  |
+| `lotId` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `itemName` | texte |  |  |
 | `locationCode` | texte |  |  |
@@ -184,7 +184,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `itemCode` | texte |  |  |
 | `locationCode` | texte |  |  |
 | `quantity` | nombre décimal |  |  |
-| `unitCost` | entier int64 ⚠ |  |  |
+| `unitCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `referenceType` | texte |  |  |
 | `referenceCode` | texte |  |  |
 | `performedBy` | texte |  |  |

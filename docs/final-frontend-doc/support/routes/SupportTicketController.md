@@ -147,7 +147,7 @@ Module [support](../README.md) · 20 route(s).
 | `ticketNumber` | chemin | `String` | oui |  |
 | `file` | partie multipart | `MultipartFile` | oui |  |
 | `internal` | requête | `Boolean` |  |  |
-| `messageId` | requête | `Long` |  |  |
+| `messageId` | requête | `Long` (code identifiant ou nombre) |  |  |
 
 <a id="r-delete-sni-api-v1-support-tickets-ticketnumber-attachments-id"></a>
 ### DELETE /sni/api/v1/support/tickets/{ticketNumber}/attachments/{id}
@@ -159,7 +159,7 @@ Module [support](../README.md) · 20 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `ticketNumber` | chemin | `String` | oui |  |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-support-tickets-ticketnumber-attachments-id-download"></a>
 ### GET /sni/api/v1/support/tickets/{ticketNumber}/attachments/{id}/download
@@ -171,7 +171,7 @@ Module [support](../README.md) · 20 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `ticketNumber` | chemin | `String` | oui |  |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-support-tickets-ticketnumber-messages"></a>
 ### POST /sni/api/v1/support/tickets/{ticketNumber}/messages
@@ -198,7 +198,7 @@ Module [support](../README.md) · 20 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `ticketNumber` | chemin | `String` | oui |  |
-| `messageId` | chemin | `Long` | oui |  |
+| `messageId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-support-tickets-ticketnumber-status"></a>
 ### PATCH /sni/api/v1/support/tickets/{ticketNumber}/status
@@ -343,9 +343,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `agentId` | entier int64 ⚠ |  |  |
-| `assignedCount` | entier int64 ⚠ |  |  |
-| `resolvedCount` | entier int64 ⚠ |  |  |
+| `agentId` | code identifiant (texte) |  |  |
+| `assignedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `resolvedCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `avgFirstResponseHours` | nombre décimal |  |  |
 | `avgResolutionHours` | nombre décimal |  |  |
 | `avgCsatScore` | nombre décimal |  |  |
@@ -357,22 +357,22 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `from` | date-heure ISO 8601 UTC |  |  |
 | `to` | date-heure ISO 8601 UTC |  |  |
-| `totalCreated` | entier int64 ⚠ |  |  |
-| `totalResolved` | entier int64 ⚠ |  |  |
-| `openAtEndOfPeriod` | entier int64 ⚠ |  |  |
-| `slaBreachCount` | entier int64 ⚠ |  |  |
+| `totalCreated` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalResolved` | entier int64 (texte au-delà de 2^53) |  |  |
+| `openAtEndOfPeriod` | entier int64 (texte au-delà de 2^53) |  |  |
+| `slaBreachCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `slaBreachRate` | nombre décimal |  |  |
 | `avgFirstResponseHours` | nombre décimal |  |  |
 | `avgResolutionHours` | nombre décimal |  |  |
-| `reopenedCount` | entier int64 ⚠ |  |  |
-| `waitingClientCount` | entier int64 ⚠ |  |  |
-| `byCategory` | objet { clé : entier int64 ⚠ } |  |  |
-| `byPriority` | objet { clé : entier int64 ⚠ } |  |  |
-| `topTags` | objet { clé : entier int64 ⚠ } |  |  |
-| `volumeByRelatedType` | objet { clé : entier int64 ⚠ } |  |  |
-| `backlogByAgent` | objet { clé : entier int64 ⚠ } |  |  |
+| `reopenedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `waitingClientCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `byCategory` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `byPriority` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `topTags` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `volumeByRelatedType` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `backlogByAgent` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
 | `avgCsatScore` | nombre décimal |  |  |
-| `csatResponseCount` | entier int64 ⚠ |  |  |
+| `csatResponseCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `csatByCategory` | objet { clé : nombre décimal } |  |  |
 | `csatByAgent` | objet { clé : nombre décimal } |  |  |
 | `agentWorkload` | [SupportDtos.AgentWorkloadEntry](#m-SupportDtos-AgentWorkloadEntry)[] |  |  |
@@ -384,8 +384,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `ownerType` | texte |  |  |
 | `ownerCode` | texte |  |  |
-| `openTickets` | entier int64 ⚠ |  |  |
-| `slaBreaches` | entier int64 ⚠ |  |  |
+| `openTickets` | entier int64 (texte au-delà de 2^53) |  |  |
+| `slaBreaches` | entier int64 (texte au-delà de 2^53) |  |  |
 | `avgCsatScore` | nombre décimal |  |  |
 | `atRisk` | booléen |  |  |
 | `recentTickets` | [SupportDtos.SupportTicketResponse](#m-SupportDtos-SupportTicketResponse)[] |  |  |
@@ -395,10 +395,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `openTickets` | entier int64 ⚠ |  |  |
-| `overdueFirstResponse` | entier int64 ⚠ |  |  |
-| `overdueResolution` | entier int64 ⚠ |  |  |
-| `resolvedTickets` | entier int64 ⚠ |  |  |
+| `openTickets` | entier int64 (texte au-delà de 2^53) |  |  |
+| `overdueFirstResponse` | entier int64 (texte au-delà de 2^53) |  |  |
+| `overdueResolution` | entier int64 (texte au-delà de 2^53) |  |  |
+| `resolvedTickets` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-SupportDtos-AssignTicketRequest"></a>
 #### SupportDtos.AssignTicketRequest
@@ -412,12 +412,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `fileName` | texte |  |  |
 | `contentType` | texte |  |  |
-| `fileSize` | entier int64 ⚠ |  |  |
+| `fileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `internal` | booléen |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-SupportDtos-AddTicketMessageRequest"></a>
@@ -438,7 +438,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `articleCode` | texte |  |  |
 | `title` | texte |  |  |
 | `slug` | texte |  |  |
@@ -448,9 +448,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `publicVisible` | booléen |  |  |
 | `internalOnly` | booléen |  |  |
 | `active` | booléen |  |  |
-| `viewCount` | entier int64 ⚠ |  |  |
-| `createdBy` | entier int64 ⚠ |  |  |
-| `updatedBy` | entier int64 ⚠ |  |  |
+| `viewCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `createdBy` | entier int64 (texte au-delà de 2^53) |  |  |
+| `updatedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -484,17 +484,17 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `title` | texte |  |  |
 | `description` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `status` | enum : `OPEN`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`, `ARCHIVED` |  |  |
 | `priority` | enum : `LOW`, `MEDIUM`, `HIGH`, `URGENT` |  |  |
 | `dueAt` | date-heure ISO 8601 UTC |  |  |
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
 | `recurrence` | enum : `NONE`, `DAILY`, `WEEKLY`, `MONTHLY`, `AFTER_BOOKING` |  |  |
-| `parentTaskId` | entier int64 ⚠ |  |  |
+| `parentTaskId` | code identifiant (texte) |  |  |
 | `completedAt` | date-heure ISO 8601 UTC |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
@@ -508,7 +508,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `title` | texte | oui | longueur min `1` |
 | `description` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `priority` | enum : `LOW`, `MEDIUM`, `HIGH`, `URGENT` |  |  |
 | `dueAt` | date-heure ISO 8601 UTC |  |  |
 | `checklist` | [TaskDtos.ChecklistRequest](#m-TaskDtos-ChecklistRequest)[] |  |  |
@@ -518,7 +518,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `eventType` | enum : `TICKET_CREATED`, `ASSIGNED`, `STATUS_CHANGED`, `PRIORITY_CHANGED`, `CATEGORY_CHANGED`, `MESSAGE_ADDED`, `SLA_ESCALATED`, `CSAT_SUBMITTED`, `REOPENED`, `MERGED`, `AUTO_CLOSED`, `TASK_CREATED` |  |  |
 | `actorType` | texte |  |  |
 | `actorId` | texte |  |  |
@@ -530,7 +530,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `senderType` | enum : `CLIENT`, `AGENT`, `SYSTEM` |  |  |
 | `senderId` | texte |  |  |
 | `senderName` | texte |  |  |
@@ -543,16 +543,16 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `agentId` | entier int64 ⚠ |  |  |
-| `assigned` | entier int64 ⚠ |  |  |
-| `resolved` | entier int64 ⚠ |  |  |
+| `agentId` | code identifiant (texte) |  |  |
+| `assigned` | entier int64 (texte au-delà de 2^53) |  |  |
+| `resolved` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-TaskDtos-ChecklistResponse"></a>
 #### TaskDtos.ChecklistResponse
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `label` | texte |  |  |
 | `completed` | booléen |  |  |
 | `displayOrder` | entier |  |  |
@@ -562,7 +562,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `authorId` | texte |  |  |
 | `authorName` | texte |  |  |
 | `comment` | texte |  |  |

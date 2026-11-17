@@ -26,7 +26,7 @@ Sommaire : [Notions](#notions) · [Statuts](#statuts-et-cycle-de-vie) · [Parcou
 | Autorisation de dépense | `id` (entier court) | Permet à un collaborateur de régler des factures de l'organisation avec son portefeuille, pour certaines opérations, sous plafonds. Une seule autorisation ouverte par collaborateur et par portefeuille. |
 | Dépense | `id` (entier court) | Un règlement fait sur le portefeuille par un collaborateur ou le gérant, avec la facture payée. |
 
-Tous les `id` de ce module (rattachement, place, accès, autorisation, dépense) sont des **numéros courts** sûrs en JavaScript, pas les identifiants 64 bits : voir [identifiants](../README.md#identifiants--attention-aux-grands-nombres).
+Tous les `id` de ce module (rattachement, place, accès, autorisation, dépense) sont des **numéros courts** sûrs en JavaScript, pas les identifiants 64 bits : voir [identifiants](../README.md#identifiants--codes-en-texte).
 
 Types d'organisation (`organizationType`) et identifiants proposés à la saisie (`suggestedIdentifiers` dans la réponse), tous facultatifs (`src/main/java/com/sni/bokaticowork/features/company/enums/OrganizationType.java`) :
 

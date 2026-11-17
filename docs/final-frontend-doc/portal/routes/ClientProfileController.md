@@ -79,7 +79,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `kycCompletionPercent` | entier |  |  |
 | `gracePeriodEndsAt` | date-heure ISO 8601 UTC |  |  |
 | `gracePeriodActive` | booléen |  |  |
-| `gracePeriodDaysRemaining` | entier int64 ⚠ |  |  |
+| `gracePeriodDaysRemaining` | entier int64 (texte au-delà de 2^53) |  |  |
 | `portalFullyActive` | booléen |  |  |
 | `nextStep` | texte |  |  |
 | `restrictedActions` | texte[] |  |  |

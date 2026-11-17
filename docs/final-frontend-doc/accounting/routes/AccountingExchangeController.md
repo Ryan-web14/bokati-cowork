@@ -76,7 +76,7 @@ Module [accounting](../README.md) · 10 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-imports-compare"></a>
 ### POST /sni/api/v1/accounting/imports/compare
@@ -130,11 +130,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `number` | texte |  |  |
 | `fiscalYearCode` | texte |  |  |
 | `fileName` | texte |  |  |
-| `sizeBytes` | entier int64 ⚠ |  |  |
+| `sizeBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `contentHash` | texte |  |  |
 | `manifest` | texte |  |  |
 | `createdBy` | texte |  |  |
@@ -145,7 +145,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `number` | texte |  |  |
 | `format` | texte |  |  |
 | `mode` | texte |  |  |
@@ -178,7 +178,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `format` | texte |  |  |
 | `kind` | texte |  |  |
 | `source` | texte |  |  |

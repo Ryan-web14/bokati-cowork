@@ -85,7 +85,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `generatedAt` | date-heure ISO 8601 UTC |  |  |
 | `totalOutstanding` | nombre décimal |  |  |
-| `totalInvoices` | entier int64 ⚠ |  |  |
+| `totalInvoices` | entier int64 (texte au-delà de 2^53) |  |  |
 | `aging` | [DebtRecoveryReportResponse.AgingSummary](#m-DebtRecoveryReportResponse-AgingSummary) |  |  |
 | `unpaidInvoices` | [DebtRecoveryReportResponse.UnpaidInvoice](#m-DebtRecoveryReportResponse-UnpaidInvoice)[] |  |  |
 
@@ -116,7 +116,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `totalAmount` | nombre décimal |  |  |
 | `paidAmount` | nombre décimal |  |  |
 | `balanceDue` | nombre décimal |  |  |
-| `agingDays` | entier int64 ⚠ |  |  |
+| `agingDays` | entier int64 (texte au-delà de 2^53) |  |  |
 | `agingBucket` | texte |  |  |
 
 <a id="m-DebtRecoveryReportResponse-AgingBucket"></a>
@@ -125,7 +125,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `label` | texte |  |  |
-| `invoiceCount` | entier int64 ⚠ |  |  |
+| `invoiceCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalAmount` | nombre décimal |  |  |
 | `averageAmount` | nombre décimal |  |  |
 | `percentage` | nombre décimal |  |  |

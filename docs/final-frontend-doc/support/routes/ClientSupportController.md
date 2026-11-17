@@ -86,7 +86,7 @@ Module [support](../README.md) · 10 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `ticketNumber` | chemin | `String` | oui |  |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-client-support-tickets-ticketnumber-close"></a>
 ### POST /sni/api/v1/client/support/tickets/{ticketNumber}/close
@@ -197,8 +197,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `ownerType` | texte |  |  |
 | `ownerCode` | texte |  |  |
-| `openTickets` | entier int64 ⚠ |  |  |
-| `slaBreaches` | entier int64 ⚠ |  |  |
+| `openTickets` | entier int64 (texte au-delà de 2^53) |  |  |
+| `slaBreaches` | entier int64 (texte au-delà de 2^53) |  |  |
 | `avgCsatScore` | nombre décimal |  |  |
 | `atRisk` | booléen |  |  |
 | `recentTickets` | [SupportDtos.SupportTicketResponse](#m-SupportDtos-SupportTicketResponse)[] |  |  |
@@ -208,12 +208,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `fileName` | texte |  |  |
 | `contentType` | texte |  |  |
-| `fileSize` | entier int64 ⚠ |  |  |
+| `fileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `internal` | booléen |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-SupportDtos-SubmitCsatRequest"></a>
@@ -236,7 +236,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `senderType` | enum : `CLIENT`, `AGENT`, `SYSTEM` |  |  |
 | `senderId` | texte |  |  |
 | `senderName` | texte |  |  |

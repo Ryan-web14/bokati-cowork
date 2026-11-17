@@ -132,7 +132,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `multipleAllowed` | booléen |  |  |
 | `requiresBackSide` | booléen |  |  |
 | `allowedMimeTypes` | texte |  |  |
-| `maxFileSizeBytes` | entier int64 ⚠ |  |  |
+| `maxFileSizeBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-DocumentOwnerType"></a>
@@ -163,7 +163,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `multipleAllowed` | booléen |  |  |
 | `requiresBackSide` | booléen |  |  |
 | `allowedMimeTypes` | texte |  |  |
-| `maxFileSizeBytes` | entier int64 ⚠ |  |  |
+| `maxFileSizeBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-DocumentUploadConfigResponse"></a>
@@ -179,5 +179,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `requiresExpiryDate` | booléen |  |  |
 | `requiresBackSide` | booléen |  |  |
 | `allowedMimeTypes` | texte[] |  |  |
-| `maxFileSizeBytes` | entier int64 ⚠ |  |  |
+| `maxFileSizeBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `category` | texte |  |  |

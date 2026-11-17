@@ -12,7 +12,7 @@ Le module étant volumineux, les parcours détaillés sont dans des fichiers sé
 
 ## Notions
 
-Tous les objets s'adressent par un **code lisible** dans les chemins, sauf les exceptions signalées par ⚠ (identifiant numérique int64, voir [Identifiants](../README.md#identifiants--attention-aux-grands-nombres)).
+Tous les objets s'adressent par un **code lisible** dans les chemins, sauf les exceptions signalées par ⚠ (identifiant numérique int64, voir [Identifiants](../README.md#identifiants--codes-en-texte)).
 
 | Objet | Identifiant exposé | Rôle et liens |
 | --- | --- | --- |

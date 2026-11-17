@@ -44,7 +44,7 @@ Module [inventory](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `barcodeId` | chemin | `Long` | oui |  |
+| `barcodeId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-inventory-items-barcodes-barcodeid-primary"></a>
 ### PATCH /sni/api/v1/inventory/items/barcodes/{barcodeId}/primary
@@ -57,7 +57,7 @@ Module [inventory](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `barcodeId` | chemin | `Long` | oui |  |
+| `barcodeId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-delete-sni-api-v1-inventory-items-packagings-packagingid"></a>
 ### DELETE /sni/api/v1/inventory/items/packagings/{packagingId}
@@ -68,7 +68,7 @@ Module [inventory](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `packagingId` | chemin | `Long` | oui |  |
+| `packagingId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-delete-sni-api-v1-inventory-items-substitutes-substituteid"></a>
 ### DELETE /sni/api/v1/inventory/items/substitutes/{substituteId}
@@ -79,7 +79,7 @@ Module [inventory](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `substituteId` | chemin | `Long` | oui |  |
+| `substituteId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-delete-sni-api-v1-inventory-items-translations-translationid"></a>
 ### DELETE /sni/api/v1/inventory/items/translations/{translationId}
@@ -90,7 +90,7 @@ Module [inventory](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `translationId` | chemin | `Long` | oui |  |
+| `translationId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-delete-sni-api-v1-inventory-items-itemcode"></a>
 ### DELETE /sni/api/v1/inventory/items/{itemCode}
@@ -350,8 +350,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `unitName` | texte |  |  |
 | `itemType` | enum : `CONSUMABLE`, `ASSET`, `SERVICE`, `SPARE_PART` |  |  |
 | `trackingType` | enum : `NONE`, `QUANTITY`, `SERIAL`, `LOT`, `EXPIRY` |  |  |
-| `defaultCost` | entier int64 ⚠ |  |  |
-| `salePrice` | entier int64 ⚠ |  |  |
+| `defaultCost` | entier int64 (texte au-delà de 2^53) |  |  |
+| `salePrice` | entier int64 (texte au-delà de 2^53) |  |  |
 | `taxable` | booléen |  |  |
 | `allowNegativeStock` | booléen |  |  |
 | `requiresExpiryDate` | booléen |  |  |
@@ -388,8 +388,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `unitCode` | texte |  |  |
 | `itemType` | enum : `CONSUMABLE`, `ASSET`, `SERVICE`, `SPARE_PART` | oui |  |
 | `trackingType` | enum : `NONE`, `QUANTITY`, `SERIAL`, `LOT`, `EXPIRY` |  |  |
-| `defaultCost` | entier int64 ⚠ |  |  |
-| `salePrice` | entier int64 ⚠ |  |  |
+| `defaultCost` | entier int64 (texte au-delà de 2^53) |  |  |
+| `salePrice` | entier int64 (texte au-delà de 2^53) |  |  |
 | `taxable` | booléen |  |  |
 | `allowNegativeStock` | booléen |  |  |
 | `requiresExpiryDate` | booléen |  |  |
@@ -410,7 +410,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `barcodeType` | enum : `EAN13`, `EAN8`, `UPC`, `CODE128`, `QR`, `INTERNAL`, `SUPPLIER` |  |  |
 | `barcodeValue` | texte |  |  |
@@ -445,7 +445,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `packagingLevel` | enum : `EACH`, `INNER`, `CASE`, `PALLET` |  |  |
 | `name` | texte |  |  |
@@ -477,12 +477,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `priceType` | enum : `DEFAULT_COST`, `SALE_PRICE` |  |  |
-| `previousValue` | entier int64 ⚠ |  |  |
-| `newValue` | entier int64 ⚠ |  |  |
-| `delta` | entier int64 ⚠ |  |  |
+| `previousValue` | entier int64 (texte au-delà de 2^53) |  |  |
+| `newValue` | entier int64 (texte au-delà de 2^53) |  |  |
+| `delta` | entier int64 (texte au-delà de 2^53) |  |  |
 | `changedBy` | texte |  |  |
 | `reason` | texte |  |  |
 | `changedAt` | date-heure ISO 8601 UTC |  |  |
@@ -502,7 +502,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `previousRevision` | texte |  |  |
 | `newRevision` | texte |  |  |
@@ -516,7 +516,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `substituteItemCode` | texte |  |  |
 | `substituteItemName` | texte |  |  |
@@ -544,7 +544,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `languageCode` | texte |  |  |
 | `name` | texte |  |  |

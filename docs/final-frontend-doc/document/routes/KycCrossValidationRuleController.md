@@ -36,7 +36,7 @@ Module [document](../README.md) · 5 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-kyc-cross-validation-rules-id"></a>
 ### GET /sni/api/v1/kyc/cross-validation-rules/{id}
@@ -48,7 +48,7 @@ Module [document](../README.md) · 5 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-kyc-cross-validation-rules-id"></a>
 ### PUT /sni/api/v1/kyc/cross-validation-rules/{id}
@@ -61,7 +61,7 @@ Module [document](../README.md) · 5 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -72,7 +72,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentTypeCode1` | texte |  |  |
 | `documentTypeCode2` | texte |  |  |
 | `fieldToCompare` | texte |  |  |

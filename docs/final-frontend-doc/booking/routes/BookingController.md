@@ -414,7 +414,7 @@ Module [booking](../README.md) · 40 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `bookingNumber` | chemin | `String` | oui |  |
-| `participantId` | chemin | `Long` | oui |  |
+| `participantId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-bookings-bookingnumber-reject"></a>
 ### PATCH /sni/api/v1/bookings/{bookingNumber}/reject
@@ -608,7 +608,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `hoursBeforeStart` | entier |  |  |
 | `refundPercentage` | nombre décimal |  |  |
 | `ruleOrder` | entier |  |  |
@@ -706,13 +706,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `draftBookings` | entier int64 ⚠ |  |  |
-| `pendingApprovalBookings` | entier int64 ⚠ |  |  |
-| `confirmedBookings` | entier int64 ⚠ |  |  |
-| `completedBookings` | entier int64 ⚠ |  |  |
-| `cancelledBookings` | entier int64 ⚠ |  |  |
-| `noShowBookings` | entier int64 ⚠ |  |  |
-| `activeHolds` | entier int64 ⚠ |  |  |
+| `draftBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `pendingApprovalBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `confirmedBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `completedBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `cancelledBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `noShowBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `activeHolds` | entier int64 (texte au-delà de 2^53) |  |  |
 | `confirmedAmount` | nombre décimal |  |  |
 | `completedAmount` | nombre décimal |  |  |
 
@@ -883,7 +883,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `memberCode` | texte |  |  |
 | `name` | texte |  |  |
 | `email` | texte |  |  |
@@ -932,7 +932,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `lineType` | enum : `RESOURCE`, `ENTITLEMENT`, `BILLABLE` |  |  |
 | `description` | texte |  |  |
 | `quantity` | nombre décimal |  |  |

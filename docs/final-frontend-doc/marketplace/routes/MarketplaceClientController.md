@@ -55,7 +55,7 @@ Module [marketplace](../README.md) · 10 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `lineId` | chemin | `Long` | oui |  |
+| `lineId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-client-marketplace-cart-lines-lineid"></a>
 ### PATCH /sni/api/v1/client/marketplace/cart/lines/{lineId}
@@ -68,7 +68,7 @@ Module [marketplace](../README.md) · 10 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `lineId` | chemin | `Long` | oui |  |
+| `lineId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-client-marketplace-offers"></a>
 ### GET /sni/api/v1/client/marketplace/offers
@@ -128,7 +128,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `orderNumber` | texte |  |  |
 | `status` | enum : `CART`, `PENDING_PAYMENT`, `PAID`, `FULFILLED`, `CANCELLED`, `EXPIRED` |  |  |
 | `buyerMemberCode` | texte |  |  |
@@ -162,7 +162,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `offerId` | entier int64 ⚠ | oui |  |
+| `offerId` | code identifiant (texte) | oui |  |
 | `quantity` | entier | oui | min `1` |
 
 <a id="m-MarketplaceDtos-CartQuantityRequest"></a>
@@ -177,7 +177,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `offerCode` | texte |  |  |
 | `kind` | enum : `PRODUCT`, `SERVICE` |  |  |
 | `title` | texte |  |  |
@@ -207,8 +207,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `offerId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `offerId` | code identifiant (texte) |  |  |
 | `kind` | enum : `PRODUCT`, `SERVICE` |  |  |
 | `title` | texte |  |  |
 | `imageUrl` | texte |  |  |

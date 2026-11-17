@@ -298,7 +298,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `entries` | entier int64 ⚠ |  |  |
+| `entries` | entier int64 (texte au-delà de 2^53) |  |  |
 | `brokenEntries` | texte[] |  |  |
 
 <a id="m-ComplianceController-AuditEntryView"></a>
@@ -392,12 +392,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `openCases` | entier int64 ⚠ |  |  |
-| `overdueCases` | entier int64 ⚠ |  |  |
-| `openByPriority` | objet { clé : entier int64 ⚠ } |  |  |
-| `openByAge` | objet { clé : entier int64 ⚠ } |  |  |
-| `unreviewedListMatches` | entier int64 ⚠ |  |  |
-| `activeFreezes` | entier int64 ⚠ |  |  |
+| `openCases` | entier int64 (texte au-delà de 2^53) |  |  |
+| `overdueCases` | entier int64 (texte au-delà de 2^53) |  |  |
+| `openByPriority` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `openByAge` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `unreviewedListMatches` | entier int64 (texte au-delà de 2^53) |  |  |
+| `activeFreezes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `rules` | [ComplianceDashboardService.RuleStat](#m-ComplianceDashboardService-RuleStat)[] |  |  |
 
 <a id="m-ComplianceDtos-FreezeView"></a>
@@ -446,9 +446,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `active` | booléen |  |  |
 | `effectiveFrom` | date-heure ISO 8601 UTC |  |  |
 | `effectiveTo` | date-heure ISO 8601 UTC |  |  |
-| `hitCount` | entier int64 ⚠ |  |  |
-| `confirmedCount` | entier int64 ⚠ |  |  |
-| `dismissedCount` | entier int64 ⚠ |  |  |
+| `hitCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `confirmedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `dismissedCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `falsePositiveRate` | nombre décimal |  |  |
 | `createdBy` | texte |  |  |
 | `approvedBy` | texte |  |  |
@@ -548,11 +548,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `ruleCode` | texte |  |  |
 | `name` | texte |  |  |
 | `action` | enum : `FLAG`, `REQUIRE_REVIEW`, `BLOCK_OPERATION`, `FREEZE_WALLET` |  |  |
-| `hits` | entier int64 ⚠ |  |  |
-| `confirmed` | entier int64 ⚠ |  |  |
-| `dismissed` | entier int64 ⚠ |  |  |
+| `hits` | entier int64 (texte au-delà de 2^53) |  |  |
+| `confirmed` | entier int64 (texte au-delà de 2^53) |  |  |
+| `dismissed` | entier int64 (texte au-delà de 2^53) |  |  |
 | `falsePositiveRate` | nombre décimal |  |  |
-| `hitsLast30Days` | entier int64 ⚠ |  |  |
+| `hitsLast30Days` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-ComplianceDtos-ListEntryRequest"></a>
 #### ComplianceDtos.ListEntryRequest

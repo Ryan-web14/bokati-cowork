@@ -293,8 +293,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `qualificationDelayDays` | entier |  |  |
 | `maxReferralsPerReferrer` | entier |  |  |
 | `currency` | texte |  |  |
-| `links` | entier int64 ⚠ |  |  |
-| `referralsByStatus` | objet { clé : entier int64 ⚠ } |  |  |
+| `links` | entier int64 (texte au-delà de 2^53) |  |  |
+| `referralsByStatus` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `createdBy` | texte |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |

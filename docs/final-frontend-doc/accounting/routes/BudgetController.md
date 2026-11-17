@@ -128,7 +128,7 @@ Module [accounting](../README.md) · 23 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `lineId` | chemin | `Long` | oui |  |
+| `lineId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `frozen` | requête | `boolean` |  | true |
 
 <a id="r-get-sni-api-v1-accounting-budget-reports-commitments"></a>
@@ -206,7 +206,7 @@ Module [accounting](../README.md) · 23 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `decision` | chemin | `String` | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-budget-unplanned-reasons"></a>
@@ -226,7 +226,7 @@ Module [accounting](../README.md) · 23 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-budget-id-lines"></a>
 ### POST /sni/api/v1/accounting/budget/{id}/lines
@@ -239,7 +239,7 @@ Module [accounting](../README.md) · 23 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-accounting-budget-id-action"></a>
 ### PATCH /sni/api/v1/accounting/budget/{id}/{action}
@@ -252,7 +252,7 @@ Module [accounting](../README.md) · 23 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `action` | chemin | `String` | oui |  |
 
 ## Modèles
@@ -264,7 +264,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `fiscalYearCode` | texte |  |  |
 | `version` | entier |  |  |
 | `label` | texte |  |  |
@@ -316,7 +316,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `number` | texte |  |  |
 | `itemCode` | texte |  |  |
 | `sectionCode` | texte |  |  |
@@ -391,7 +391,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `itemLabel` | texte |  |  |
 | `sectionCode` | texte |  |  |
@@ -422,7 +422,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `unplannedCode` | texte |  |  |
 | `createdBy` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
-| `ageDays` | entier int64 ⚠ |  |  |
+| `ageDays` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-BudgetReportService-FollowUp"></a>
 #### BudgetReportService.FollowUp
@@ -459,9 +459,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `fromLineId` | entier int64 ⚠ |  |  |
-| `toLineId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `fromLineId` | code identifiant (texte) |  |  |
+| `toLineId` | code identifiant (texte) |  |  |
 | `amount` | nombre décimal |  |  |
 | `reason` | texte |  |  |
 | `status` | texte |  |  |
@@ -475,8 +475,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `fromLineId` | entier int64 ⚠ |  |  |
-| `toLineId` | entier int64 ⚠ |  |  |
+| `fromLineId` | code identifiant (texte) |  |  |
+| `toLineId` | code identifiant (texte) |  |  |
 | `amount` | nombre décimal |  |  |
 | `reason` | texte |  |  |
 
@@ -499,7 +499,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `lineId` | entier int64 ⚠ |  |  |
+| `lineId` | code identifiant (texte) |  |  |
 | `itemCode` | texte |  |  |
 | `itemLabel` | texte |  |  |
 | `sectionCode` | texte |  |  |

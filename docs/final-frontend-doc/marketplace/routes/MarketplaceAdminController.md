@@ -38,7 +38,7 @@ Module [marketplace](../README.md) · 10 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-marketplace-offers-id"></a>
 ### PATCH /sni/api/v1/marketplace/offers/{id}
@@ -51,7 +51,7 @@ Module [marketplace](../README.md) · 10 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-marketplace-offers-id-publish"></a>
 ### POST /sni/api/v1/marketplace/offers/{id}/publish
@@ -63,7 +63,7 @@ Module [marketplace](../README.md) · 10 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-marketplace-offers-id-unpublish"></a>
 ### POST /sni/api/v1/marketplace/offers/{id}/unpublish
@@ -75,7 +75,7 @@ Module [marketplace](../README.md) · 10 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-marketplace-orders"></a>
 ### GET /sni/api/v1/marketplace/orders
@@ -138,7 +138,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `offerCode` | texte |  |  |
 | `kind` | enum : `PRODUCT`, `SERVICE` |  |  |
 | `title` | texte |  |  |
@@ -194,7 +194,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `orderNumber` | texte |  |  |
 | `status` | enum : `CART`, `PENDING_PAYMENT`, `PAID`, `FULFILLED`, `CANCELLED`, `EXPIRED` |  |  |
 | `buyerMemberCode` | texte |  |  |
@@ -241,8 +241,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `offerId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `offerId` | code identifiant (texte) |  |  |
 | `kind` | enum : `PRODUCT`, `SERVICE` |  |  |
 | `title` | texte |  |  |
 | `imageUrl` | texte |  |  |

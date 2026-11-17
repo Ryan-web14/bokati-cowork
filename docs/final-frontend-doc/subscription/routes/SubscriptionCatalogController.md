@@ -175,7 +175,7 @@ Module [subscription](../README.md) · 14 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `planCode` | chemin | `String` | oui |  |
-| `versionId` | chemin | `Long` | oui |  |
+| `versionId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-subscriptions-plans-plancode-versions-versionid-publish"></a>
 ### PATCH /sni/api/v1/subscriptions/plans/{planCode}/versions/{versionId}/publish
@@ -188,7 +188,7 @@ Module [subscription](../README.md) · 14 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `planCode` | chemin | `String` | oui |  |
-| `versionId` | chemin | `Long` | oui |  |
+| `versionId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -199,7 +199,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `name` | texte |  |  |
 | `description` | texte |  |  |
@@ -257,7 +257,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `name` | texte |  |  |
 | `description` | texte |  |  |
@@ -346,7 +346,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `billingCycle` | enum : `ONE_TIME`, `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`, `YEARLY` |  |  |
 | `currency` | texte |  |  |
 | `amount` | nombre décimal |  |  |
@@ -362,7 +362,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `title` | texte |  |  |
 | `description` | texte |  |  |
 | `icon` | texte |  |  |
@@ -377,7 +377,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `entitlementCode` | texte |  |  |
 | `entitlementName` | texte |  |  |
 | `quantity` | nombre décimal |  |  |

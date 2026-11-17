@@ -64,7 +64,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `expectedHidden` | booléen |  |  |
 | `lastCountAmount` | nombre décimal |  |  |
 | `lastCountAt` | date-heure ISO 8601 UTC |  |  |
-| `daysSinceCount` | entier int64 ⚠ |  |  |
+| `daysSinceCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `maxCashAmount` | nombre décimal |  |  |
 | `occupancyPercent` | nombre décimal |  |  |
 | `transfersInCount` | entier |  |  |

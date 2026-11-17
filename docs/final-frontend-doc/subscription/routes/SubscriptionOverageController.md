@@ -31,7 +31,7 @@ Module [subscription](../README.md) · 3 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `planVersionId` | requête | `Long` |  |  |
+| `planVersionId` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `entitlementCode` | requête | `String` |  |  |
 
 <a id="r-post-sni-api-v1-subscription-overage-policies"></a>
@@ -75,8 +75,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `planVersionId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `planVersionId` | code identifiant (texte) |  |  |
 | `planCode` | texte |  |  |
 | `entitlementCode` | texte |  |  |
 | `mode` | enum : `BLOCK`, `BILLABLE`, `ALLOW_UNBILLED` |  |  |
@@ -91,7 +91,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `planVersionId` | entier int64 ⚠ | oui |  |
+| `planVersionId` | code identifiant (texte) | oui |  |
 | `entitlementCode` | texte | oui | longueur min `1` |
 | `mode` | enum : `BLOCK`, `BILLABLE`, `ALLOW_UNBILLED` | oui |  |
 | `unitPrice` | nombre décimal |  |  |

@@ -105,7 +105,7 @@ Module [payment](../README.md) · 12 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-cash-registers-registercode-seal"></a>
 ### POST /sni/api/v1/cash-registers/{registerCode}/seal
@@ -209,7 +209,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `delegator` | texte |  |  |
 | `delegate` | texte |  |  |
 | `permissions` | texte[] |  |  |

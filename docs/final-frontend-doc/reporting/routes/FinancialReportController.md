@@ -263,7 +263,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `generatedAt` | date-heure ISO 8601 UTC |  |  |
 | `totalOutstanding` | nombre décimal |  |  |
-| `totalInvoices` | entier int64 ⚠ |  |  |
+| `totalInvoices` | entier int64 (texte au-delà de 2^53) |  |  |
 | `current` | [reporting.dto.response.BillingAgingReportResponse.AgingBucket](#m-reporting-dto-response-BillingAgingReportResponse-AgingBucket) |  |  |
 | `days1to30` | [reporting.dto.response.BillingAgingReportResponse.AgingBucket](#m-reporting-dto-response-BillingAgingReportResponse-AgingBucket) |  |  |
 | `days31to60` | [reporting.dto.response.BillingAgingReportResponse.AgingBucket](#m-reporting-dto-response-BillingAgingReportResponse-AgingBucket) |  |  |
@@ -305,17 +305,17 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `generatedAt` | date-heure ISO 8601 UTC |  |  |
 | `fromDate` | date AAAA-MM-JJ |  |  |
 | `toDate` | date AAAA-MM-JJ |  |  |
-| `invoiceCount` | entier int64 ⚠ |  |  |
+| `invoiceCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalInvoiced` | nombre décimal |  |  |
 | `totalPaid` | nombre décimal |  |  |
 | `totalOutstanding` | nombre décimal |  |  |
-| `overdueCount` | entier int64 ⚠ |  |  |
+| `overdueCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `overdueAmount` | nombre décimal |  |  |
 | `collectionRate` | nombre décimal |  |  |
 | `totalVat` | nombre décimal |  |  |
 | `totalAdditionalCent` | nombre décimal |  |  |
 | `totalDiscounts` | nombre décimal |  |  |
-| `cancelledInvoiceCount` | entier int64 ⚠ |  |  |
+| `cancelledInvoiceCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `revenueBySource` | [FinancialDashboardResponse.RevenueBySource](#m-FinancialDashboardResponse-RevenueBySource)[] |  |  |
 | `payments` | [FinancialDashboardResponse.PaymentSummary](#m-FinancialDashboardResponse-PaymentSummary) |  |  |
 
@@ -328,7 +328,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `fromDate` | date AAAA-MM-JJ |  |  |
 | `toDate` | date AAAA-MM-JJ |  |  |
 | `totalReceived` | nombre décimal |  |  |
-| `totalTransactions` | entier int64 ⚠ |  |  |
+| `totalTransactions` | entier int64 (texte au-delà de 2^53) |  |  |
 | `byMethod` | [PaymentSourceReportResponse.MethodBreakdown](#m-PaymentSourceReportResponse-MethodBreakdown)[] |  |  |
 | `dailySeries` | [PaymentSourceReportResponse.DailyPaymentEntry](#m-PaymentSourceReportResponse-DailyPaymentEntry)[] |  |  |
 
@@ -338,7 +338,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `label` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `amount` | nombre décimal |  |  |
 | `percentage` | nombre décimal |  |  |
 
@@ -349,7 +349,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `movementType` | texte |  |  |
 | `direction` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalAmount` | nombre décimal |  |  |
 
 <a id="m-CashFlowReportResponse-DailyCashFlowEntry"></a>
@@ -369,13 +369,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `registerCode` | texte |  |  |
 | `registerName` | texte |  |  |
-| `sessionsCount` | entier int64 ⚠ |  |  |
+| `sessionsCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `openingAmount` | nombre décimal |  |  |
 | `cashIn` | nombre décimal |  |  |
 | `cashOut` | nombre décimal |  |  |
 | `netFlow` | nombre décimal |  |  |
 | `totalVariance` | nombre décimal |  |  |
-| `movementsCount` | entier int64 ⚠ |  |  |
+| `movementsCount` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-FinancialDashboardResponse-RevenueBySource"></a>
 #### FinancialDashboardResponse.RevenueBySource
@@ -383,7 +383,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `sourceType` | texte |  |  |
-| `invoiceCount` | entier int64 ⚠ |  |  |
+| `invoiceCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalInvoiced` | nombre décimal |  |  |
 | `totalPaid` | nombre décimal |  |  |
 | `outstandingAmount` | nombre décimal |  |  |
@@ -393,7 +393,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `transactionCount` | entier int64 ⚠ |  |  |
+| `transactionCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalReceived` | nombre décimal |  |  |
 | `cashAmount` | nombre décimal |  |  |
 | `walletAmount` | nombre décimal |  |  |
@@ -401,8 +401,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `bankTransferAmount` | nombre décimal |  |  |
 | `cardAmount` | nombre décimal |  |  |
 | `chequeAmount` | nombre décimal |  |  |
-| `failedCount` | entier int64 ⚠ |  |  |
-| `pendingCount` | entier int64 ⚠ |  |  |
+| `failedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `pendingCount` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-PaymentSourceReportResponse-MethodBreakdown"></a>
 #### PaymentSourceReportResponse.MethodBreakdown
@@ -410,7 +410,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `method` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `amount` | nombre décimal |  |  |
 | `percentage` | nombre décimal |  |  |
 

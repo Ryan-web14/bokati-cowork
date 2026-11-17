@@ -54,9 +54,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `cashierCode` | texte |  |  |
-| `sessionCount` | entier int64 ⚠ |  |  |
-| `closedSessionCount` | entier int64 ⚠ |  |  |
-| `reviewSessionCount` | entier int64 ⚠ |  |  |
+| `sessionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `closedSessionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `reviewSessionCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `reviewFrequencyPercentage` | nombre décimal |  |  |
 | `averageVarianceAmount` | nombre décimal |  |  |
 | `varianceStandardDeviation` | nombre décimal |  |  |
@@ -71,8 +71,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `registerCode` | texte |  |  |
 | `registerName` | texte |  |  |
-| `sessionCount` | entier int64 ⚠ |  |  |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `sessionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `averageSessionDurationMinutes` | nombre décimal |  |  |
 | `averageVarianceAmount` | nombre décimal |  |  |
 | `peakHours` | [CashRegisterStatisticsResponse.HourlyVolume](#m-CashRegisterStatisticsResponse-HourlyVolume)[] |  |  |
@@ -88,13 +88,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `openedBy` | texte |  |  |
 | `openedAt` | date-heure ISO 8601 UTC |  |  |
 | `closedAt` | date-heure ISO 8601 UTC |  |  |
-| `durationMinutes` | entier int64 ⚠ |  |  |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `durationMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `transactionsPerHour` | nombre décimal |  |  |
 | `totalInflow` | nombre décimal |  |  |
 | `totalOutflow` | nombre décimal |  |  |
 | `inOutRatio` | nombre décimal |  |  |
-| `idleMinutes` | entier int64 ⚠ |  |  |
+| `idleMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `averageMovementAmount` | nombre décimal |  |  |
 | `varianceAmount` | nombre décimal |  |  |
 | `variancePercentage` | nombre décimal |  |  |
@@ -105,5 +105,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `hourOfDay` | entier |  |  |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalAmount` | nombre décimal |  |  |

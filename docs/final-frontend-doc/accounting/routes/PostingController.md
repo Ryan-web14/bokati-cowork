@@ -62,7 +62,7 @@ Module [accounting](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-accounting-posting-events-id-ignore"></a>
 ### PATCH /sni/api/v1/accounting/posting/events/{id}/ignore
@@ -75,7 +75,7 @@ Module [accounting](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-accounting-posting-events-id-regenerate"></a>
 ### PATCH /sni/api/v1/accounting/posting/events/{id}/regenerate
@@ -87,7 +87,7 @@ Module [accounting](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-posting-preview"></a>
 ### POST /sni/api/v1/accounting/posting/preview
@@ -149,7 +149,7 @@ Module [accounting](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-accounting-posting-rules-id-retire"></a>
 ### PATCH /sni/api/v1/accounting/posting/rules/{id}/retire
@@ -161,7 +161,7 @@ Module [accounting](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-posting-run"></a>
 ### POST /sni/api/v1/accounting/posting/run
@@ -190,7 +190,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `eventType` | texte |  |  |
 | `reference` | texte |  |  |
 | `family` | texte |  |  |
@@ -233,7 +233,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `counts` | objet { clé : entier int64 ⚠ } |  |  |
+| `counts` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
 | `accountingEnabled` | booléen |  |  |
 | `startDate` | date AAAA-MM-JJ |  |  |
 | `disabledFamilies` | texte[] |  |  |
@@ -268,9 +268,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `ruleId` | entier int64 ⚠ |  |  |
+| `ruleId` | code identifiant (texte) |  |  |
 | `rule` | [PostingDtos.RuleRequest](#m-PostingDtos-RuleRequest) |  |  |
-| `eventId` | entier int64 ⚠ |  |  |
+| `eventId` | code identifiant (texte) |  |  |
 | `payload` | objet libre |  |  |
 
 <a id="m-PostingDtos-Resolver"></a>
@@ -286,7 +286,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `version` | entier |  |  |
 | `eventType` | texte |  |  |

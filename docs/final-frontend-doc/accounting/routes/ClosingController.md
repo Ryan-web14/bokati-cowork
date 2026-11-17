@@ -56,7 +56,7 @@ Module [accounting](../README.md) · 32 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-closing-editions-number-pdf"></a>
 ### GET /sni/api/v1/accounting/closing/editions/{number}/pdf
@@ -376,7 +376,7 @@ Module [accounting](../README.md) · 32 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-statements-template-mappings"></a>
 ### GET /sni/api/v1/accounting/statements/{template}/mappings
@@ -425,7 +425,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `accountNumber` | texte |  |  |
 | `thirdPartyCode` | texte |  |  |
 | `date` | date AAAA-MM-JJ |  |  |
@@ -582,7 +582,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `number` | texte |  |  |
 | `accountNumber` | texte |  |  |
 | `thirdPartyCode` | texte |  |  |
@@ -652,7 +652,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `lineCode` | texte |  |  |
 | `accountPrefix` | texte |  |  |
 | `balanceSide` | texte |  |  |
@@ -673,14 +673,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `lineId` | entier int64 ⚠ |  |  |
+| `lineId` | code identifiant (texte) |  |  |
 | `entryNumber` | texte |  |  |
 | `date` | date AAAA-MM-JJ |  |  |
 | `reference` | texte |  |  |
 | `label` | texte |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |
 | `amount` | nombre décimal |  |  |
-| `daysOverdue` | entier int64 ⚠ |  |  |
+| `daysOverdue` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-BalanceJustificationService-PartyBalance"></a>
 #### BalanceJustificationService.PartyBalance
@@ -731,4 +731,4 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `dueDate` | date AAAA-MM-JJ |  |  |
 | `currency` | texte |  |  |
 | `foreignAmount` | nombre décimal |  |  |
-| `sourceLineId` | entier int64 ⚠ |  |  |
+| `sourceLineId` | code identifiant (texte) |  |  |

@@ -81,9 +81,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `walletTotal` | nombre décimal |  |  |
 | `account4191Balance` | nombre décimal |  |  |
 | `walletDifference` | nombre décimal |  |  |
-| `invoicesNotPosted` | entier int64 ⚠ |  |  |
-| `paymentsNotPosted` | entier int64 ⚠ |  |  |
-| `walletEntriesNotPosted` | entier int64 ⚠ |  |  |
+| `invoicesNotPosted` | entier int64 (texte au-delà de 2^53) |  |  |
+| `paymentsNotPosted` | entier int64 (texte au-delà de 2^53) |  |  |
+| `walletEntriesNotPosted` | entier int64 (texte au-delà de 2^53) |  |  |
 | `invoiceGaps` | [SalesAccountingService.InvoiceGap](#m-SalesAccountingService-InvoiceGap)[] |  |  |
 
 <a id="m-AccountingLetteringService-Proposal"></a>
@@ -101,7 +101,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `eventType` | texte |  |  |
 | `reference` | texte |  |  |
 | `family` | texte |  |  |
@@ -138,7 +138,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `lineId` | entier int64 ⚠ |  |  |
+| `lineId` | code identifiant (texte) |  |  |
 | `entryNumber` | texte |  |  |
 | `entryDate` | date AAAA-MM-JJ |  |  |
 | `journalCode` | texte |  |  |

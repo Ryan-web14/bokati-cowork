@@ -54,5 +54,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `remainingDailyTopUp` | nombre décimal |  |  |
 | `maxBalance` | nombre décimal |  |  |
 | `maxDailyOperations` | entier |  |  |
-| `dailyOperationsUsed` | entier int64 ⚠ |  |  |
+| `dailyOperationsUsed` | entier int64 (texte au-delà de 2^53) |  |  |
 | `upgradePath` | texte |  |  |

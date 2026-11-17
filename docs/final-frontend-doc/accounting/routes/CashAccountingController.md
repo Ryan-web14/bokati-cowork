@@ -100,7 +100,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `operationalBalance` | nombre décimal |  |  |
 | `difference` | nombre décimal |  |  |
 | `operationalSource` | texte |  |  |
-| `movementsNotPosted` | entier int64 ⚠ |  |  |
+| `movementsNotPosted` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-AccountingResponses-Journal"></a>
 #### AccountingResponses.Journal
