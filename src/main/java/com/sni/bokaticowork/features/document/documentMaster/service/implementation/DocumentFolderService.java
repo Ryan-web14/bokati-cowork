@@ -64,12 +64,12 @@ public class DocumentFolderService {
             space = parent.getSpace();
             depth = parent.getDepth() + 1;
             if (depth > MAX_DEPTH) {
-                throw new BadRequestException("Maximum folder depth (" + MAX_DEPTH + ") exceeded");
+                throw new BadRequestException("Profondeur maximale de dossiers (" + MAX_DEPTH + ") dépassée");
             }
         }
 
         if (folderRepository.existsByParentAndNameAndDeletedFalse(parent, request.getName().trim())) {
-            throw new BadRequestException("A folder with this name already exists in the same parent");
+            throw new BadRequestException("Un dossier de ce nom existe déjà au même endroit");
         }
 
         Long ownerId = resolveOwnerId(request.getOwnerType(), request.getOwnerCode());
@@ -111,7 +111,7 @@ public class DocumentFolderService {
             String newName = request.getName().trim();
             if (!newName.equals(folder.getName())
                     && folderRepository.existsByParentAndNameAndDeletedFalse(folder.getParent(), newName)) {
-                throw new BadRequestException("A folder with this name already exists in the same parent");
+                throw new BadRequestException("Un dossier de ce nom existe déjà au même endroit");
             }
             folder.setName(newName);
         }
@@ -129,11 +129,11 @@ public class DocumentFolderService {
         requireUserFolder(folder);
         long children = folderRepository.countByParentAndDeletedFalse(folder);
         if (children > 0) {
-            throw new BadRequestException("Cannot delete a folder that contains sub-folders. Move or delete them first.");
+            throw new BadRequestException("Un dossier qui contient des sous-dossiers ne se supprime pas : déplacez-les ou supprimez-les d'abord.");
         }
         long docs = documentRepository.countByFolderAndDeletedFalse(folder);
         if (docs > 0) {
-            throw new BadRequestException("Cannot delete a folder that contains documents. Move or delete them first.");
+            throw new BadRequestException("Un dossier qui contient des documents ne se supprime pas : déplacez-les ou supprimez-les d'abord.");
         }
         folderRepository.delete(folder);
     }
@@ -152,10 +152,10 @@ public class DocumentFolderService {
             newDepth = newParent.getDepth() + 1;
 
             if (newParent.getPath().startsWith(folder.getPath())) {
-                throw new BadRequestException("Cannot move a folder into one of its descendants");
+                throw new BadRequestException("Un dossier ne se déplace pas dans l'un de ses sous-dossiers");
             }
             if (newDepth > MAX_DEPTH) {
-                throw new BadRequestException("Maximum folder depth (" + MAX_DEPTH + ") exceeded");
+                throw new BadRequestException("Profondeur maximale de dossiers (" + MAX_DEPTH + ") dépassée");
             }
         }
 
@@ -222,7 +222,7 @@ public class DocumentFolderService {
 
     public DocumentResponse moveDocument(String documentCode, String folderCode) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + documentCode));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable : " + documentCode));
 
         if (StringUtils.hasText(folderCode)) {
             DocumentFolder folder = findByCode(folderCode);
@@ -246,7 +246,7 @@ public class DocumentFolderService {
 
     private DocumentFolder findByCode(String code) {
         return folderRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Folder not found: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable : " + code));
     }
 
     private String buildPath(DocumentFolder folder) {

@@ -161,7 +161,7 @@ public class KycServiceImpl implements KycService {
             for (String typeCode : request.getDocumentTypeCodes()) {
                 String normalizedCode = typeCode.trim().toUpperCase(Locale.ROOT);
                 DocumentType docType = documentTypeRepository.findByCode(normalizedCode)
-                        .orElseThrow(() -> new BadRequestException("Unknown document type: " + typeCode));
+                        .orElseThrow(() -> new BadRequestException("Type de document inconnu : " + typeCode));
                 KycCaseRequirement caseReq = KycCaseRequirement.builder()
                         .kycCase(entity)
                         .documentTypeCode(docType.getCode())
@@ -281,10 +281,10 @@ public class KycServiceImpl implements KycService {
         }
         CaseAssessment assessment = assess(kycCase);
         if (!assessment.complete()) {
-            throw new BadRequestException("KYC case cannot be approved while mandatory documents are missing");
+            throw new BadRequestException("Le dossier KYC ne peut être approuvé tant que des pièces obligatoires manquent");
         }
         if (!assessment.allVerified()) {
-            throw new BadRequestException("KYC case cannot be approved while documents are not verified");
+            throw new BadRequestException("Le dossier KYC ne peut être approuvé tant que des pièces ne sont pas vérifiées");
         }
         validateCrossDocumentRules(kycCase);
 
@@ -316,7 +316,7 @@ public class KycServiceImpl implements KycService {
     @Override
     public KycCaseResponse reject(String code, KycDecisionRequest request) {
         if (!StringUtils.hasText(request.getComment())) {
-            throw new BadRequestException("A rejection reason is required");
+            throw new BadRequestException("Le motif du refus est requis");
         }
 
         KycCase kycCase = serviceCase(code);
@@ -401,7 +401,7 @@ public class KycServiceImpl implements KycService {
 
     private KycCase serviceCase(String code) {
         return caseRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("KYC case not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier KYC introuvable"));
     }
 
     @Override
@@ -500,11 +500,11 @@ public class KycServiceImpl implements KycService {
         Long assigneeId = request.getAssignedTo();
         if (assigneeId == null && StringUtils.hasText(request.getEmail())) {
             Users user = userRepository.findByEmailIgnoreCase(request.getEmail().trim())
-                    .orElseThrow(() -> new BadRequestException("No user found with email: " + request.getEmail()));
+                    .orElseThrow(() -> new BadRequestException("Aucun utilisateur avec l'adresse : " + request.getEmail()));
             assigneeId = user.getId();
         }
         if (assigneeId == null) {
-            throw new BadRequestException("Either assignedTo (ID) or email is required");
+            throw new BadRequestException("Indiquez le réviseur : assignedTo (identifiant) ou email");
         }
 
         KycCase kycCase = serviceCase(code);
@@ -676,7 +676,7 @@ public class KycServiceImpl implements KycService {
         String normalizedCode = documentCode.trim();
         KycDocument document = documentRepository.findAllByDocument_Code(normalizedCode).stream()
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("KYC document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pièce KYC introuvable"));
         return ocrResultRepository.findByKycDocument(document)
                 .map(mapper::toOcrResultResponse)
                 .orElseGet(() -> KycDocumentOcrResultResponse.builder()
@@ -730,7 +730,7 @@ public class KycServiceImpl implements KycService {
         try {
             return PdfRenderer.render(html);
         } catch (Exception ex) {
-            throw new BadRequestException("Unable to export KYC case PDF", ex);
+            throw new BadRequestException("Export PDF du dossier KYC impossible", ex);
         }
     }
 
@@ -773,7 +773,7 @@ public class KycServiceImpl implements KycService {
         if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
             return principal.getUser().getId();
         }
-        throw new BadRequestException("Current user could not be resolved");
+        throw new BadRequestException("Impossible d'identifier l'utilisateur connecté");
     }
 
     private String ownerActor(KycCase kycCase) {
@@ -883,7 +883,7 @@ public class KycServiceImpl implements KycService {
             if (StringUtils.hasText(firstValue) && StringUtils.hasText(secondValue)
                     && !firstValue.equalsIgnoreCase(secondValue)
                     && Boolean.TRUE.equals(rule.getBlocking())) {
-                throw new BadRequestException("KYC cross-validation failed for field " + rule.getFieldToCompare());
+                throw new BadRequestException("Contrôle croisé KYC non satisfait pour le champ " + rule.getFieldToCompare());
             }
         }
     }
@@ -998,7 +998,7 @@ public class KycServiceImpl implements KycService {
 
     private OwnerResolution resolveOwner(DocumentOwnerType ownerType, String ownerCode) {
         if (ownerType == null || !StringUtils.hasText(ownerCode)) {
-            throw new BadRequestException("KYC owner is required");
+            throw new BadRequestException("Le titulaire du dossier KYC est requis");
         }
 
         return switch (ownerType) {
@@ -1014,7 +1014,7 @@ public class KycServiceImpl implements KycService {
                 BusinessEntity business = businessService.serviceBusinessByCode(ownerCode.trim());
                 yield new OwnerResolution(DocumentOwnerType.BUSINESS, business.getId(), business.getCode());
             }
-            default -> throw new BadRequestException("KYC is only supported for member, customer or business");
+            default -> throw new BadRequestException("Le KYC ne concerne que les membres, les clients et les entreprises");
         };
     }
 
@@ -1031,7 +1031,7 @@ public class KycServiceImpl implements KycService {
     private Member memberById(Long memberId) {
         return memberRepository.findById(memberId)
                 .filter(member -> !Boolean.TRUE.equals(member.getDeleted()))
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membre introuvable"));
     }
 
     private String trimToNull(String value) {
@@ -1184,7 +1184,7 @@ public class KycServiceImpl implements KycService {
         KycDocument kycDoc = documentRepository.findAllByKycCaseOrderByIdAsc(kycCase).stream()
                 .filter(d -> d.getDocument() != null && request.getDocumentCode().equals(d.getDocument().getCode()))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found in case " + caseCode));
+                .orElseThrow(() -> new ResourceNotFoundException("Document absent du dossier " + caseCode));
 
         DocumentCorrectionRequest corrReq = new DocumentCorrectionRequest();
         corrReq.setReviewedBy(actor(request.getReviewedBy()));

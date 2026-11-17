@@ -34,11 +34,19 @@ public class DocumentTagServiceImpl implements DocumentTagService {
     private final DocumentTagAssignmentRepository assignmentRepository;
     private final DocumentRepository documentRepository;
 
+    private DocumentLockService lockService;
+
+    /** Lot KG4 : un document verrouille par un autre ne se modifie pas. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setLockService(DocumentLockService lockService) {
+        this.lockService = lockService;
+    }
+
     @Override
     public DocumentTagResponse create(DocumentTagRequest request) {
         String code = request.getCode().toLowerCase(Locale.ROOT).trim();
         if (tagRepository.existsByCode(code)) {
-            throw new BadRequestException("Tag with code '" + code + "' already exists");
+            throw new BadRequestException("L'étiquette '" + code + "' existe déjà");
         }
         DocumentTag tag = DocumentTag.builder()
                 .code(code)
@@ -81,7 +89,7 @@ public class DocumentTagServiceImpl implements DocumentTagService {
     public void delete(String code) {
         DocumentTag tag = serviceTag(code);
         if (assignmentRepository.existsByTag(tag)) {
-            throw new BadRequestException("Tag '" + code + "' is in use and cannot be deleted");
+            throw new BadRequestException("L'étiquette '" + code + "' est utilisée et ne se supprime pas");
         }
         tagRepository.delete(tag);
     }
@@ -89,10 +97,13 @@ public class DocumentTagServiceImpl implements DocumentTagService {
     @Override
     public List<DocumentTagResponse> assignTags(String documentCode, DocumentTagAssignRequest request) {
         Document document = serviceDocument(documentCode);
+        if (lockService != null) {
+            lockService.assertEditable(document);
+        }
         Long actorId = currentUserId();
         List<DocumentTag> tags = tagRepository.findAllByCodeIn(request.getTagCodes());
         if (tags.size() != request.getTagCodes().size()) {
-            throw new BadRequestException("One or more tag codes not found");
+            throw new BadRequestException("Une ou plusieurs étiquettes sont introuvables");
         }
         for (DocumentTag tag : tags) {
             if (!assignmentRepository.existsByDocumentAndTag(document, tag)) {
@@ -109,6 +120,9 @@ public class DocumentTagServiceImpl implements DocumentTagService {
     @Override
     public void removeTag(String documentCode, String tagCode) {
         Document document = serviceDocument(documentCode);
+        if (lockService != null) {
+            lockService.assertEditable(document);
+        }
         DocumentTag tag = serviceTag(tagCode);
         assignmentRepository.deleteByDocumentAndTag(document, tag);
     }
@@ -124,12 +138,12 @@ public class DocumentTagServiceImpl implements DocumentTagService {
 
     private DocumentTag serviceTag(String code) {
         return tagRepository.findByCode(code.toLowerCase(Locale.ROOT))
-                .orElseThrow(() -> new ResourceNotFoundException("Tag not found: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Étiquette introuvable : " + code));
     }
 
     private Document serviceDocument(String code) {
         return documentRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable : " + code));
     }
 
     private DocumentTagResponse toResponse(DocumentTag tag) {

@@ -154,7 +154,7 @@ public class DocumentController {
                                                 @RequestParam(name = "token", required = false) String token,
                                                 HttpServletRequest request) {
         if (!accessTokenService.verify(code, token)) {
-            throw new ForbiddenException("A valid access token is required to preview this document");
+            throw new ForbiddenException("Un jeton d'accès valide est requis pour afficher ce document");
         }
         DocumentFileResult result = service.getFileWithMeta(code);
         accessLogService.log(code, "PREVIEW", clientIp(request), request.getHeader("User-Agent"));

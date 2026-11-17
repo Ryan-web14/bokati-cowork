@@ -83,11 +83,11 @@ public class DocumentWorkflowService {
 
     public WorkflowInstanceResponse startWorkflow(String documentCode, String workflowCode) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         DocumentWorkflow workflow = findWorkflow(workflowCode);
 
         instanceRepository.findByDocumentAndStatusIn(document, List.of("PENDING", "IN_PROGRESS"))
-                .ifPresent(i -> { throw new BadRequestException("Document already has an active workflow"); });
+                .ifPresent(i -> { throw new BadRequestException("Ce document a déjà un circuit d'approbation en cours"); });
 
         DocumentWorkflowInstance instance = DocumentWorkflowInstance.builder()
                 .workflow(workflow)
@@ -111,10 +111,10 @@ public class DocumentWorkflowService {
     @Transactional(readOnly = true)
     public WorkflowInstanceResponse getStatus(String documentCode) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         DocumentWorkflowInstance instance = instanceRepository.findByDocumentAndStatusIn(
                         document, List.of("PENDING", "IN_PROGRESS", "APPROVED", "REJECTED"))
-                .orElseThrow(() -> new ResourceNotFoundException("No workflow found for this document"));
+                .orElseThrow(() -> new ResourceNotFoundException("Aucun circuit d'approbation pour ce document"));
         return toInstanceResponse(instance);
     }
 
@@ -128,10 +128,10 @@ public class DocumentWorkflowService {
 
     private WorkflowInstanceResponse processAction(String documentCode, String action, WorkflowActionRequest request) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         DocumentWorkflowInstance instance = instanceRepository.findByDocumentAndStatusIn(
                         document, List.of("PENDING", "IN_PROGRESS"))
-                .orElseThrow(() -> new BadRequestException("No active workflow for this document"));
+                .orElseThrow(() -> new BadRequestException("Aucun circuit d'approbation en cours pour ce document"));
 
         DocumentWorkflowAction wfAction = DocumentWorkflowAction.builder()
                 .instance(instance)
@@ -161,7 +161,7 @@ public class DocumentWorkflowService {
 
     private DocumentWorkflow findWorkflow(String code) {
         return workflowRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Workflow not found: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Circuit d'approbation introuvable : " + code));
     }
 
     private WorkflowResponse toResponse(DocumentWorkflow wf) {

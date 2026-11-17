@@ -539,7 +539,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
                 try {
                     yield new OwnerResolution(Long.parseLong(ownerCode.trim()), ownerCode);
                 } catch (NumberFormatException e) {
-                    throw new BadRequestException("Owner code must be numeric for owner type " + ownerType);
+                    throw new BadRequestException("Code du propriétaire invalide pour le type " + ownerType);
                 }
             }
         };

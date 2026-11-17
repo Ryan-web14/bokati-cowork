@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,7 +16,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(ApiPath.V1 + "/document-retention-policies")
-@PreAuthorize("hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')")
+// Lot KG6 : un seul droit, SYSTEM:SETTINGS (regles d'acces), comme les autres parametres documentaires.
 public class DocumentRetentionPolicyController {
 
     private final DocumentRetentionService retentionService;
@@ -45,6 +44,14 @@ public class DocumentRetentionPolicyController {
             @PathVariable String code,
             @Valid @RequestBody DocumentRetentionPolicyRequest request) {
         return ResponseEntity.ok(retentionService.update(code, request));
+    }
+
+    /** Lot KG4 : une politique desactivee se reactive. */
+    @org.springframework.web.bind.annotation.PatchMapping("/{code}/activate")
+    @Audited(module = "DOCUMENT", action = "RETENTION_POLICY_ACTIVATE", ressource = "document_retention_policy")
+    public ResponseEntity<DocumentRetentionPolicyResponse> activate(@PathVariable String code) {
+        retentionService.activate(code);
+        return ResponseEntity.ok(retentionService.getByCode(code));
     }
 
     @DeleteMapping("/{code}")

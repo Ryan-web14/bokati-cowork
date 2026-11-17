@@ -129,6 +129,18 @@ Les erreurs métier et de validation ont toutes la même forme :
 
 Codes d'erreur (`errorCode`) : `BAD_REQUEST`, `VALIDATION_FAILED`, `CONSTRAINT_VIOLATION`, `TYPE_MISMATCH`, `MISSING_PARAMETER`, `RESOURCE_NOT_FOUND`, `RESOURCE_ALREADY_EXISTS`, `CONFLICT`, `OPERATION_NOT_ALLOWED`, `UNAUTHORIZED`, `FORBIDDEN`, `ACCESS_DENIED`, `INSUFFICIENT_PRIVILEGES`, `INVALID_CREDENTIALS`, `BAD_CREDENTIALS`, `INVALID_TOKEN`, `TOKEN_EXPIRED`, `ACCOUNT_LOCKED`, `FILE_STORAGE_ERROR`, `FILE_SIZE_EXCEEDED`, `INVALID_FILE_FORMAT`, `UNSUPPORTED_MEDIA_TYPE`, `MEDIA_TYPE_NOT_SUPPORTED`, `METHOD_NOT_SUPPORTED`, `ENDPOINT_NOT_FOUND`, `SERVICE_UNAVAILABLE`, `INTERNAL_SERVER_ERROR`.
 
+Réponses dédiées (lot KG6, 17/11/2026) :
+
+| Cas | Statut | `errorCode` | Message |
+| --- | --- | --- | --- |
+| Fichier ou envoi trop volumineux | `413` | `FILE_SIZE_EXCEEDED` | « Fichier ou envoi trop volumineux (maximum 10 Mo). » |
+| Paramètre d'URL ou de chemin invalide (nombre, date, énumération) | `400` | `TYPE_MISMATCH` | « Valeur « X » invalide pour le paramètre space · valeurs admises : … » ; `errors[]` nomme le paramètre |
+| Valeur invalide dans le corps (énumération, format) | `400` | `VALIDATION_FAILED` | « Valeur « X » invalide pour lines.[0].unit · valeurs admises : … » |
+| Paramètre obligatoire absent | `400` | `MISSING_PARAMETER` | « Paramètre obligatoire manquant : X. » |
+| Transaction annulée (données changées entre-temps, verrou, étape en échec) | `409` | `CONFLICT` | « L'opération n'a pas pu aboutir … Rechargez puis réessayez. » |
+
+Avant, ces cas tombaient en `500`. Le corps absent ou illisible répond « Corps de la requête absent ou illisible. ». Les messages du KYC et de la GED sont en français.
+
 Les refus de la couche de sécurité ont une autre forme :
 
 ```json

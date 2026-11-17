@@ -179,7 +179,7 @@ public class ClientKycService {
 
         DocumentResponse docResponse = documentService.upload(metadata, file);
         Document document = documentRepository.findByCode(docResponse.getCode())
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found after upload"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable après le dépôt"));
 
         // Lot KG2 : documentService.upload a rattache le fichier a sa piece (recto remplace, verso
         // ajoute a son recto, anciens fichiers SUPERSEDED, jamais de piece pour un verso).
@@ -202,7 +202,7 @@ public class ClientKycService {
         KycDocument kycDocument = resolveOwnedKycDocument(member, documentId);
         if (kycDocument.getStatus() != KycDocumentVerificationStatus.REJECTED
                 && kycDocument.getStatus() != KycDocumentVerificationStatus.PENDING) {
-            throw new BadRequestException("Only PENDING or REJECTED documents can be resubmitted");
+            throw new BadRequestException("Seule une pièce en attente ou refusée se redépose");
         }
         documentService.replace(kycDocument.getDocument().getCode(), file);
         kycDocument.setStatus(KycDocumentVerificationStatus.PENDING);
@@ -231,12 +231,12 @@ public class ClientKycService {
         KycCase kycCase = resolveCase(member);
         if (kycCase.getStatus() != KycCaseStatus.IN_PROGRESS
                 && kycCase.getStatus() != KycCaseStatus.PENDING_CORRECTION) {
-            throw new BadRequestException("Your KYC case is not in a submittable state. Current status: " + kycCase.getStatus());
+            throw new BadRequestException("Votre dossier KYC ne peut pas être soumis dans son état actuel : " + kycCase.getStatus());
         }
         KycCaseResponse response = kycService.submit(kycCase.getCode());
         kycCase = kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(
                 DocumentOwnerType.MEMBER, member.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("KYC case not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier KYC introuvable"));
         return toStatusResponse(response, kycCase);
     }
 
@@ -253,16 +253,16 @@ public class ClientKycService {
         return kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(
                         DocumentOwnerType.MEMBER, member.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "No KYC case found. Please contact support to initialize your KYC dossier."));
+                        "Aucun dossier KYC : contactez le support pour l'ouvrir."));
     }
 
     private KycDocument resolveOwnedKycDocument(Member member, Long documentId) {
         KycCase kycCase = resolveCase(member);
         // L'API expose le numero court de la piece, pas l'identifiant genere.
         KycDocument doc = kycDocumentRepository.findByShortId(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("KYC document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pièce KYC introuvable"));
         if (!doc.getKycCase().getId().equals(kycCase.getId())) {
-            throw new ResourceNotFoundException("KYC document not found");
+            throw new ResourceNotFoundException("Pièce KYC introuvable");
         }
         return doc;
     }
@@ -270,7 +270,7 @@ public class ClientKycService {
     /** La piece deja deposee pour ce type, hors la ligne que l'envoi en cours vient de creer. */
     private void assertCaseEditable(KycCase kycCase) {
         if (closedForUploads(kycCase)) {
-            throw new BadRequestException("KYC case is not open for document uploads. Current status: " + kycCase.getStatus());
+            throw new BadRequestException("Le dossier KYC n'accepte pas de dépôt dans son état actuel : " + kycCase.getStatus());
         }
     }
 

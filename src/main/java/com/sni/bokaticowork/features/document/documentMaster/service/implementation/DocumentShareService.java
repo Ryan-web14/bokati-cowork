@@ -58,20 +58,20 @@ public class DocumentShareService {
 
     public ShareLinkResponse shareDocument(String documentCode, CreateShareLinkRequest request) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         return createLink(document, null, request);
     }
 
     public ShareLinkResponse shareFolder(String folderCode, CreateShareLinkRequest request) {
         DocumentFolder folder = folderRepository.findByCode(folderCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Folder not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
         return createLink(null, folder, request);
     }
 
     @Transactional(readOnly = true)
     public ShareLinkResponse access(String token, String password) {
         DocumentShareLink link = shareRepository.findByTokenAndActiveTrue(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Share link not found or expired"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lien de partage introuvable ou expiré"));
         validateLink(link);
         validatePassword(link, password);
         return toResponse(link);
@@ -79,7 +79,7 @@ public class DocumentShareService {
 
     public void recordAccess(String token) {
         DocumentShareLink link = shareRepository.findByTokenAndActiveTrue(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Share link not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lien de partage introuvable"));
         validateLink(link);
         link.setAccessCount(link.getAccessCount() + 1);
         link.setLastAccessedAt(Instant.now());
@@ -88,7 +88,7 @@ public class DocumentShareService {
 
     public void revoke(String token) {
         DocumentShareLink link = shareRepository.findByTokenAndActiveTrue(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Share link not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lien de partage introuvable"));
         link.setActive(false);
         shareRepository.save(link);
     }
@@ -96,7 +96,7 @@ public class DocumentShareService {
     @Transactional(readOnly = true)
     public List<ShareLinkResponse> listByDocument(String documentCode) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         return shareRepository.findAllByDocumentAndActiveTrueOrderByCreatedAtDesc(document)
                 .stream().map(this::toResponse).toList();
     }
@@ -122,10 +122,10 @@ public class DocumentShareService {
 
     private void validateLink(DocumentShareLink link) {
         if (Instant.now().isAfter(link.getExpiresAt())) {
-            throw new BadRequestException("This share link has expired");
+            throw new BadRequestException("Ce lien de partage a expiré");
         }
         if (link.getMaxAccessCount() != null && link.getAccessCount() >= link.getMaxAccessCount()) {
-            throw new BadRequestException("This share link has reached its maximum access count");
+            throw new BadRequestException("Ce lien de partage a atteint son nombre maximal d'accès");
         }
     }
 

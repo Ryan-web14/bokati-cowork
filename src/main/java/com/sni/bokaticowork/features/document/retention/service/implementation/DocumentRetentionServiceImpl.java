@@ -51,7 +51,7 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
     @Override
     public DocumentRetentionPolicyResponse create(DocumentRetentionPolicyRequest request) {
         if (policyRepository.existsByCode(request.getCode().trim().toUpperCase())) {
-            throw new BadRequestException("Retention policy code already exists: " + request.getCode());
+            throw new BadRequestException("Ce code de politique de rétention existe déjà : " + request.getCode());
         }
         DocumentRetentionPolicy policy = DocumentRetentionPolicy.builder()
                 .code(request.getCode().trim().toUpperCase())
@@ -100,7 +100,27 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
         policyRepository.save(policy);
     }
 
+    private org.springframework.transaction.support.TransactionTemplate perDocument;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setTransactionManager(org.springframework.transaction.PlatformTransactionManager transactionManager) {
+        this.perDocument = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        this.perDocument.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
     @Override
+    public void activate(String code) {
+        DocumentRetentionPolicy policy = findByCode(code);
+        policy.setActive(Boolean.TRUE);
+        policyRepository.save(policy);
+    }
+
+    /**
+     * Lot KG4 : chaque document dans sa propre transaction. Avant, tout le passage tenait dans une
+     * seule : un echec sur un document annulait tout ce qui avait ete archive ou marque.
+     */
+    @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public int applyPolicies() {
         List<DocumentRetentionPolicy> policies = policyRepository.findAllByActiveTrue();
         int total = 0;
@@ -123,13 +143,22 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
         for (Document doc : candidates) {
             if (held.contains(doc.getId())) continue;
             try {
-                if (policy.getAction() == DocumentRetentionAction.ARCHIVE) {
-                    documentService.archive(doc.getCode(), "Archived by retention policy: " + policy.getCode());
-                } else if (policy.getAction() == DocumentRetentionAction.PURGE_FLAG) {
-                    // Marque seulement : la destruction attend la confirmation d'un administrateur
-                    doc.setDestructionDueAt(Instant.now());
-                    doc.setDestructionPolicyCode(policy.getCode());
-                    documentRepository.save(doc);
+                Runnable apply = () -> {
+                    if (policy.getAction() == DocumentRetentionAction.ARCHIVE) {
+                        documentService.archive(doc.getCode(), "Archivé par la règle de conservation " + policy.getCode());
+                    } else if (policy.getAction() == DocumentRetentionAction.PURGE_FLAG) {
+                        // Marque seulement : la destruction attend la confirmation d'un administrateur
+                        documentRepository.findById(doc.getId()).ifPresent(fresh -> {
+                            fresh.setDestructionDueAt(Instant.now());
+                            fresh.setDestructionPolicyCode(policy.getCode());
+                            documentRepository.save(fresh);
+                        });
+                    }
+                };
+                if (perDocument != null) {
+                    perDocument.executeWithoutResult(status -> apply.run());
+                } else {
+                    apply.run();
                 }
                 count++;
             } catch (Exception ex) {
@@ -179,7 +208,7 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
 
     private DocumentRetentionPolicy findByCode(String code) {
         return policyRepository.findByCode(code.trim().toUpperCase())
-                .orElseThrow(() -> new ResourceNotFoundException("Retention policy not found: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Politique de rétention introuvable : " + code));
     }
 
     private DocumentRetentionPolicyResponse toResponse(DocumentRetentionPolicy p) {

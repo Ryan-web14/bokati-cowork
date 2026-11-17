@@ -2,14 +2,14 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [document](../README.md) · 5 route(s).
+Module [document](../README.md) · 6 route(s).
 
 ## Routes
 
 <a id="r-get-sni-api-v1-document-retention-policies"></a>
 ### GET /sni/api/v1/document-retention-policies
 
-- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS` ; contrôle supplémentaire sur la méthode : `hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Réponse : `List<DocumentRetentionPolicyResponse>`
 - Modèles : [DocumentRetentionPolicyResponse](#m-DocumentRetentionPolicyResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java`, méthode `list`
@@ -17,7 +17,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-post-sni-api-v1-document-retention-policies"></a>
 ### POST /sni/api/v1/document-retention-policies
 
-- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS` ; contrôle supplémentaire sur la méthode : `hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Corps JSON (obligatoire) : `DocumentRetentionPolicyRequest`
 - Réponse : `DocumentRetentionPolicyResponse`
 - Modèles : [DocumentRetentionPolicyResponse](#m-DocumentRetentionPolicyResponse), [DocumentRetentionPolicyRequest](#m-DocumentRetentionPolicyRequest)
@@ -26,7 +26,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-delete-sni-api-v1-document-retention-policies-code"></a>
 ### DELETE /sni/api/v1/document-retention-policies/{code}
 
-- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS` ; contrôle supplémentaire sur la méthode : `hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Réponse : `vide`
 - Code : `src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java`, méthode `deactivate`
 
@@ -37,7 +37,7 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-get-sni-api-v1-document-retention-policies-code"></a>
 ### GET /sni/api/v1/document-retention-policies/{code}
 
-- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS` ; contrôle supplémentaire sur la méthode : `hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Réponse : `DocumentRetentionPolicyResponse`
 - Modèles : [DocumentRetentionPolicyResponse](#m-DocumentRetentionPolicyResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java`, méthode `getByCode`
@@ -49,11 +49,23 @@ Module [document](../README.md) · 5 route(s).
 <a id="r-put-sni-api-v1-document-retention-policies-code"></a>
 ### PUT /sni/api/v1/document-retention-policies/{code}
 
-- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS` ; contrôle supplémentaire sur la méthode : `hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')`
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - Corps JSON (obligatoire) : `DocumentRetentionPolicyRequest`
 - Réponse : `DocumentRetentionPolicyResponse`
 - Modèles : [DocumentRetentionPolicyResponse](#m-DocumentRetentionPolicyResponse), [DocumentRetentionPolicyRequest](#m-DocumentRetentionPolicyRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java`, méthode `update`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
+<a id="r-patch-sni-api-v1-document-retention-policies-code-activate"></a>
+### PATCH /sni/api/v1/document-retention-policies/{code}/activate
+
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
+- Réponse : `DocumentRetentionPolicyResponse`
+- Modèles : [DocumentRetentionPolicyResponse](#m-DocumentRetentionPolicyResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java`, méthode `activate`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |

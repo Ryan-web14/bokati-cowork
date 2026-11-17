@@ -39,7 +39,7 @@ public class DocumentAccessLogServiceImpl {
     @Transactional(readOnly = true)
     public PaginatedResponse<DocumentAccessLogResponse> getByDocument(String documentCode, Pageable pageable) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + documentCode));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable : " + documentCode));
         return new PaginatedResponse<>(
                 accessLogRepository.findAllByDocumentOrderByAccessedAtDesc(document, pageable)
                         .map(this::toResponse));

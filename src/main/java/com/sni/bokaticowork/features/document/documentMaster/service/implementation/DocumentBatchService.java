@@ -42,6 +42,31 @@ public class DocumentBatchService {
     private static final int MAX_BATCH_FILES = 20;
     private static final int MAX_ZIP_FILES = 50;
     private static final long MAX_ZIP_SIZE = 100L * 1024 * 1024; // 100 MB
+    /** Lot KG4 : taille decompressee maximale d'un fichier de l'archive et de l'archive entiere. */
+    static final long MAX_ENTRY_BYTES = 25L * 1024 * 1024;
+    static final long MAX_UNCOMPRESSED_BYTES = 200L * 1024 * 1024;
+
+    /** Taille maximale reelle d'une requete (au-dela, le serveur la refuse avant ce service). */
+    @org.springframework.beans.factory.annotation.Value("${spring.servlet.multipart.max-request-size:10MB}")
+    private org.springframework.util.unit.DataSize maxRequestSize = org.springframework.util.unit.DataSize.ofMegabytes(10);
+
+    /** Limite effective d'une archive : la plus petite de 100 Mo et de la taille de requete. */
+    public long effectiveZipLimit() {
+        long request = maxRequestSize == null ? MAX_ZIP_SIZE : maxRequestSize.toBytes();
+        return Math.min(MAX_ZIP_SIZE, request);
+    }
+
+    private org.springframework.transaction.support.TransactionTemplate perFile;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setTransactionManager(org.springframework.transaction.PlatformTransactionManager transactionManager) {
+        this.perFile = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+    }
+
+    /** Lot KG4 : un fichier = une transaction (depot, dossier, etiquettes), tout ou rien. */
+    private DocumentResponse uploadAtomically(MultipartFile file, BatchUploadMetadataRequest metadata) {
+        return perFile == null ? uploadSingleFile(file, metadata) : perFile.execute(status -> uploadSingleFile(file, metadata));
+    }
 
     private final DocumentService documentService;
     private final DocumentTagService tagService;
@@ -52,17 +77,17 @@ public class DocumentBatchService {
     public DocumentBulkActionResponse uploadBatch(List<MultipartFile> files,
                                                    BatchUploadMetadataRequest metadata) {
         if (files == null || files.isEmpty()) {
-            throw new BadRequestException("At least one file is required");
+            throw new BadRequestException("Au moins un fichier est requis");
         }
         if (files.size() > MAX_BATCH_FILES) {
-            throw new BadRequestException("Maximum " + MAX_BATCH_FILES + " files per batch");
+            throw new BadRequestException("Au plus " + MAX_BATCH_FILES + " fichiers par lot");
         }
 
         List<DocumentBulkItemResult> results = new ArrayList<>();
 
         for (MultipartFile file : files) {
             try {
-                DocumentResponse response = uploadSingleFile(file, metadata);
+                DocumentResponse response = uploadAtomically(file, metadata);
                 results.add(DocumentBulkItemResult.builder()
                         .code(response.getCode())
                         .status("UPLOADED")
@@ -89,11 +114,12 @@ public class DocumentBatchService {
     public ZipImportResponse importZip(MultipartFile zipFile,
                                         BatchUploadMetadataRequest metadata) {
         if (zipFile == null || zipFile.isEmpty()) {
-            throw new BadRequestException("ZIP file is required");
+            throw new BadRequestException("L'archive ZIP est requise");
         }
-        if (zipFile.getSize() > MAX_ZIP_SIZE) {
-            throw new BadRequestException("ZIP file exceeds maximum size of 100 MB");
+        if (zipFile.getSize() > effectiveZipLimit()) {
+            throw new BadRequestException("L'archive dépasse la taille maximale de " + (effectiveZipLimit() / (1024 * 1024)) + " Mo");
         }
+        long uncompressed = 0;
 
         List<ZipImportResponse.ZipImportItem> items = new ArrayList<>();
         Map<String, String> createdFolders = new HashMap<>();
@@ -130,7 +156,12 @@ public class DocumentBatchService {
                         folderCode = metadata.getFolderCode();
                     }
 
-                    byte[] content = zis.readAllBytes();
+                    // Lot KG4 : archive piegee (taille decompressee demesuree) arretee en lisant.
+                    if (entryPath.contains("..") || entryPath.startsWith("/") || entryPath.startsWith("\\")) {
+                        throw new BadRequestException("Chemin refusé dans l'archive : " + entryPath);
+                    }
+                    byte[] content = readBounded(zis, Math.min(MAX_ENTRY_BYTES, MAX_UNCOMPRESSED_BYTES - uncompressed), entryPath);
+                    uncompressed += content.length;
                     String mimeType = URLConnection.guessContentTypeFromName(fileName);
                     if (mimeType == null) mimeType = "application/octet-stream";
 
@@ -146,7 +177,7 @@ public class DocumentBatchService {
                     entryMeta.setReferenceCode(metadata.getReferenceCode());
                     entryMeta.setTagCodes(metadata.getTagCodes());
 
-                    DocumentResponse response = uploadSingleFile(mockFile, entryMeta);
+                    DocumentResponse response = uploadAtomically(mockFile, entryMeta);
 
                     items.add(ZipImportResponse.ZipImportItem.builder()
                             .originalPath(entryPath)
@@ -166,7 +197,7 @@ public class DocumentBatchService {
                 }
             }
         } catch (IOException ex) {
-            throw new BadRequestException("Failed to read ZIP file: " + ex.getMessage());
+            throw new BadRequestException("Archive ZIP illisible : " + ex.getMessage());
         }
 
         int succeeded = (int) items.stream().filter(ZipImportResponse.ZipImportItem::isSuccess).count();
@@ -179,6 +210,25 @@ public class DocumentBatchService {
                 .build();
     }
 
+    /** Lit une entree sans depasser la limite : au-dela, l'archive est refusee. */
+    static byte[] readBounded(java.io.InputStream in, long limit, String entryName) throws IOException {
+        if (limit <= 0) {
+            throw new BadRequestException("L'archive décompressée dépasse " + (MAX_UNCOMPRESSED_BYTES / (1024 * 1024)) + " Mo");
+        }
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        long total = 0;
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            total += read;
+            if (total > limit) {
+                throw new BadRequestException("Fichier trop volumineux une fois décompressé dans l'archive : " + entryName);
+            }
+            out.write(buffer, 0, read);
+        }
+        return out.toByteArray();
+    }
+
     private DocumentResponse uploadSingleFile(MultipartFile file, BatchUploadMetadataRequest metadata) {
         String fileName = file.getOriginalFilename();
         String title = fileName != null ? fileName.replaceAll("\\.[^.]+$", "").replace("_", " ") : "Untitled";
@@ -188,21 +238,24 @@ public class DocumentBatchService {
         uploadMeta.setOwnerCode(metadata.getOwnerCode());
         uploadMeta.setDocumentTypeCode(metadata.getDocumentTypeCode());
         uploadMeta.setTitle(title);
+        // Lot KG4 : le dossier passe par le depot, qui controle ses droits (dossier restreint).
+        uploadMeta.setFolderCode(metadata.getFolderCode());
 
         DocumentResponse response = documentService.upload(uploadMeta, file);
 
         Document document = documentRepository.findByCode(response.getCode()).orElse(null);
         if (document != null) {
-            if (metadata.getSpace() != null) {
+            if (metadata.getSpace() != null && metadata.getSpace() != document.getSpace()) {
+                // Un espace KYC ne s'impose ni ne se quitte par un depot en lot.
+                if (metadata.getSpace() == DocumentSpace.KYC_SPACE || document.getSpace() == DocumentSpace.KYC_SPACE) {
+                    throw new BadRequestException("L'espace KYC ne se choisit pas dans un dépôt en lot");
+                }
                 document.setSpace(metadata.getSpace());
             }
             if (metadata.getReferenceCode() != null) {
                 document.setSpaceReferenceCode(metadata.getReferenceCode());
             }
-            if (metadata.getFolderCode() != null) {
-                DocumentFolder folder = folderRepository.findByCode(metadata.getFolderCode()).orElse(null);
-                if (folder != null) document.setFolder(folder);
-            }
+
             documentRepository.save(document);
         }
 
@@ -245,7 +298,7 @@ public class DocumentBatchService {
                 parentCode = folder.getCode();
                 createdFolders.put(key, folder.getCode());
             } catch (BadRequestException ex) {
-                if (ex.getMessage() != null && ex.getMessage().contains("already exists")) {
+                if (ex.getMessage() != null && (ex.getMessage().contains("existe déjà") || ex.getMessage().contains("already exists"))) {
                     DocumentFolder existing = findExistingFolder(parentCode, part);
                     if (existing != null) {
                         parentCode = existing.getCode();

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-207 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+208 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -66,6 +66,7 @@
 | DELETE | `/sni/api/v1/document-retention-policies/{code}` | SYSTEM:SETTINGS | [DocumentRetentionPolicyController](routes/DocumentRetentionPolicyController.md#r-delete-sni-api-v1-document-retention-policies-code) |
 | GET | `/sni/api/v1/document-retention-policies/{code}` | SYSTEM:SETTINGS | [DocumentRetentionPolicyController](routes/DocumentRetentionPolicyController.md#r-get-sni-api-v1-document-retention-policies-code) |
 | PUT | `/sni/api/v1/document-retention-policies/{code}` | SYSTEM:SETTINGS | [DocumentRetentionPolicyController](routes/DocumentRetentionPolicyController.md#r-put-sni-api-v1-document-retention-policies-code) |
+| PATCH | `/sni/api/v1/document-retention-policies/{code}/activate` | SYSTEM:SETTINGS | [DocumentRetentionPolicyController](routes/DocumentRetentionPolicyController.md#r-patch-sni-api-v1-document-retention-policies-code-activate) |
 | GET | `/sni/api/v1/review/queue` | DOCUMENT:REVIEW* | [DocumentReviewQueueController](routes/DocumentReviewQueueController.md#r-get-sni-api-v1-review-queue) |
 | GET | `/sni/api/v1/review/{space}` | DOCUMENT:REVIEW* | [DocumentReviewQueueController](routes/DocumentReviewQueueController.md#r-get-sni-api-v1-review-space) |
 | POST | `/sni/api/v1/review/{space}/bulk-approve` | DOCUMENT:REVIEW* | [DocumentReviewQueueController](routes/DocumentReviewQueueController.md#r-post-sni-api-v1-review-space-bulk-approve) |

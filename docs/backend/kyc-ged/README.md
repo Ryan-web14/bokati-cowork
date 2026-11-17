@@ -2,7 +2,7 @@
 
 Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan validé avec les décisions de l'exploitant du 16/11/2026 (voir plus bas).
 
-État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)), **KG2 fait** ([lot-kg2-recto-verso.md](lot-kg2-recto-verso.md)), **KG3 fait** ([lot-kg3-evenements-relances.md](lot-kg3-evenements-relances.md)), **KG9 première partie faite** ([lot-kg9-controles-qualite.md](lot-kg9-controles-qualite.md) : contrôles croisés préenregistrés, qualité d'image au dépôt).
+État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)), **KG2 fait** ([lot-kg2-recto-verso.md](lot-kg2-recto-verso.md)), **KG3 fait** ([lot-kg3-evenements-relances.md](lot-kg3-evenements-relances.md)), **KG4 fait** ([lot-kg4-ged.md](lot-kg4-ged.md)), **KG6 fait** ([lot-kg6-erreurs.md](lot-kg6-erreurs.md)), **KG9 première partie faite** ([lot-kg9-controles-qualite.md](lot-kg9-controles-qualite.md) : contrôles croisés préenregistrés, qualité d'image au dépôt).
 
 ## Constat (vérifié dans le code le 16/11/2026)
 
@@ -102,25 +102,25 @@ Critères de validation (testés) :
 | K-n10 | Suppression au portail bloque un nouveau dépôt | Réglé (KG2) |
 | K-n11 | Décisions manuelles écrasées, approbation sans garde | Réglé (KG1) |
 | K-n12 | Relances envoyées à des pièces refusées ou remplacées | Réglé (KG3) |
-| G1 | Opérations en masse en une transaction ; `{space}` sans effet | confirmé |
+| G1 | Opérations en masse en une transaction ; `{space}` sans effet | Réglé (KG4) |
 | G2 | Droits `DOCUMENT:REVIEW_<ESPACE>` sans effet | confirmé |
 | G3 | Écritures en `DOCUMENT:READ` ; signature sans contrôle ni statut `SIGNED` | confirmé |
-| G4 | Verrou ignoré par les décisions, étiquettes, métadonnées, signatures ; non exposé | en partie réglé |
+| G4 | Verrou ignoré par les décisions, étiquettes, métadonnées, signatures ; non exposé | Réglé (KG4) |
 | G5 | Permissions par document jamais appliquées ; `/document-permissions` en `ADMIN:ACCESS` | en partie réglé |
 | G6 | Lien de partage sans contenu, révocation publique, courriel exposé | confirmé (plus large) |
-| G7 | Formats annoncés mais refusés ; limite ZIP inatteignable | en partie réglé |
-| G8 | Remplacement d'un document archivé, expiré ou refusé | en partie réglé (verrou et blocage légal contrôlés) |
-| G9 | `ownerCode` numérique pour contrats et factures | confirmé |
+| G7 | Formats annoncés mais refusés ; limite ZIP inatteignable | Réglé (KG4) |
+| G8 | Remplacement d'un document archivé, expiré ou refusé | Réglé (KG4) |
+| G9 | `ownerCode` numérique pour contrats et factures | Réglé (KG4) |
 | G10 | Circuits d'approbation décoratifs ; erreur 500 au deuxième circuit | confirmé |
-| G11 | Politique de rétention non réactivable ; rétention en une transaction | en partie réglé (`PURGE_FLAG` utilisé) |
+| G11 | Politique de rétention non réactivable ; rétention en une transaction | Réglé (KG4) |
 | G12 | `reviewedBy` fourni par le client | confirmé |
-| G13 | Messages en anglais ; erreurs de taille et de conversion en 500 | confirmé |
+| G13 | Messages en anglais ; erreurs de taille et de conversion en 500 | Réglé (KG6) |
 | G-n1 | Dossiers restreints contournés (dépôt, étiquettes, file de revue...) | nouveau |
-| G-n2 | Archive ZIP piégée (taille décompressée non bornée) | nouveau |
+| G-n2 | Archive ZIP piégée (taille décompressée non bornée) | Réglé (KG4) |
 | G-n3 | `autoApproveAfterDays` presque inutilisé, sans trace de revue | Réglé (KG3) |
-| G-n4 | `folderCode`, `folderName` jamais remplis | nouveau |
+| G-n4 | `folderCode`, `folderName` jamais remplis | Réglé (KG4) |
 | G-n5 | Demande de signature sur un document refusé ou archivé | nouveau |
-| G-n6 | Fichiers orphelins après annulation | nouveau |
-| G-n7 | Double contrôle de droit sur la rétention | nouveau |
-| G-n8 | N+1 dans la file de revue | nouveau |
+| G-n6 | Fichiers orphelins après annulation | Réglé (KG4) |
+| G-n7 | Double contrôle de droit sur la rétention | Réglé (KG6) |
+| G-n8 | N+1 dans la file de revue | Réglé (KG4) |
 | G-n9 | Plantage possible sur un auteur inconnu (partage, circuits) | nouveau |

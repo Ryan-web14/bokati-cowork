@@ -30,6 +30,13 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
     private final DocumentRepository documentRepository;
     private final DocumentSignatureRepository signatureRepository;
     private final OutboxService outboxService;
+    private DocumentLockService lockService;
+
+    /** Lot KG4 : un document verrouille par un autre ne se signe pas. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setLockService(DocumentLockService lockService) {
+        this.lockService = lockService;
+    }
 
     @Override
     public DocumentSignatureResponse requestSignature(String documentCode, CreateDocumentSignatureRequest request) {
@@ -50,13 +57,16 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
     @Override
     public DocumentSignatureResponse sign(String documentCode, Long signatureId, SignDocumentRequest request, String ipAddress, String userAgent) {
         if (request == null || !Boolean.TRUE.equals(request.accepted())) {
-            throw new BadRequestException("Signature acceptance is required");
+            throw new BadRequestException("L'acceptation de la signature est requise");
         }
         DocumentSignature signature = signatureRepository.findById(signatureId)
                 .filter(item -> item.getDocument().getCode().equals(documentCode))
-                .orElseThrow(() -> new ResourceNotFoundException("Document signature request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Demande de signature introuvable"));
         if (signature.getSignatureStatus() != DocumentSignatureStatus.PENDING) {
-            throw new BadRequestException("Document signature is not pending");
+            throw new BadRequestException("Cette signature n'est plus en attente");
+        }
+        if (lockService != null) {
+            lockService.assertEditable(signature.getDocument());
         }
         requireSigner(signature);
         signature.setSignatureStatus(DocumentSignatureStatus.SIGNED);
@@ -99,10 +109,10 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
 
     private Document document(String documentCode) {
         if (!StringUtils.hasText(documentCode)) {
-            throw new BadRequestException("Document code is required");
+            throw new BadRequestException("Le code du document est requis");
         }
         return documentRepository.findByCode(documentCode.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
     }
 
     private DocumentSignatureResponse toResponse(DocumentSignature signature) {

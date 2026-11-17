@@ -17,6 +17,15 @@ import java.util.Map;
 public class DocumentResponse {
     private String code;
     private Long ownerId;
+    /** Code metier du proprietaire (memberId, customerId, code d'entreprise, contractCode, documentNumber...). */
+    private String ownerCode;
+    /** Nom ou libelle du proprietaire. */
+    private String ownerLabel;
+    /** Verrou d'edition en cours (lot KG4). */
+    private Boolean locked;
+    private Long lockedById;
+    private String lockedByName;
+    private Instant lockExpiresAt;
     private DocumentOwnerType ownerType;
     private DocumentCategory category;
     private DocumentSpace space;

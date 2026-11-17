@@ -22,9 +22,20 @@ public class DocumentMetadataServiceImpl implements DocumentMetadataService {
     private final DocumentMetadataRepository metadataRepository;
     private final DocumentRepository documentRepository;
 
+    private DocumentLockService lockService;
+
+    /** Lot KG4 : un document verrouille par un autre ne se modifie pas. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setLockService(DocumentLockService lockService) {
+        this.lockService = lockService;
+    }
+
     @Override
     public Map<String, String> setMetadata(String documentCode, Map<String, String> metadata) {
         Document document = serviceDocument(documentCode);
+        if (lockService != null) {
+            lockService.assertEditable(document);
+        }
         metadata.forEach((key, value) -> {
             if (!StringUtils.hasText(key)) return;
             String trimmedKey = key.trim();
@@ -56,6 +67,6 @@ public class DocumentMetadataServiceImpl implements DocumentMetadataService {
 
     private Document serviceDocument(String code) {
         return documentRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable : " + code));
     }
 }

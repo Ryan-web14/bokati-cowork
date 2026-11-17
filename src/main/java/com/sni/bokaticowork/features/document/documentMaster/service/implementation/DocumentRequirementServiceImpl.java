@@ -47,7 +47,7 @@ public class DocumentRequirementServiceImpl implements DocumentRequirementServic
     @Override
     public DocumentRequirementResponse update(Long id, DocumentRequirementRequest request) {
         DocumentRequirement entity = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Document requirement not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exigence documentaire introuvable"));
         validateAndNormalize(request);
         mapper.updateEntity(entity, request);
         repository.save(entity);
@@ -106,10 +106,10 @@ public class DocumentRequirementServiceImpl implements DocumentRequirementServic
 
     private void validateAndNormalize(DocumentRequirementRequest request) {
         if (request.getOwnerType() == null) {
-            throw new BadRequestException("Document requirement owner type is required");
+            throw new BadRequestException("Le type de titulaire de l'exigence est requis");
         }
         if (!StringUtils.hasText(request.getDocumentTypeCode())) {
-            throw new BadRequestException("Document type code is required");
+            throw new BadRequestException("Le code du type de document est requis");
         }
         documentTypeService.serviceByCode(request.getDocumentTypeCode());
         request.setDocumentTypeCode(request.getDocumentTypeCode().trim().toUpperCase(Locale.ROOT));
@@ -120,10 +120,10 @@ public class DocumentRequirementServiceImpl implements DocumentRequirementServic
 
     private DocumentRequirement serviceById(Long id) {
         if (id == null) {
-            throw new BadRequestException("Document requirement id is required");
+            throw new BadRequestException("L'identifiant de l'exigence est requis");
         }
         return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Document requirement not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exigence documentaire introuvable"));
     }
 
 }

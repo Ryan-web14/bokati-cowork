@@ -127,7 +127,7 @@ public class DocumentLockService {
 
     private Document findDocument(String code) {
         return documentRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable : " + code));
     }
 
     private static Long currentUserId() {

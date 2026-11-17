@@ -53,7 +53,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     @Override
     public void initializeMemberKyc(String memberId) {
         Member member = memberRepository.findByMemberIdAndDeletedFalse(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membre introuvable"));
         if (!hasActiveRequirements(DocumentOwnerType.MEMBER, null)) {
             return;
         }
@@ -68,7 +68,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     @Override
     public void initializeCustomerKyc(String customerId) {
         Customer customer = customerRepository.findByCustomerId(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Client introuvable"));
         if (!hasActiveRequirements(DocumentOwnerType.CUSTOMER, customer.getType() == null ? null : customer.getType().name())) {
             return;
         }
@@ -83,7 +83,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     @Override
     public void syncMemberKyc(String memberId) {
         Member member = memberRepository.findByMemberIdAndDeletedFalse(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membre introuvable"));
         if (!hasActiveRequirements(DocumentOwnerType.MEMBER, null)) {
             return;
         }
@@ -102,7 +102,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     @Override
     public void syncCustomerKyc(String customerId) {
         Customer customer = customerRepository.findByCustomerId(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Client introuvable"));
         if (!hasActiveRequirements(DocumentOwnerType.CUSTOMER, customer.getType() == null ? null : customer.getType().name())) {
             return;
         }
@@ -396,7 +396,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     private void syncOwnerStatusFromCase(KycCase kycCase) {
         if (kycCase.getOwnerType() == DocumentOwnerType.MEMBER) {
             Member member = memberRepository.findById(kycCase.getOwnerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Membre introuvable"));
             MemberStatus target = switch (kycCase.getStatus()) {
                 case IN_PROGRESS, NOT_STARTED -> MemberStatus.PENDING;
                 case SUBMITTED, UNDER_REVIEW -> MemberStatus.UNDER_REVIEW;
@@ -417,7 +417,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
 
         if (kycCase.getOwnerType() == DocumentOwnerType.CUSTOMER) {
             Customer customer = customerRepository.findById(kycCase.getOwnerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Client introuvable"));
             CustomerStatus target = switch (kycCase.getStatus()) {
                 case IN_PROGRESS, NOT_STARTED, SUBMITTED, UNDER_REVIEW, PENDING_CORRECTION, REJECTED -> CustomerStatus.PENDING;
                 case APPROVED -> CustomerStatus.ACTIVE;

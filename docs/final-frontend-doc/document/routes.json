@@ -1698,7 +1698,6 @@
    "handler": "list",
    "declaredIn": "DocumentRetentionPolicyController",
    "access": {
-    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
     "kind": "admin",
     "permission": "SYSTEM:SETTINGS"
    },
@@ -1716,7 +1715,6 @@
    "handler": "create",
    "declaredIn": "DocumentRetentionPolicyController",
    "access": {
-    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
     "kind": "admin",
     "permission": "SYSTEM:SETTINGS"
    },
@@ -1738,7 +1736,6 @@
    "handler": "deactivate",
    "declaredIn": "DocumentRetentionPolicyController",
    "access": {
-    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
     "kind": "admin",
     "permission": "SYSTEM:SETTINGS"
    },
@@ -1763,7 +1760,6 @@
    "handler": "getByCode",
    "declaredIn": "DocumentRetentionPolicyController",
    "access": {
-    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
     "kind": "admin",
     "permission": "SYSTEM:SETTINGS"
    },
@@ -1788,13 +1784,36 @@
    "handler": "update",
    "declaredIn": "DocumentRetentionPolicyController",
    "access": {
-    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
     "kind": "admin",
     "permission": "SYSTEM:SETTINGS"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.document.retention.dto.request.DocumentRetentionPolicyRequest",
     "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.retention.dto.response.DocumentRetentionPolicyResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/document-retention-policies/{code}/activate",
+   "package": "features.document.retention.controller",
+   "controller": "DocumentRetentionPolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java",
+   "handler": "activate",
+   "declaredIn": "DocumentRetentionPolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
    },
    "params": [
     {
@@ -3478,6 +3497,12 @@
      "name": "code",
      "required": true,
      "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "space",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentUploadConfigResponse>"
@@ -5926,6 +5951,26 @@
     "ownerId": {
      "type": "integer",
      "format": "int64"
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "ownerLabel": {
+     "type": "string"
+    },
+    "locked": {
+     "type": "boolean"
+    },
+    "lockedById": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lockedByName": {
+     "type": "string"
+    },
+    "lockExpiresAt": {
+     "type": "string",
+     "format": "date-time"
     },
     "ownerType": {
      "type": "string",

@@ -107,18 +107,18 @@ public class DocumentTypeServiceImpl implements DocumentTypeService {
     @Transactional(readOnly = true)
     public DocumentType serviceByCode(String code) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Document type code is required");
+            throw new BadRequestException("Le code du type de document est requis");
         }
         return repository.findByCode(normalizeCode(code))
-                .orElseThrow(() -> new ResourceNotFoundException("Document type not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Type de document introuvable"));
     }
 
     private void validateRequest(DocumentTypeRequest request) {
         if (!StringUtils.hasText(request.getName())) {
-            throw new BadRequestException("Document type name is required");
+            throw new BadRequestException("Le nom du type de document est requis");
         }
         if (request.getCategory() == null) {
-            throw new BadRequestException("Document type category is required");
+            throw new BadRequestException("La catégorie du type de document est requise");
         }
     }
 
@@ -129,7 +129,7 @@ public class DocumentTypeServiceImpl implements DocumentTypeService {
         List<String> mimes = StringUtils.hasText(type.getAllowedMimeTypes())
                 ? Arrays.stream(type.getAllowedMimeTypes().split(","))
                         .map(String::trim).filter(StringUtils::hasText).collect(Collectors.toList())
-                : List.of("application/pdf", "image/jpeg", "image/png");
+                : DocumentSecurityService.DEFAULT_ALLOWED_MIME_TYPES;
         long maxBytes = type.getMaxFileSizeBytes() != null && type.getMaxFileSizeBytes() > 0
                 ? type.getMaxFileSizeBytes() : 10L * 1024 * 1024;
         return DocumentUploadConfigResponse.builder()
@@ -148,7 +148,7 @@ public class DocumentTypeServiceImpl implements DocumentTypeService {
 
     private String normalizeCode(String code) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Document type code is required");
+            throw new BadRequestException("Le code du type de document est requis");
         }
         return code.trim().toUpperCase(Locale.ROOT);
     }

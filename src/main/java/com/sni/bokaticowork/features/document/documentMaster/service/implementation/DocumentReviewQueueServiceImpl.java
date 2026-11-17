@@ -46,7 +46,7 @@ public class DocumentReviewQueueServiceImpl implements DocumentReviewQueueServic
                 ? documentRepository.findAllBySpaceAndStatus(space, DocumentStatus.PENDING_REVIEW, pageable)
                 : documentRepository.findAllByStatus(DocumentStatus.PENDING_REVIEW, pageable);
         return new PaginatedResponse<>(
-                page.map(doc -> documentService.getByCode(((com.sni.bokaticowork.features.document.documentMaster.model.Document) doc).getCode()))
+                page.map(doc -> documentService.summarize((com.sni.bokaticowork.features.document.documentMaster.model.Document) doc))
         );
     }
 
@@ -62,7 +62,7 @@ public class DocumentReviewQueueServiceImpl implements DocumentReviewQueueServic
             return new PaginatedResponse<>(org.springframework.data.domain.Page.<DocumentResponse>empty(pageable));
         }
         return new PaginatedResponse<>(documentRepository.findAllBySpaceInAndStatus(spaces, DocumentStatus.PENDING_REVIEW, pageable)
-                .map(doc -> documentService.getByCode(doc.getCode())));
+                .map(documentService::summarize));
     }
 
     /** Lot KG0 : un document hors de l'espace de la route n'est pas traite. */

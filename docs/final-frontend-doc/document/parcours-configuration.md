@@ -43,7 +43,7 @@ Droit commun : `SYSTEM:SETTINGS` (règle d'URL). Les politiques de rétention ex
 
 ### Configuration de téléversement
 
-`GET /sni/api/v1/document-types/{code}/upload-config` : accessible à tout compte connecté, membres compris. Détail dans [parcours-televersement-et-apercus.md](parcours-televersement-et-apercus.md#préparer-un-formulaire-de-dépôt).
+`GET /sni/api/v1/document-types/{code}/upload-config?space=` : accessible à tout compte connecté, membres compris. Sans formats propres au type, la liste par défaut est celle que le dépôt applique vraiment (PDF, JPEG, PNG, WebP). Avec `space`, les formats sont ceux du type **et** de l'espace (17/11/2026, lot KG4). Détail dans [parcours-televersement-et-apercus.md](parcours-televersement-et-apercus.md#préparer-un-formulaire-de-dépôt).
 
 ## Exigences documentaires
 
@@ -67,7 +67,7 @@ Effets à connaître :
 
 ## Politiques de rétention
 
-`/sni/api/v1/document-retention-policies/**` ([routes](routes/DocumentRetentionPolicyController.md)), droits `SYSTEM:SETTINGS` et `DOCUMENT:REVIEW`.
+`/sni/api/v1/document-retention-policies/**` ([routes](routes/DocumentRetentionPolicyController.md)), droit `SYSTEM:SETTINGS` seul (le second contrôle `DOCUMENT:REVIEW` a été retiré au lot KG6).
 
 1. Lister : `GET /document-retention-policies` (actives et inactives). Détail : `GET /document-retention-policies/{code}`.
 2. Créer : `POST /document-retention-policies`, corps `{ "code": "FIN-10ANS", "name": "Pièces financières 10 ans", "space": "FINANCIAL_SPACE", "documentTypeCode": null, "retentionDays": 3650, "retentionReference": "UPLOAD_DATE", "action": "ARCHIVE" }`.
@@ -77,5 +77,5 @@ Effets à connaître :
    - `action` : `ARCHIVE` (défaut) ; `PURGE_FLAG` est accepté mais n'a aucun effet.
    - `space` et `documentTypeCode` facultatifs : sans eux, la politique vise tous les documents. Le code du type est comparé tel quel (sensible à la casse).
 3. Modifier : `PUT /document-retention-policies/{code}` avec le corps complet (le `code` du corps est ignoré, l'état actif est conservé).
-4. Désactiver : `DELETE /document-retention-policies/{code}` (`204`). Aucune route ne réactive.
+4. Désactiver : `DELETE /document-retention-policies/{code}` (`204`). Réactiver : `PATCH /document-retention-policies/{code}/activate` (réponse : la politique) (17/11/2026). L'application nocturne traite chaque document dans sa propre transaction : un échec n'annule plus le reste.
 5. Application : chaque nuit à 02 h 30, les documents `APPROVED`, `SIGNED` ou `EXPIRED` qui correspondent et ont dépassé le délai passent `ARCHIVED`. Prévenir dans l'écran que l'effet n'est pas immédiat et qu'un document archivé ne compte plus comme valide dans la vue « pièces manquantes » du propriétaire.

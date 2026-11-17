@@ -42,7 +42,7 @@ public class DocumentPermissionService {
 
         if (permissionRepository.existsByTargetTypeAndTargetIdAndGranteeTypeAndGranteeIdAndPermission(
                 request.getTargetType(), targetId, request.getGranteeType(), request.getGranteeId(), request.getPermission())) {
-            throw new BadRequestException("Permission already granted");
+            throw new BadRequestException("Permission déjà accordée");
         }
 
         DocumentPermission perm = DocumentPermission.builder()
@@ -61,7 +61,7 @@ public class DocumentPermissionService {
         Long targetId = resolveTargetId(targetType, targetCode);
         DocumentPermission perm = permissionRepository.findByTargetTypeAndTargetIdAndGranteeTypeAndGranteeIdAndPermission(
                         targetType, targetId, granteeType, granteeId, permission)
-                .orElseThrow(() -> new ResourceNotFoundException("Permission not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Permission introuvable"));
         permissionRepository.delete(perm);
     }
 
@@ -84,7 +84,7 @@ public class DocumentPermissionService {
     @Transactional(readOnly = true)
     public Set<String> getEffectivePermissions(Long userId, String documentCode) {
         Document document = documentRepository.findByCode(documentCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
         Set<String> permissions = new HashSet<>();
 
         permissionRepository.findAllByTargetTypeAndTargetIdOrderByPermissionAsc("DOCUMENT", document.getId())
@@ -108,20 +108,20 @@ public class DocumentPermissionService {
 
     private void validate(GrantPermissionRequest request) {
         if (!VALID_TARGET_TYPES.contains(request.getTargetType()))
-            throw new BadRequestException("Invalid target type. Allowed: " + VALID_TARGET_TYPES);
+            throw new BadRequestException("Type de cible invalide. Valeurs admises : " + VALID_TARGET_TYPES);
         if (!VALID_GRANTEE_TYPES.contains(request.getGranteeType()))
-            throw new BadRequestException("Invalid grantee type. Allowed: " + VALID_GRANTEE_TYPES);
+            throw new BadRequestException("Type de bénéficiaire invalide. Valeurs admises : " + VALID_GRANTEE_TYPES);
         if (!VALID_PERMISSIONS.contains(request.getPermission()))
-            throw new BadRequestException("Invalid permission. Allowed: " + VALID_PERMISSIONS);
+            throw new BadRequestException("Permission invalide. Valeurs admises : " + VALID_PERMISSIONS);
     }
 
     private Long resolveTargetId(String targetType, String targetCode) {
         return switch (targetType) {
             case "DOCUMENT" -> documentRepository.findByCode(targetCode)
-                    .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + targetCode)).getId();
+                    .orElseThrow(() -> new ResourceNotFoundException("Document introuvable : " + targetCode)).getId();
             case "FOLDER" -> folderRepository.findByCode(targetCode)
-                    .orElseThrow(() -> new ResourceNotFoundException("Folder not found: " + targetCode)).getId();
-            default -> throw new BadRequestException("Unknown target type: " + targetType);
+                    .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable : " + targetCode)).getId();
+            default -> throw new BadRequestException("Type de cible inconnu : " + targetType);
         };
     }
 

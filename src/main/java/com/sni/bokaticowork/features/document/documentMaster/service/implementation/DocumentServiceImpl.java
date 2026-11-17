@@ -216,10 +216,18 @@ public class DocumentServiceImpl implements DocumentService {
         // Un document verrouille par quelqu'un d'autre, ou sous gel juridique, ne se remplace pas
         lockService.assertEditable(document);
         holdService.assertNotHeld(document, "remplace");
+        // Lot KG4 : un document archive, expire, remplace ou signe ne recoit plus de nouvelle version
+        // (en deposer un nouveau) ; avant, il etait remis en revue.
+        if (java.util.EnumSet.of(DocumentStatus.ARCHIVED, DocumentStatus.EXPIRED, DocumentStatus.SUPERSEDED, DocumentStatus.SIGNED)
+                .contains(document.getStatus())) {
+            throw new BadRequestException("Le document " + document.getCode() + " est " + document.getStatus()
+                    + " : il ne se remplace pas, déposez un nouveau document");
+        }
         List<String> allowedMimeTypes = parseAllowedMimeTypes(document.getDocumentType().getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspect(file, allowedMimeTypes);
 
-        document.setStatus(document.getDocumentType().getRequiresReview() ? DocumentStatus.PENDING_REVIEW : DocumentStatus.APPROVED);
+        // Meme regle qu'au depot (autoApprove, delai, revue) ; avant, autoApprove etait ignore.
+        document.setStatus(initialDocumentStatus(document.getDocumentType()));
         createVersion(document, uploadedBy, document.getTitle(), null, file, inspection);
 
         kycDocumentRepository.findAllByDocument(document).forEach(item -> {
@@ -265,6 +273,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponse approve(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
         guard(document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision.APPROVE);
+        lockService.assertEditable(document);
         request.setReviewedBy(reviewer(request.getReviewedBy()));
         assertReviewable(document, DocumentStatus.APPROVED);
         boolean liftsRejection = document.getStatus() == DocumentStatus.REJECTED;
@@ -292,6 +301,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponse reject(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
         guard(document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision.REJECT);
+        lockService.assertEditable(document);
         request.setReviewedBy(reviewer(request.getReviewedBy()));
         assertReviewable(document, DocumentStatus.REJECTED);
         document.setStatus(DocumentStatus.REJECTED);
@@ -308,6 +318,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponse requestCorrection(String documentCode, DocumentCorrectionRequest request) {
         Document document = serviceDocument(documentCode);
         guard(document, com.sni.bokaticowork.features.document.documentMaster.security.DocumentReviewGuard.Decision.CORRECTION);
+        lockService.assertEditable(document);
         request.setReviewedBy(reviewer(request.getReviewedBy()));
         assertReviewable(document, DocumentStatus.NEEDS_CORRECTION);
 
@@ -398,7 +409,7 @@ public class DocumentServiceImpl implements DocumentService {
         lockService.assertEditable(document);
         holdService.assertNotHeld(document, "archive");
         if (document.getStatus() == DocumentStatus.ARCHIVED) {
-            throw new BadRequestException("Document is already archived");
+            throw new BadRequestException("Ce document est déjà archivé");
         }
         document.setStatus(DocumentStatus.ARCHIVED);
         documentRepository.save(document);
@@ -444,7 +455,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentFileResult getFileWithMeta(String documentCode) {
         Document document = serviceDocument(documentCode);
         if (!StringUtils.hasText(document.getFileUrl())) {
-            throw new BadRequestException("Document has no file stored");
+            throw new BadRequestException("Aucun fichier enregistré pour ce document");
         }
         DocumentVersion currentVersion = documentVersionRepository.findByDocumentAndCurrentTrue(document).orElse(null);
         String storageProvider = currentVersion == null ? "FILESYSTEM" : currentVersion.getStorageProvider();
@@ -472,6 +483,7 @@ public class DocumentServiceImpl implements DocumentService {
         int nextVersion = document.getCurrentVersionNumber() == null ? 1 : document.getCurrentVersionNumber() + 1;
         String ownerFolder = storageFolder(document);
         DocumentStorageService.StoredDocument stored = storageService.store(ownerFolder, document.getCode(), nextVersion, file);
+        removeOnRollback(stored);
 
         DocumentVersion version = DocumentVersion.builder()
                 .document(document)
@@ -518,6 +530,7 @@ public class DocumentServiceImpl implements DocumentService {
         int nextVersion = document.getCurrentVersionNumber() == null ? 1 : document.getCurrentVersionNumber() + 1;
         String ownerFolder = storageFolder(document);
         DocumentStorageService.StoredDocument stored = storageService.storeBytes(ownerFolder, document.getCode(), nextVersion, originalFileName, content);
+        removeOnRollback(stored);
 
         DocumentVersion version = DocumentVersion.builder()
                 .document(document)
@@ -638,7 +651,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     private void validateDocumentMetadata(DocumentUploadMetadataRequest metadata, DocumentType documentType, long fileSizeBytes) {
         if (documentType.getRequiresExpiryDate() && metadata.getExpiryDate() == null) {
-            throw new BadRequestException("Expiry date is required for this document type");
+            throw new BadRequestException("La date d'expiration est obligatoire pour ce type de document");
         }
         if (documentType.getMaxFileSizeBytes() != null && documentType.getMaxFileSizeBytes() > 0
                 && fileSizeBytes > documentType.getMaxFileSizeBytes()) {
@@ -678,12 +691,41 @@ public class DocumentServiceImpl implements DocumentService {
 
     private DocumentType documentType(String code) {
         return documentTypeRepository.findByCode(code.trim().toUpperCase(Locale.ROOT))
-                .orElseThrow(() -> new ResourceNotFoundException("Document type not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Type de document introuvable"));
     }
 
     private Document serviceDocument(String code) {
         return documentRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document introuvable"));
+    }
+
+    /**
+     * Lot KG4 : un fichier ecrit dans le stockage pendant une transaction annulee est supprime ;
+     * avant, il restait orphelin.
+     */
+    private void removeOnRollback(DocumentStorageService.StoredDocument stored) {
+        if (stored == null || !org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCompletion(int status) {
+                        if (status == STATUS_ROLLED_BACK) {
+                            try {
+                                storageService.delete(stored.provider(), stored.storagePath());
+                            } catch (RuntimeException ex) {
+                                log.warn("Fichier orphelin non supprime {} : {}", stored.storagePath(), ex.getMessage());
+                            }
+                        }
+                    }
+                });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentResponse summarize(Document document) {
+        return toResponse(document, false);
     }
 
     private DocumentResponse toResponse(Document document, boolean includeVersions) {
@@ -713,7 +755,26 @@ public class DocumentServiceImpl implements DocumentService {
         response.setMetadata(metadata);
         response.setSpace(document.getSpace());
         response.setSpaceReferenceCode(document.getSpaceReferenceCode());
+        // Lot KG4 : etat du verrou et proprietaire par son code metier.
+        boolean locked = DocumentLockService.active(document);
+        response.setLocked(locked);
+        response.setLockedById(locked ? document.getLockedBy() : null);
+        response.setLockedByName(locked ? lockService.lockerName(document) : null);
+        response.setLockExpiresAt(locked ? document.getLockExpiresAt() : null);
+        if (ownerCodes != null) {
+            ownerCodes.codeAndLabel(document.getOwnerType(), document.getOwnerId()).ifPresent(owner -> {
+                response.setOwnerCode(owner[0]);
+                response.setOwnerLabel(owner[1]);
+            });
+        }
         return response;
+    }
+
+    private com.sni.bokaticowork.features.document.documentMaster.service.support.DocumentOwnerCodes ownerCodes;
+
+    @Autowired(required = false)
+    void setOwnerCodes(com.sni.bokaticowork.features.document.documentMaster.service.support.DocumentOwnerCodes ownerCodes) {
+        this.ownerCodes = ownerCodes;
     }
 
     private DocumentSpace deriveSpace(DocumentOwnerType ownerType, DocumentCategory category) {
@@ -730,7 +791,7 @@ public class DocumentServiceImpl implements DocumentService {
             return new OwnerResolution(DocumentOwnerType.INTERNAL, null);
         }
         if (ownerType == null || !StringUtils.hasText(ownerCode)) {
-            throw new BadRequestException("Document owner is required");
+            throw new BadRequestException("Le propriétaire du document est requis");
         }
 
         return switch (ownerType) {
@@ -748,10 +809,17 @@ public class DocumentServiceImpl implements DocumentService {
                 yield new OwnerResolution(DocumentOwnerType.BUSINESS, business.getId());
             }
             default -> {
+                // Lot KG4 : contrat, facture, paiement, proposition, actif par leur code metier
+                // (contractCode, documentNumber, transactionNumber...) ; l'identifiant numerique reste accepte.
+                if (ownerCodes != null && ownerCodes.handles(ownerType)) {
+                    Long id = ownerCodes.idOf(ownerType, ownerCode).orElseThrow(() -> new BadRequestException(
+                            "Propriétaire introuvable : " + ownerType + " " + ownerCode.trim()));
+                    yield new OwnerResolution(ownerType, id);
+                }
                 try {
                     yield new OwnerResolution(ownerType, Long.parseLong(ownerCode.trim()));
                 } catch (NumberFormatException ex) {
-                    throw new BadRequestException("Owner code must be numeric for owner type " + ownerType);
+                    throw new BadRequestException("Code du propriétaire invalide pour le type " + ownerType);
                 }
             }
         };

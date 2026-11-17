@@ -95,7 +95,7 @@ public class KycController {
                 try {
                     yield KycCaseStatus.valueOf(normalized);
                 } catch (IllegalArgumentException ex) {
-                    throw new BadRequestException("Unsupported KYC case status: " + status);
+                    throw new BadRequestException("Statut de dossier KYC non pris en charge : " + status);
                 }
             }
         };
