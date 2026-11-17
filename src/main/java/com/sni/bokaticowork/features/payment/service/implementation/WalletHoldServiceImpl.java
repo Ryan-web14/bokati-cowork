@@ -65,7 +65,10 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public WalletHoldResponse create(CreateWalletHoldRequest request) {
         WalletAccount wallet = walletRepository.findByWalletNumber(request.walletNumber())
-                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Portefeuille introuvable"));
+        if (wallet.getStatus() != com.sni.bokaticowork.features.payment.enums.WalletStatus.ACTIVE) {
+            throw new BadRequestException("Une retenue ne se pose que sur un portefeuille actif (statut " + wallet.getStatus() + ")");
+        }
         // Le numero de blocage est genere avant l'ecriture : il sert de cle d'idempotence, donc
         // il doit exister au moment ou le grand livre est ecrit.
         String holdNumber = sequenceGenerator.next("wallet_hold");
@@ -121,9 +124,9 @@ public class WalletHoldServiceImpl implements WalletHoldService {
 
     private WalletHold activeHold(String holdNumber) {
         WalletHold hold = holdRepository.findByHoldNumber(holdNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Wallet hold not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Retenue de portefeuille introuvable"));
         if (hold.getStatus() != WalletHoldStatus.ACTIVE) {
-            throw new BadRequestException("Wallet hold is not active");
+            throw new BadRequestException("Cette retenue n'est plus active");
         }
         return hold;
     }
@@ -139,7 +142,7 @@ public class WalletHoldServiceImpl implements WalletHoldService {
         try {
             return WalletHoldStatus.valueOf(status.trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("Invalid wallet hold status");
+            throw new BadRequestException("Statut de retenue invalide");
         }
     }
 

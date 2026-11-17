@@ -9,7 +9,7 @@ Module [payment](../README.md) · 10 route(s).
 <a id="r-get-sni-api-v1-payments-mobile-money-callbacks"></a>
 ### GET /sni/api/v1/payments/mobile-money/callbacks
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `PaginatedResponse<MobileMoneyCallbackResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [MobileMoneyCallbackResponse](#m-MobileMoneyCallbackResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `listCallbacks`
@@ -22,7 +22,7 @@ Module [payment](../README.md) · 10 route(s).
 <a id="r-get-sni-api-v1-payments-mobile-money-deposits"></a>
 ### GET /sni/api/v1/payments/mobile-money/deposits
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `PaginatedResponse<MobileMoneyDepositResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `listDeposits`
@@ -35,7 +35,7 @@ Module [payment](../README.md) · 10 route(s).
 <a id="r-get-sni-api-v1-payments-mobile-money-deposits-depositid"></a>
 ### GET /sni/api/v1/payments/mobile-money/deposits/{depositId}
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
 - Réponse : `MobileMoneyDepositResponse`
 - Modèles : [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `getDeposit`
@@ -47,7 +47,7 @@ Module [payment](../README.md) · 10 route(s).
 <a id="r-post-sni-api-v1-payments-mobile-money-deposits-depositid-recheck"></a>
 ### POST /sni/api/v1/payments/mobile-money/deposits/{depositId}/recheck
 
-- Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')`
+- Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
 - Réponse : `MobileMoneyDepositResponse`
 - Modèles : [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java`, méthode `recheck`

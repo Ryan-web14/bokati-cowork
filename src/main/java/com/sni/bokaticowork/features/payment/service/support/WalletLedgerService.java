@@ -136,6 +136,15 @@ public class WalletLedgerService {
         }
 
         WalletAccount locked = lock(wallet);
+        // Un portefeuille clos ne bouge plus ; un portefeuille gele (LOCKED) ne recoit ni ne donne
+        // rien, seule une retenue peut y etre levee. Avant, une recharge, un remboursement ou un
+        // trop-percu creditait un portefeuille gele ou clos.
+        if (locked.getStatus() == com.sni.bokaticowork.features.payment.enums.WalletStatus.CLOSED) {
+            throw new com.sni.bokaticowork.core.exception.customs.ConflictException("wallet", "ce portefeuille est clôturé : aucune écriture possible");
+        }
+        if (locked.getStatus() == com.sni.bokaticowork.features.payment.enums.WalletStatus.LOCKED && type != WalletEntryType.HOLD_RELEASE) {
+            throw new com.sni.bokaticowork.core.exception.customs.ConflictException("wallet", "ce portefeuille est gelé : aucune écriture possible avant la levée du gel");
+        }
         BigDecimal normalized = money(amount);
         mutation.apply(locked, normalized);
         locked.setLastActivityAt(Instant.now());
@@ -196,12 +205,12 @@ public class WalletLedgerService {
      */
     private WalletAccount lock(WalletAccount wallet) {
         if (wallet == null || wallet.getId() == null) {
-            throw new BadRequestException("Wallet is required");
+            throw new BadRequestException("Le portefeuille est requis");
         }
         entityManager.flush();
         WalletAccount managed = entityManager.find(WalletAccount.class, wallet.getId());
         if (managed == null) {
-            throw new ResourceNotFoundException("Wallet not found");
+            throw new ResourceNotFoundException("Portefeuille introuvable");
         }
         entityManager.refresh(managed, LockModeType.PESSIMISTIC_WRITE);
         return managed;
@@ -213,19 +222,19 @@ public class WalletLedgerService {
 
     private void requireAvailable(WalletAccount wallet, BigDecimal amount) {
         if (wallet.getAvailableBalance().compareTo(amount) < 0) {
-            throw new BadRequestException("Insufficient wallet balance");
+            throw new BadRequestException("Solde du portefeuille insuffisant");
         }
     }
 
     private void requireHeld(WalletAccount wallet, BigDecimal amount) {
         if (wallet.getHeldBalance().compareTo(amount) < 0) {
-            throw new BadRequestException("Insufficient held balance on wallet");
+            throw new BadRequestException("Montant retenu insuffisant sur le portefeuille");
         }
     }
 
     private void validateAmount(BigDecimal amount) {
         if (amount == null || amount.signum() <= 0) {
-            throw new BadRequestException("Wallet amount must be positive");
+            throw new BadRequestException("Le montant doit être positif");
         }
     }
 

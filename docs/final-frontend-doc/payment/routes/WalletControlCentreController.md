@@ -111,8 +111,8 @@ Module [payment](../README.md) · 15 route(s).
 ### GET /sni/api/v1/wallets/control/treasury/reconciliations
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
-- Réponse : `PaginatedResponse<WalletTreasuryReconciliation>`
-- Modèles : [PaginatedResponse](#m-PaginatedResponse), [WalletTreasuryReconciliation](#m-WalletTreasuryReconciliation)
+- Réponse : `PaginatedResponse<WalletControlCentreController.TreasuryReconciliationView>`
+- Modèles : [PaginatedResponse](#m-PaginatedResponse), [WalletControlCentreController.TreasuryReconciliationView](#m-WalletControlCentreController-TreasuryReconciliationView)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/control/controller/WalletControlCentreController.java`, méthode `reconciliations`
 
 | Paramètre | Où | Type | Requis | Défaut |
@@ -124,16 +124,16 @@ Module [payment](../README.md) · 15 route(s).
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
 - Corps JSON (obligatoire) : `WalletControlDtos.TreasuryRequest`
-- Réponse : `WalletTreasuryReconciliation`
-- Modèles : [WalletTreasuryReconciliation](#m-WalletTreasuryReconciliation), [WalletControlDtos.TreasuryRequest](#m-WalletControlDtos-TreasuryRequest)
+- Réponse : `WalletControlCentreController.TreasuryReconciliationView`
+- Modèles : [WalletControlCentreController.TreasuryReconciliationView](#m-WalletControlCentreController-TreasuryReconciliationView), [WalletControlDtos.TreasuryRequest](#m-WalletControlDtos-TreasuryRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/control/controller/WalletControlCentreController.java`, méthode `reconcile`
 
 <a id="r-get-sni-api-v1-wallets-control-treasury-reconciliations-number"></a>
 ### GET /sni/api/v1/wallets/control/treasury/reconciliations/{number}
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
-- Réponse : `WalletTreasuryReconciliation`
-- Modèles : [WalletTreasuryReconciliation](#m-WalletTreasuryReconciliation)
+- Réponse : `WalletControlCentreController.TreasuryReconciliationView`
+- Modèles : [WalletControlCentreController.TreasuryReconciliationView](#m-WalletControlCentreController-TreasuryReconciliationView)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/control/controller/WalletControlCentreController.java`, méthode `reconciliation`
 
 | Paramètre | Où | Type | Requis | Défaut |
@@ -281,12 +281,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `holdWallet` | booléen |  |  |
 
-<a id="m-WalletTreasuryReconciliation"></a>
-#### WalletTreasuryReconciliation
+<a id="m-WalletControlCentreController-TreasuryReconciliationView"></a>
+#### WalletControlCentreController.TreasuryReconciliationView
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
 | `reconciliationNumber` | texte |  |  |
 | `reconciliationDate` | date AAAA-MM-JJ |  |  |
 | `currency` | texte |  |  |
@@ -299,7 +298,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `variance` | nombre décimal |  |  |
 | `varianceExplained` | booléen |  |  |
 | `explainedBy` | texte |  |  |
-| `status` | enum : `BALANCED`, `VARIANCE`, `UNDER_REVIEW` |  |  |
+| `status` | texte |  |  |
 | `preparedBy` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -344,3 +343,25 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `direction` | enum : `DEBIT`, `CREDIT` |  |  |
 | `count` | entier int64 ⚠ |  |  |
 | `amount` | nombre décimal |  |  |
+
+<a id="m-WalletTreasuryReconciliation"></a>
+#### WalletTreasuryReconciliation
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `id` | entier int64 ⚠ |  |  |
+| `reconciliationNumber` | texte |  |  |
+| `reconciliationDate` | date AAAA-MM-JJ |  |  |
+| `currency` | texte |  |  |
+| `totalWalletBalance` | nombre décimal |  |  |
+| `totalHeldBalance` | nombre décimal |  |  |
+| `walletCount` | entier |  |  |
+| `ledgerAccountBalance` | nombre décimal |  |  |
+| `availableCash` | nombre décimal |  |  |
+| `coverageRatio` | nombre décimal |  |  |
+| `variance` | nombre décimal |  |  |
+| `varianceExplained` | booléen |  |  |
+| `explainedBy` | texte |  |  |
+| `status` | enum : `BALANCED`, `VARIANCE`, `UNDER_REVIEW` |  |  |
+| `preparedBy` | texte |  |  |
+| `createdAt` | date-heure ISO 8601 UTC |  |  |

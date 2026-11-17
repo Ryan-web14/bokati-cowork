@@ -184,5 +184,59 @@ public class ComplianceWorker implements SchedulingConfigurer {
         log.warn("Conformite · {} dossier(s) hors delai : {}", overdue.size(),
                 overdue.stream().limit(20).map(c -> c.getCaseNumber() + " (" + c.getPriority() + ", "
                         + (c.getAssignedTo() == null ? "non confie" : c.getAssignedTo()) + ")").toList());
+        notifyOverdue(overdue);
+    }
+
+    static final String ALERT_EMAIL_KEY = "bokati.compliance.alert-email";
+
+    private com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender emailSender;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setEmailSender(com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender emailSender) {
+        this.emailSender = emailSender;
+    }
+
+    /**
+     * Les dossiers hors delai sont envoyes, une fois par jour, a la personne a qui chacun est confie
+     * et a l'adresse de conformite ({@code bokati.compliance.alert-email}). Avant, ils n'etaient
+     * que journalises : personne n'etait prevenu.
+     */
+    void notifyOverdue(List<ComplianceCase> overdue) {
+        if (emailSender == null) {
+            return;
+        }
+        java.util.Map<String, List<ComplianceCase>> byRecipient = new java.util.LinkedHashMap<>();
+        String officer = platformSettings == null ? null : platformSettings.text(ALERT_EMAIL_KEY, null);
+        if (officer != null && !officer.isBlank()) {
+            for (String address : officer.split(",")) {
+                if (!address.isBlank()) byRecipient.put(address.trim(), overdue);
+            }
+        }
+        for (ComplianceCase c : overdue) {
+            if (c.getAssignedTo() != null && c.getAssignedTo().contains("@")) {
+                byRecipient.computeIfAbsent(c.getAssignedTo().trim(), k -> new java.util.ArrayList<>());
+                if (byRecipient.get(c.getAssignedTo().trim()) != overdue) {
+                    byRecipient.get(c.getAssignedTo().trim()).add(c);
+                }
+            }
+        }
+        byRecipient.forEach((to, cases) -> {
+            StringBuilder html = new StringBuilder("<p>Bonjour,</p><p>")
+                    .append(cases.size()).append(" dossier(s) de conformité ont dépassé leur délai de traitement :</p><ul>");
+            cases.stream().limit(50).forEach(c -> html.append("<li><strong>").append(escape(c.getCaseNumber())).append("</strong> · ")
+                    .append(escape(c.getTitle())).append(" · priorité ").append(c.getPriority())
+                    .append(" · échéance ").append(c.getDueAt() == null ? "-" : c.getDueAt().toString().substring(0, 10))
+                    .append(" · ").append(c.getAssignedTo() == null ? "non confié" : escape(c.getAssignedTo())).append("</li>"));
+            html.append("</ul><p>Ils sont à reprendre dans le centre de conformité des portefeuilles.</p>");
+            try {
+                emailSender.sendHtmlEmail(to, "Conformité : " + cases.size() + " dossier(s) hors délai", html.toString());
+            } catch (Exception ex) {
+                log.warn("Conformite · alerte des dossiers hors delai non envoyee a {} : {}", to, ex.getMessage());
+            }
+        });
+    }
+
+    private static String escape(String value) {
+        return value == null ? "" : value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

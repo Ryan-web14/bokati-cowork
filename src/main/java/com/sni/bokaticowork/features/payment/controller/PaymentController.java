@@ -202,7 +202,7 @@ public class PaymentController {
 
     @PostMapping("/intents/{intentNumber}/link")
     public ResponseEntity<PaymentLinkResponse> createPaymentLink(@PathVariable String intentNumber,
-                                                                 @RequestBody(required = false) CreatePaymentLinkRequest request) {
+                                                                 @jakarta.validation.Valid @RequestBody(required = false) CreatePaymentLinkRequest request) {
         return ResponseEntity.ok(paymentLinkService.createLink(intentNumber, request));
     }
 

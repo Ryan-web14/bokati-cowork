@@ -50,7 +50,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MobileMoneyController {
 
-    private static final String STAFF = "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')";
+    // Droits : PAYMENT:READ (lecture) et PAYMENT:PROCESS (resolution), comme le reste de /payments ;
+    // plus de seconde regle par role (ROLE_MANAGER admis, ROLE_FINANCE refuse malgre ses droits).
 
     private final PaymentService paymentService;
     private final PawapayDepositService depositService;
@@ -77,14 +78,12 @@ public class MobileMoneyController {
      * {@code /client/billing/mobile-money/deposits/{depositId}}, qui verifie qu'il est bien le sien.</p>
      */
     @GetMapping("/deposits/{depositId}")
-    @PreAuthorize(STAFF)
     public ResponseEntity<MobileMoneyDepositResponse> getDeposit(@PathVariable String depositId) {
         return ResponseEntity.ok(depositService.get(depositId));
     }
 
     /** Les depots, filtrables par statut · {@code UNRESOLVED} donne la file de rapprochement. */
     @GetMapping("/deposits")
-    @PreAuthorize(STAFF)
     public ResponseEntity<PaginatedResponse<MobileMoneyDepositResponse>> listDeposits(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -93,14 +92,12 @@ public class MobileMoneyController {
 
     /** Relit le statut aupres de l'operateur sans attendre la prochaine echeance. */
     @PostMapping("/deposits/{depositId}/recheck")
-    @PreAuthorize(STAFF)
     public ResponseEntity<MobileMoneyDepositResponse> recheck(@PathVariable String depositId) {
         return ResponseEntity.ok(supervision.recheck(depositId));
     }
 
     /** Les rappels recus et ce qu'on en a fait · de quoi expliquer un paiement manquant. */
     @GetMapping("/callbacks")
-    @PreAuthorize(STAFF)
     public ResponseEntity<PaginatedResponse<MobileMoneyCallbackResponse>> listCallbacks(
             @RequestParam(required = false) String outcome,
             @PageableDefault(size = 20, sort = "receivedAt", direction = Sort.Direction.DESC) Pageable pageable) {

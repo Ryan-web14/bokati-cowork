@@ -70,7 +70,7 @@ Enchaînement type au guichet : facture → `POST /sni/api/v1/payments/intents/f
 
 Règles transverses (le détail est dans chaque fichier) :
 
-- **Échéance par défaut de 15 minutes** sur toute intention créée sans `expiresAt`. Un lien de paiement la prolonge jusqu'à sa propre échéance (24 h par défaut). Une intention expirée n'est plus payable (`400` « Payment intent has expired » ou « Payment intent is not payable »).
+- **Échéance par défaut de 15 minutes** sur toute intention créée sans `expiresAt`. Un lien de paiement la prolonge jusqu'à sa propre échéance (24 h par défaut). Une intention expirée n'est plus payable (`400` « L'intention de paiement a expiré » ou « Cette intention de paiement n'est pas payable »).
 - **Reste payable** : on ne peut encaisser que `payableAmount` (reste dû moins ce qui attend un opérateur). Tant qu'un dépôt mobile money est en cours pour tout le reste, tout autre encaissement est refusé (`400` « Payment intent has pending mobile money transactions... »).
 - **Espèces** : `XAF` seulement, session de caisse `OPEN` obligatoire.
 - **Portefeuille** : même titulaire et même devise que l'intention, statut `ACTIVE`, solde disponible suffisant.
@@ -81,7 +81,7 @@ Règles transverses (le détail est dans chaque fichier) :
 ## À prévoir côté frontend
 
 - **Droits du module** : `PAYMENT:READ`, `PAYMENT:PROCESS`, `PAYMENT:REFUND`, `CASH:READ`, `CASH:ADJUST`, `CASH:CLOSE_SESSION`. Plusieurs contrôleurs ajoutent une condition de **rôle** (`@PreAuthorize`) que le droit seul ne révèle pas :
-  - suivi et supervision mobile money : `ROLE_ADMIN`, `ROLE_SUPER_ADMIN` ou `ROLE_MANAGER` ; forcer l'issue d'un dépôt : `ROLE_ADMIN` ou `ROLE_SUPER_ADMIN` ;
+  - suivi et supervision mobile money : le droit seul (`PAYMENT:READ`, `PAYMENT:PROCESS`) ; forcer l'issue d'un dépôt : `ROLE_ADMIN` ou `ROLE_SUPER_ADMIN` ;
   - centre de contrôle des portefeuilles, conformité, intégrité, plafonds, réinitialisation du code secret : `ROLE_ADMIN` ou `ROLE_SUPER_ADMIN`.
   Masquer ces écrans selon la liste `roles` reçue à la connexion, qui contient rôles et droits.
 - **Écrans principaux** : fiche d'intention et choix du moyen de paiement ; écran d'attente mobile money ; génération de lien ; recouvrement d'un client ; remboursement ; caisse du caissier (session, mouvements, clôture) et supervision des caisses ; recherche et fiche de portefeuille ; centre de contrôle ; conformité ; supervision mobile money.

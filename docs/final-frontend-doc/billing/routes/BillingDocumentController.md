@@ -539,6 +539,7 @@ Module [billing](../README.md) · 71 route(s).
 ### POST /sni/api/v1/billing/invoices/{documentNumber}/pay
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- En-tête `Idempotency-Key` : conseillé (opération `INVOICE_PAY`, voir le README racine)
 - Corps JSON (obligatoire) : `PayInvoiceRequest`
 - Réponse : `PayInvoiceResponse`
 - Modèles : [PayInvoiceResponse](#m-PayInvoiceResponse), [PayInvoiceRequest](#m-PayInvoiceRequest)

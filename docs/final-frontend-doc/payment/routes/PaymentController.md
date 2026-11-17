@@ -103,6 +103,7 @@ Module [payment](../README.md) · 22 route(s).
 ### PATCH /sni/api/v1/payments/intents/{intentNumber}/cash
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- En-tête `Idempotency-Key` : conseillé (opération `PAYMENT_CASH`, voir le README racine)
 - Corps JSON (obligatoire) : `RegisterCashPaymentRequest`
 - Réponse : `PaymentTransactionResponse`
 - Modèles : [PaymentTransactionResponse](#m-PaymentTransactionResponse), [RegisterCashPaymentRequest](#m-RegisterCashPaymentRequest)
@@ -143,6 +144,7 @@ Module [payment](../README.md) · 22 route(s).
 ### PATCH /sni/api/v1/payments/intents/{intentNumber}/mobile-money
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- En-tête `Idempotency-Key` : conseillé (opération `PAYMENT_MOBILE_MONEY`, voir le README racine)
 - Corps JSON (obligatoire) : `InitiateMobileMoneyDepositRequest`
 - Réponse : `MobileMoneyDepositResponse`
 - Modèles : [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse), [InitiateMobileMoneyDepositRequest](#m-InitiateMobileMoneyDepositRequest)
@@ -156,6 +158,7 @@ Module [payment](../README.md) · 22 route(s).
 ### PATCH /sni/api/v1/payments/intents/{intentNumber}/offline
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- En-tête `Idempotency-Key` : conseillé (opération `PAYMENT_OFFLINE`, voir le README racine)
 - Corps JSON (obligatoire) : `RegisterOfflinePaymentRequest`
 - Réponse : `PaymentTransactionResponse`
 - Modèles : [PaymentTransactionResponse](#m-PaymentTransactionResponse), [RegisterOfflinePaymentRequest](#m-RegisterOfflinePaymentRequest)
@@ -194,6 +197,7 @@ Module [payment](../README.md) · 22 route(s).
 ### PATCH /sni/api/v1/payments/intents/{intentNumber}/wallet
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- En-tête `Idempotency-Key` : conseillé (opération `PAYMENT_WALLET`, voir le README racine)
 - Corps JSON (obligatoire) : `WalletPaymentRequest`
 - Réponse : `PaymentTransactionResponse`
 - Modèles : [PaymentTransactionResponse](#m-PaymentTransactionResponse), [WalletPaymentRequest](#m-WalletPaymentRequest)
@@ -207,6 +211,7 @@ Module [payment](../README.md) · 22 route(s).
 ### POST /sni/api/v1/payments/mobile-money/deposits
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- En-tête `Idempotency-Key` : conseillé (opération `PAYMENT_MOBILE_MONEY_DEPOSIT`, voir le README racine)
 - Corps JSON (obligatoire) : `InitiateMobileMoneyDepositRequest`
 - Réponse : `MobileMoneyDepositResponse`
 - Modèles : [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse), [InitiateMobileMoneyDepositRequest](#m-InitiateMobileMoneyDepositRequest)
@@ -248,6 +253,7 @@ Module [payment](../README.md) · 22 route(s).
 ### POST /sni/api/v1/payments/transactions/{transactionNumber}/refund
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:REFUND`
+- En-tête `Idempotency-Key` : conseillé (opération `PAYMENT_REFUND`, voir le README racine)
 - Corps JSON (obligatoire) : `RefundPaymentRequest`
 - Réponse : `PaymentTransactionResponse`
 - Modèles : [PaymentTransactionResponse](#m-PaymentTransactionResponse), [RefundPaymentRequest](#m-RefundPaymentRequest)
@@ -273,6 +279,7 @@ Module [payment](../README.md) · 22 route(s).
 ### POST /sni/api/v1/payments/transactions/{transactionNumber}/reverse
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- En-tête `Idempotency-Key` : conseillé (opération `PAYMENT_REVERSE`, voir le README racine)
 - Corps JSON (obligatoire) : `RefundPaymentRequest`
 - Réponse : `PaymentTransactionResponse`
 - Modèles : [PaymentTransactionResponse](#m-PaymentTransactionResponse), [RefundPaymentRequest](#m-RefundPaymentRequest)
@@ -461,8 +468,6 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `intentNumber` | texte |  |  |
 | `checkoutUrl` | texte |  |  |
-| `depositId` | texte |  |  |
-| `transactionNumber` | texte |  |  |
 | `token` | texte |  |  |
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `emailedTo` | texte |  |  |
@@ -652,6 +657,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `amount` | nombre décimal |  |  |
 | `reason` | texte | oui | longueur min `1` |
 | `processedBy` | texte |  |  |
+| `cashSessionNumber` | texte |  |  |
 
 <a id="m-BillableItemResponse"></a>
 #### BillableItemResponse

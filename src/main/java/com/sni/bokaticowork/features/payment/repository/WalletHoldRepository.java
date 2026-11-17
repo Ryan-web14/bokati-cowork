@@ -41,6 +41,10 @@ public interface WalletHoldRepository extends JpaRepository<WalletHold, Long> {
               AND expires_at IS NOT NULL
               AND expires_at <= :expiresAt
             """)
+    /** Retenues en cours d'un portefeuille, les plus recentes d'abord. */
+    List<WalletHold> findAllByWalletAndStatusOrderByCreatedAtDesc(com.sni.bokaticowork.features.payment.model.WalletAccount wallet,
+                                                                  com.sni.bokaticowork.features.payment.enums.WalletHoldStatus status);
+
     List<WalletHold> findAllByStatusAndExpiresAtLessThanEqual(@Param("status") String status,
                                                               @Param("expiresAt") Instant expiresAt);
 

@@ -33,6 +33,7 @@ Module [payment](../README.md) · 5 route(s).
 ### POST /sni/api/v1/wallets/admin/top-up
 
 - Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- En-tête `Idempotency-Key` : conseillé (opération `WALLET_ADMIN_TOPUP`, voir le README racine)
 - Corps JSON (obligatoire) : `WalletTopUpRequest`
 - Réponse : `non typé, voir le code`
 - Modèles : [WalletTopUpRequest](#m-WalletTopUpRequest)
@@ -82,6 +83,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `heldBalance` | nombre décimal |  |  |
 | `openedAt` | date-heure ISO 8601 UTC |  |  |
 | `closedAt` | date-heure ISO 8601 UTC |  |  |
+| `ownerName` | texte |  |  |
+| `activeHolds` | [WalletResponse.HoldLine](#m-WalletResponse-HoldLine)[] |  |  |
 
 <a id="m-WalletLookupRequest"></a>
 #### WalletLookupRequest
@@ -123,4 +126,18 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `sourceCode` | texte |  |  |
 | `reference` | texte |  |  |
 | `createdBy` | texte |  |  |
+| `createdAt` | date-heure ISO 8601 UTC |  |  |
+| `sourceLabel` | texte |  |  |
+
+<a id="m-WalletResponse-HoldLine"></a>
+#### WalletResponse.HoldLine
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `holdNumber` | texte |  |  |
+| `amount` | nombre décimal |  |  |
+| `sourceType` | texte |  |  |
+| `sourceCode` | texte |  |  |
+| `sourceLabel` | texte |  |  |
+| `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |

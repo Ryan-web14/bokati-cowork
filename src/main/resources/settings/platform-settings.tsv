@@ -347,6 +347,7 @@ bokati.cash.visa.expiry-hours	PAYMENT	INTEGER	LIVE	24	Delai du second visa d'une
 bokati.company.wallet.approval-expiry-delay-ms	COMPANIES	INTEGER	LIVE	600000	Cadence d'expiration des validations (ms)
 bokati.company.wallet.approval-hours	COMPANIES	INTEGER	LIVE	48	Délai de validation d'une dépense (heures)
 bokati.company.wallet.currency	COMPANIES	TEXT	LIVE	XAF	Devise du portefeuille d'organisation
+bokati.compliance.alert-email	COMPLIANCE	EMAIL	LIVE		Adresse(s) prévenue(s) chaque jour des dossiers de conformité hors délai (séparées par des virgules)
 bokati.compliance.case.due-hours.critical	COMPLIANCE	INTEGER	LIVE	24	Délai d'un dossier critique (heures)
 bokati.compliance.case.due-hours.high	COMPLIANCE	INTEGER	LIVE	72	Délai d'un dossier élevé (heures)
 bokati.compliance.case.due-hours.low	COMPLIANCE	INTEGER	LIVE	336	Délai d'un dossier faible (heures)

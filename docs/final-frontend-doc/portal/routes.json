@@ -9503,6 +9503,15 @@
     "closedAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "ownerName": {
+     "type": "string"
+    },
+    "activeHolds": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.WalletResponse.HoldLine"
+     }
     }
    }
   },
@@ -9573,6 +9582,9 @@
     "createdAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "sourceLabel": {
+     "type": "string"
     }
    }
   },
@@ -11366,6 +11378,34 @@
     }
    }
   },
+  "WalletResponse.HoldLine": {
+   "type": "object",
+   "properties": {
+    "holdNumber": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "sourceType": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "sourceLabel": {
+     "type": "string"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
   "WalletLimitService.LimitSnapshot": {
    "type": "object",
    "properties": {
@@ -12035,6 +12075,7 @@
   "BillingPreferences": "com.sni.bokaticowork.core.settings.userSettings.dto.request.BillingPreferences",
   "WalletPreferencesRequest": "com.sni.bokaticowork.core.settings.userSettings.dto.request.WalletPreferencesRequest",
   "BillingDocumentResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse",
+  "WalletResponse.HoldLine": "com.sni.bokaticowork.features.payment.dto.response.WalletResponse.HoldLine",
   "WalletLimitService.LimitSnapshot": "com.sni.bokaticowork.features.payment.limit.service.WalletLimitService.LimitSnapshot",
   "MobileMoneyDepositResponse.AccountDetailsResponse": "com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse.AccountDetailsResponse",
   "StatementDtos.Aging": "com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Aging",

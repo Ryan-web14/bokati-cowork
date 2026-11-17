@@ -48,6 +48,7 @@ import static org.mockito.Mockito.when;
 class PaymentGapsFixTest {
 
     @Mock private PaymentTransactionRepository transactionRepository;
+    @Mock private com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService cashRegisterService;
     @Mock private PaymentIntentRepository intentRepository;
     @Mock private PaymentAllocationService allocationService;
     @Mock private SequenceGeneratorFacade sequenceGenerator;
@@ -107,6 +108,7 @@ class PaymentGapsFixTest {
         original.setAmount(new BigDecimal("100"));
         original.setCurrency("XAF");
         original.setStatus(PaymentTransactionStatus.SUCCEEDED);
+        original.setCashSessionNumber("CS-1");
         when(transactionRepository.findByTransactionNumber("TXN-1")).thenReturn(Optional.of(original));
         when(transactionRepository.findAllByOriginalTransactionNumber("TXN-1")).thenReturn(List.of());
 

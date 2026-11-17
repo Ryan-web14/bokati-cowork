@@ -41,6 +41,7 @@ import static org.mockito.Mockito.when;
 class MobileMoneyRefundSafetyTest {
 
     @Mock private PaymentTransactionRepository transactionRepository;
+    @Mock private com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService cashRegisterService;
     @Mock private PaymentAllocationService allocationService;
     @Mock private MobileMoneyPaymentProvider mobileMoneyProvider;
     @Mock private SequenceGeneratorFacade sequenceGenerator;
@@ -64,6 +65,7 @@ class MobileMoneyRefundSafetyTest {
         original.setAmount(new BigDecimal("10"));
         original.setCurrency("XAF");
         original.setStatus(PaymentTransactionStatus.SUCCEEDED);
+        original.setCashSessionNumber("CS-1");
         when(transactionRepository.findByTransactionNumber("TXN-1")).thenReturn(Optional.of(original));
         when(transactionRepository.findAllByOriginalTransactionNumber("TXN-1")).thenReturn(List.of());
         when(transactionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));

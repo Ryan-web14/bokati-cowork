@@ -1433,6 +1433,11 @@
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
    },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "INVOICE_PAY",
+    "required": false
+   },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.PayInvoiceRequest",
     "required": true

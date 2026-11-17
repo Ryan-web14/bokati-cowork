@@ -167,7 +167,8 @@ public class ScreeningService {
 
     @Transactional(readOnly = true)
     public Page<ScreeningCheck> pendingReview(Pageable pageable) {
-        return checkRepository.findByResultInOrderByCheckedAtDesc(
+        // Seulement celles qui attendent une revue (avant, les controles deja revus revenaient aussi).
+        return checkRepository.findByResultInAndReviewedAtIsNullOrderByCheckedAtDesc(
                 List.of(ScreeningCheck.Result.POSSIBLE_MATCH, ScreeningCheck.Result.MATCH), pageable);
     }
 

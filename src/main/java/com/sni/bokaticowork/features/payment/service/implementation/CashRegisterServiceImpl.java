@@ -751,6 +751,16 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, actors.resolve(createdBy), null);
     }
 
+    @Override
+    public void recordRefund(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy) {
+        CashSession session = requireOpenSession(sessionNumber);
+        assertManualEntryAllowed(session.getCashRegister());
+        validatePositive(amount);
+        saveMovement(session, CashMovementType.REFUND, amount, CashDocumentType.EXIT_VOUCHER, trim(referenceCode), "REFUND",
+                "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, "Remboursement en espèces",
+                actors.resolve(createdBy), null);
+    }
+
     /**
      * Range un paiement de la plateforme (mobile money, portefeuille) dans sa caisse automatique, en
      * ouvrant une session s'il n'y en a pas.

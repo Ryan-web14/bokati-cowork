@@ -60,6 +60,9 @@ public interface CashRegisterService {
     CashMetricsOverviewResponse overviewMetrics(String registerCode, String businessEntityCode, Instant fromDate, Instant toDate);
     java.util.List<CashRegisterMetricsResponse> registerMetrics(String businessEntityCode, Instant fromDate, Instant toDate);
     void recordPayment(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy);
+
+    /** Especes rendues a un client (remboursement d'un paiement en especes) : sortie de la session. */
+    void recordRefund(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy);
     void recordAutomaticPayment(PaymentTransaction transaction);
 
     /** Refuse une session close ou tenue par le systeme · pour rattacher un paiement saisi au guichet. */

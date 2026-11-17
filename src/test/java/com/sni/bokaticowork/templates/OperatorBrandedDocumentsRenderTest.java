@@ -89,7 +89,7 @@ class OperatorBrandedDocumentsRenderTest {
         Context context = context();
         context.setVariable("entry", new WalletLedgerEntryResponse("WLE-1", "WTX-000001", UUID.randomUUID(), "WAL-000001",
                 WalletEntryDirection.CREDIT, BigDecimal.TEN, "XAF", BigDecimal.TEN, WalletEntryType.TOPUP,
-                null, null, null, "admin", Instant.now()));
+                null, null, null, "admin", Instant.now(), null));
         context.setVariable("holderName", "Jean Mbemba");
         context.setVariable("date", "12/11/2026 10:00");
         context.setVariable("amount", "10");

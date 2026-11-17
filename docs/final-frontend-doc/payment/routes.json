@@ -3293,7 +3293,7 @@
      "type": "String"
     }
    ],
-   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.compliance.model.ComplianceAuditEntry>>"
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.payment.compliance.controller.ComplianceController.AuditEntryView>>"
   },
   {
    "methods": [
@@ -3898,7 +3898,6 @@
    "handler": "listCallbacks",
    "declaredIn": "MobileMoneyController",
    "access": {
-    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
     "kind": "admin",
     "permission": "PAYMENT:READ"
    },
@@ -3929,7 +3928,6 @@
    "handler": "listDeposits",
    "declaredIn": "MobileMoneyController",
    "access": {
-    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
     "kind": "admin",
     "permission": "PAYMENT:READ"
    },
@@ -3960,7 +3958,6 @@
    "handler": "getDeposit",
    "declaredIn": "MobileMoneyController",
    "access": {
-    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
     "kind": "admin",
     "permission": "PAYMENT:READ"
    },
@@ -3985,7 +3982,6 @@
    "handler": "recheck",
    "declaredIn": "MobileMoneyController",
    "access": {
-    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
    },
@@ -4145,7 +4141,6 @@
    "handler": "search",
    "declaredIn": "MobileMoneyOperationsController",
    "access": {
-    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
     "kind": "admin",
     "permission": "PAYMENT:READ"
    },
@@ -4220,7 +4215,6 @@
    "handler": "reconciliation",
    "declaredIn": "MobileMoneyOperationsController",
    "access": {
-    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
     "kind": "admin",
     "permission": "PAYMENT:READ"
    },
@@ -4251,7 +4245,6 @@
    "handler": "summary",
    "declaredIn": "MobileMoneyOperationsController",
    "access": {
-    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
     "kind": "admin",
     "permission": "PAYMENT:READ"
    },
@@ -4282,7 +4275,6 @@
    "handler": "detail",
    "declaredIn": "MobileMoneyOperationsController",
    "access": {
-    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
     "kind": "admin",
     "permission": "PAYMENT:READ"
    },
@@ -4307,7 +4299,6 @@
    "handler": "resolve",
    "declaredIn": "MobileMoneyOperationsController",
    "access": {
-    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
    },
@@ -4571,6 +4562,11 @@
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
    },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PAYMENT_CASH",
+    "required": false
+   },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest",
     "required": true
@@ -4663,6 +4659,11 @@
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
    },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PAYMENT_MOBILE_MONEY",
+    "required": false
+   },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest",
     "required": true
@@ -4690,6 +4691,11 @@
    "access": {
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PAYMENT_OFFLINE",
+    "required": false
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.RegisterOfflinePaymentRequest",
@@ -4771,6 +4777,11 @@
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
    },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PAYMENT_WALLET",
+    "required": false
+   },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest",
     "required": true
@@ -4798,6 +4809,11 @@
    "access": {
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PAYMENT_MOBILE_MONEY_DEPOSIT",
+    "required": false
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest",
@@ -4916,6 +4932,11 @@
     "kind": "admin",
     "permission": "PAYMENT:REFUND"
    },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PAYMENT_REFUND",
+    "required": false
+   },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.RefundPaymentRequest",
     "required": true
@@ -4967,6 +4988,11 @@
    "access": {
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PAYMENT_REVERSE",
+    "required": false
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.RefundPaymentRequest",
@@ -5477,7 +5503,7 @@
      "type": "Pageable"
     }
    ],
-   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.payment.control.model.WalletTreasuryReconciliation>>"
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.payment.control.controller.WalletControlCentreController.TreasuryReconciliationView>>"
   },
   {
    "methods": [
@@ -5499,7 +5525,7 @@
     "required": true
    },
    "params": [],
-   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.control.model.WalletTreasuryReconciliation>"
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.control.controller.WalletControlCentreController.TreasuryReconciliationView>"
   },
   {
    "methods": [
@@ -5524,7 +5550,7 @@
      "type": "String"
     }
    ],
-   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.control.model.WalletTreasuryReconciliation>"
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.control.controller.WalletControlCentreController.TreasuryReconciliationView>"
   },
   {
    "methods": [
@@ -5713,6 +5739,11 @@
    "access": {
     "kind": "admin",
     "permission": "PAYMENT:PROCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "WALLET_ADMIN_TOPUP",
+    "required": false
    },
    "body": {
     "type": "com.sni.bokaticowork.features.payment.dto.request.WalletTopUpRequest",
@@ -9314,16 +9345,11 @@
     }
    }
   },
-  "ComplianceAuditEntry": {
+  "ComplianceController.AuditEntryView": {
    "type": "object",
    "properties": {
-    "id": {
-     "type": "integer",
-     "format": "int64"
-    },
     "entryUuid": {
-     "type": "string",
-     "format": "uuid"
+     "type": "string"
     },
     "occurredAt": {
      "type": "string",
@@ -10706,12 +10732,6 @@
     "checkoutUrl": {
      "type": "string"
     },
-    "depositId": {
-     "type": "string"
-    },
-    "transactionNumber": {
-     "type": "string"
-    },
     "token": {
      "type": "string"
     },
@@ -11180,6 +11200,9 @@
     },
     "processedBy": {
      "type": "string"
+    },
+    "cashSessionNumber": {
+     "type": "string"
     }
    }
   },
@@ -11544,13 +11567,9 @@
     }
    }
   },
-  "WalletTreasuryReconciliation": {
+  "WalletControlCentreController.TreasuryReconciliationView": {
    "type": "object",
    "properties": {
-    "id": {
-     "type": "integer",
-     "format": "int64"
-    },
     "reconciliationNumber": {
      "type": "string"
     },
@@ -11590,12 +11609,7 @@
      "type": "string"
     },
     "status": {
-     "type": "string",
-     "enum": [
-      "BALANCED",
-      "VARIANCE",
-      "UNDER_REVIEW"
-     ]
+     "type": "string"
     },
     "preparedBy": {
      "type": "string"
@@ -11728,6 +11742,15 @@
     "closedAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "ownerName": {
+     "type": "string"
+    },
+    "activeHolds": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.WalletResponse.HoldLine"
+     }
     }
    }
   },
@@ -11855,6 +11878,9 @@
     "createdAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "sourceLabel": {
+     "type": "string"
     }
    }
   },
@@ -11889,6 +11915,16 @@
      "type": "string"
     },
     "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sourceLabel": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
      "type": "string",
      "format": "date-time"
     }
@@ -13032,6 +13068,96 @@
     }
    }
   },
+  "WalletTreasuryReconciliation": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "reconciliationNumber": {
+     "type": "string"
+    },
+    "reconciliationDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "totalWalletBalance": {
+     "type": "number"
+    },
+    "totalHeldBalance": {
+     "type": "number"
+    },
+    "walletCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "ledgerAccountBalance": {
+     "type": "number"
+    },
+    "availableCash": {
+     "type": "number"
+    },
+    "coverageRatio": {
+     "type": "number"
+    },
+    "variance": {
+     "type": "number"
+    },
+    "varianceExplained": {
+     "type": "boolean"
+    },
+    "explainedBy": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "BALANCED",
+      "VARIANCE",
+      "UNDER_REVIEW"
+     ]
+    },
+    "preparedBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "WalletResponse.HoldLine": {
+   "type": "object",
+   "properties": {
+    "holdNumber": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "sourceType": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "sourceLabel": {
+     "type": "string"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
   "LocalTime": {
    "type": "object",
    "properties": {
@@ -13303,7 +13429,7 @@
   "CashRegisterStatisticsResponse": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterStatisticsResponse",
   "CashSessionStatisticsResponse": "com.sni.bokaticowork.features.payment.dto.response.CashSessionStatisticsResponse",
   "ComplianceAuditService.ChainReport": "com.sni.bokaticowork.features.payment.compliance.service.ComplianceAuditService.ChainReport",
-  "ComplianceAuditEntry": "com.sni.bokaticowork.features.payment.compliance.model.ComplianceAuditEntry",
+  "ComplianceController.AuditEntryView": "com.sni.bokaticowork.features.payment.compliance.controller.ComplianceController.AuditEntryView",
   "ComplianceDtos.CaseView": "com.sni.bokaticowork.features.payment.compliance.dto.ComplianceDtos.CaseView",
   "ComplianceDtos.AssignRequest": "com.sni.bokaticowork.features.payment.compliance.dto.ComplianceDtos.AssignRequest",
   "ComplianceDtos.CloseRequest": "com.sni.bokaticowork.features.payment.compliance.dto.ComplianceDtos.CloseRequest",
@@ -13358,7 +13484,7 @@
   "WalletRiskFlag.Status": "com.sni.bokaticowork.features.payment.control.model.WalletRiskFlag.Status",
   "WalletControlDtos.FlagResolveRequest": "com.sni.bokaticowork.features.payment.control.dto.WalletControlDtos.FlagResolveRequest",
   "WalletControlDtos.FlagReviewRequest": "com.sni.bokaticowork.features.payment.control.dto.WalletControlDtos.FlagReviewRequest",
-  "WalletTreasuryReconciliation": "com.sni.bokaticowork.features.payment.control.model.WalletTreasuryReconciliation",
+  "WalletControlCentreController.TreasuryReconciliationView": "com.sni.bokaticowork.features.payment.control.controller.WalletControlCentreController.TreasuryReconciliationView",
   "WalletControlDtos.TreasuryRequest": "com.sni.bokaticowork.features.payment.control.dto.WalletControlDtos.TreasuryRequest",
   "WalletTreasuryReconciliationService.Snapshot": "com.sni.bokaticowork.features.payment.control.service.WalletTreasuryReconciliationService.Snapshot",
   "WalletControlDtos.AdminActionRequest": "com.sni.bokaticowork.features.payment.control.dto.WalletControlDtos.AdminActionRequest",
@@ -13402,6 +13528,8 @@
   "BillingDocumentAuthorResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentAuthorResponse",
   "PaymentReceiptAllocationResponse": "com.sni.bokaticowork.features.payment.dto.response.PaymentReceiptAllocationResponse",
   "WalletControlCentreService.VolumeLine": "com.sni.bokaticowork.features.payment.control.service.WalletControlCentreService.VolumeLine",
+  "WalletTreasuryReconciliation": "com.sni.bokaticowork.features.payment.control.model.WalletTreasuryReconciliation",
+  "WalletResponse.HoldLine": "com.sni.bokaticowork.features.payment.dto.response.WalletResponse.HoldLine",
   "LocalTime": "java.time.LocalTime",
   "MobileMoneyDepositResponse.AccountDetailsResponse": "com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse.AccountDetailsResponse"
  }

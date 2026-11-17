@@ -34,6 +34,21 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
     @Autowired
     private PaymentTransactionRepository transactionRepository;
 
+    @Autowired(required = false)
+    private com.sni.bokaticowork.features.payment.repository.WalletHoldRepository holdRepository;
+
+    private String sourceLabel(String sourceType, String sourceCode) {
+        if (sourceType == null || sourceCode == null) {
+            return null;
+        }
+        try {
+            TransactionContextResolver.SourceView view = contextResolver.resolveSource(sourceType, sourceCode);
+            return view == null ? null : view.label();
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
     @Override
     public PaymentIntentResponse toIntentResponse(PaymentIntent intent) {
         TransactionContextResolver.PartyView party = contextResolver.resolveParty(intent.getCustomerType(), intent.getCustomerCode());
@@ -124,8 +139,31 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 wallet.getLedgerBalance(),
                 wallet.getHeldBalance(),
                 wallet.getOpenedAt(),
-                wallet.getClosedAt()
+                wallet.getClosedAt(),
+                ownerName(wallet),
+                activeHolds(wallet)
         );
+    }
+
+    private String ownerName(WalletAccount wallet) {
+        try {
+            TransactionContextResolver.PartyView party = contextResolver.resolveParty(wallet.getOwnerType(), wallet.getOwnerCode());
+            return party == null ? null : party.name();
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private java.util.List<WalletResponse.HoldLine> activeHolds(WalletAccount wallet) {
+        if (holdRepository == null || wallet.getId() == null || wallet.getHeldBalance() == null || wallet.getHeldBalance().signum() <= 0) {
+            return java.util.List.of();
+        }
+        return holdRepository.findAllByWalletAndStatusOrderByCreatedAtDesc(wallet,
+                        com.sni.bokaticowork.features.payment.enums.WalletHoldStatus.ACTIVE).stream()
+                .map(hold -> new WalletResponse.HoldLine(hold.getHoldNumber(), hold.getAmount(), hold.getSourceType(),
+                        hold.getSourceCode(), sourceLabel(hold.getSourceType(), hold.getSourceCode()), hold.getExpiresAt(),
+                        hold.getCreatedAt()))
+                .toList();
     }
 
     @Override
@@ -138,7 +176,10 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 hold.getStatus(),
                 hold.getSourceType(),
                 hold.getSourceCode(),
-                hold.getExpiresAt()
+                hold.getExpiresAt(),
+                sourceLabel(hold.getSourceType(), hold.getSourceCode()),
+                hold.getCreatedBy(),
+                hold.getCreatedAt()
         );
     }
 
@@ -158,7 +199,8 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 entry.getSourceCode(),
                 entry.getReference(),
                 entry.getCreatedBy(),
-                entry.getCreatedAt()
+                entry.getCreatedAt(),
+                sourceLabel(entry.getSourceType(), entry.getSourceCode())
         );
     }
 
