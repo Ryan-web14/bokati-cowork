@@ -192,6 +192,35 @@ public class PurchaseService {
         return inventory;
     }
 
+    /**
+     * Tient a jour la fiche comptable d'une fiche fournisseur d'inventaire : creee si elle manque
+     * (vrai), sinon nom, NIU, adresse, telephone, courriel et statut repris (faux). Sans controle de
+     * droit : appele par la synchronisation, dans la transaction de l'inventaire.
+     */
+    public boolean syncFromInventory(Supplier inventory) {
+        Optional<AccSupplier> linked = suppliers.findByInventorySupplierId(inventory.getId());
+        if (linked.isEmpty()) {
+            if (inventory.getSupplierCode() == null || inventory.getName() == null) {
+                return false;
+            }
+            AccSupplier created = linkedSupplier(inventory);
+            if (inventory.getStatus() != SupplierStatus.ACTIVE) {
+                created.setStatus("INACTIVE");
+                suppliers.save(created);
+            }
+            return true;
+        }
+        AccSupplier supplier = linked.get();
+        supplier.setName(cut(inventory.getName(), 200));
+        if (inventory.getTaxId() != null) supplier.setNiu(cut(inventory.getTaxId(), 60));
+        if (inventory.getAddress() != null) supplier.setAddress(cut(inventory.getAddress(), 500));
+        if (inventory.getPhone() != null) supplier.setPhone(cut(inventory.getPhone(), 40));
+        if (inventory.getEmail() != null) supplier.setEmail(cut(inventory.getEmail(), 180));
+        supplier.setStatus(inventory.getStatus() == SupplierStatus.ACTIVE ? "ACTIVE" : "INACTIVE");
+        suppliers.save(supplier);
+        return false;
+    }
+
     private AccSupplier linkedSupplier(Supplier inventory) {
         Optional<AccSupplier> linked = suppliers.findByInventorySupplierId(inventory.getId());
         if (linked.isPresent()) {

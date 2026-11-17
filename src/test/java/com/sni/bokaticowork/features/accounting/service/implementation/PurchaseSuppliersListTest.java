@@ -63,4 +63,40 @@ class PurchaseSuppliersListTest {
                     assertThat(v.accountNumber()).isEqualTo("401");
                 });
     }
+
+    @Mock private com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
+
+    @Test
+    void anInventorySupplierWithoutAccountingRecordGetsOne() {
+        Supplier inventory = inventory(5, "SUP-5", "Imprimerie Moderne");
+        inventory.setTaxId("M123");
+        when(suppliers.findByInventorySupplierId(5L)).thenReturn(java.util.Optional.empty());
+        when(suppliers.existsByCode("SUP-5")).thenReturn(false);
+        when(settings.text(anyString(), anyString())).thenReturn("401");
+        when(suppliers.save(org.mockito.ArgumentMatchers.any())).thenAnswer(call -> call.getArgument(0));
+
+        assertThat(service.syncFromInventory(inventory)).isTrue();
+
+        org.mockito.ArgumentCaptor<AccSupplier> saved = org.mockito.ArgumentCaptor.forClass(AccSupplier.class);
+        org.mockito.Mockito.verify(suppliers).save(saved.capture());
+        assertThat(saved.getValue().getCode()).isEqualTo("SUP-5");
+        assertThat(saved.getValue().getNiu()).isEqualTo("M123");
+        assertThat(saved.getValue().getInventorySupplierId()).isEqualTo(5L);
+    }
+
+    @Test
+    void aLinkedSupplierFollowsTheInventoryRecordButKeepsItsAccountingFields() {
+        AccSupplier linked = AccSupplier.builder().code("SUP-5").name("Ancien nom").inventorySupplierId(5L)
+                .accountNumber("4011").paymentTermsDays(45).status("ACTIVE").build();
+        when(suppliers.findByInventorySupplierId(5L)).thenReturn(java.util.Optional.of(linked));
+        Supplier inventory = inventory(5, "SUP-5", "Imprimerie Moderne");
+        inventory.setStatus(SupplierStatus.INACTIVE);
+
+        assertThat(service.syncFromInventory(inventory)).isFalse();
+
+        assertThat(linked.getName()).isEqualTo("Imprimerie Moderne");
+        assertThat(linked.getStatus()).isEqualTo("INACTIVE");
+        assertThat(linked.getAccountNumber()).isEqualTo("4011");
+        assertThat(linked.getPaymentTermsDays()).isEqualTo(45);
+    }
 }
