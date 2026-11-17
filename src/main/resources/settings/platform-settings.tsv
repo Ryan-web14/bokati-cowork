@@ -231,6 +231,9 @@ app.ged.text.ocr-language	DOCUMENTS	TEXT	LIVE	fra+eng	Langues de l'OCR de la GED
 app.ged.trash.purge-cron	DOCUMENTS	CRON	LIVE	0 15 3 * * *	Heure du vidage de la corbeille GED
 app.ged.trash.purge-enabled	DOCUMENTS	BOOLEAN	LIVE	true	Vidage automatique de la corbeille GED
 app.ged.trash.retention-days	DOCUMENTS	INTEGER	LIVE	30	Jours en corbeille GED avant destruction
+app.kyc.identity.document-types	DOCUMENTS	TEXT	LIVE	ID_CARD,NATIONAL_ID,PASSPORT,DRIVERS_LICENSE,RESIDENCE_PERMIT,REPRESENTATIVE_ID	Pièces KYC : morceaux de code des types de pièces d'identité analysés au dépôt (séparés par des virgules)
+app.kyc.identity.enabled	DOCUMENTS	BOOLEAN	LIVE	true	Pièces KYC : analyse « pièce d'identité » au dépôt (contour, format, MRZ, visage avec OpenCV), avertissement seulement
+app.kyc.identity.engine	DOCUMENTS	ENUM	LIVE	JAVA	Pièces KYC : moteur d'analyse des pièces d'identité, JAVA (défaut, sans bibliothèque native) ou OPENCV (visage, plus de mémoire)
 app.kyc.quality.blur-threshold	DOCUMENTS	INTEGER	LIVE	100	Pièces KYC : seuil de netteté (variance du laplacien) sous lequel l'image est signalée floue
 app.kyc.quality.enabled	DOCUMENTS	BOOLEAN	LIVE	true	Pièces KYC : contrôle de qualité d'image au dépôt
 app.kyc.quality.min-side-px	DOCUMENTS	INTEGER	LIVE	600	Pièces KYC : plus petit côté minimal de l'image (pixels)

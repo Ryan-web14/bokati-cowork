@@ -24,10 +24,19 @@
 - Désormais : premier échec de chargement, OCR marqué indisponible jusqu'au prochain démarrage, résultat `SKIPPED` (`OCR_UNAVAILABLE`), un seul message dans les journaux.
 - Pour avoir l'OCR sur Heroku plus tard : buildpack `heroku-community/apt` avec un `Aptfile` (`tesseract-ocr`, `tesseract-ocr-fra`, `tesseract-ocr-eng`) et `TESSDATA_PREFIX` ; environ 40 Mo de slug, chargement à la première pièce.
 
-## OpenCV (à venir)
+## Analyse « pièce d'identité » (seconde partie, 17/11/2026)
 
-Voir la réponse du 17/11/2026 : `org.bytedeco:opencv` restreint à `linux-x86_64` (et `windows-x86_64` en dev) par la propriété Maven `javacpp.platform`, chargé à la demande derrière un paramètre, pour la détection du contour de la carte et du visage.
+Au dépôt d'une pièce d'identité (types dont le code contient `ID_CARD`, `NATIONAL_ID`, `PASSPORT`, `DRIVERS_LICENSE`, `RESIDENCE_PERMIT`, `REPRESENTATIVE_ID`), en même temps que la netteté et sur la même image : est-ce bien une pièce d'identité ? Avertissement seulement, jamais un refus.
+
+- Moteur **Java** (défaut, `JavaIdentityEngine`, sans bibliothèque native) : contour par les bords droits longs (profils de gradient), sinon image supposée recadrée ; format par le rapport des côtés (ID1, carte 1,586 ; ID3, page de passeport 1,42 ; 7 % de tolérance) ; lignes de texte par densité de transitions ; bande MRZ (deux lignes serrées sur toute la largeur en bas). Pas de visage.
+- Moteur **OpenCV** (`app.kyc.identity.engine=OPENCV`, `OpenCvIdentityEngine`) : contour par Canny et plus grand quadrilatère convexe, visage par la cascade de Haar `haarcascade_frontalface_default` (fournie dans le paquet OpenCV Linux), texte et MRZ repris du moteur Java dans le cadre trouvé. Classe ordinaire créée à la première analyse : rien de natif au démarrage ni dans l'entraînement du cache AOT. Échec de chargement : moteur Java jusqu'au prochain démarrage, un seul message.
+- Verdict (`KycIdentityVerdicts`) : `LIKELY_IDENTITY` (format reconnu et MRZ, visage, ou contour et texte), `NOT_IDENTITY` (ni format, ni texte, ni visage), sinon `UNCERTAIN`. Avertissements : pièce méconnaissable, format non reconnu, peu de texte, MRZ absente au recto d'un passeport, aucun visage (OpenCV, recto).
+- Enregistré sur la pièce (`identity_verdict`, `back_identity_verdict`, `identity_engine`) ; avertissements ajoutés à ceux de la qualité (`qualityWarnings`, statut `WARNING`).
+- Paramètres : `app.kyc.identity.enabled` (vrai), `app.kyc.identity.engine` (`JAVA` ou `OPENCV`), `app.kyc.identity.document-types`.
+- Dépendances : `org.bytedeco` `javacpp` 1.5.11, `opencv` 4.10.0-1.5.11, `openblas` 0.3.28-1.5.11, bibliothèques natives `linux-x86_64` seules dans le build (environ 46 Mo de plus au slug Heroku, 323 Mo avant, limite 500) ; celles de Windows par le profil Maven `opencv-windows`, actif sur un poste Windows seulement.
+- Mémoire : avec OpenCV, environ 50 à 150 Mo natifs de plus au premier usage, hors du tas Java ; à surveiller sur le dyno (marge faible, voir docs/backend/demarrage-et-dynos). Le moteur Java n'ajoute rien.
+- Migrations : dev `V371__kyc_analyse_piece_identite.sql`, prod `V365`.
 
 ## Tests
 
-`KycCrossCheckServiceTest` (dates saisies, NIU de la fiche sans séparateurs, numéro chez un autre titulaire, OCR absent ignoré), `KycImageQualityServiceTest` (carte nette, carte floue, image petite ou sombre, PNG décodé, format inconnu).
+`KycCrossCheckServiceTest` (dates saisies, NIU de la fiche sans séparateurs, numéro chez un autre titulaire, OCR absent ignoré), `KycImageQualityServiceTest` (carte nette, carte floue, image petite ou sombre, PNG décodé, format inconnu), `KycIdentityAnalysisTest` (carte ID1 avec texte et MRZ, image sans format ni texte, page de passeport sans MRZ, types analysés, moteur OpenCV réellement chargé : contour trouvé, pas de visage sur une carte fabriquée).

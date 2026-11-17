@@ -39,7 +39,16 @@ public class KycImageQualityService {
     public enum Status { OK, WARNING, UNKNOWN }
 
     /** Ce que le controle a mesure. */
-    public record Report(Status status, Double blurScore, Integer width, Integer height, List<String> warnings) {
+    /**
+     * @param identity lot KG9 : analyse « piece d'identite » (nulle pour un autre type de piece) ;
+     *                 ses avertissements sont deja dans {@code warnings}
+     */
+    public record Report(Status status, Double blurScore, Integer width, Integer height, List<String> warnings,
+                         com.sni.bokaticowork.features.document.kyc.service.support.identity.KycIdentityReport identity) {
+        public Report(Status status, Double blurScore, Integer width, Integer height, List<String> warnings) {
+            this(status, blurScore, width, height, warnings, null);
+        }
+
         public static Report unknown(String reason) {
             return new Report(Status.UNKNOWN, null, null, null, reason == null ? List.of() : List.of(reason));
         }
@@ -59,7 +68,24 @@ public class KycImageQualityService {
     }
 
     public Report check(byte[] content, String fileName, String mimeType) {
-        if (settings != null && !settings.bool(ENABLED, true)) {
+        return check(content, fileName, mimeType, null, false);
+    }
+
+    private com.sni.bokaticowork.features.document.kyc.service.support.identity.KycIdentityAnalysisService identity;
+
+    @Autowired(required = false)
+    void setIdentity(com.sni.bokaticowork.features.document.kyc.service.support.identity.KycIdentityAnalysisService identity) {
+        this.identity = identity;
+    }
+
+    /**
+     * Lot KG9 : qualite d'image, plus l'analyse « piece d'identite » pour un type de piece
+     * d'identite (meme image decodee une seule fois).
+     */
+    public Report check(byte[] content, String fileName, String mimeType, String documentTypeCode, boolean back) {
+        boolean qualityOn = settings == null || settings.bool(ENABLED, true);
+        boolean identityOn = identity != null && identity.applies(documentTypeCode);
+        if (!qualityOn && !identityOn) {
             return Report.unknown(null);
         }
         if (content == null || content.length == 0) {
@@ -70,9 +96,24 @@ public class KycImageQualityService {
             if (image == null) {
                 return Report.unknown("Format d'image non analysé : la netteté n'a pas pu être vérifiée.");
             }
-            return analyse(image,
-                    settings == null ? 100 : settings.integer(BLUR_THRESHOLD, 100),
-                    settings == null ? 600 : settings.integer(MIN_SIDE, 600));
+            Report quality = qualityOn
+                    ? analyse(image, settings == null ? 100 : settings.integer(BLUR_THRESHOLD, 100),
+                            settings == null ? 600 : settings.integer(MIN_SIDE, 600))
+                    : new Report(Status.OK, null, image.getWidth(), image.getHeight(), List.of());
+            if (!identityOn) {
+                return quality;
+            }
+            com.sni.bokaticowork.features.document.kyc.service.support.identity.KycIdentityReport report;
+            try {
+                report = identity.analyse(image, documentTypeCode, back);
+            } catch (RuntimeException | LinkageError ex) {
+                log.warn("Analyse de piece d'identite impossible pour {} : {}", fileName, ex.getMessage());
+                return quality;
+            }
+            List<String> warnings = new java.util.ArrayList<>(quality.warnings());
+            warnings.addAll(report.warnings());
+            Status status = quality.status() == Status.WARNING || !report.warnings().isEmpty() ? Status.WARNING : quality.status();
+            return new Report(status, quality.blurScore(), quality.width(), quality.height(), List.copyOf(warnings), report);
         } catch (Exception | OutOfMemoryError ex) {
             log.warn("Controle de qualite impossible pour {} : {}", fileName, ex.getMessage());
             return Report.unknown(null);

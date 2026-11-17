@@ -160,7 +160,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentRepository.save(document);
         autoFiler.file(document);
         createVersion(document, uploadedBy, metadata.getTitle(), metadata.getDocumentNumber(), file, inspection);
-        attachKycDocumentIfNeeded(document, owner, metadata, qualityOf(document, file));
+        attachKycDocumentIfNeeded(document, owner, metadata, qualityOf(document, file, metadata.getKycSide()));
         kycAutomationService.syncFromDocumentUpload(document);
         publishDocumentEvent("DOCUMENT_UPLOADED", document, uploadedBy);
         return getByCode(document.getCode());
@@ -573,12 +573,15 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     /** Qualite d'image d'une piece KYC deposee (nettete, resolution, exposition) : avertissement seulement. */
-    private com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService.Report qualityOf(Document document, MultipartFile file) {
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService.Report qualityOf(Document document, MultipartFile file,
+                                                                                                         String side) {
         if (document.getCategory() != DocumentCategory.KYC || imageQuality == null) {
             return null;
         }
         try {
-            return imageQuality.check(file.getBytes(), file.getOriginalFilename(), file.getContentType());
+            // Lot KG9 : analyse « piece d'identite » pour les types de pieces d'identite.
+            return imageQuality.check(file.getBytes(), file.getOriginalFilename(), file.getContentType(),
+                    document.getDocumentType() == null ? null : document.getDocumentType().getCode(), "BACK".equalsIgnoreCase(side));
         } catch (java.io.IOException ex) {
             return null;
         }

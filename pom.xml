@@ -29,6 +29,10 @@
 	<properties>
 		<java.version>25</java.version>
 		<netflix-dgs.version>11.0.0</netflix-dgs.version>
+		<!-- Lot KG9 : moteur OpenCV facultatif de l'analyse des pieces d'identite (app.kyc.identity.engine). -->
+		<javacpp.version>1.5.11</javacpp.version>
+		<opencv.version>4.10.0-1.5.11</opencv.version>
+		<openblas.version>0.3.28-1.5.11</openblas.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -133,6 +137,41 @@
 			<groupId>net.sourceforge.tess4j</groupId>
 			<artifactId>tess4j</artifactId>
 			<version>5.18.0</version>
+		</dependency>
+		<!-- Lot KG9 : OpenCV, charge a la premiere analyse seulement si le moteur OPENCV est choisi.
+		     Bibliotheques natives Linux seules (Heroku) ; celles de Windows viennent du profil opencv-windows. -->
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>javacpp</artifactId>
+			<version>${javacpp.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>opencv</artifactId>
+			<version>${opencv.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>openblas</artifactId>
+			<version>${openblas.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>javacpp</artifactId>
+			<version>${javacpp.version}</version>
+			<classifier>linux-x86_64</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>opencv</artifactId>
+			<version>${opencv.version}</version>
+			<classifier>linux-x86_64</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>openblas</artifactId>
+			<version>${openblas.version}</version>
+			<classifier>linux-x86_64</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -400,6 +439,36 @@
 	</build>
 
 	<profiles>
+		<!-- Lot KG9 : bibliotheques natives OpenCV pour Windows, sur un poste de developpement seulement
+		     (jamais dans le slug Heroku). -->
+		<profile>
+			<id>opencv-windows</id>
+			<activation>
+				<os>
+					<family>windows</family>
+				</os>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>org.bytedeco</groupId>
+					<artifactId>javacpp</artifactId>
+					<version>${javacpp.version}</version>
+					<classifier>windows-x86_64</classifier>
+				</dependency>
+				<dependency>
+					<groupId>org.bytedeco</groupId>
+					<artifactId>opencv</artifactId>
+					<version>${opencv.version}</version>
+					<classifier>windows-x86_64</classifier>
+				</dependency>
+				<dependency>
+					<groupId>org.bytedeco</groupId>
+					<artifactId>openblas</artifactId>
+					<version>${openblas.version}</version>
+					<classifier>windows-x86_64</classifier>
+				</dependency>
+			</dependencies>
+		</profile>
 		<!-- Build Heroku (la variable STACK n'existe que la) : jar extrait et cache de demarrage AOT,
 		     voir tools/heroku/preparer-demarrage.sh. Le jar complet est supprime pour la taille du slug,
 		     d'ou l'installation dans le depot local sautee. -->

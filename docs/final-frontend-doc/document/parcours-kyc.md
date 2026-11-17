@@ -86,6 +86,8 @@
 
 Qualité d'image : chaque pièce porte `qualityStatus` (`OK`, `WARNING`, `UNKNOWN` pour un format non analysé comme HEIC) et `qualityWarnings` (phrases à afficher : image floue, faible résolution, trop sombre), et `backQualityStatus`, `backQualityWarnings` pour le verso. Mesurées au dépôt (netteté par variance du laplacien, plus petit côté, luminosité), elles **n'empêchent rien** : à montrer au réviseur près de l'aperçu, et à l'équipe juste après un dépôt pour reprendre la photo si besoin. Seuils : paramètres `app.kyc.quality.blur-threshold` (100), `app.kyc.quality.min-side-px` (600), `app.kyc.quality.enabled`.
 
+Pièce d'identité (lot KG9) : pour une carte, un passeport, un permis, un titre de séjour ou la pièce d'un représentant, le dépôt vérifie aussi que le fichier ressemble à une pièce d'identité (contour et format de carte ou de passeport, lignes de texte, bande MRZ ; visage si le moteur OpenCV est activé). Chaque pièce porte `identityVerdict` (recto) et `backIdentityVerdict` (verso) : `LIKELY_IDENTITY`, `UNCERTAIN`, `NOT_IDENTITY` (nuls si non analysée), et `identityEngine` (`JAVA` ou `OPENCV`). Les avertissements s'ajoutent à `qualityWarnings` (et passent `qualityStatus` à `WARNING`) : les afficher au déposant et au réviseur. Jamais bloquant ; badge conseillé sur la fiche : vert `LIKELY_IDENTITY`, orange `UNCERTAIN`, rouge `NOT_IDENTITY`. Réglage : `app.kyc.identity.engine` (`JAVA` par défaut, `OPENCV`), `app.kyc.identity.enabled`.
+
 ## Réviser les pièces
 
 ### File de revue des pièces

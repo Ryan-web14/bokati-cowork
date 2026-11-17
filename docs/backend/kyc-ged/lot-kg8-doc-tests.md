@@ -28,4 +28,4 @@ Démarrage complet : `BokatiCoworkApplicationTests` (application entière, confi
 
 ## Reste
 
-KG9 seconde partie (analyse locale des pièces) : non commencée.
+KG9 seconde partie faite le 17/11/2026 (voir le lot KG9).
