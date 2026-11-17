@@ -386,6 +386,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `status` | texte |  |  |
 | `requiresBackSide` | booléen |  |  |
 | `backDocumentCode` | texte |  |  |
+| `qualityStatus` | texte |  |  |
+| `qualityWarnings` | texte[] |  |  |
+| `backQualityStatus` | texte |  |  |
+| `backQualityWarnings` | texte[] |  |  |
 | `backFileName` | texte |  |  |
 | `backFileSize` | entier int64 ⚠ |  |  |
 | `backMimeType` | texte |  |  |

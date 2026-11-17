@@ -72,6 +72,8 @@
 
 Écran conseillé : pour chaque ligne de `requirements[]`, un champ recto et, si `requiresBackSide`, un champ verso activé une fois le recto envoyé. Après l'envoi, recharger la fiche : le recalcul du dossier part juste après l'enregistrement du dépôt (asynchrone, une fois par document).
 
+Qualité d'image : chaque pièce porte `qualityStatus` (`OK`, `WARNING`, `UNKNOWN` pour un format non analysé comme HEIC) et `qualityWarnings` (phrases à afficher : image floue, faible résolution, trop sombre), et `backQualityStatus`, `backQualityWarnings` pour le verso. Mesurées au dépôt (netteté par variance du laplacien, plus petit côté, luminosité), elles **n'empêchent rien** : à montrer au réviseur près de l'aperçu, et à l'équipe juste après un dépôt pour reprendre la photo si besoin. Seuils : paramètres `app.kyc.quality.blur-threshold` (100), `app.kyc.quality.min-side-px` (600), `app.kyc.quality.enabled`.
+
 ## Réviser les pièces
 
 ### File de revue des pièces
@@ -162,6 +164,74 @@ Quand toutes les pièces exigées sont vérifiées, le recalcul passe le dossier
 - Les exigences propres **s'ajoutent** aux exigences globales (avant, elles les remplaçaient). Une ligne active remplace le caractère obligatoire d'une exigence globale du même type ; une ligne inactive dispense. **Réglé** (KG1).
 - Après un ajout ou un retrait, le dossier est recalculé : un dossier approuvé se rouvre (`IN_PROGRESS`) si une pièce obligatoire manque ; la pièce apparaît aussitôt dans l'espace client du titulaire, qui peut la déposer.
 - Dépôt : seules les pièces demandées pour le dossier se déposent (équipe et titulaire) : `400` « Cette pièce n'est pas demandée pour ce dossier … ».
+
+## Courriels au titulaire
+
+Envoyés par la boîte d'envoi (un échec de mise en file est réessayé, lot KG3) :
+
+| Événement | Objet |
+| --- | --- |
+| `KYC_CASE_CREATED` | Votre dossier KYC est ouvert |
+| `KYC_CASE_APPROVED` (manuel ou par recalcul) | Bonne nouvelle : votre dossier KYC est validé |
+| `KYC_CASE_CORRECTION_REQUESTED` | Une petite mise à jour est nécessaire sur votre dossier KYC |
+| `KYC_DOCUMENT_CORRECTION_REQUESTED` | Une pièce de votre dossier KYC est à corriger (avec le motif) |
+| `KYC_CASE_REQUIREMENT_ADDED` | Une pièce de plus pour votre dossier KYC (nom de la pièce, facultative ou non) |
+| `KYC_CASE_LEVEL_CHANGED` | Quelques pièces complémentaires pour votre dossier KYC (liste) |
+| `KYC_INCOMPLETE_REMINDER` | Petit rappel : votre dossier KYC vous attend (après 3, 7, 14 jours, 3 au plus) |
+| `KYC_DOCUMENT_EXPIRY_REMINDER` | Échéance d'une pièce : un rappel par seuil (60, 30, 7 jours) |
+| `KYC_RENEWAL_REQUIRED` | Votre dossier KYC est à renouveler (pièce échue, après 15 jours de grâce) |
+
+Les autres événements (soumission, affectation, note, risque, recalcul…) sont consignés dans la chronologie du dossier sans courriel ; ils ne finissent plus en erreur dans la boîte d'envoi.
+
+## Export PDF
+
+`GET /sni/api/v1/kyc/cases/{code}/export/pdf?includeInternalNotes=true` ([route](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code-export-pdf)) : fichier `kyc-<code>.pdf` (`attachment`), avec dossier, chronologie, échéances et notes. Télécharger par `fetch` avec Bearer puis `blob`.
+
+## Règles de contrôle croisé
+
+Les règles ne s'appuient plus seulement sur l'OCR (absent en production) : elles ont un **type**, et la plupart vérifient les données saisies au dépôt et la fiche du titulaire (17/11/2026).
+
+### Résultat sur un dossier
+
+`GET /sni/api/v1/kyc/cases/{code}/cross-checks` (droit `KYC:READ`, lecture seule) : une ligne par règle active et par pièce visée.
+
+```json
+[ { "ruleCode": "PIECE_NON_ECHUE", "ruleName": "Pièce non échue", "ruleType": "DOCUMENT_NOT_EXPIRED",
+    "blocking": true, "outcome": "FAILED", "documentType": "MEMBER_NATIONAL_ID", "detail": "Pièce échue le 2026-10-01" } ]
+```
+
+- `outcome` : `PASSED`, `FAILED`, `SKIPPED` (donnée absente, OCR indisponible, une des deux pièces manque).
+- Seules les pièces en attente ou vérifiées sont contrôlées.
+- À l'approbation manuelle, une règle **bloquante** en échec refuse : `400` « Contrôles croisés non satisfaits : Pièce non échue (MEMBER_NATIONAL_ID : Pièce échue le …) ; … ». Les autres sont des signaux pour le réviseur.
+- Écran conseillé : un encart « Contrôles » sur la fiche, échecs en rouge (bloquants) ou orange, ignorés en gris avec leur raison.
+
+### Règles préenregistrées
+
+Créées par migration (`systemRule = true`) : modifiables (libellé, paramètre, bloquante, active), **pas supprimables** (`400`, les désactiver).
+
+| Code | Type | Contrôle | Bloquante |
+| --- | --- | --- | --- |
+| `PIECE_NON_ECHUE` | `DOCUMENT_NOT_EXPIRED` | date d'expiration saisie non dépassée | oui |
+| `DATES_COHERENTES` | `ISSUE_BEFORE_EXPIRY` | émission passée et antérieure à l'expiration | oui |
+| `VALIDITE_RESTANTE` | `MIN_VALIDITY` | encore valable au moins `parameter` jours (30) | non |
+| `NUMERO_UNIQUE` | `UNIQUE_DOCUMENT_NUMBER` | numéro saisi non utilisé par un autre titulaire pour le même type | non |
+| `NIU_PROFIL` | `PROFILE_MATCH` (`niu`) | numéro de la pièce NIU = NIU de la fiche entreprise | non |
+| `RCCM_PROFIL` | `PROFILE_MATCH` (`rccm`) | numéro de la pièce RCCM = RCCM de la fiche entreprise | non |
+| `NOM_PROFIL_OCR` | `PROFILE_MATCH` (`last_name`) | nom lu sur la pièce d'identité = nom de la fiche (OCR) | non |
+| `NUMERO_SAISI_OCR` | `DECLARED_VS_OCR` (`document_number`) | numéro saisi = numéro lu (OCR) | non |
+| `ECHEANCE_SAISIE_OCR` | `DECLARED_VS_OCR` (`expiry_date`) | échéance saisie = échéance lue (OCR) | non |
+| `NOM_IDENTITE_DOMICILE` | `FIELD_MATCH` (`last_name`) | même nom lu sur l'identité et le justificatif de domicile (OCR) | non |
+
+Les comparaisons ignorent la casse, les accents, les espaces et la ponctuation (« M 0123-45 » = « m012345 »). Les règles OCR restent `SKIPPED` tant que l'OCR n'est pas disponible.
+
+### Paramétrage
+
+Lecture `KYC:READ`, création, modification et suppression `KYC:MANAGE` : `GET/POST /sni/api/v1/kyc/cross-validation-rules`, `GET/PUT/DELETE /sni/api/v1/kyc/cross-validation-rules/{id}` ([routes](routes/KycCrossValidationRuleController.md)). `{id}` est un int64 ⚠.
+
+- Corps : `{ "code": "…", "name": "…", "description": "…", "ruleType": "MIN_VALIDITY", "documentTypeCode1": "MEMBER_PASSPORT,MEMBER_NATIONAL_ID", "documentTypeCode2": null, "fieldToCompare": null, "parameter": "90", "blocking": false, "active": true }`.
+- `ruleType` absent = `FIELD_MATCH` (comme avant). `documentTypeCode1` : un ou plusieurs types séparés par des virgules, vide = toutes les pièces.
+- Champs exigés : `FIELD_MATCH` : deux types et `fieldToCompare` parmi `first_name`, `last_name`, `date_of_birth`, `expiry_date`, `document_number`, `nationality` ; `DECLARED_VS_OCR` : `document_number` ou `expiry_date` ; `PROFILE_MATCH` : `niu`, `rccm`, `last_name`, `first_name` ; `MIN_VALIDITY` : `parameter` en jours. Sinon `400` qui nomme les valeurs admises.
+- Réponse : en plus, `id`, `code`, `name`, `description`, `ruleType`, `parameter`, `systemRule`.
 
 ## Courriels au titulaire
 

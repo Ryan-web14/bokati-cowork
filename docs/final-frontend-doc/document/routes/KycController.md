@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [document](../README.md) · 25 route(s).
+Module [document](../README.md) · 26 route(s).
 
 ## Routes
 
@@ -104,6 +104,18 @@ Module [document](../README.md) · 25 route(s).
 - Réponse : `KycCaseResponse`
 - Modèles : [KycCaseResponse](#m-KycCaseResponse), [KycAssignRequest](#m-KycAssignRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java`, méthode `assign`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-kyc-cases-code-cross-checks"></a>
+### GET /sni/api/v1/kyc/cases/{code}/cross-checks
+
+- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Réponse : `List<KycCrossCheckService.Result>`
+- Modèles : [KycCrossCheckService.Result](#m-KycCrossCheckService-Result)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java`, méthode `crossChecks`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -409,6 +421,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `assignedTo` | entier int64 ⚠ |  |  |
 | `email` | texte |  |  |
 
+<a id="m-KycCrossCheckService-Result"></a>
+#### KycCrossCheckService.Result
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `ruleCode` | texte |  |  |
+| `ruleName` | texte |  |  |
+| `ruleType` | enum : `FIELD_MATCH`, `DECLARED_VS_OCR`, `PROFILE_MATCH`, `DOCUMENT_NOT_EXPIRED`, `ISSUE_BEFORE_EXPIRY`, `MIN_VALIDITY`, `UNIQUE_DOCUMENT_NUMBER` |  |  |
+| `blocking` | booléen |  |  |
+| `outcome` | enum : `PASSED`, `FAILED`, `SKIPPED` |  |  |
+| `documentType` | texte |  |  |
+| `detail` | texte |  |  |
+
 <a id="m-KycBulkActionResponse"></a>
 #### KycBulkActionResponse
 
@@ -452,6 +477,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `downloadUrl` | texte |  |  |
 | `requiresBackSide` | booléen |  |  |
 | `backDocumentCode` | texte |  |  |
+| `qualityStatus` | texte |  |  |
+| `qualityWarnings` | texte[] |  |  |
+| `backQualityStatus` | texte |  |  |
+| `backQualityWarnings` | texte[] |  |  |
 | `backFileName` | texte |  |  |
 | `backFileSize` | entier int64 ⚠ |  |  |
 | `backMimeType` | texte |  |  |

@@ -141,6 +141,16 @@ public class KycController {
         return ResponseEntity.ok(service.reject(code, request));
     }
 
+    /**
+     * Controles croises du dossier : une ligne par regle active et par piece visee, resultat
+     * PASSED, FAILED ou SKIPPED (donnee absente, OCR indisponible). Les regles bloquantes en echec
+     * empechent l'approbation. Lecture seule, droit KYC:READ.
+     */
+    @GetMapping("/{code}/cross-checks")
+    public ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService.Result>> crossChecks(@PathVariable String code) {
+        return ResponseEntity.ok(service.crossChecks(code));
+    }
+
     @GetMapping("/{code}/missing-requirements")
     public ResponseEntity<List<KycRequirementStatus>> missingRequirements(@PathVariable String code) {
         return ResponseEntity.ok(service.getMissingRequirements(code));

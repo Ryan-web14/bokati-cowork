@@ -385,6 +385,20 @@ public class KycServiceImpl implements KycService {
         return toResponse(caseRepository.findByCode(code).orElse(kycCase));
     }
 
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService crossCheckService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCrossCheckService(com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService crossCheckService) {
+        this.crossCheckService = crossCheckService;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService.Result> crossChecks(String code) {
+        KycCase kycCase = serviceCase(code);
+        return crossCheckService == null ? List.of() : crossCheckService.evaluate(kycCase);
+    }
+
     private KycCase serviceCase(String code) {
         return caseRepository.findByCode(code)
                 .orElseThrow(() -> new ResourceNotFoundException("KYC case not found"));
@@ -836,6 +850,17 @@ public class KycServiceImpl implements KycService {
     }
 
     private void validateCrossDocumentRules(KycCase kycCase) {
+        if (crossCheckService != null) {
+            // Regles typees (saisie, fiche, OCR si disponible) ; seules les bloquantes en echec arretent.
+            var failures = com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService
+                    .blockingFailures(crossCheckService.evaluate(kycCase));
+            if (!failures.isEmpty()) {
+                throw new BadRequestException("Contrôles croisés non satisfaits : " + failures.stream()
+                        .map(f -> f.ruleName() + " (" + f.documentType() + " : " + f.detail() + ")")
+                        .collect(java.util.stream.Collectors.joining(" ; ")));
+            }
+            return;
+        }
         List<KycCrossValidationRule> rules = crossValidationRuleRepository.findAllByActiveTrueOrderByIdAsc();
         if (rules.isEmpty()) {
             return;

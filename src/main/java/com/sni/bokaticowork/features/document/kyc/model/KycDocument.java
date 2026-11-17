@@ -57,6 +57,26 @@ public class KycDocument {
     @Column(name = "document_type", nullable = false, length = 150)
     private String documentType;
 
+    /** Qualite d'image du recto mesuree au depot : OK, WARNING, UNKNOWN. */
+    @Column(name = "quality_status", length = 20)
+    private String qualityStatus;
+
+    /** Avertissements du recto, un par ligne. */
+    @Column(name = "quality_warnings")
+    private String qualityWarnings;
+
+    @Column(name = "quality_blur_score")
+    private java.math.BigDecimal qualityBlurScore;
+
+    @Column(name = "back_quality_status", length = 20)
+    private String backQualityStatus;
+
+    @Column(name = "back_quality_warnings")
+    private String backQualityWarnings;
+
+    @Column(name = "back_quality_blur_score")
+    private java.math.BigDecimal backQualityBlurScore;
+
     @Column(name = "document_number", length = 100)
     private String documentNumber;
 

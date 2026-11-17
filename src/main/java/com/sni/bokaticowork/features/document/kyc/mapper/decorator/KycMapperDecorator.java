@@ -75,6 +75,10 @@ public abstract class KycMapperDecorator implements KycMapper {
         return response;
     }
 
+    private static java.util.List<String> qualityLines(String text) {
+        return text == null || text.isBlank() ? java.util.List.of() : java.util.List.of(text.split("\n"));
+    }
+
     @Override
     public KycDocumentResponse toDocumentResponse(KycDocument document) {
         KycDocumentResponse response = delegate.toDocumentResponse(document);
@@ -83,6 +87,10 @@ public abstract class KycMapperDecorator implements KycMapper {
         }
         String documentCode = document.getDocument().getCode();
         response.setDocumentCode(documentCode);
+        response.setQualityStatus(document.getQualityStatus());
+        response.setQualityWarnings(qualityLines(document.getQualityWarnings()));
+        response.setBackQualityStatus(document.getBackQualityStatus());
+        response.setBackQualityWarnings(qualityLines(document.getBackQualityWarnings()));
         response.setFileName(document.getDocument().getFileName());
         response.setFileSize(document.getDocument().getFileSize());
         response.setMimeType(document.getDocument().getMimeType());

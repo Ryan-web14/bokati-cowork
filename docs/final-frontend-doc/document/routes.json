@@ -4964,6 +4964,30 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/cross-checks",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "crossChecks",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService.Result>>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/kyc/cases/{code}/documents/bulk-approve",
@@ -8982,6 +9006,46 @@
     }
    }
   },
+  "KycCrossCheckService.Result": {
+   "type": "object",
+   "properties": {
+    "ruleCode": {
+     "type": "string"
+    },
+    "ruleName": {
+     "type": "string"
+    },
+    "ruleType": {
+     "type": "string",
+     "enum": [
+      "FIELD_MATCH",
+      "DECLARED_VS_OCR",
+      "PROFILE_MATCH",
+      "DOCUMENT_NOT_EXPIRED",
+      "ISSUE_BEFORE_EXPIRY",
+      "MIN_VALIDITY",
+      "UNIQUE_DOCUMENT_NUMBER"
+     ]
+    },
+    "blocking": {
+     "type": "boolean"
+    },
+    "outcome": {
+     "type": "string",
+     "enum": [
+      "PASSED",
+      "FAILED",
+      "SKIPPED"
+     ]
+    },
+    "documentType": {
+     "type": "string"
+    },
+    "detail": {
+     "type": "string"
+    }
+   }
+  },
   "KycBulkActionResponse": {
    "type": "object",
    "properties": {
@@ -9083,6 +9147,24 @@
     },
     "backDocumentCode": {
      "type": "string"
+    },
+    "qualityStatus": {
+     "type": "string"
+    },
+    "qualityWarnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "backQualityStatus": {
+     "type": "string"
+    },
+    "backQualityWarnings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
     },
     "backFileName": {
      "type": "string"
@@ -9378,6 +9460,33 @@
      "type": "integer",
      "format": "int64"
     },
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "ruleType": {
+     "type": "string",
+     "enum": [
+      "FIELD_MATCH",
+      "DECLARED_VS_OCR",
+      "PROFILE_MATCH",
+      "DOCUMENT_NOT_EXPIRED",
+      "ISSUE_BEFORE_EXPIRY",
+      "MIN_VALIDITY",
+      "UNIQUE_DOCUMENT_NUMBER"
+     ]
+    },
+    "parameter": {
+     "type": "string"
+    },
+    "systemRule": {
+     "type": "boolean"
+    },
     "documentTypeCode1": {
      "type": "string"
     },
@@ -9396,25 +9505,50 @@
    }
   },
   "KycCrossValidationRuleRequest": {
-   "required": [
-    "documentTypeCode1",
-    "documentTypeCode2",
-    "fieldToCompare"
-   ],
    "type": "object",
    "properties": {
+    "code": {
+     "maxLength": 80,
+     "minLength": 0,
+     "type": "string"
+    },
+    "name": {
+     "maxLength": 200,
+     "minLength": 0,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "ruleType": {
+     "type": "string",
+     "enum": [
+      "FIELD_MATCH",
+      "DECLARED_VS_OCR",
+      "PROFILE_MATCH",
+      "DOCUMENT_NOT_EXPIRED",
+      "ISSUE_BEFORE_EXPIRY",
+      "MIN_VALIDITY",
+      "UNIQUE_DOCUMENT_NUMBER"
+     ]
+    },
     "documentTypeCode1": {
-     "maxLength": 150,
+     "maxLength": 1000,
      "minLength": 0,
      "type": "string"
     },
     "documentTypeCode2": {
-     "maxLength": 150,
+     "maxLength": 1000,
      "minLength": 0,
      "type": "string"
     },
     "fieldToCompare": {
      "maxLength": 80,
+     "minLength": 0,
+     "type": "string"
+    },
+    "parameter": {
+     "maxLength": 200,
      "minLength": 0,
      "type": "string"
     },
@@ -10252,6 +10386,7 @@
   "KycDashboardResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse",
   "KycDecisionRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest",
   "KycAssignRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycAssignRequest",
+  "KycCrossCheckService.Result": "com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService.Result",
   "KycBulkActionResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse",
   "KycCaseBulkApproveRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkApproveRequest",
   "KycCaseBulkRejectRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkRejectRequest",

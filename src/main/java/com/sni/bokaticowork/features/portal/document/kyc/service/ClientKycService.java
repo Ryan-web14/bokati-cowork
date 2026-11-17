@@ -287,6 +287,10 @@ public class ClientKycService {
                 || kycCase.getStatus() == KycCaseStatus.SUBMITTED;
     }
 
+    private static List<String> lines(String text) {
+        return text == null || text.isBlank() ? List.of() : List.of(text.split("\n"));
+    }
+
     private ClientKycDocumentResponse toDocumentResponse(KycDocument kycDocument) {
         Document document = kycDocument.getDocument();
         DocumentType docType = documentTypeRepository.findByCode(kycDocument.getDocumentType()).orElse(null);
@@ -299,6 +303,10 @@ public class ClientKycService {
                 .fileSize(document.getFileSize())
                 .mimeType(document.getMimeType())
                 .status(kycDocument.getStatus() != null ? kycDocument.getStatus().name() : null)
+                .qualityStatus(kycDocument.getQualityStatus())
+                .qualityWarnings(lines(kycDocument.getQualityWarnings()))
+                .backQualityStatus(kycDocument.getBackQualityStatus())
+                .backQualityWarnings(lines(kycDocument.getBackQualityWarnings()))
                 .requiresBackSide(docType != null ? docType.getRequiresBackSide() : Boolean.FALSE)
                 .issueDate(kycDocument.getIssueDate())
                 .expiryDate(kycDocument.getExpiryDate())

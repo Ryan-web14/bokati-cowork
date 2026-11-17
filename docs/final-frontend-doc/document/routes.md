@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-206 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+207 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -177,6 +177,7 @@
 | GET | `/sni/api/v1/kyc/cases/{code}` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code) |
 | POST | `/sni/api/v1/kyc/cases/{code}/approve` | KYC:APPROVE | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-approve) |
 | PATCH | `/sni/api/v1/kyc/cases/{code}/assign` | KYC:MANAGE | [KycController](routes/KycController.md#r-patch-sni-api-v1-kyc-cases-code-assign) |
+| GET | `/sni/api/v1/kyc/cases/{code}/cross-checks` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code-cross-checks) |
 | POST | `/sni/api/v1/kyc/cases/{code}/documents/bulk-approve` | KYC:APPROVE | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-documents-bulk-approve) |
 | POST | `/sni/api/v1/kyc/cases/{code}/documents/bulk-reject` | KYC:REJECT | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-documents-bulk-reject) |
 | POST | `/sni/api/v1/kyc/cases/{code}/documents/request-correction` | KYC:REJECT | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-documents-request-correction) |

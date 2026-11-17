@@ -2,7 +2,7 @@
 
 Branche `feature/kyc-ged`, partie de new-main 68407979 le 16/11/2026. Plan validé avec les décisions de l'exploitant du 16/11/2026 (voir plus bas).
 
-État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)), **KG2 fait** ([lot-kg2-recto-verso.md](lot-kg2-recto-verso.md)), **KG3 fait** ([lot-kg3-evenements-relances.md](lot-kg3-evenements-relances.md)).
+État : **KG0 fait** ([lot-kg0-droits.md](lot-kg0-droits.md)), **KG1 fait** ([lot-kg1-cycle-kyc.md](lot-kg1-cycle-kyc.md)), **KG2 fait** ([lot-kg2-recto-verso.md](lot-kg2-recto-verso.md)), **KG3 fait** ([lot-kg3-evenements-relances.md](lot-kg3-evenements-relances.md)), **KG9 première partie faite** ([lot-kg9-controles-qualite.md](lot-kg9-controles-qualite.md) : contrôles croisés préenregistrés, qualité d'image au dépôt).
 
 ## Constat (vérifié dans le code le 16/11/2026)
 

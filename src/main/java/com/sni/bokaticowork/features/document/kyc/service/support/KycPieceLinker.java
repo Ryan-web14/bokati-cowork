@@ -35,9 +35,31 @@ import java.util.HashMap;
 public class KycPieceLinker {
 
     /** Ce que le depot dit de la piece. */
-    public record Details(String side, String documentNumber, LocalDate issueDate, LocalDate expiryDate) {
+    public record Details(String side, String documentNumber, LocalDate issueDate, LocalDate expiryDate,
+                          KycImageQualityService.Report quality) {
+        public Details(String side, String documentNumber, LocalDate issueDate, LocalDate expiryDate) {
+            this(side, documentNumber, issueDate, expiryDate, null);
+        }
+
         boolean back() {
             return "BACK".equalsIgnoreCase(side);
+        }
+    }
+
+    /** Qualite d'image mesuree au depot, sur la face deposee. */
+    private static void applyQuality(KycDocument piece, Details details, boolean back) {
+        KycImageQualityService.Report report = details.quality();
+        String status = report == null ? null : report.status().name();
+        String warnings = report == null || report.warnings().isEmpty() ? null : String.join("\n", report.warnings());
+        java.math.BigDecimal blur = report == null || report.blurScore() == null ? null : java.math.BigDecimal.valueOf(report.blurScore());
+        if (back) {
+            piece.setBackQualityStatus(status);
+            piece.setBackQualityWarnings(warnings);
+            piece.setBackQualityBlurScore(blur);
+        } else {
+            piece.setQualityStatus(status);
+            piece.setQualityWarnings(warnings);
+            piece.setQualityBlurScore(blur);
         }
     }
 
@@ -62,6 +84,7 @@ public class KycPieceLinker {
             supersede(existing.getBackDocument(), document);
             existing.setBackDocument(document);
             existing.setStatus(KycDocumentVerificationStatus.PENDING);
+            applyQuality(existing, details, true);
             return kycDocumentRepository.save(existing);
         }
 
@@ -69,6 +92,8 @@ public class KycPieceLinker {
             supersede(existing.getDocument(), document);
             supersede(existing.getBackDocument(), document);
             existing.setBackDocument(null);
+            applyQuality(existing, new Details(null, null, null, null, null), true);
+            applyQuality(existing, details, false);
             existing.setDocument(document);
             existing.setDocumentNumber(trim(details.documentNumber()));
             existing.setIssueDate(details.issueDate());
@@ -77,7 +102,7 @@ public class KycPieceLinker {
             return kycDocumentRepository.save(existing);
         }
 
-        return kycDocumentRepository.save(KycDocument.builder()
+        KycDocument created = KycDocument.builder()
                 .kycCase(kycCase)
                 .ownerType(ownerType)
                 .ownerId(ownerId)
@@ -87,7 +112,9 @@ public class KycPieceLinker {
                 .issueDate(details.issueDate())
                 .expiryDate(details.expiryDate())
                 .status(KycDocumentVerificationStatus.PENDING)
-                .build());
+                .build();
+        applyQuality(created, details, false);
+        return kycDocumentRepository.save(created);
     }
 
     /** L'ancien fichier d'une piece remplacee passe SUPERSEDED ; il reste consultable. */

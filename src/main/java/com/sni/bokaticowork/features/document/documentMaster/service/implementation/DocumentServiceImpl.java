@@ -160,7 +160,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentRepository.save(document);
         autoFiler.file(document);
         createVersion(document, uploadedBy, metadata.getTitle(), metadata.getDocumentNumber(), file, inspection);
-        attachKycDocumentIfNeeded(document, owner, metadata);
+        attachKycDocumentIfNeeded(document, owner, metadata, qualityOf(document, file));
         kycAutomationService.syncFromDocumentUpload(document);
         publishDocumentEvent("DOCUMENT_UPLOADED", document, uploadedBy);
         return getByCode(document.getCode());
@@ -203,7 +203,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentRepository.save(document);
         autoFiler.file(document);
         createVersionFromBytes(document, uploadedBy, originalFileName, content, inspection);
-        attachKycDocumentIfNeeded(document, owner, metadata);
+        attachKycDocumentIfNeeded(document, owner, metadata, null);
         kycAutomationService.syncFromDocumentUpload(document);
         publishDocumentEvent("DOCUMENT_GENERATED", document, uploadedBy);
         return getByCode(document.getCode());
@@ -549,13 +549,33 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     /** Lot KG2 : rattachement recto / verso et remplacement, en un seul endroit (KycPieceLinker). */
-    private void attachKycDocumentIfNeeded(Document document, OwnerResolution owner, DocumentUploadMetadataRequest metadata) {
+    private void attachKycDocumentIfNeeded(Document document, OwnerResolution owner, DocumentUploadMetadataRequest metadata,
+                                           com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService.Report quality) {
         if (document.getCategory() != DocumentCategory.KYC || pieceLinker == null) {
             return;
         }
         pieceLinker.link(document, owner.ownerType(), owner.ownerId(),
                 new com.sni.bokaticowork.features.document.kyc.service.support.KycPieceLinker.Details(
-                        metadata.getKycSide(), metadata.getDocumentNumber(), metadata.getIssueDate(), metadata.getExpiryDate()));
+                        metadata.getKycSide(), metadata.getDocumentNumber(), metadata.getIssueDate(), metadata.getExpiryDate(), quality));
+    }
+
+    /** Qualite d'image d'une piece KYC deposee (nettete, resolution, exposition) : avertissement seulement. */
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService.Report qualityOf(Document document, MultipartFile file) {
+        if (document.getCategory() != DocumentCategory.KYC || imageQuality == null) {
+            return null;
+        }
+        try {
+            return imageQuality.check(file.getBytes(), file.getOriginalFilename(), file.getContentType());
+        } catch (java.io.IOException ex) {
+            return null;
+        }
+    }
+
+    private com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService imageQuality;
+
+    @Autowired(required = false)
+    void setImageQuality(com.sni.bokaticowork.features.document.kyc.service.support.KycImageQualityService imageQuality) {
+        this.imageQuality = imageQuality;
     }
 
     private com.sni.bokaticowork.features.document.kyc.service.support.KycPieceLinker pieceLinker;

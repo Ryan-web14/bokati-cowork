@@ -26,6 +26,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -132,6 +133,10 @@ public class KycDocumentUploadService {
                 .documentCode(doc.getCode())
                 .documentType(kycDoc.getDocumentType())
                 .documentNumber(kycDoc.getDocumentNumber())
+                .qualityStatus(kycDoc.getQualityStatus())
+                .qualityWarnings(kycDoc.getQualityWarnings() == null || kycDoc.getQualityWarnings().isBlank() ? List.of() : List.of(kycDoc.getQualityWarnings().split("\n")))
+                .backQualityStatus(kycDoc.getBackQualityStatus())
+                .backQualityWarnings(kycDoc.getBackQualityWarnings() == null || kycDoc.getBackQualityWarnings().isBlank() ? List.of() : List.of(kycDoc.getBackQualityWarnings().split("\n")))
                 .fileName(doc.getFileName())
                 .fileSize(doc.getFileSize())
                 .mimeType(doc.getMimeType())

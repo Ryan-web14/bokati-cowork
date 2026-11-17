@@ -22,6 +22,11 @@ public class KycDocumentResponse {
     private String downloadUrl;
     private Boolean requiresBackSide;
     private String backDocumentCode;
+    /** Qualite d'image au depot : OK, WARNING, UNKNOWN (nul avant la mesure). */
+    private String qualityStatus;
+    private java.util.List<String> qualityWarnings;
+    private String backQualityStatus;
+    private java.util.List<String> backQualityWarnings;
     private String backFileName;
     private Long backFileSize;
     private String backMimeType;

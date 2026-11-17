@@ -58,6 +58,9 @@ public interface KycService {
      * se rouvre s'il en manque, et le titulaire est prevenu des pieces a fournir.
      */
     KycCaseResponse changeLevel(String code, int level, String reason);
+
+    /** Resultat des regles de controle croise sur le dossier (lecture, sans effet). */
+    List<com.sni.bokaticowork.features.document.kyc.service.support.KycCrossCheckService.Result> crossChecks(String code);
     List<KycDocumentResponse> reviewQueue();
     List<KycDocumentResponse> reviewedDocuments(List<KycDocumentVerificationStatus> statuses);
     KycDocumentOcrResultResponse getOcrResult(String documentCode);

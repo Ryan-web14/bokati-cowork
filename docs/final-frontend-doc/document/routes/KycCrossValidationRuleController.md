@@ -73,6 +73,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `id` | entier int64 ⚠ |  |  |
+| `code` | texte |  |  |
+| `name` | texte |  |  |
+| `description` | texte |  |  |
+| `ruleType` | enum : `FIELD_MATCH`, `DECLARED_VS_OCR`, `PROFILE_MATCH`, `DOCUMENT_NOT_EXPIRED`, `ISSUE_BEFORE_EXPIRY`, `MIN_VALIDITY`, `UNIQUE_DOCUMENT_NUMBER` |  |  |
+| `parameter` | texte |  |  |
+| `systemRule` | booléen |  |  |
 | `documentTypeCode1` | texte |  |  |
 | `documentTypeCode2` | texte |  |  |
 | `fieldToCompare` | texte |  |  |
@@ -84,8 +90,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `documentTypeCode1` | texte | oui | longueur min `0`, longueur max `150` |
-| `documentTypeCode2` | texte | oui | longueur min `0`, longueur max `150` |
-| `fieldToCompare` | texte | oui | longueur min `0`, longueur max `80` |
+| `code` | texte |  | longueur min `0`, longueur max `80` |
+| `name` | texte |  | longueur min `0`, longueur max `200` |
+| `description` | texte |  |  |
+| `ruleType` | enum : `FIELD_MATCH`, `DECLARED_VS_OCR`, `PROFILE_MATCH`, `DOCUMENT_NOT_EXPIRED`, `ISSUE_BEFORE_EXPIRY`, `MIN_VALIDITY`, `UNIQUE_DOCUMENT_NUMBER` |  |  |
+| `documentTypeCode1` | texte |  | longueur min `0`, longueur max `1000` |
+| `documentTypeCode2` | texte |  | longueur min `0`, longueur max `1000` |
+| `fieldToCompare` | texte |  | longueur min `0`, longueur max `80` |
+| `parameter` | texte |  | longueur min `0`, longueur max `200` |
 | `blocking` | booléen |  |  |
 | `active` | booléen |  |  |

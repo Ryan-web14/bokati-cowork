@@ -22,6 +22,11 @@ public class ClientKycDocumentResponse {
     private String status;
     private Boolean requiresBackSide;
     private String backDocumentCode;
+    /** Qualite d'image au depot : OK, WARNING, UNKNOWN ; avertissements a montrer au titulaire. */
+    private String qualityStatus;
+    private java.util.List<String> qualityWarnings;
+    private String backQualityStatus;
+    private java.util.List<String> backQualityWarnings;
     private String backFileName;
     private Long backFileSize;
     private String backMimeType;

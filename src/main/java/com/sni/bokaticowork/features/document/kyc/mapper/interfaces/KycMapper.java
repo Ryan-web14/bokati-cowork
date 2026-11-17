@@ -25,6 +25,8 @@ public interface KycMapper {
 
     /** Lot KG2 : {@code id} est toujours le numero court de la piece (celui des routes). */
     @Mapping(target = "id", source = "shortId")
+    @Mapping(target = "qualityWarnings", ignore = true)
+    @Mapping(target = "backQualityWarnings", ignore = true)
     KycDocumentResponse toDocumentResponse(KycDocument document);
 
     KycCaseNoteResponse toNoteResponse(KycCaseNote note);

@@ -231,6 +231,9 @@ app.ged.text.ocr-language	DOCUMENTS	TEXT	LIVE	fra+eng	Langues de l'OCR de la GED
 app.ged.trash.purge-cron	DOCUMENTS	CRON	LIVE	0 15 3 * * *	Heure du vidage de la corbeille GED
 app.ged.trash.purge-enabled	DOCUMENTS	BOOLEAN	LIVE	true	Vidage automatique de la corbeille GED
 app.ged.trash.retention-days	DOCUMENTS	INTEGER	LIVE	30	Jours en corbeille GED avant destruction
+app.kyc.quality.blur-threshold	DOCUMENTS	INTEGER	LIVE	100	Pièces KYC : seuil de netteté (variance du laplacien) sous lequel l'image est signalée floue
+app.kyc.quality.enabled	DOCUMENTS	BOOLEAN	LIVE	true	Pièces KYC : contrôle de qualité d'image au dépôt
+app.kyc.quality.min-side-px	DOCUMENTS	INTEGER	LIVE	600	Pièces KYC : plus petit côté minimal de l'image (pixels)
 app.locale	LOCALE	TEXT	RESTART	fr_FR	Langue de la plateforme
 app.outbox.worker.batch-size	OUTBOX	INTEGER	LIVE	25	Taille de lot de la boîte d'envoi
 app.outbox.worker.enabled	OUTBOX	BOOLEAN	LIVE	true	Boîte d'envoi active
