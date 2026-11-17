@@ -125,6 +125,49 @@ public class CashClosingReportMailer {
         }
     }
 
+    /**
+     * Envoie le rapport de session a la demande (session ouverte ou close) : au responsable de la
+     * caisse, sinon au superviseur, et a l'adresse indiquee le cas echeant.
+     *
+     * @return les destinataires
+     */
+    public Set<String> sendOnDemand(String sessionNumber, String extraRecipient, String actor) {
+        CashSession session = sessionRepository.findBySessionNumber(sessionNumber)
+                .orElseThrow(() -> new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Session de caisse introuvable"));
+        Set<String> recipients = new LinkedHashSet<>();
+        String responsible = session.getCashRegister() == null ? null : session.getCashRegister().getManagerEmail();
+        if (StringUtils.hasText(responsible)) {
+            recipients.add(responsible.trim().toLowerCase(Locale.ROOT));
+        } else if (StringUtils.hasText(supervisorEmail())) {
+            recipients.add(supervisorEmail().trim().toLowerCase(Locale.ROOT));
+        }
+        if (StringUtils.hasText(extraRecipient)) {
+            for (String address : extraRecipient.split(",")) {
+                if (StringUtils.hasText(address)) recipients.add(address.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        if (recipients.isEmpty()) {
+            throw new com.sni.bokaticowork.core.exception.customs.BadRequestException("Aucun destinataire : renseignez le responsable de la caisse ou une adresse");
+        }
+        byte[] pdf = pdfService.generateSessionClosingReport(session.getSessionNumber());
+        String register = session.getCashRegister() == null ? "" : " " + session.getCashRegister().getName();
+        String subject = "Rapport de caisse" + register + " · " + session.getSessionNumber();
+        Context context = new Context(Locale.FRENCH);
+        context.setVariable("subject", subject);
+        context.setVariable("recipientName", "équipe");
+        context.setVariable("message", "Rapport de la session " + session.getSessionNumber() + " (" + session.getStatus()
+                + "), ouverte par " + session.getOpenedBy()
+                + (session.getOpenedAt() == null ? "" : " le " + DATE_TIME.format(session.getOpenedAt()))
+                + ", envoyé par " + actor + ". Le détail est dans le document joint.");
+        context.setVariable("reference", session.getSessionNumber());
+        context.setVariable("actionUrl", adminAccessUrl().stripTrailing() + "/payments/cash-registers/sessions/" + session.getSessionNumber());
+        String html = templateEngine.process("email/generic-notification", context);
+        for (String to : recipients) {
+            emailSender.sendHtmlEmailWithPdfAttachment(to, subject, html, "rapport-caisse-" + session.getSessionNumber() + ".pdf", pdf);
+        }
+        return recipients;
+    }
+
     /** Administration, gerance, et le responsable de la caisse · ou, sans lui, le superviseur. */
     public Set<String> recipients(CashRegister register) {
         Set<String> recipients = new LinkedHashSet<>();

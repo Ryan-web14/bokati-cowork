@@ -93,6 +93,9 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             WHERE metadata_json ->> 'originalTransactionNumber' = :transactionNumber
             ORDER BY created_at ASC
             """)
+    /** Transactions rattachees a une session de caisse (encaissements, remboursements). */
+    List<PaymentTransaction> findAllByCashSessionNumberOrderByCreatedAtAsc(String cashSessionNumber);
+
     List<PaymentTransaction> findAllByOriginalTransactionNumber(@Param("transactionNumber") String transactionNumber);
 
     /** Paiements recents d'une facture (toutes ses intentions) : detection d'un double envoi. */
