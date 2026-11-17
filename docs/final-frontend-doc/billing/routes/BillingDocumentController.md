@@ -150,7 +150,7 @@ Module [billing](../README.md) · 71 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `reason` | requête | `String` |  |  |
 
 <a id="r-patch-sni-api-v1-billing-deposits-id-invoice"></a>
@@ -163,7 +163,7 @@ Module [billing](../README.md) · 71 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-billing-deposits-id-settle"></a>
 ### PATCH /sni/api/v1/billing/deposits/{id}/settle
@@ -176,7 +176,7 @@ Module [billing](../README.md) · 71 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-billing-documents"></a>
 ### GET /sni/api/v1/billing/documents
@@ -506,7 +506,7 @@ Module [billing](../README.md) · 71 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-billing-invoices-from-billable-items"></a>
 ### POST /sni/api/v1/billing/invoices/from-billable-items
@@ -1014,7 +1014,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `documents` | [BillingDocumentResponse](#m-BillingDocumentResponse)[] |  |  |
 | `page` | entier |  |  |
 | `size` | entier |  |  |
-| `totalElements` | entier int64 ⚠ |  |  |
+| `totalElements` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalPages` | entier |  |  |
 | `accountingBalance` | nombre décimal |  |  |
 
@@ -1035,7 +1035,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentNumber` | texte |  |  |
 | `finalDocumentNumber` | texte |  |  |
 | `rank` | entier |  |  |
@@ -1304,7 +1304,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentNumber` | texte |  |  |
 | `channel` | texte |  |  |
 | `to` | texte[] |  |  |
@@ -1361,7 +1361,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `invoiceNumber` | texte |  |  |
 | `status` | texte |  |  |
 | `reason` | texte |  |  |
@@ -1603,7 +1603,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `dueDate` | date AAAA-MM-JJ |  |  |
 | `totalAmount` | nombre décimal |  |  |
 | `balanceDue` | nombre décimal |  |  |
-| `daysOverdue` | entier int64 ⚠ |  |  |
+| `daysOverdue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `agingBucket` | texte |  |  |
 | `status` | texte |  |  |
 

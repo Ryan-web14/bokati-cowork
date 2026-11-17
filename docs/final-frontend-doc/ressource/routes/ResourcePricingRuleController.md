@@ -71,7 +71,7 @@ Module [ressource](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-resource-pricing-rules-id"></a>
 ### GET /sni/api/v1/resource-pricing-rules/{id}
@@ -83,7 +83,7 @@ Module [ressource](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-put-sni-api-v1-resource-pricing-rules-id"></a>
 ### PATCH | PUT /sni/api/v1/resource-pricing-rules/{id}
@@ -96,7 +96,7 @@ Module [ressource](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-resource-pricing-rules-id-active"></a>
 ### PATCH /sni/api/v1/resource-pricing-rules/{id}/active
@@ -108,7 +108,7 @@ Module [ressource](../README.md) · 9 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `active` | requête | `Boolean` | oui |  |
 
 ## Modèles
@@ -120,7 +120,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `resourceCode` | texte |  |  |
 | `bookingUnit` | texte |  |  |
 | `price` | entier |  |  |
@@ -206,7 +206,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `endedAt` | date-heure locale sans fuseau |  |  |
 | `basePrice` | entier |  |  |
 | `finalPrice` | entier |  |  |
-| `appliedRuleId` | entier int64 ⚠ |  |  |
+| `appliedRuleId` | code identifiant (texte) |  |  |
 | `appliedRuleLabel` | texte |  |  |
 | `adjustmentType` | texte |  |  |
 | `adjustmentValue` | entier |  |  |
@@ -264,7 +264,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `label` | texte |  |  |
 | `price` | entier |  |  |
 | `priority` | entier |  |  |

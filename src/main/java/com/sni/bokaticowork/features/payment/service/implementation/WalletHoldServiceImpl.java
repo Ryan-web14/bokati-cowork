@@ -35,6 +35,19 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final PaymentMapper mapper;
 
+    private com.sni.bokaticowork.features.payment.service.support.PaymentOriginResolver paymentOrigin;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPaymentOrigin(com.sni.bokaticowork.features.payment.service.support.PaymentOriginResolver paymentOrigin) {
+        this.paymentOrigin = paymentOrigin;
+    }
+
+    /** Auteur : le compte connecte ; la valeur transmise ne sert qu'aux traitements internes. */
+    private String actorOr(String declared) {
+        String current = paymentOrigin == null ? null : paymentOrigin.currentActor();
+        return current != null && !current.isBlank() ? current : declared;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponse<WalletHoldResponse> list(String walletNumber, String status, String sourceType, String sourceCode, Pageable pageable) {
@@ -52,12 +65,15 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public WalletHoldResponse create(CreateWalletHoldRequest request) {
         WalletAccount wallet = walletRepository.findByWalletNumber(request.walletNumber())
-                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Portefeuille introuvable"));
+        if (wallet.getStatus() != com.sni.bokaticowork.features.payment.enums.WalletStatus.ACTIVE) {
+            throw new BadRequestException("Une retenue ne se pose que sur un portefeuille actif (statut " + wallet.getStatus() + ")");
+        }
         // Le numero de blocage est genere avant l'ecriture : il sert de cle d'idempotence, donc
         // il doit exister au moment ou le grand livre est ecrit.
         String holdNumber = sequenceGenerator.next("wallet_hold");
         ledgerService.placeHold(wallet, request.amount(), request.sourceType(), request.sourceCode(),
-                holdNumber, request.createdBy(), "HOLD:" + holdNumber);
+                holdNumber, actorOr(request.createdBy()), "HOLD:" + holdNumber);
         return mapper.toWalletHoldResponse(holdRepository.save(WalletHold.builder()
                 .holdNumber(holdNumber)
                 .wallet(wallet)
@@ -67,12 +83,13 @@ public class WalletHoldServiceImpl implements WalletHoldService {
                 .sourceType(request.sourceType())
                 .sourceCode(request.sourceCode())
                 .expiresAt(request.expiresAt())
-                .createdBy(request.createdBy())
+                .createdBy(actorOr(request.createdBy()))
                 .build()));
     }
 
     @Override
-    public WalletHoldResponse capture(String holdNumber, String createdBy) {
+    public WalletHoldResponse capture(String holdNumber, String declaredBy) {
+        String createdBy = actorOr(declaredBy);
         WalletHold hold = activeHold(holdNumber);
         ledgerService.captureHold(hold.getWallet(), hold.getAmount(), hold.getSourceType(), hold.getSourceCode(),
                 "CAPTURE_HOLD", createdBy, "HOLD_CAPTURE:" + hold.getHoldNumber());
@@ -81,7 +98,8 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     }
 
     @Override
-    public WalletHoldResponse release(String holdNumber, String createdBy) {
+    public WalletHoldResponse release(String holdNumber, String declaredBy) {
+        String createdBy = actorOr(declaredBy);
         WalletHold hold = activeHold(holdNumber);
         releaseHold(hold, createdBy, WalletHoldStatus.RELEASED);
         return mapper.toWalletHoldResponse(hold);
@@ -106,9 +124,9 @@ public class WalletHoldServiceImpl implements WalletHoldService {
 
     private WalletHold activeHold(String holdNumber) {
         WalletHold hold = holdRepository.findByHoldNumber(holdNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Wallet hold not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Retenue de portefeuille introuvable"));
         if (hold.getStatus() != WalletHoldStatus.ACTIVE) {
-            throw new BadRequestException("Wallet hold is not active");
+            throw new BadRequestException("Cette retenue n'est plus active");
         }
         return hold;
     }
@@ -124,7 +142,7 @@ public class WalletHoldServiceImpl implements WalletHoldService {
         try {
             return WalletHoldStatus.valueOf(status.trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("Invalid wallet hold status");
+            throw new BadRequestException("Statut de retenue invalide");
         }
     }
 

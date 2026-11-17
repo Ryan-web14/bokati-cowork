@@ -67,7 +67,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `membersPurged` | entier |  |  |
-| `rowsAffected` | entier int64 ⚠ |  |  |
+| `rowsAffected` | entier int64 (texte au-delà de 2^53) |  |  |
 | `reports` | [MemberPurgeService.PurgeReport](#m-MemberPurgeService-PurgeReport)[] |  |  |
 
 <a id="m-MemberPurgeController-BatchPurgeRequest"></a>
@@ -97,7 +97,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `memberCode` | texte |  |  |
 | `email` | texte |  |  |
 | `dryRun` | booléen |  |  |
-| `rowsAffected` | entier int64 ⚠ |  |  |
+| `rowsAffected` | entier int64 (texte au-delà de 2^53) |  |  |
 | `rowsByTable` | objet { clé : entier } |  |  |
 | `skippedTables` | texte[] |  |  |
-| `durationMs` | entier int64 ⚠ |  |  |
+| `durationMs` | entier int64 (texte au-delà de 2^53) |  |  |

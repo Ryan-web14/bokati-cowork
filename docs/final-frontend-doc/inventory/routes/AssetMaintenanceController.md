@@ -89,7 +89,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `startedAt` | date-heure ISO 8601 UTC |  |  |
 | `completedAt` | date-heure ISO 8601 UTC |  |  |
 | `providerName` | texte |  |  |
-| `cost` | entier int64 ⚠ |  |  |
+| `cost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `description` | texte |  |  |
 | `resolution` | texte |  |  |
 
@@ -99,7 +99,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `resolution` | texte |  |  |
-| `cost` | entier int64 ⚠ |  |  |
+| `cost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `assetCondition` | enum : `NEW`, `GOOD`, `FAIR`, `DAMAGED`, `UNUSABLE` |  |  |
 
 <a id="m-AssetMaintenanceRequest"></a>
@@ -110,5 +110,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `maintenanceType` | enum : `PREVENTIVE`, `CORRECTIVE`, `WARRANTY`, `INSPECTION` | oui |  |
 | `scheduledAt` | date-heure ISO 8601 UTC |  |  |
 | `providerName` | texte |  |  |
-| `cost` | entier int64 ⚠ |  |  |
+| `cost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `description` | texte |  |  |

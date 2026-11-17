@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.billing.controller;
 
+import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest;
@@ -480,6 +481,7 @@ public class BillingDocumentController {
                 .body(billingDocumentService.createCorrectiveInvoice(invoiceNumber, request));
     }
 
+    @Idempotent(operation = "INVOICE_PAY", requestBodyArgIndex = 1)
     @PostMapping("/invoices/{documentNumber}/pay")
     public ResponseEntity<PayInvoiceResponse> payInvoice(@PathVariable String documentNumber,
                                                          @Valid @RequestBody PayInvoiceRequest request) {

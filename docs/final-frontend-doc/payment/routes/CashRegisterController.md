@@ -381,12 +381,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `currency` | texte |  |  |
-| `registerCount` | entier int64 ⚠ |  |  |
-| `activeRegisterCount` | entier int64 ⚠ |  |  |
-| `openSessionCount` | entier int64 ⚠ |  |  |
-| `closingReviewSessionCount` | entier int64 ⚠ |  |  |
-| `closedSessionCount` | entier int64 ⚠ |  |  |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `registerCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `activeRegisterCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `openSessionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `closingReviewSessionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `closedSessionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `openingFloatAmount` | nombre décimal |  |  |
 | `totalPayments` | nombre décimal |  |  |
 | `totalRefunds` | nombre décimal |  |  |
@@ -405,9 +405,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `registerName` | texte |  |  |
 | `businessEntityCode` | texte |  |  |
 | `deviceCode` | texte |  |  |
-| `openSessionCount` | entier int64 ⚠ |  |  |
-| `closingReviewSessionCount` | entier int64 ⚠ |  |  |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `openSessionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `closingReviewSessionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalPayments` | nombre décimal |  |  |
 | `totalRefunds` | nombre décimal |  |  |
 | `totalCashIn` | nombre décimal |  |  |
@@ -524,7 +524,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `openingVariance` | nombre décimal |  |  |
 | `openingVarianceReason` | texte |  |  |
 | `pausedAt` | date-heure ISO 8601 UTC |  |  |
-| `pauseSeconds` | entier int64 ⚠ |  |  |
+| `pauseSeconds` | entier int64 (texte au-delà de 2^53) |  |  |
 | `suspendedBy` | texte |  |  |
 | `suspensionReason` | texte |  |  |
 | `keptFloat` | nombre décimal |  |  |
@@ -668,7 +668,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `fileName` | texte |  |  |
 | `contentType` | texte |  |  |
 | `storagePath` | texte |  |  |
@@ -716,7 +716,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
 | `provider` | texte |  |  |
 | `label` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `amount` | nombre décimal |  |  |
 
 <a id="m-LocalTime"></a>

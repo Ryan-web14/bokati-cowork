@@ -111,8 +111,14 @@ class CashRegisterServiceImplTest {
         ));
 
         assertEquals(true, response.registerCode().startsWith("CSR-"));
-        assertEquals(true, response.businessEntityCode().startsWith("BIZ-"));
-        assertEquals(true, response.deviceCode().startsWith("DEV-"));
+        // Codes fournis : gardes tels quels (avant, remplaces par des codes generes).
+        assertEquals("BUS-0001", response.businessEntityCode());
+        assertEquals("POS-001", response.deviceCode());
+
+        var generated = service.createRegister(new CreateCashRegisterRequest(
+                "Caisse annexe", "LOC-001", null, null, true, new BigDecimal("500000"), "manager@example.com"));
+        assertEquals(true, generated.businessEntityCode().startsWith("BIZ-"));
+        assertEquals(true, generated.deviceCode().startsWith("DEV-"));
     }
 
     @Test
@@ -216,7 +222,7 @@ class CashRegisterServiceImplTest {
                 null
         )));
 
-        assertEquals("Reason is required for this cash movement type", ex.getMessage());
+        assertEquals("Le motif est requis pour ce type de mouvement", ex.getMessage());
     }
 
     private CashSession openSession() {

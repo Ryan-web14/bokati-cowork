@@ -160,23 +160,23 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `generatedAt` | date-heure ISO 8601 UTC |  |  |
-| `activeBookings` | entier int64 ⚠ |  |  |
-| `checkedInBookings` | entier int64 ⚠ |  |  |
-| `occupiedResources` | entier int64 ⚠ |  |  |
-| `totalBookableResources` | entier int64 ⚠ |  |  |
+| `activeBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `checkedInBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `occupiedResources` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalBookableResources` | entier int64 (texte au-delà de 2^53) |  |  |
 | `occupancyRate` | nombre décimal |  |  |
-| `availableResources` | entier int64 ⚠ |  |  |
-| `pendingApproval` | entier int64 ⚠ |  |  |
-| `upcomingNextHour` | entier int64 ⚠ |  |  |
-| `activeHolds` | entier int64 ⚠ |  |  |
-| `bookingsToday` | entier int64 ⚠ |  |  |
+| `availableResources` | entier int64 (texte au-delà de 2^53) |  |  |
+| `pendingApproval` | entier int64 (texte au-delà de 2^53) |  |  |
+| `upcomingNextHour` | entier int64 (texte au-delà de 2^53) |  |  |
+| `activeHolds` | entier int64 (texte au-delà de 2^53) |  |  |
+| `bookingsToday` | entier int64 (texte au-delà de 2^53) |  |  |
 | `revenueToday` | nombre décimal |  |  |
 | `avgBookingAmount` | nombre décimal |  |  |
-| `bookedMinutesToday` | entier int64 ⚠ |  |  |
-| `cancelledToday` | entier int64 ⚠ |  |  |
-| `noShowToday` | entier int64 ⚠ |  |  |
-| `checkInsToday` | entier int64 ⚠ |  |  |
-| `newMembersToday` | entier int64 ⚠ |  |  |
+| `bookedMinutesToday` | entier int64 (texte au-delà de 2^53) |  |  |
+| `cancelledToday` | entier int64 (texte au-delà de 2^53) |  |  |
+| `noShowToday` | entier int64 (texte au-delà de 2^53) |  |  |
+| `checkInsToday` | entier int64 (texte au-delà de 2^53) |  |  |
+| `newMembersToday` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-AnalyticsOverviewResponse"></a>
 #### AnalyticsOverviewResponse
@@ -202,12 +202,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `ownerType` | texte |  |  |
 | `ownerCode` | texte |  |  |
 | `ownerName` | texte |  |  |
-| `bookingCount` | entier int64 ⚠ |  |  |
-| `confirmedCount` | entier int64 ⚠ |  |  |
-| `completedCount` | entier int64 ⚠ |  |  |
-| `cancelledCount` | entier int64 ⚠ |  |  |
+| `bookingCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `confirmedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `completedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `cancelledCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `revenue` | nombre décimal |  |  |
-| `bookedMinutes` | entier int64 ⚠ |  |  |
+| `bookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-TopResourceResponse"></a>
 #### TopResourceResponse
@@ -220,12 +220,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `resourceTypeName` | texte |  |  |
 | `resourceGroupCode` | texte |  |  |
 | `resourceGroupName` | texte |  |  |
-| `bookingCount` | entier int64 ⚠ |  |  |
-| `confirmedCount` | entier int64 ⚠ |  |  |
-| `completedCount` | entier int64 ⚠ |  |  |
-| `cancelledCount` | entier int64 ⚠ |  |  |
+| `bookingCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `confirmedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `completedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `cancelledCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `revenue` | nombre décimal |  |  |
-| `bookedMinutes` | entier int64 ⚠ |  |  |
+| `bookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-BookingTrendResponse"></a>
 #### BookingTrendResponse
@@ -233,9 +233,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `date` | date AAAA-MM-JJ |  |  |
-| `bookingCount` | entier int64 ⚠ |  |  |
-| `confirmedCount` | entier int64 ⚠ |  |  |
-| `cancelledCount` | entier int64 ⚠ |  |  |
+| `bookingCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `confirmedCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `cancelledCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `revenue` | nombre décimal |  |  |
 
 <a id="m-OccupancyTrendResponse"></a>
@@ -245,9 +245,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `date` | date AAAA-MM-JJ |  |  |
 | `days` | entier |  |  |
-| `bookingCount` | entier int64 ⚠ |  |  |
-| `bookedMinutes` | entier int64 ⚠ |  |  |
-| `availableMinutes` | entier int64 ⚠ |  |  |
+| `bookingCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `bookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
+| `availableMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `occupancyRate` | nombre décimal |  |  |
 
 <a id="m-RevenueTrendResponse"></a>
@@ -256,9 +256,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `date` | date AAAA-MM-JJ |  |  |
-| `invoiceCount` | entier int64 ⚠ |  |  |
+| `invoiceCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `invoicedAmount` | nombre décimal |  |  |
-| `paymentCount` | entier int64 ⚠ |  |  |
+| `paymentCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `collectedAmount` | nombre décimal |  |  |
 
 <a id="m-AnalyticsOverviewResponse-BookingMetrics"></a>
@@ -266,26 +266,26 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `bookingCount` | entier int64 ⚠ |  |  |
-| `confirmedBookings` | entier int64 ⚠ |  |  |
-| `completedBookings` | entier int64 ⚠ |  |  |
-| `cancelledBookings` | entier int64 ⚠ |  |  |
-| `noShowBookings` | entier int64 ⚠ |  |  |
+| `bookingCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `confirmedBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `completedBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `cancelledBookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `noShowBookings` | entier int64 (texte au-delà de 2^53) |  |  |
 | `bookingRevenue` | nombre décimal |  |  |
-| `bookedMinutes` | entier int64 ⚠ |  |  |
-| `participantCount` | entier int64 ⚠ |  |  |
+| `bookedMinutes` | entier int64 (texte au-delà de 2^53) |  |  |
+| `participantCount` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-AnalyticsOverviewResponse-FinancialMetrics"></a>
 #### AnalyticsOverviewResponse.FinancialMetrics
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `invoiceCount` | entier int64 ⚠ |  |  |
+| `invoiceCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `invoicedAmount` | nombre décimal |  |  |
 | `paidAmount` | nombre décimal |  |  |
 | `outstandingAmount` | nombre décimal |  |  |
-| `overdueInvoiceCount` | entier int64 ⚠ |  |  |
-| `quotationCount` | entier int64 ⚠ |  |  |
+| `overdueInvoiceCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `quotationCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `quotedAmount` | nombre décimal |  |  |
 | `vatAmount` | nombre décimal |  |  |
 | `additionalCentAmount` | nombre décimal |  |  |
@@ -304,22 +304,22 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `transactionCount` | entier int64 ⚠ |  |  |
+| `transactionCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `succeededAmount` | nombre décimal |  |  |
 | `cashAmount` | nombre décimal |  |  |
 | `walletAmount` | nombre décimal |  |  |
 | `mobileMoneyAmount` | nombre décimal |  |  |
 | `bankTransferAmount` | nombre décimal |  |  |
 | `cardAmount` | nombre décimal |  |  |
-| `failedTransactionCount` | entier int64 ⚠ |  |  |
-| `pendingTransactionCount` | entier int64 ⚠ |  |  |
+| `failedTransactionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `pendingTransactionCount` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-AnalyticsOverviewResponse-WalletMetrics"></a>
 #### AnalyticsOverviewResponse.WalletMetrics
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `walletCount` | entier int64 ⚠ |  |  |
+| `walletCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `availableBalance` | nombre décimal |  |  |
 | `heldBalance` | nombre décimal |  |  |
 | `credits` | nombre décimal |  |  |
@@ -330,29 +330,29 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `activeSubscriptions` | entier int64 ⚠ |  |  |
-| `pendingSubscriptions` | entier int64 ⚠ |  |  |
-| `suspendedSubscriptions` | entier int64 ⚠ |  |  |
-| `activePasses` | entier int64 ⚠ |  |  |
+| `activeSubscriptions` | entier int64 (texte au-delà de 2^53) |  |  |
+| `pendingSubscriptions` | entier int64 (texte au-delà de 2^53) |  |  |
+| `suspendedSubscriptions` | entier int64 (texte au-delà de 2^53) |  |  |
+| `activePasses` | entier int64 (texte au-delà de 2^53) |  |  |
 | `monthlyRecurringRevenue` | nombre décimal |  |  |
-| `billableUsageQuantity` | entier int64 ⚠ |  |  |
+| `billableUsageQuantity` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-AnalyticsOverviewResponse-CustomerMetrics"></a>
 #### AnalyticsOverviewResponse.CustomerMetrics
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `customerCount` | entier int64 ⚠ |  |  |
-| `memberCount` | entier int64 ⚠ |  |  |
-| `activeMembers` | entier int64 ⚠ |  |  |
-| `guestBookingCount` | entier int64 ⚠ |  |  |
+| `customerCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `memberCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `activeMembers` | entier int64 (texte au-delà de 2^53) |  |  |
+| `guestBookingCount` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-AnalyticsOverviewResponse-InventoryMetrics"></a>
 #### AnalyticsOverviewResponse.InventoryMetrics
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `itemCount` | entier int64 ⚠ |  |  |
+| `itemCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `stockValue` | nombre décimal |  |  |
-| `lowStockAlerts` | entier int64 ⚠ |  |  |
-| `openPurchaseOrders` | entier int64 ⚠ |  |  |
+| `lowStockAlerts` | entier int64 (texte au-delà de 2^53) |  |  |
+| `openPurchaseOrders` | entier int64 (texte au-delà de 2^53) |  |  |

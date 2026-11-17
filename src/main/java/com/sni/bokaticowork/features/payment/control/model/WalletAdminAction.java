@@ -30,7 +30,13 @@ import java.time.Instant;
 public class WalletAdminAction {
 
     public enum Type {
-        TOPUP, DEBIT, ADJUST, REVERSE, SUSPEND, UNSUSPEND, RESET_PIN, RAISE_LIMIT, CLOSE, REVIEW_FLAG
+        TOPUP, DEBIT, ADJUST, REVERSE, SUSPEND, UNSUSPEND, RESET_PIN, RAISE_LIMIT, CLOSE, REVIEW_FLAG,
+        /** Leve une retenue en cours (reference : numero de la retenue). */
+        RELEASE_HOLD,
+        /** Vire un montant vers un autre portefeuille (reference : numero du portefeuille cible). */
+        TRANSFER,
+        /** Rend un montant au titulaire (reference : CASH:&lt;session de caisse&gt; ou reference du virement exterieur). */
+        RESTITUTE
     }
 
     public enum Status {

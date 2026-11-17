@@ -148,15 +148,15 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `openAlerts` | entier int64 ⚠ |  |  |
-| `lowStockAlerts` | entier int64 ⚠ |  |  |
-| `outOfStockAlerts` | entier int64 ⚠ |  |  |
-| `negativeStockAlerts` | entier int64 ⚠ |  |  |
-| `expirySoonAlerts` | entier int64 ⚠ |  |  |
-| `expiringLots30Days` | entier int64 ⚠ |  |  |
-| `outOfStockLevels` | entier int64 ⚠ |  |  |
-| `openPurchaseOrders` | entier int64 ⚠ |  |  |
-| `totalStockValue` | entier int64 ⚠ |  |  |
+| `openAlerts` | entier int64 (texte au-delà de 2^53) |  |  |
+| `lowStockAlerts` | entier int64 (texte au-delà de 2^53) |  |  |
+| `outOfStockAlerts` | entier int64 (texte au-delà de 2^53) |  |  |
+| `negativeStockAlerts` | entier int64 (texte au-delà de 2^53) |  |  |
+| `expirySoonAlerts` | entier int64 (texte au-delà de 2^53) |  |  |
+| `expiringLots30Days` | entier int64 (texte au-delà de 2^53) |  |  |
+| `outOfStockLevels` | entier int64 (texte au-delà de 2^53) |  |  |
+| `openPurchaseOrders` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalStockValue` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-InventoryLabelResponse"></a>
 #### InventoryLabelResponse
@@ -184,8 +184,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `generatedAt` | date-heure ISO 8601 UTC |  |  |
 | `itemCodeFilter` | texte |  |  |
 | `locationCodeFilter` | texte |  |  |
-| `pairsChecked` | entier int64 ⚠ |  |  |
-| `divergenceCount` | entier int64 ⚠ |  |  |
+| `pairsChecked` | entier int64 (texte au-delà de 2^53) |  |  |
+| `divergenceCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalAbsoluteDifference` | nombre décimal |  |  |
 | `consistent` | booléen |  |  |
 | `divergences` | [StockReconciliationLineResponse](#m-StockReconciliationLineResponse)[] |  |  |
@@ -195,11 +195,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `negativeStockLevels` | entier int64 ⚠ |  |  |
-| `negativeStockAlerts` | entier int64 ⚠ |  |  |
-| `movementsWithNegativeOverride` | entier int64 ⚠ |  |  |
-| `suspiciousAdjustments` | entier int64 ⚠ |  |  |
-| `largeInventoryCountVariances` | entier int64 ⚠ |  |  |
+| `negativeStockLevels` | entier int64 (texte au-delà de 2^53) |  |  |
+| `negativeStockAlerts` | entier int64 (texte au-delà de 2^53) |  |  |
+| `movementsWithNegativeOverride` | entier int64 (texte au-delà de 2^53) |  |  |
+| `suspiciousAdjustments` | entier int64 (texte au-delà de 2^53) |  |  |
+| `largeInventoryCountVariances` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-InventoryMovementReportResponse"></a>
 #### InventoryMovementReportResponse
@@ -227,8 +227,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `fromDate` | date-heure ISO 8601 UTC |  |  |
 | `toDate` | date-heure ISO 8601 UTC |  |  |
 | `referenceTypeFilter` | texte |  |  |
-| `totalOverrides` | entier int64 ⚠ |  |  |
-| `manualOverrides` | entier int64 ⚠ |  |  |
+| `totalOverrides` | entier int64 (texte au-delà de 2^53) |  |  |
+| `manualOverrides` | entier int64 (texte au-delà de 2^53) |  |  |
 | `breakdown` | [InventoryOverrideReportResponse.Breakdown](#m-InventoryOverrideReportResponse-Breakdown)[] |  |  |
 | `lines` | [InventoryOverrideReportResponse.Line](#m-InventoryOverrideReportResponse-Line)[] |  |  |
 
@@ -259,14 +259,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalInQuantity` | nombre décimal |  |  |
 | `totalOutQuantity` | nombre décimal |  |  |
 | `netQuantity` | nombre décimal |  |  |
-| `totalInValue` | entier int64 ⚠ |  |  |
-| `totalOutValue` | entier int64 ⚠ |  |  |
-| `netValue` | entier int64 ⚠ |  |  |
-| `totalMovementValue` | entier int64 ⚠ |  |  |
+| `totalInValue` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalOutValue` | entier int64 (texte au-delà de 2^53) |  |  |
+| `netValue` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalMovementValue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `firstMovementAt` | texte |  |  |
 | `lastMovementAt` | texte |  |  |
 
@@ -276,11 +276,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `movementType` | enum : `IN`, `OUT`, `TRANSFER`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT` |  |  |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalQuantity` | nombre décimal |  |  |
-| `totalValue` | entier int64 ⚠ |  |  |
+| `totalValue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `signedQuantity` | nombre décimal |  |  |
-| `signedValue` | entier int64 ⚠ |  |  |
+| `signedValue` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-InventoryMovementReportResponse-ItemLine"></a>
 #### InventoryMovementReportResponse.ItemLine
@@ -289,11 +289,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `itemCode` | texte |  |  |
 | `itemName` | texte |  |  |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalInQuantity` | nombre décimal |  |  |
 | `totalOutQuantity` | nombre décimal |  |  |
 | `netQuantity` | nombre décimal |  |  |
-| `totalValue` | entier int64 ⚠ |  |  |
+| `totalValue` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-InventoryMovementReportResponse-LocationLine"></a>
 #### InventoryMovementReportResponse.LocationLine
@@ -302,11 +302,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `locationCode` | texte |  |  |
 | `locationName` | texte |  |  |
-| `movementCount` | entier int64 ⚠ |  |  |
+| `movementCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalInQuantity` | nombre décimal |  |  |
 | `totalOutQuantity` | nombre décimal |  |  |
 | `netQuantity` | nombre décimal |  |  |
-| `totalValue` | entier int64 ⚠ |  |  |
+| `totalValue` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-InventoryMovementReportResponse-MovementDetail"></a>
 #### InventoryMovementReportResponse.MovementDetail
@@ -320,8 +320,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `locationFromCode` | texte |  |  |
 | `locationToCode` | texte |  |  |
 | `quantity` | nombre décimal |  |  |
-| `unitCost` | entier int64 ⚠ |  |  |
-| `totalCost` | entier int64 ⚠ |  |  |
+| `unitCost` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `referenceType` | texte |  |  |
 | `referenceCode` | texte |  |  |
 | `performedBy` | texte |  |  |
@@ -334,7 +334,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `referenceType` | texte |  |  |
 | `performedBy` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-InventoryOverrideReportResponse-Line"></a>
 #### InventoryOverrideReportResponse.Line

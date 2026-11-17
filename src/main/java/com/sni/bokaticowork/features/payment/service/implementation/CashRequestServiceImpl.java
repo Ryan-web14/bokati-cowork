@@ -59,11 +59,16 @@ public class CashRequestServiceImpl implements CashRequestService {
     @Transactional
     public CashRequestResponse submit(String sessionNumber, CreateCashRequestRequest request) {
         CashSession session = session(sessionNumber);
+        // Une demande s'execute sur sa session : elle n'est recevable que session ouverte.
+        if (session.getStatus() != com.sni.bokaticowork.features.payment.enums.CashSessionStatus.OPEN) {
+            throw new BadRequestException("La session " + session.getSessionNumber() + " n'est pas ouverte ("
+                    + session.getStatus() + ") : la demande ne peut pas être soumise");
+        }
         if (request.amount() == null || request.amount().signum() <= 0) {
-            throw new BadRequestException("Cash request amount must be positive");
+            throw new BadRequestException("Le montant de la demande doit être positif");
         }
         if (!StringUtils.hasText(request.reason())) {
-            throw new BadRequestException("Cash request reason is required");
+            throw new BadRequestException("Le motif de la demande est requis");
         }
         String requestedBy = actors.current() != null ? actors.current()
                 : (StringUtils.hasText(request.requestedBy()) ? request.requestedBy().trim() : session.getOpenedBy());
@@ -98,6 +103,18 @@ public class CashRequestServiceImpl implements CashRequestService {
     public CashRequestResponse approve(String requestNumber, ReviewCashRequestRequest request) {
         CashRequest cashRequest = requireStatus(requestNumber, CashRequestStatus.PENDING);
         String reviewer = reviewer(cashRequest, request);
+        CashSession session = cashRequest.getCashSession();
+        if (session != null && !session.getStatus().isLive()) {
+            // Session close ou annulee : la demande ne s'executera plus, elle est annulee au lieu de
+            // rester en attente indefiniment.
+            cancelInternally(cashRequest, reviewer, "Session " + session.getSessionNumber() + " " + session.getStatus()
+                    + " : demande annulée");
+            return toResponse(cashRequest);
+        }
+        if (session != null && session.getStatus() != com.sni.bokaticowork.features.payment.enums.CashSessionStatus.OPEN) {
+            throw new BadRequestException("La session " + session.getSessionNumber() + " est " + session.getStatus()
+                    + " : la demande s'approuvera quand elle sera rouverte");
+        }
         cashRequest.setStatus(CashRequestStatus.APPROVED);
         cashRequest.setReviewedBy(reviewer);
         cashRequest.setReviewedAt(Instant.now());
@@ -142,6 +159,45 @@ public class CashRequestServiceImpl implements CashRequestService {
         );
 
         return toResponse(cashRequest);
+    }
+
+    /** Annulation par le demandeur, ou par un approbateur, tant que la demande est en attente. */
+    @Override
+    @Transactional
+    public CashRequestResponse cancel(String requestNumber, ReviewCashRequestRequest request) {
+        CashRequest cashRequest = requireStatus(requestNumber, CashRequestStatus.PENDING);
+        String actor = actors.resolve(request == null ? null : request.reviewedBy());
+        boolean requester = com.sni.bokaticowork.features.payment.service.support.CashActorResolver.samePerson(actor, cashRequest.getRequestedBy());
+        if (!requester && !actors.hasAuthority("CASH_MOVEMENT:APPROVE")) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException(
+                    "Seul le demandeur ou un approbateur peut annuler la demande");
+        }
+        cancelInternally(cashRequest, actor, request == null || !StringUtils.hasText(request.note()) ? "Annulée" : request.note().trim());
+        return toResponse(cashRequest);
+    }
+
+    /** Demandes encore en attente d'une session close : annulees (appele apres la cloture). */
+    @Override
+    @Transactional
+    public int cancelPendingOfSession(String sessionNumber) {
+        List<CashRequest> pending = requestRepository.findAllByCashSession_SessionNumberAndStatus(sessionNumber, CashRequestStatus.PENDING);
+        pending.forEach(r -> cancelInternally(r, "SYSTEM", "Session " + sessionNumber + " clôturée : demande annulée"));
+        return pending.size();
+    }
+
+    private void cancelInternally(CashRequest cashRequest, String actor, String note) {
+        cashRequest.setStatus(CashRequestStatus.CANCELLED);
+        cashRequest.setReviewedBy(actor);
+        cashRequest.setReviewedAt(Instant.now());
+        cashRequest.setReviewNote(note);
+        requestRepository.save(cashRequest);
+        emailNotifier.notifyUser(
+                cashRequest.getRequestedBy(),
+                "Demande de caisse annulée · " + cashRequest.getRequestNumber(),
+                "Votre demande " + cashRequest.getRequestType().name() + " de " + cashRequest.getAmount() + " "
+                        + cashRequest.getCurrency() + " est annulée. " + note,
+                cashRequest.getRequestNumber(),
+                CASH_REQUESTS_PATH + cashRequest.getRequestNumber());
     }
 
     @Override
@@ -203,9 +259,10 @@ public class CashRequestServiceImpl implements CashRequestService {
                 null,
                 cashRequest.getRequestType().name(),
                 "cash-request",
-                // Un justificatif approuve etait ajoute a l'attendu : on garde ce sens, desormais explicite.
+                // Un justificatif approuve justifie de l'argent sorti du tiroir : il diminue l'attendu
+                // (avant : sens IN, qui augmentait encore l'argent attendu en caisse).
                 movementType == CashMovementType.ADJUSTMENT
-                        ? com.sni.bokaticowork.features.payment.enums.CashFlowDirection.IN
+                        ? com.sni.bokaticowork.features.payment.enums.CashFlowDirection.OUT
                         : null,
                 null
         );
@@ -213,7 +270,7 @@ public class CashRequestServiceImpl implements CashRequestService {
         // La demande approuvee par un autre que le demandeur vaut second visa.
         operations.approveInternally(movementResponse.movementNumber(), cashRequest.getReviewedBy());
         CashMovement persisted = movementRepository.findByMovementNumber(movementResponse.movementNumber())
-                .orElseThrow(() -> new ResourceNotFoundException("Cash movement not found: " + movementResponse.movementNumber()));
+                .orElseThrow(() -> new ResourceNotFoundException("Mouvement de caisse introuvable : " + movementResponse.movementNumber()));
         cashRequest.setExecutedMovement(persisted);
         cashRequest.setExecutedAt(Instant.now());
         cashRequest.setStatus(CashRequestStatus.EXECUTED);
@@ -241,25 +298,26 @@ public class CashRequestServiceImpl implements CashRequestService {
     private CashRequest requireStatus(String requestNumber, CashRequestStatus expected) {
         CashRequest cashRequest = find(requestNumber);
         if (cashRequest.getStatus() != expected) {
-            throw new BadRequestException("Cash request " + requestNumber + " is not " + expected.name().toLowerCase(Locale.ROOT));
+            throw new BadRequestException("La demande " + requestNumber + " est " + cashRequest.getStatus()
+                    + " : action possible seulement en " + expected.name());
         }
         return cashRequest;
     }
 
     private CashRequest find(String requestNumber) {
         if (!StringUtils.hasText(requestNumber)) {
-            throw new BadRequestException("Cash request number is required");
+            throw new BadRequestException("Le numéro de la demande est requis");
         }
         return requestRepository.findByRequestNumber(requestNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Cash request not found: " + requestNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Demande de caisse introuvable : " + requestNumber));
     }
 
     private CashSession session(String sessionNumber) {
         if (!StringUtils.hasText(sessionNumber)) {
-            throw new BadRequestException("Cash session number is required");
+            throw new BadRequestException("Le numéro de la session est requis");
         }
         return sessionRepository.findBySessionNumber(sessionNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Cash session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session de caisse introuvable : " + sessionNumber));
     }
 
     private String requesterLabel(CashRequest cashRequest) {

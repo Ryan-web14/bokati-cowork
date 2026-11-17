@@ -23,7 +23,7 @@ Ce fichier couvre les routes du back-office sur les portefeuilles : `WalletContr
 
 ### Portefeuille (`WalletStatus`)
 
-Seul `ACTIVE` permet un débit (paiement, transfert, retenue capturée) : sinon `400` « Wallet is not active » (`src/main/java/com/sni/bokaticowork/features/payment/service/implementation/WalletServiceImpl.java:136`).
+Seul `ACTIVE` permet un débit (paiement, transfert, retenue capturée) : sinon `400` « Le portefeuille n'est pas actif » (`src/main/java/com/sni/bokaticowork/features/payment/service/implementation/WalletServiceImpl.java:136`).
 
 | Statut | Signification | On y arrive par | On en sort vers |
 | --- | --- | --- | --- |
@@ -83,6 +83,8 @@ Actif tant que `liftedAt` est nul ; un seul gel actif par portefeuille. Levée p
 
 1. Liste : `GET /sni/api/v1/wallets?ownerType=&ownerCode=` ([route](routes/WalletController.md#r-get-sni-api-v1-wallets)). `ownerType` est comparé tel quel (pas de traduction `MEMBRE` → `MEMBER` ici).
 2. Fiche : `GET /sni/api/v1/wallets/{walletNumber}` ; historique : `GET /sni/api/v1/wallets/{walletNumber}/ledger` (plus récentes d'abord, `sort` ignoré).
+   - Chaque portefeuille (fiche et listes) porte `ownerName` (nom du membre, du client ou de l'entreprise) et `activeHolds` : les retenues en cours qui composent `heldBalance`, chacune avec `holdNumber`, `amount`, `sourceType`, `sourceCode`, `sourceLabel` (ce qu'elle bloque, en clair : réservation, abonnement…), `expiresAt`, `createdAt`. Écran conseillé : sous le solde retenu, la liste « Bloqué pour » avec un lien vers la réservation ou la facture.
+   - Chaque écriture de l'historique porte `sourceLabel` (ce qu'elle concerne, en clair) ; chaque retenue (`GET /wallet-holds`) porte `sourceLabel`, `createdBy`, `createdAt`.
 3. Ouvrir sans créditer : `POST /sni/api/v1/wallets/admin/get-or-create` avec `{ ownerType, ownerCode, currency }` : renvoie le portefeuille existant pour ce titulaire et cette devise, ou le crée `ACTIVE` à zéro.
 4. Plafonds et consommation du jour : `GET /sni/api/v1/wallets/{walletNumber}/limits` (`LimitSnapshot` : politique, niveau KYC, plafonds, consommé). Rôle `ROLE_ADMIN` ou `ROLE_SUPER_ADMIN` requis.
 5. Intégrité : `GET /sni/api/v1/wallets/{walletNumber}/integrity` (`IntegrityReport` : écritures vérifiées, maillons rompus `brokenLinks`, solde attendu et réel). Rôle `ROLE_ADMIN` ou `ROLE_SUPER_ADMIN` requis.
@@ -92,12 +94,12 @@ Actif tant que `liftedAt` est nul ; un seul gel actif par portefeuille. Levée p
 Deux chemins coexistent :
 
 - **Chemin contrôlé (à privilégier)** : `POST /sni/api/v1/wallets/control/wallets/{walletNumber}/actions` ([route](routes/WalletControlCentreController.md#r-post-sni-api-v1-wallets-control-wallets-walletnumber-actions)) avec `{ "type": "TOPUP" | "DEBIT" | "ADJUST", "amount": ..., "reason": "...", "reference": "..." }`. Motif d'au moins 5 caractères. `ADJUST` porte un montant signé non nul. Sous le seuil de double visa, exécution immédiate (`status` = `EXECUTED`) ; au-delà, `PENDING_APPROVAL` (parcours 4). L'auteur est lu dans le jeton, jamais dans le corps.
-- **Recharge directe** : `POST /sni/api/v1/wallets/admin/top-up` ([route](routes/WalletController.md#r-post-sni-api-v1-wallets-admin-top-up)) avec `{ ownerType, ownerCode, currency, amount, createdBy, reference? }`. Crée le portefeuille au besoin et crédite `ADMIN_TOPUP` sans seuil ni second visa (voir Écarts). Une `reference` rend la recharge idempotente (`ADMIN_TOPUP:<reference>`) ; sans elle, deux envois créditent deux fois.
+- **Recharge directe** : `POST /sni/api/v1/wallets/admin/top-up` ([route](routes/WalletController.md#r-post-sni-api-v1-wallets-admin-top-up)) avec `{ ownerType, ownerCode, currency, amount, reference? }` (`createdBy` ignoré : l'auteur est le compte connecté). Crée le portefeuille au besoin. **Sous le seuil de double visa** (`bokati.wallet.admin.four-eyes-threshold`, 100 000) : crédit `ADMIN_TOPUP` immédiat, `200` avec le portefeuille. **Au-delà** : rien n'est crédité ; une action `TOPUP` est créée en attente du second visa ([double visa](#4-double-visa-des-actions-administratives)), `202` avec l'action (`actionNumber`, `status = PENDING_APPROVAL`) ; l'écran affiche « En attente de validation ». Une `reference` rend la recharge immédiate idempotente (`ADMIN_TOPUP:<reference>`).
 
 ### 3. Bloquer puis prélever ou rendre des fonds (retenues)
 
 1. `POST /sni/api/v1/wallet-holds` ([route](routes/WalletHoldController.md#r-post-sni-api-v1-wallet-holds)) avec `{ walletNumber, amount, sourceType?, sourceCode?, expiresAt?, createdBy? }`. Renvoie la retenue `ACTIVE` ; `availableBalance` baisse, `heldBalance` monte. `400` « Insufficient wallet balance » si le disponible ne suffit pas.
-2. `PATCH /sni/api/v1/wallet-holds/{holdNumber}/capture?createdBy=` prélève ; `PATCH .../release?createdBy=` rend. Sur une retenue qui n'est plus `ACTIVE` : `400` « Wallet hold is not active ».
+2. `PATCH /sni/api/v1/wallet-holds/{holdNumber}/capture` prélève ; `PATCH .../release` rend (`createdBy` facultatif et ignoré pour un compte connecté). Sur une retenue qui n'est plus `ACTIVE` : `400` « Cette retenue n'est plus active ».
 3. Liste : `GET /sni/api/v1/wallet-holds?walletNumber=&status=&sourceType=&sourceCode=`. `status` invalide : `400` « Invalid wallet hold status ».
 
 ### 4. Double visa des actions administratives
@@ -111,7 +113,12 @@ Deux chemins coexistent :
    - `RESET_PIN` : immédiat, même effet que le parcours 8.
    - `RAISE_LIMIT` : `reference` = code d'une politique de plafond existante, `until` (fin de la dérogation) obligatoire.
    - `CLOSE` : refusé tant qu'il reste une retenue ; avec un solde positif, `reference` (référence de restitution) est obligatoire et l'action passe en double visa.
+   - `RELEASE_HOLD` (17/11/2026) : `reference` = numéro de la retenue à lever (elle doit appartenir au portefeuille) ; immédiat ; les fonds redeviennent disponibles. Pour une retenue bloquée (réservation annulée, retenue orpheline).
+   - `TRANSFER` (17/11/2026) : `amount` positif, `reference` = numéro du portefeuille cible (même devise) ; sortie `TRANSFER_OUT` et entrée `TRANSFER_IN` ; double visa au-delà du seuil (100 000).
+   - `RESTITUTE` (17/11/2026) : `amount` positif, `reference` = `CASH:<session de caisse>` pour rendre en espèces (sortie `CASH_OUT` de la session, bon de sortie, catégorie `WALLET_RESTITUTION`) ou la référence d'un virement ou d'un envoi mobile money fait par ailleurs ; **toujours en double visa** ; le titulaire est prévenu. La session doit être ouverte au moment du second visa.
    - Toute action sur un portefeuille clôturé : `409` « ce portefeuille est clôturé ».
+
+5. **Payer une facture depuis le portefeuille** (17/11/2026) : `POST /sni/api/v1/wallets/control/wallets/{walletNumber}/pay-invoice` avec `{ "documentNumber": "FAC-…", "amount": 15000 }` (`amount` absent : tout le solde restant). Droit `PAYMENT:PROCESS`. Même règlement que `POST /billing/invoices/{documentNumber}/pay` en mode `WALLET` : le portefeuille doit appartenir au client de la facture, un double clic rend le même paiement. Réponse : la facture à jour et la transaction.
 
 ### 5. Traiter les signalements de risque
 
@@ -154,8 +161,8 @@ Deux chemins coexistent :
 - **Droits à deux niveaux.** Le droit de l'URL (`PAYMENT:READ` / `PAYMENT:PROCESS`) ne suffit pas : `WalletControlCentreController`, `ComplianceController`, `.../integrity`, `.../limits` et `.../security/pin/reset` exigent aussi `ROLE_ADMIN` ou `ROLE_SUPER_ADMIN` (`@PreAuthorize` au niveau de la classe ou de la méthode). `WalletController` et `WalletHoldController` n'ont que le droit.
 - **Écrans** : recherche et fiche de portefeuille (soldes, statut, écritures, retenues, plafonds, intégrité) ; centre de contrôle (tableau de bord, file des actions à viser, file des signalements, trésorerie, export) ; conformité (dossiers, gels, filtrage, règles, audit).
 - **Fichiers téléchargés** : CSV d'export comptable, JSON d'export de dossier.
-- **Identifiants numériques** : `GET .../treasury/reconciliations` et `GET .../audit/...` renvoient les entités telles quelles, avec leur `id` int64 (voir [README racine](../README.md#identifiants--attention-aux-grands-nombres)) ; utiliser `reconciliationNumber` pour naviguer.
-- **Champs d'auteur** : dans le centre de contrôle et la conformité, l'auteur vient du jeton. Dans `WalletController` et `WalletHoldController`, `createdBy` est du texte libre envoyé par l'écran : y mettre l'identifiant de l'utilisateur connecté.
+- **Identifiants numériques** : `GET .../treasury/reconciliations` et `GET .../audit/...` renvoient les entités telles quelles, avec leur `id` int64 (voir [README racine](../README.md#identifiants--codes-en-texte)) ; utiliser `reconciliationNumber` pour naviguer.
+- **Champs d'auteur** : partout, l'auteur vient du jeton (centre de contrôle, conformité, recharges, retenues, paiements). Les champs `createdBy` encore acceptés ne servent qu'aux traitements internes.
 
 ## Effets automatiques
 
@@ -172,9 +179,9 @@ Deux chemins coexistent :
 
 ## Écarts relevés
 
-- `POST /sni/api/v1/wallets/admin/top-up` crédite sans seuil ni second visa, avec un auteur libre (`createdBy`), alors que le centre de contrôle impose le double visa au-delà de 100 000 pour le même geste. `src/main/java/com/sni/bokaticowork/features/payment/service/implementation/WalletServiceImpl.java:33` et `src/main/java/com/sni/bokaticowork/features/payment/controller/WalletController.java`.
-- Le grand livre ne vérifie pas le statut : une recharge directe, un remboursement ou un trop-perçu créditent un portefeuille `LOCKED` ou `CLOSED`, et une retenue peut être posée sur un portefeuille non actif (`WalletHoldServiceImpl.create` ne contrôle pas le statut). `src/main/java/com/sni/bokaticowork/features/payment/service/support/WalletLedgerService.java:122`, `src/main/java/com/sni/bokaticowork/features/payment/service/implementation/WalletHoldServiceImpl.java:27`.
-- `GET /sni/api/v1/wallets/compliance/screening/checks?scope=pending` renvoie aussi les contrôles déjà revus (filtre sur le résultat seulement, pas sur `reviewedAt`). `src/main/java/com/sni/bokaticowork/features/payment/compliance/service/ScreeningService.java:170`.
-- Entités JPA renvoyées directement (identifiants int64 et champs internes exposés) : `WalletTreasuryReconciliation` et `ComplianceAuditEntry`. `src/main/java/com/sni/bokaticowork/features/payment/control/controller/WalletControlCentreController.java` (routes `treasury/reconciliations`), `compliance/controller/ComplianceController.java:232`.
-- Le `ComplianceWorker` des dossiers hors délai ne fait que journaliser : personne n'est prévenu. `compliance/service/ComplianceWorker.java:128`.
-- Le code secret se réinitialise par deux voies (route directe et action `RESET_PIN`), dont une seule laisse une trace d'action administrative. `security/controller/WalletSecurityAdminController.java` et `WalletAdminActionService.java:230`.
+- **Réglé (17/11/2026)** : `POST /wallets/admin/top-up` applique le double visa au-delà du seuil et prend l'auteur du jeton.
+- **Réglé (17/11/2026)** : aucune écriture sur un portefeuille `CLOSED` ; sur un portefeuille `LOCKED` (gel), seule la levée d'une retenue passe (`409`) ; une retenue ne se pose que sur un portefeuille `ACTIVE` (`400`).
+- **Réglé (17/11/2026)** : `scope=pending` ne renvoie que les correspondances pas encore revues.
+- **Réglé (17/11/2026)** : rapprochements de trésorerie et piste de conformité renvoyés sans identifiant interne (vues dédiées).
+- **Réglé (17/11/2026)** : chaque matin, les dossiers hors délai sont envoyés par courriel à la personne à qui chacun est confié et à l'adresse `bokati.compliance.alert-email` (paramètre, plusieurs adresses séparées par des virgules).
+- **Réglé (17/11/2026)** : `POST /wallets/{walletNumber}/security/pin/reset` passe par l'action `RESET_PIN` du centre de contrôle : les deux voies laissent la même trace.

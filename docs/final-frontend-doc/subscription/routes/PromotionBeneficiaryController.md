@@ -113,8 +113,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `promotionCode` | texte |  |  |
-| `active` | entier int64 ⚠ |  |  |
-| `redeemed` | entier int64 ⚠ |  |  |
+| `active` | entier int64 (texte au-delà de 2^53) |  |  |
+| `redeemed` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-PromotionBeneficiaryService-ImportLine"></a>
 #### PromotionBeneficiaryService.ImportLine

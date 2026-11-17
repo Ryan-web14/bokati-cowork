@@ -120,6 +120,18 @@ public class CashDeclarationNotifier {
     /** Annulee · rien a dire au client quand c est lui qui a annule, on previent la caisse. */
     public void cancelled(CashPaymentDeclaration declaration) {
         log.info("Annonce {} close · {}", declaration.getDeclarationNumber(), declaration.getCloseReason());
+        try {
+            Map<String, Object> facts = facts(declaration);
+            facts.put("closeReason", declaration.getCloseReason());
+            String subject = "Annonce annulée · " + facts.get("amount") + " " + facts.get("currency")
+                    + " de " + facts.get("customerName");
+            for (String recipient : Recipients.split(deskEmail())) {
+                adminInAppNotifier.notify("CASH_PAYMENT_DECLARATION_CANCELLED", AGGREGATE,
+                        declaration.getDeclarationNumber(), recipient, subject, facts);
+            }
+        } catch (Exception ex) {
+            log.warn("Annonce {} · notification d'annulation a la caisse impossible", declaration.getDeclarationNumber(), ex);
+        }
     }
 
     // -----------------------------------------------------------------------------------------

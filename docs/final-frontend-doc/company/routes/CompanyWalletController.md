@@ -43,7 +43,7 @@ Module [company](../README.md) · 7 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `authorizationId` | chemin | `Long` | oui |  |
+| `authorizationId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-companies-customerid-spending-authorizations-authorizationid-pin-reset"></a>
 ### POST /sni/api/v1/companies/{customerId}/spending-authorizations/{authorizationId}/pin/reset
@@ -56,7 +56,7 @@ Module [company](../README.md) · 7 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `authorizationId` | chemin | `Long` | oui |  |
+| `authorizationId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-companies-customerid-wallet"></a>
 ### GET /sni/api/v1/companies/{customerId}/wallet
@@ -107,7 +107,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `companyCustomerCode` | texte |  |  |
 | `walletNumber` | texte |  |  |
 | `memberId` | texte |  |  |
@@ -173,7 +173,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `memberId` | texte |  |  |
 | `memberName` | texte |  |  |
 | `operation` | enum : `BOOKING`, `SUBSCRIPTION`, `PASS`, `INVOICE_PAYMENT`, `MARKETPLACE` |  |  |

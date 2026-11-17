@@ -38,7 +38,6 @@ class PublicPathsTest {
     @ValueSource(strings = {
             ApiPath.V1 + "/payments/mobile-money/pawapay/callback",
             ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback",
-            ApiPath.V1 + "/payments/mobile-money/pawapay/return",
             ApiPath.V1 + "/payments/mobile-money/providers",
             "/verify/doc/INV-1",
             "/verify/receipt/REC-1",

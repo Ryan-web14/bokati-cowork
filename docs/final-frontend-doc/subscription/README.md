@@ -36,7 +36,7 @@ Il travaille avec [billing](../billing/README.md) (chaque somme due devient une 
 | Parrainage | `referralNumber`, lien `linkCode`, programme `programCode` | Filleul inscrit par le lien d'un parrain. | |
 | Élément facturable | `billableNumber` | Une somme due, transmise à la facturation. | |
 
-Les identifiants numériques (`id` des versions de plan d'abonnement, des options, des politiques de dépassement) relèvent de la règle des [grands nombres](../README.md#identifiants--attention-aux-grands-nombres) : les garder en texte. Les préfixes cités viennent des définitions de séquences des migrations ; traiter tous les codes comme opaques.
+Les identifiants numériques (`id` des versions de plan d'abonnement, des options, des politiques de dépassement) relèvent de la règle des [grands nombres](../README.md#identifiants--codes-en-texte) : les garder en texte. Les préfixes cités viennent des définitions de séquences des migrations ; traiter tous les codes comme opaques.
 
 Une seule politique d'abonnement (`SubscriptionPolicy`) règle tout le cycle de vie ; ses valeurs par défaut, en l'absence de ligne en base, sont dans `src/main/java/com/sni/bokaticowork/features/subscription/lifecycle/model/SubscriptionPolicy.java` : prorata `DAILY`, préavis 30 jours, rupture `PERCENT_OF_REMAINING` à 50 %, 2 gels par an de 60 jours maximum sans frais, tolérance 1 jour, suspension 3 jours après l'entrée en tolérance, expiration 7 jours après la fin de période, devis valable 30 jours.
 
@@ -169,6 +169,7 @@ Formes d'erreur : voir [Erreurs](../README.md#erreurs). Dans ce module, une `Con
 - Plans : `GET /sni/api/v1/subscriptions/plans?status=ACTIVE` ; versions : `GET .../plans/{planCode}/versions` (seulement les versions de catalogue).
 - Définitions de droits : `GET /sni/api/v1/subscriptions/entitlement-definitions/search/basic?query=...` pour une saisie assistée.
 - Plans de pass : `GET /sni/api/v1/pass-plans?status=ACTIVE`, puis `GET .../{planCode}/versions` et `GET /sni/api/v1/pass-plans/versions/{versionCode}/prices`.
+- **Entreprise : deux identités** (16/11/2026). Une entreprise a un profil client (`CUS-COM-...`, type `CUSTOMER`) relié à son entité (`code` d'entreprise, type `BUSINESS_ENTITY`) ; ses abonnements peuvent être au nom de l'un ou de l'autre. `GET /sni/api/v1/subscriptions?subscriberType=...&subscriberCode=...` et `GET /sni/api/v1/subscriptions/current` trouvent les abonnements des deux identités, quel que soit le type (`CUSTOMER` ou `BUSINESS_ENTITY`) et le code envoyés ; la réponse garde le `subscriberType` et le `subscriberCode` réels de chaque abonnement. Un membre n'a qu'une identité.
 - Les souscripteurs (membres, clients, entreprises) viennent des modules [client](../client/README.md) et [company](../company/README.md) : envoyer leur code métier (`memberId`, `customerId`, `code` d'entreprise) dans `subscriberCode` ou `ownerCode`.
 - Énumérations : toutes dans les modèles des fichiers `routes/`.
 

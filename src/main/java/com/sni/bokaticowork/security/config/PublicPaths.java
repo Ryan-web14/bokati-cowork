@@ -47,7 +47,6 @@ public final class PublicPaths {
             ApiPath.V1 + "/payments/mobile-money/pawaypay/callback",
             ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback",
             ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback",
-            ApiPath.V1 + "/payments/mobile-money/pawapay/return",
             ApiPath.V1 + "/payments/mobile-money/pawaypay/return",
             ApiPath.V1 + "/payments/mobile-money/providers"
     );

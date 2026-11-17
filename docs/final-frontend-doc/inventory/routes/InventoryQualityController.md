@@ -16,7 +16,7 @@ Module [inventory](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `lotId` | chemin | `Long` | oui |  |
+| `lotId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-inventory-quality-lots-lotid-inspections"></a>
 ### POST /sni/api/v1/inventory/quality/lots/{lotId}/inspections
@@ -30,7 +30,7 @@ Module [inventory](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `lotId` | chemin | `Long` | oui |  |
+| `lotId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-inventory-quality-non-conformances"></a>
 ### GET /sni/api/v1/inventory/quality/non-conformances
@@ -199,7 +199,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `inspectionCode` | texte |  |  |
 | `planCode` | texte |  |  |
 | `itemCode` | texte |  |  |
-| `lotId` | entier int64 ⚠ |  |  |
+| `lotId` | code identifiant (texte) |  |  |
 | `lotNumber` | texte |  |  |
 | `locationCode` | texte |  |  |
 | `sampledQuantity` | nombre décimal |  |  |
@@ -236,7 +236,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `nonConformanceCode` | texte |  |  |
 | `itemCode` | texte |  |  |
-| `lotId` | entier int64 ⚠ |  |  |
+| `lotId` | code identifiant (texte) |  |  |
 | `lotNumber` | texte |  |  |
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
@@ -248,7 +248,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `responsibleCode` | texte |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |
 | `supplierClaimCode` | texte |  |  |
-| `costImpact` | entier int64 ⚠ |  |  |
+| `costImpact` | entier int64 (texte au-delà de 2^53) |  |  |
 | `detectedBy` | texte |  |  |
 | `detectedAt` | date-heure ISO 8601 UTC |  |  |
 | `closedBy` | texte |  |  |
@@ -261,7 +261,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `itemCode` | texte | oui | longueur min `1` |
-| `lotId` | entier int64 ⚠ |  |  |
+| `lotId` | code identifiant (texte) |  |  |
 | `quantity` | nombre décimal |  |  |
 | `severity` | enum : `MINOR`, `MAJOR`, `CRITICAL` | oui |  |
 | `description` | texte | oui | longueur min `1` |
@@ -270,7 +270,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `responsibleCode` | texte |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |
 | `supplierClaimCode` | texte |  |  |
-| `costImpact` | entier int64 ⚠ |  |  |
+| `costImpact` | entier int64 (texte au-delà de 2^53) |  |  |
 | `detectedBy` | texte |  |  |
 
 <a id="m-QualityControlPlanResponse"></a>

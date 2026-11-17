@@ -84,7 +84,7 @@ Module [inventory](../README.md) · 13 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `assetCode` | chemin | `String` | oui |  |
-| `assignmentId` | chemin | `Long` | oui |  |
+| `assignmentId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-inventory-assets-assetcode-cancel-reservation"></a>
 ### PATCH /sni/api/v1/inventory/assets/{assetCode}/cancel-reservation
@@ -201,11 +201,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `assignedToType` | enum : `MEMBER`, `CUSTOMER`, `BUSINESS`, `USER`, `RESOURCE` |  |  |
 | `assignedToCode` | texte |  |  |
 | `purchaseDate` | date AAAA-MM-JJ |  |  |
-| `purchaseCost` | entier int64 ⚠ |  |  |
+| `purchaseCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `warrantyEndDate` | date AAAA-MM-JJ |  |  |
 | `usefulLifeMonths` | entier |  |  |
-| `residualValue` | entier int64 ⚠ |  |  |
-| `depreciatedValue` | entier int64 ⚠ |  |  |
+| `residualValue` | entier int64 (texte au-delà de 2^53) |  |  |
+| `depreciatedValue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `notes` | texte |  |  |
 
 <a id="m-AssetStatus"></a>
@@ -231,10 +231,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `condition` | enum : `NEW`, `GOOD`, `FAIR`, `DAMAGED`, `UNUSABLE` |  |  |
 | `locationCode` | texte |  |  |
 | `purchaseDate` | date AAAA-MM-JJ |  |  |
-| `purchaseCost` | entier int64 ⚠ |  |  |
+| `purchaseCost` | entier int64 (texte au-delà de 2^53) |  |  |
 | `warrantyEndDate` | date AAAA-MM-JJ |  |  |
 | `usefulLifeMonths` | entier |  |  |
-| `residualValue` | entier int64 ⚠ |  |  |
+| `residualValue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `notes` | texte |  |  |
 
 <a id="m-AssetAssignmentResponse"></a>

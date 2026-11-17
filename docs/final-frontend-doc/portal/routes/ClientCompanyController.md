@@ -104,7 +104,7 @@ Module [portal](../README.md) · 13 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `customerId` | chemin | `String` | oui |  |
-| `linkId` | chemin | `Long` | oui |  |
+| `linkId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-client-companies-customerid-mobile-money-deposits-depositid"></a>
 ### GET /sni/api/v1/client/companies/{customerId}/mobile-money/deposits/{depositId}
@@ -308,7 +308,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `customerId` | texte |  |  |
 | `companyName` | texte |  |  |
 | `memberId` | texte |  |  |
@@ -528,7 +528,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `paidAmount` | nombre décimal |  |  |
 | `balanceDue` | nombre décimal |  |  |
 | `impact` | nombre décimal |  |  |
-| `daysOverdue` | entier int64 ⚠ |  |  |
+| `daysOverdue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `inPeriod` | booléen |  |  |
 
 <a id="m-MobileMoneyDepositResponse-AccountDetailsResponse"></a>

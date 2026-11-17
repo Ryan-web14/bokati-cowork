@@ -142,7 +142,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `endedAt` | date-heure locale sans fuseau |  |  |
 | `basePrice` | entier |  |  |
 | `finalPrice` | entier |  |  |
-| `appliedRuleId` | entier int64 ⚠ |  |  |
+| `appliedRuleId` | code identifiant (texte) |  |  |
 | `appliedRuleLabel` | texte |  |  |
 | `adjustmentType` | texte |  |  |
 | `adjustmentValue` | entier |  |  |
@@ -177,7 +177,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `resourceCode` | texte |  |  |
 | `bookingUnit` | texte |  |  |
 | `price` | entier |  |  |

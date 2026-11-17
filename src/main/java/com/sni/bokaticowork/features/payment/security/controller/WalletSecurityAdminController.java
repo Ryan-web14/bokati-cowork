@@ -34,6 +34,7 @@ public class WalletSecurityAdminController {
     private final WalletSecurityService securityService;
     private final WalletLimitService limitService;
     private final WalletKycLevelResolver kycLevelResolver;
+    private final com.sni.bokaticowork.features.payment.control.service.WalletAdminActionService adminActionService;
 
     /**
      * Retire le code · le titulaire en posera un nouveau a sa prochaine operation.
@@ -44,8 +45,13 @@ public class WalletSecurityAdminController {
     @PostMapping("/{walletNumber}/security/pin/reset")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> resetPin(@PathVariable String walletNumber, Authentication authentication) {
-        WalletAccount wallet = wallet(walletNumber);
-        securityService.resetPin(wallet, authentication == null ? "ADMIN" : authentication.getName());
+        // Meme chemin que l'action RESET_PIN du centre de controle : une action administrative est
+        // tracee (avant, cette route reinitialisait sans aucune trace d'action).
+        wallet(walletNumber);
+        adminActionService.request(walletNumber, new com.sni.bokaticowork.features.payment.control.service.WalletAdminActionService.ActionRequest(
+                com.sni.bokaticowork.features.payment.control.model.WalletAdminAction.Type.RESET_PIN, null, null,
+                "Réinitialisation du code secret depuis l'espace sécurité", null),
+                authentication == null ? "ADMIN" : authentication.getName());
         return ResponseEntity.noContent().build();
     }
 

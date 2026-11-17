@@ -17,7 +17,7 @@ Module [task](../README.md) · 15 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `status` | requête | `TaskStatus` |  |  |
-| `assignedTo` | requête | `Long` |  |  |
+| `assignedTo` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `priority` | requête | `TaskPriority` |  |  |
 | `sourceType` | requête | `String` |  |  |
 | `searchText` | requête | `String` |  |  |
@@ -42,7 +42,7 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `assignedTo` | requête | `Long` |  |  |
+| `assignedTo` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `priority` | requête | `TaskPriority` |  |  |
 | `sourceType` | requête | `String` |  |  |
 | `searchText` | requête | `String` |  |  |
@@ -73,7 +73,7 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-tasks-id"></a>
 ### PUT /sni/api/v1/tasks/{id}
@@ -86,7 +86,7 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-tasks-id-archive"></a>
 ### PATCH /sni/api/v1/tasks/{id}/archive
@@ -98,7 +98,7 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-tasks-id-assign"></a>
 ### PATCH /sni/api/v1/tasks/{id}/assign
@@ -111,7 +111,7 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-tasks-id-checklist"></a>
 ### POST /sni/api/v1/tasks/{id}/checklist
@@ -124,7 +124,7 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-delete-sni-api-v1-tasks-id-checklist-itemid"></a>
 ### DELETE /sni/api/v1/tasks/{id}/checklist/{itemId}
@@ -136,8 +136,8 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
-| `itemId` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+| `itemId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-tasks-id-checklist-itemid"></a>
 ### PATCH /sni/api/v1/tasks/{id}/checklist/{itemId}
@@ -150,8 +150,8 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
-| `itemId` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+| `itemId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-tasks-id-comments"></a>
 ### POST /sni/api/v1/tasks/{id}/comments
@@ -164,7 +164,7 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-tasks-id-complete"></a>
 ### PATCH /sni/api/v1/tasks/{id}/complete
@@ -176,7 +176,7 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-tasks-id-status"></a>
 ### PATCH /sni/api/v1/tasks/{id}/status
@@ -189,7 +189,7 @@ Module [task](../README.md) · 15 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -200,17 +200,17 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `title` | texte |  |  |
 | `description` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `status` | enum : `OPEN`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`, `ARCHIVED` |  |  |
 | `priority` | enum : `LOW`, `MEDIUM`, `HIGH`, `URGENT` |  |  |
 | `dueAt` | date-heure ISO 8601 UTC |  |  |
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
 | `recurrence` | enum : `NONE`, `DAILY`, `WEEKLY`, `MONTHLY`, `AFTER_BOOKING` |  |  |
-| `parentTaskId` | entier int64 ⚠ |  |  |
+| `parentTaskId` | code identifiant (texte) |  |  |
 | `completedAt` | date-heure ISO 8601 UTC |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
@@ -234,7 +234,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `title` | texte | oui | longueur min `1` |
 | `description` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `priority` | enum : `LOW`, `MEDIUM`, `HIGH`, `URGENT` |  |  |
 | `dueAt` | date-heure ISO 8601 UTC |  |  |
 | `sourceType` | texte |  |  |
@@ -248,25 +248,25 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `columns` | [TaskDtos.TaskKanbanColumnResponse](#m-TaskDtos-TaskKanbanColumnResponse)[] |  |  |
-| `totalTasks` | entier int64 ⚠ |  |  |
-| `overdueTasks` | entier int64 ⚠ |  |  |
+| `totalTasks` | entier int64 (texte au-delà de 2^53) |  |  |
+| `overdueTasks` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-TaskDtos-TaskMetricsResponse"></a>
 #### TaskDtos.TaskMetricsResponse
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `totalTasks` | entier int64 ⚠ |  |  |
-| `openTasks` | entier int64 ⚠ |  |  |
-| `inProgressTasks` | entier int64 ⚠ |  |  |
-| `completedTasks` | entier int64 ⚠ |  |  |
-| `cancelledTasks` | entier int64 ⚠ |  |  |
-| `archivedTasks` | entier int64 ⚠ |  |  |
-| `overdueTasks` | entier int64 ⚠ |  |  |
+| `totalTasks` | entier int64 (texte au-delà de 2^53) |  |  |
+| `openTasks` | entier int64 (texte au-delà de 2^53) |  |  |
+| `inProgressTasks` | entier int64 (texte au-delà de 2^53) |  |  |
+| `completedTasks` | entier int64 (texte au-delà de 2^53) |  |  |
+| `cancelledTasks` | entier int64 (texte au-delà de 2^53) |  |  |
+| `archivedTasks` | entier int64 (texte au-delà de 2^53) |  |  |
+| `overdueTasks` | entier int64 (texte au-delà de 2^53) |  |  |
 | `completionRate` | nombre décimal |  |  |
 | `avgCompletionHours` | nombre décimal |  |  |
-| `byPriority` | objet { clé : entier int64 ⚠ } |  |  |
-| `bySourceType` | objet { clé : entier int64 ⚠ } |  |  |
+| `byPriority` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `bySourceType` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
 
 <a id="m-TaskDtos-UpdateTaskRequest"></a>
 #### TaskDtos.UpdateTaskRequest
@@ -286,7 +286,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-TaskDtos-ChecklistRequest"></a>
 #### TaskDtos.ChecklistRequest
@@ -327,7 +327,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `label` | texte |  |  |
 | `completed` | booléen |  |  |
 | `displayOrder` | entier |  |  |
@@ -337,7 +337,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `authorId` | texte |  |  |
 | `authorName` | texte |  |  |
 | `comment` | texte |  |  |
@@ -349,7 +349,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `status` | enum : `OPEN`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`, `ARCHIVED` |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `cards` | [TaskDtos.TaskKanbanCardResponse](#m-TaskDtos-TaskKanbanCardResponse)[] |  |  |
 
 <a id="m-TaskDtos-TaskKanbanCardResponse"></a>
@@ -357,13 +357,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `title` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `status` | enum : `OPEN`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`, `ARCHIVED` |  |  |
 | `priority` | enum : `LOW`, `MEDIUM`, `HIGH`, `URGENT` |  |  |
 | `recurrence` | enum : `NONE`, `DAILY`, `WEEKLY`, `MONTHLY`, `AFTER_BOOKING` |  |  |
-| `parentTaskId` | entier int64 ⚠ |  |  |
+| `parentTaskId` | code identifiant (texte) |  |  |
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
 | `dueAt` | date-heure ISO 8601 UTC |  |  |

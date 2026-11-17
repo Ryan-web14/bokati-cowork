@@ -226,7 +226,7 @@ Les comparaisons ignorent la casse, les accents, les espaces et la ponctuation (
 
 ### Paramétrage
 
-Lecture `KYC:READ`, création, modification et suppression `KYC:MANAGE` : `GET/POST /sni/api/v1/kyc/cross-validation-rules`, `GET/PUT/DELETE /sni/api/v1/kyc/cross-validation-rules/{id}` ([routes](routes/KycCrossValidationRuleController.md)). `{id}` est un int64 ⚠.
+Lecture `KYC:READ`, création, modification et suppression `KYC:MANAGE` : `GET/POST /sni/api/v1/kyc/cross-validation-rules`, `GET/PUT/DELETE /sni/api/v1/kyc/cross-validation-rules/{id}` ([routes](routes/KycCrossValidationRuleController.md)). `{id}` est un code identifiant (texte, voir le README racine).
 
 - Corps : `{ "code": "…", "name": "…", "description": "…", "ruleType": "MIN_VALIDITY", "documentTypeCode1": "MEMBER_PASSPORT,MEMBER_NATIONAL_ID", "documentTypeCode2": null, "fieldToCompare": null, "parameter": "90", "blocking": false, "active": true }`.
 - `ruleType` absent = `FIELD_MATCH` (comme avant). `documentTypeCode1` : un ou plusieurs types séparés par des virgules, vide = toutes les pièces.
@@ -257,7 +257,7 @@ Les autres événements (soumission, affectation, note, risque, recalcul…) son
 
 ## Règles de contrôle croisé
 
-Paramétrage (lecture `KYC:READ`, création, modification et suppression `KYC:MANAGE`) : `GET/POST /sni/api/v1/kyc/cross-validation-rules`, `GET/PUT/DELETE /sni/api/v1/kyc/cross-validation-rules/{id}` ([routes](routes/KycCrossValidationRuleController.md)). `{id}` est un int64 ⚠.
+Paramétrage (lecture `KYC:READ`, création, modification et suppression `KYC:MANAGE`) : `GET/POST /sni/api/v1/kyc/cross-validation-rules`, `GET/PUT/DELETE /sni/api/v1/kyc/cross-validation-rules/{id}` ([routes](routes/KycCrossValidationRuleController.md)). `{id}` est un code identifiant (texte, voir le README racine).
 
 - Corps : `{ "documentTypeCode1": "CNI", "documentTypeCode2": "PASSEPORT", "fieldToCompare": "last_name", "blocking": true, "active": true }`. Codes mis en majuscules, champ en minuscules.
 - Champs comparables : `first_name`/`firstname`, `last_name`/`lastname`/`name`, `date_of_birth`/`dob`, `expiry_date`, `document_number`, `nationality`. Toute autre valeur est acceptée à l'enregistrement mais ne compare rien.

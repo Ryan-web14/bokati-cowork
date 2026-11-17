@@ -61,6 +61,20 @@ public class ProcurementServiceImpl implements ProcurementService {
     private final ProcurementMapper mapper;
     private final SupplierCategoryService supplierCategories;
 
+    private org.springframework.context.ApplicationEventPublisher events;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setEvents(org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
+    }
+
+    /** La comptabilite tient sa fiche fournisseur a jour (InventorySupplierSync). */
+    private void supplierSaved(Supplier saved) {
+        if (events != null && saved.getId() != null) {
+            events.publishEvent(new com.sni.bokaticowork.features.inventory.procurement.event.InventorySupplierSaved(saved.getId()));
+        }
+    }
+
     @Override
     public SupplierResponse createSupplier(SupplierRequest request) {
         Supplier supplier = new Supplier();
@@ -74,6 +88,7 @@ public class ProcurementServiceImpl implements ProcurementService {
             supplierCategories.replaceFor(saved, request.getCategories());
         }
         publish("inventory.supplier.created", "INVENTORY_SUPPLIER", saved.getSupplierCode(), saved.getSupplierCode());
+        supplierSaved(saved);
         return withCategories(mapper.toSupplierResponse(saved), saved);
     }
 
@@ -86,6 +101,7 @@ public class ProcurementServiceImpl implements ProcurementService {
             supplierCategories.replaceFor(saved, request.getCategories());
         }
         publish("inventory.supplier.updated", "INVENTORY_SUPPLIER", saved.getSupplierCode(), saved.getSupplierCode());
+        supplierSaved(saved);
         return withCategories(mapper.toSupplierResponse(saved), saved);
     }
 

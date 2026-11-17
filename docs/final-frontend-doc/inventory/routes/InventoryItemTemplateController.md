@@ -85,11 +85,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `unitCode` | texte |  |  |
 | `itemType` | enum : `CONSUMABLE`, `ASSET`, `SERVICE`, `SPARE_PART` |  |  |
 | `trackingType` | enum : `NONE`, `QUANTITY`, `SERIAL`, `LOT`, `EXPIRY` |  |  |
-| `defaultCost` | entier int64 ⚠ |  |  |
-| `salePrice` | entier int64 ⚠ |  |  |
+| `defaultCost` | entier int64 (texte au-delà de 2^53) |  |  |
+| `salePrice` | entier int64 (texte au-delà de 2^53) |  |  |
 | `active` | booléen |  |  |
 | `possibleCombinations` | entier |  |  |
-| `generatedVariants` | entier int64 ⚠ |  |  |
+| `generatedVariants` | entier int64 (texte au-delà de 2^53) |  |  |
 | `axes` | [InventoryItemTemplateResponse.Axis](#m-InventoryItemTemplateResponse-Axis)[] |  |  |
 
 <a id="m-InventoryItemTemplateRequest"></a>
@@ -103,8 +103,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `unitCode` | texte |  |  |
 | `itemType` | enum : `CONSUMABLE`, `ASSET`, `SERVICE`, `SPARE_PART` | oui |  |
 | `trackingType` | enum : `NONE`, `QUANTITY`, `SERIAL`, `LOT`, `EXPIRY` |  |  |
-| `defaultCost` | entier int64 ⚠ |  |  |
-| `salePrice` | entier int64 ⚠ |  |  |
+| `defaultCost` | entier int64 (texte au-delà de 2^53) |  |  |
+| `salePrice` | entier int64 (texte au-delà de 2^53) |  |  |
 | `active` | booléen |  |  |
 | `axes` | [InventoryItemTemplateRequest.Axis](#m-InventoryItemTemplateRequest-Axis)[] | oui | éléments min `1` |
 

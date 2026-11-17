@@ -31,7 +31,7 @@ Module [subscription](../README.md) · 3 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `addonId` | chemin | `Long` | oui |  |
+| `addonId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-subscriptions-subscriptionnumber-addons"></a>
 ### POST /sni/api/v1/subscriptions/{subscriptionNumber}/addons
@@ -55,9 +55,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `subscriptionNumber` | texte |  |  |
-| `planVersionId` | entier int64 ⚠ |  |  |
+| `planVersionId` | code identifiant (texte) |  |  |
 | `planCode` | texte |  |  |
 | `planName` | texte |  |  |
 | `quantity` | entier |  |  |
@@ -79,7 +79,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `planVersionId` | entier int64 ⚠ | oui |  |
+| `planVersionId` | code identifiant (texte) | oui |  |
 | `quantity` | entier |  | min `1` |
 | `startsAt` | date AAAA-MM-JJ |  |  |
 | `endsAt` | date AAAA-MM-JJ |  |  |

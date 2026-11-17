@@ -10,7 +10,7 @@ Le module gère les tâches internes de l'équipe du centre : création, assigna
 
 | Objet | Identifiant exposé | Lien | Remarques |
 | --- | --- | --- | --- |
-| Tâche (`TaskResponse`) | `id` numérique uniquement (pas de code lisible) | porte ses éléments de checklist et ses commentaires, renvoyés dans la même réponse | Toutes les routes travaillent par `id` : le garder en texte ([Identifiants](../README.md#identifiants--attention-aux-grands-nombres)). |
+| Tâche (`TaskResponse`) | `id` numérique uniquement (pas de code lisible) | porte ses éléments de checklist et ses commentaires, renvoyés dans la même réponse | Toutes les routes travaillent par `id` : le garder en texte ([Identifiants](../README.md#identifiants--codes-en-texte)). |
 | Élément de checklist | `id` numérique (`itemId` dans le chemin) | appartient à une tâche | Trié par `displayOrder` croissant puis `id`. |
 | Commentaire | `id` numérique, jamais utilisé en entrée | appartient à une tâche | Trié par date croissante. Ni modification ni suppression. |
 | Origine (`sourceType`, `sourceCode`) | texte libre | renvoie à l'objet qui a motivé la tâche | Valeurs posées par le serveur : `BOOKING` + numéro de réservation, `INVENTORY` + code d'alerte, `SUPPORT_TICKET` + numéro de ticket. Une tâche manuelle peut porter n'importe quel texte. |

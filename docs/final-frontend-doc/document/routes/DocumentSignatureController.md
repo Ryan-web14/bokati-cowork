@@ -43,7 +43,7 @@ Module [document](../README.md) · 3 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `documentCode` | chemin | `String` | oui |  |
-| `signatureId` | chemin | `Long` | oui |  |
+| `signatureId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -54,10 +54,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentCode` | texte |  |  |
 | `signerType` | texte |  |  |
-| `signerId` | entier int64 ⚠ |  |  |
+| `signerId` | code identifiant (texte) |  |  |
 | `signerName` | texte |  |  |
 | `signerEmail` | texte |  |  |
 | `signatureStatus` | enum : `PENDING`, `SIGNED`, `DECLINED`, `EXPIRED` |  |  |
@@ -71,7 +71,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `signerType` | texte | oui | longueur min `1` |
-| `signerId` | entier int64 ⚠ | oui |  |
+| `signerId` | code identifiant (texte) | oui |  |
 | `signerName` | texte | oui | longueur min `1` |
 | `signerEmail` | string (email) |  |  |
 

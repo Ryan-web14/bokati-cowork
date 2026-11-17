@@ -30,7 +30,7 @@ Module [portal](../README.md) · 3 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `sessionId` | chemin | `Long` | oui |  |
+| `sessionId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -41,6 +41,6 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `active` | booléen |  |  |

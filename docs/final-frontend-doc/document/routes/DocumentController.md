@@ -30,7 +30,7 @@ Module [document](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `userId` | requête | `Long` | oui |  |
+| `userId` | requête | `Long` (code identifiant ou nombre) | oui |  |
 | `page, size, sort` | requête (pagination) | `Pageable` |  | size=20, sort=accessedAt,DESC |
 
 <a id="r-get-sni-api-v1-documents-analytics"></a>
@@ -354,11 +354,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `code` | texte |  |  |
-| `ownerId` | entier int64 ⚠ |  |  |
+| `ownerId` | code identifiant (texte) |  |  |
 | `ownerCode` | texte |  |  |
 | `ownerLabel` | texte |  |  |
 | `locked` | booléen |  |  |
-| `lockedById` | entier int64 ⚠ |  |  |
+| `lockedById` | code identifiant (texte) |  |  |
 | `lockedByName` | texte |  |  |
 | `lockExpiresAt` | date-heure ISO 8601 UTC |  |  |
 | `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
@@ -375,14 +375,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `fileUrl` | texte |  |  |
 | `previewUrl` | texte |  |  |
 | `downloadUrl` | texte |  |  |
-| `fileSize` | entier int64 ⚠ |  |  |
+| `fileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `mimeType` | texte |  |  |
 | `checksumSha256` | texte |  |  |
 | `currentVersionNumber` | entier |  |  |
 | `status` | enum : `DRAFT`, `UPLOADED`, `PENDING_REVIEW`, `NEEDS_CORRECTION`, `APPROVED`, `REJECTED`, `SIGNED`, `EXPIRED`, `ARCHIVED`, `SUPERSEDED` |  |  |
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 | `versions` | [DocumentVersionResponse](#m-DocumentVersionResponse)[] |  |  |
@@ -399,9 +399,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentCode` | texte |  |  |
-| `userId` | entier int64 ⚠ |  |  |
+| `userId` | code identifiant (texte) |  |  |
 | `action` | texte |  |  |
 | `accessedAt` | date-heure ISO 8601 UTC |  |  |
 | `ipAddress` | texte |  |  |
@@ -414,13 +414,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
 | `periodMonths` | entier |  |  |
-| `totalDocuments` | entier int64 ⚠ |  |  |
-| `pendingReview` | entier int64 ⚠ |  |  |
-| `needsCorrection` | entier int64 ⚠ |  |  |
-| `expiredDocuments` | entier int64 ⚠ |  |  |
-| `byStatus` | objet { clé : entier int64 ⚠ } |  |  |
-| `bySpace` | objet { clé : entier int64 ⚠ } |  |  |
-| `byCategory` | objet { clé : entier int64 ⚠ } |  |  |
+| `totalDocuments` | entier int64 (texte au-delà de 2^53) |  |  |
+| `pendingReview` | entier int64 (texte au-delà de 2^53) |  |  |
+| `needsCorrection` | entier int64 (texte au-delà de 2^53) |  |  |
+| `expiredDocuments` | entier int64 (texte au-delà de 2^53) |  |  |
+| `byStatus` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `bySpace` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `byCategory` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
 | `correctionRate30d` | nombre décimal |  |  |
 | `rejectionRate30d` | nombre décimal |  |  |
 | `avgReviewTimeHours` | nombre décimal |  |  |
@@ -440,12 +440,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
-| `total` | entier int64 ⚠ |  |  |
-| `byStatus` | objet { clé : entier int64 ⚠ } |  |  |
-| `byCategory` | objet { clé : entier int64 ⚠ } |  |  |
-| `pendingReviewOlderThan48h` | entier int64 ⚠ |  |  |
-| `needsCorrectionCount` | entier int64 ⚠ |  |  |
-| `expiringIn30Days` | entier int64 ⚠ |  |  |
+| `total` | entier int64 (texte au-delà de 2^53) |  |  |
+| `byStatus` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `byCategory` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
+| `pendingReviewOlderThan48h` | entier int64 (texte au-delà de 2^53) |  |  |
+| `needsCorrectionCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `expiringIn30Days` | entier int64 (texte au-delà de 2^53) |  |  |
 | `rejectionRate30d` | nombre décimal |  |  |
 | `avgReviewTimeHours` | nombre décimal |  |  |
 | `topTags` | [DocumentDashboardResponse.TagCount](#m-DocumentDashboardResponse-TagCount)[] |  |  |
@@ -525,7 +525,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `reviewedBy` | entier int64 ⚠ |  |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `comment` | texte |  |  |
 | `rejectionReasonCode` | texte |  |  |
 | `rejectionReasonDetail` | texte |  |  |
@@ -535,7 +535,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `reviewedBy` | entier int64 ⚠ |  |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `correctionNote` | texte | oui | longueur min `1` |
 | `comment` | texte |  |  |
 | `deadlineDays` | entier |  | min `1` |
@@ -556,10 +556,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `mimeTypeDetected` | texte |  |  |
 | `fileExtension` | texte |  |  |
 | `checksumSha256` | texte |  |  |
-| `fileSizeBytes` | entier int64 ⚠ |  |  |
+| `fileSizeBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadStatus` | enum : `PENDING_SCAN`, `READY`, `QUARANTINED`, `REJECTED`, `DELETED` |  |  |
 | `antivirusStatus` | enum : `PENDING`, `CLEAN`, `INFECTED`, `ERROR` |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
 | `current` | booléen |  |  |
 
@@ -568,12 +568,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `label` | texte |  |  |
 | `color` | texte |  |  |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
-| `createdBy` | entier int64 ⚠ |  |  |
+| `createdBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-DocumentAnalyticsResponse-PeriodCount"></a>
@@ -582,7 +582,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `period` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-DocumentDashboardResponse-TagCount"></a>
 #### DocumentDashboardResponse.TagCount
@@ -591,7 +591,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `tagCode` | texte |  |  |
 | `tagLabel` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-DocumentFolderResponse-OwnerInfo"></a>
 #### DocumentFolderResponse.OwnerInfo
@@ -608,8 +608,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
-| `totalDocuments` | entier int64 ⚠ |  |  |
-| `approvedDocuments` | entier int64 ⚠ |  |  |
+| `totalDocuments` | entier int64 (texte au-delà de 2^53) |  |  |
+| `approvedDocuments` | entier int64 (texte au-delà de 2^53) |  |  |
 | `completionRate` | nombre décimal |  |  |
 | `documents` | [DocumentResponse](#m-DocumentResponse)[] |  |  |
 

@@ -30,17 +30,17 @@
 | Catégorie | énumération `DocumentCategory` | `KYC`, `LEGAL`, `SYSTEM`, `FINANCIAL`, `ASSET`, `OTHER`. Portée par le type, recopiée sur le document. | détermine l'espace et le rattachement KYC |
 | Espace | énumération `DocumentSpace` | `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC`. Rangement logique et périmètre des droits de revue par espace. | voir « Espace d'un document » ci-dessous |
 | Propriétaire | `ownerType` + `ownerCode` à l'envoi ; `ownerType` + `ownerId` (int64) en réponse | `MEMBER` (code membre `memberId`), `CUSTOMER` (code client `customerId`), `BUSINESS` (code entreprise) ; pour `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `ownerCode` doit être l'identifiant numérique en texte. | `DocumentResponse` ne renvoie pas le code du propriétaire, seulement `ownerId` |
-| Exigence documentaire | `id` (int64 ⚠) | « Tel type de propriétaire doit fournir tel type de document », éventuellement filtré par type de client ou forme juridique. | alimente le KYC et la vue « pièces manquantes » |
+| Exigence documentaire | `id` (code identifiant) | « Tel type de propriétaire doit fournir tel type de document », éventuellement filtré par type de client ou forme juridique. | alimente le KYC et la vue « pièces manquantes » |
 | Dossier KYC | `code` (séquence `KYCCASE`) | Le dossier de vérification d'un membre, client ou entreprise. Un seul dossier « vivant » par propriétaire. | des pièces KYC, des notes, des exigences propres au dossier |
 | Pièce KYC (`KycDocument`) | `documentCode` (code du document recto) ; `id` numérique (voir piège plus bas) | Lien entre un dossier KYC et un document recto, plus un document verso facultatif (`backDocumentCode`). Son statut de vérification suit celui du document. | un document recto, un document verso |
 | Dossier de classement | `code` (séquence `FOLDER`) | Arborescence libre (10 niveaux au plus) dans un espace. | contient des documents |
 | Étiquette | `code` (minuscules, chiffres, tirets) | Libellé coloré, global ou propre à un espace. | assignée aux documents |
 | Métadonnée | clé texte | Paires clé/valeur libres sur un document. | |
 | Lien de partage | `token` (32 caractères hexadécimaux) | Lien à durée limitée, éventuellement protégé par mot de passe, vers un document ou un dossier. | |
-| Demande de signature | `id` (int64 ⚠) | Signature attendue d'un signataire sur un document. | |
+| Demande de signature | `id` (code identifiant) | Signature attendue d'un signataire sur un document. | |
 | Circuit d'approbation | `code` (séquence `WORKFLOW`) ; instance : `id` (int64) | Suite d'étapes d'approbation que l'on lance sur un document. | |
 | Politique de rétention | `code` (majuscules) | Archive automatiquement les documents anciens d'un espace ou d'un type. | |
-| Règle de contrôle croisé KYC | `id` (int64 ⚠) | Compare un champ lu par OCR entre deux types de pièces avant l'approbation d'un dossier. | |
+| Règle de contrôle croisé KYC | `id` (code identifiant) | Compare un champ lu par OCR entre deux types de pièces avant l'approbation d'un dossier. | |
 
 ### Espace d'un document
 
@@ -197,7 +197,7 @@ Le droit se compare à la liste `roles` reçue à la connexion ([README racine](
 
 ### Identifiants numériques à manipuler sans perte
 
-Les routes de ce module exigent plusieurs entiers int64 (voir [README racine](../README.md#identifiants--attention-aux-grands-nombres)) :
+Les routes de ce module exigent plusieurs entiers int64 (voir [README racine](../README.md#identifiants--codes-en-texte)) :
 
 - `assignedTo`, `userId` (journal par utilisateur), `granteeId`, `signerId` : l'identifiant numérique d'un compte. `reviewedBy` et `authorId` ne sont plus à envoyer (l'auteur est le compte connecté) ; « ma file » est toujours celle du compte connecté. `GET /sni/api/v1/auth/me` ne le fournit pas (il renvoie `userId` texte) ; il figure dans `AdminUserResponse.id` des routes d'administration des comptes (module `securite`, route exacte non vérifiée). Le garder en texte.
 - Chemins `{id}` : exigences documentaires, règles de contrôle croisé, `{signatureId}`.

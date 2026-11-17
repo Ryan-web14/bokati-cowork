@@ -90,7 +90,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `messageId` | texte |  |  |
 | `toPhone` | texte |  |  |
 | `kind` | texte |  |  |
@@ -115,7 +115,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `purpose` | texte |  |  |
 | `name` | texte |  |  |
 | `language` | texte |  |  |

@@ -120,7 +120,7 @@ class BookingWalletSettlementSupportTest {
 
     @Test
     void refusesTheBookingWhenTheWalletCannotCoverIt() {
-        when(walletHoldService.create(any())).thenThrow(new BadRequestException("Insufficient wallet balance"));
+        when(walletHoldService.create(any())).thenThrow(new BadRequestException("Solde du portefeuille insuffisant"));
 
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> support.hold(booking(BookingStatus.PENDING_PAYMENT, new BigDecimal("25000"))));

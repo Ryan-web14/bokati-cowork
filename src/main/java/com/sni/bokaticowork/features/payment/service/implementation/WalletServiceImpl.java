@@ -92,10 +92,10 @@ public class WalletServiceImpl implements WalletService {
     @Transactional(readOnly = true)
     public WalletAccount serviceWallet(String walletNumber) {
         if (!StringUtils.hasText(walletNumber)) {
-            throw new BadRequestException("Wallet number is required");
+            throw new BadRequestException("Le numéro de portefeuille est requis");
         }
         return walletRepository.findByWalletNumber(walletNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Portefeuille introuvable"));
     }
 
     @Override
@@ -105,19 +105,19 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public void debit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType,
+    public com.sni.bokaticowork.features.payment.model.WalletLedgerEntry debit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType,
                       String sourceCode, String reference, String createdBy, String idempotencyKey) {
         ensureUsable(wallet);
         if (limitService != null && entryType == WalletEntryType.PAYMENT) {
             // Un paiement depuis le portefeuille est une depense du titulaire · ses plafonds personnels s'appliquent.
             limitService.assertWithinPersonalCaps(wallet, amount);
         }
-        ledgerService.debit(wallet, amount, entryType, sourceType, sourceCode, reference, createdBy, idempotencyKey);
+        return ledgerService.debit(wallet, amount, entryType, sourceType, sourceCode, reference, createdBy, idempotencyKey);
     }
 
     private WalletAccount getOrCreateWallet(String ownerType, String ownerCode, String currency) {
         if (!StringUtils.hasText(ownerType) || !StringUtils.hasText(ownerCode) || !StringUtils.hasText(currency)) {
-            throw new BadRequestException("Wallet owner type, owner code and currency are required");
+            throw new BadRequestException("Le type, le code du titulaire et la devise du portefeuille sont requis");
         }
         String normalizedType = ownerType.trim();
         String normalizedCode = ownerCode.trim();
@@ -150,7 +150,7 @@ public class WalletServiceImpl implements WalletService {
 
     private void ensureUsable(WalletAccount wallet) {
         if (wallet.getStatus() != WalletStatus.ACTIVE) {
-            throw new BadRequestException("Wallet is not active");
+            throw new BadRequestException("Le portefeuille n'est pas actif");
         }
     }
 }

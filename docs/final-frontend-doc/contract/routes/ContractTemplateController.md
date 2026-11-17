@@ -151,7 +151,7 @@ Module [contract](../README.md) · 13 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `code` | chemin | `String` | oui |  |
-| `sectionId` | chemin | `Long` | oui |  |
+| `sectionId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-contract-templates-code-sections-sectionid"></a>
 ### PUT /sni/api/v1/contract-templates/{code}/sections/{sectionId}
@@ -165,7 +165,7 @@ Module [contract](../README.md) · 13 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `code` | chemin | `String` | oui |  |
-| `sectionId` | chemin | `Long` | oui |  |
+| `sectionId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -236,7 +236,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `templateCode` | texte |  |  |
 | `title` | texte |  |  |
 | `content` | texte |  |  |

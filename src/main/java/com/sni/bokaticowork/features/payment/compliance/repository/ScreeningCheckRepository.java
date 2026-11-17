@@ -21,6 +21,9 @@ public interface ScreeningCheckRepository extends JpaRepository<ScreeningCheck, 
 
     Page<ScreeningCheck> findByResultInOrderByCheckedAtDesc(Collection<ScreeningCheck.Result> results, Pageable pageable);
 
+    /** Correspondances pas encore revues. */
+    Page<ScreeningCheck> findByResultInAndReviewedAtIsNullOrderByCheckedAtDesc(Collection<ScreeningCheck.Result> results, Pageable pageable);
+
     Page<ScreeningCheck> findAllByOrderByCheckedAtDesc(Pageable pageable);
 
     long countByResultInAndReviewedAtIsNull(Collection<ScreeningCheck.Result> results);

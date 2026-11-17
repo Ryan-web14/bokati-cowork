@@ -65,7 +65,7 @@ public class ChequeService {
         int created = 0;
         for (Map<String, Object> row : new JdbcTemplate(dataSource).queryForList("SELECT t.transaction_number, t.provider_reference, t.bank_name, "
                 + "t.payer_name, t.amount, t.cash_session_number, COALESCE(t.paid_at, t.created_at) AS received FROM payment_transaction t "
-                + "WHERE t.payment_method = 'CHEQUE' AND t.status IN ('SUCCEEDED', 'REFUNDED', 'REVERSED') AND (t.metadata_json IS NULL OR t.metadata_json NOT LIKE '%originalTransactionNumber%') "
+                + "WHERE t.payment_method = 'CHEQUE' AND t.status IN ('SUCCEEDED', 'REFUNDED', 'REVERSED') AND t.metadata_json ->> 'originalTransactionNumber' IS NULL "
                 + "AND NOT EXISTS (SELECT 1 FROM bank_cheque c WHERE c.transaction_number = t.transaction_number)")) {
             String session = (String) row.get("cash_session_number");
             String register = session == null ? null

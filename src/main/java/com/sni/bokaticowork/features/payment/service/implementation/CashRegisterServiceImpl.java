@@ -239,7 +239,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (register.getId() != null) {
             sessionRepository.findBlockingSessionByCashRegisterId(register.getId())
                     .ifPresent(session -> {
-                        throw new BadRequestException("Cash register has an active session");
+                        throw new BadRequestException("La caisse a une session en cours");
                     });
         }
         // Forme historique de la suspension : sans motif de la liste, la desactivation est tracee comme telle.
@@ -276,11 +276,11 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         request.outOfHoursReasonCode(), request.outOfHoursReasonText());
         sessionRepository.findBlockingSessionByCashRegisterId(register.getId())
                 .ifPresent(session -> {
-                    throw new BadRequestException("Cash register already has an active session");
+                    throw new BadRequestException("La caisse a déjà une session en cours");
                 });
         sessionRepository.findBlockingSessionByOpenedBy(openedBy)
                 .ifPresent(session -> {
-                    throw new BadRequestException("Cashier already has an active cash session");
+                    throw new BadRequestException("Ce caissier a déjà une session en cours");
                 });
         // Continuite du fonds (lot C2) : le fonds attendu est le dernier comptage de la caisse ; un
         // fonds compte different est un ecart d'ouverture, a motiver avant toute operation.
@@ -382,7 +382,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         assertManualEntryAllowed(session.getCashRegister());
         BigDecimal countedAmount = request.countedClosingAmount() != null ? request.countedClosingAmount() : request.closingAmount();
         if (countedAmount == null) {
-            throw new BadRequestException("Counted closing amount is required");
+            throw new BadRequestException("Le montant compté à la clôture est requis");
         }
         // Forme historique de la cloture : un total compte et un motif libre. Le cycle de vie
         // (lot C2) applique tolerance, double comptage, revue et dernier comptage.
@@ -451,10 +451,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     private CashMovement movementByNumber(String movementNumber) {
         if (!StringUtils.hasText(movementNumber)) {
-            throw new BadRequestException("Cash movement number is required");
+            throw new BadRequestException("Le numéro du mouvement est requis");
         }
         return movementRepository.findByMovementNumber(movementNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Cash movement not found: " + movementNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Mouvement de caisse introuvable : " + movementNumber));
     }
 
     @Override
@@ -462,7 +462,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashSession session = requireOpenSession(sessionNumber);
         CashMovementType type = request.movementType();
         if (type == CashMovementType.PAYMENT || type == CashMovementType.OPENING_FLOAT || type == CashMovementType.CLOSING_COUNT) {
-            throw new BadRequestException("Movement type is system managed");
+            throw new BadRequestException("Ce type de mouvement est réservé au système");
         }
         if (type == CashMovementType.ADJUSTMENT
                 && request.direction() != com.sni.bokaticowork.features.payment.enums.CashFlowDirection.IN
@@ -493,7 +493,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (StringUtils.hasText(request.relatedMovementNumber())) {
             movement.setRelatedMovementId(movementRepository.findByMovementNumber(request.relatedMovementNumber().trim())
                     .map(CashMovement::getId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Related cash movement not found: " + request.relatedMovementNumber())));
+                    .orElseThrow(() -> new ResourceNotFoundException("Mouvement lié introuvable : " + request.relatedMovementNumber())));
             changed = true;
         }
         if (StringUtils.hasText(request.batchId())) {
@@ -659,9 +659,19 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 && movement.getAmount().compareTo(register.getMaxOutPerOperation()) > 0;
         boolean overDailyCap = outflow && register.getMaxOutPerDay() != null && register.getMaxOutPerDay().signum() > 0
                 && dailyOutflow(register, movement).add(movement.getAmount()).compareTo(register.getMaxOutPerDay()) > 0;
-        boolean needsVisa = movement.getMovementType() == CashMovementType.ADJUSTMENT
-                || overOperationCap || overDailyCap
-                || (threshold != null && movement.getAmount().compareTo(threshold) > 0 && (outflow || threshold.signum() == 0));
+        boolean overThreshold = threshold != null && movement.getAmount().compareTo(threshold) > 0 && (outflow || threshold.signum() == 0);
+        boolean adjustment = movement.getMovementType() == CashMovementType.ADJUSTMENT;
+        boolean needsVisa = adjustment || overOperationCap || overDailyCap || overThreshold;
+        // Indicateurs du mouvement (avant : jamais renseignes). requiresSignature : un second visa est
+        // exige. riskScore (0 a 100) : somme des raisons du visa, ajustement 30, plafond par operation
+        // 30, plafond du jour 30, seuil de double visa 20, plafonnee a 100.
+        int score = (adjustment ? 30 : 0) + (overOperationCap ? 30 : 0) + (overDailyCap ? 30 : 0) + (overThreshold ? 20 : 0);
+        if (needsVisa) {
+            // Mouvement ordinaire : requiresSignature reste false et riskScore nul (aucune raison de visa).
+            movement.setRequiresSignature(true);
+            movement.setRiskScore(BigDecimal.valueOf(Math.min(score, 100)));
+            changed = true;
+        }
         if (needsVisa) {
             movement.setStatus(com.sni.bokaticowork.features.payment.enums.CashMovementStatus.PENDING);
             movement.setExpiresAt(Instant.now().plus(java.time.Duration.ofHours(visaExpiryHours())));
@@ -749,6 +759,77 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         enforceDetentionCap(session, amount);
         saveMovement(session, CashMovementType.PAYMENT, amount, CashDocumentType.RECEIPT, trim(referenceCode), "PAYMENT",
                 "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, actors.resolve(createdBy), null);
+    }
+
+    private com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository paymentTransactions;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPaymentTransactions(com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository paymentTransactions) {
+        this.paymentTransactions = paymentTransactions;
+    }
+
+    @Override
+    public ReassignedPayment reassignPayment(String sessionNumber, String transactionNumber, String targetSessionNumber,
+                                             String reason, String actor) {
+        if (!StringUtils.hasText(reason) || reason.trim().length() < 5) {
+            throw new BadRequestException("Un motif d'au moins cinq caractères est requis pour réaffecter un paiement");
+        }
+        CashSession source = session(sessionNumber);
+        if (!java.util.EnumSet.of(CashSessionStatus.OPEN, CashSessionStatus.PAUSED, CashSessionStatus.SUSPENDED).contains(source.getStatus())) {
+            throw new BadRequestException("La session " + source.getSessionNumber() + " est " + source.getStatus()
+                    + " : un paiement ne se réaffecte que depuis une session ouverte, en pause ou suspendue");
+        }
+        CashSession target = requireOpenSession(targetSessionNumber);
+        if (target.getId().equals(source.getId())) {
+            throw new BadRequestException("La session cible est la même que la session d'origine");
+        }
+        if (paymentTransactions == null) {
+            throw new BadRequestException("Réaffectation indisponible");
+        }
+        var transaction = paymentTransactions.findByTransactionNumber(transactionNumber == null ? null : transactionNumber.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction de paiement introuvable"));
+        if (transaction.getPaymentMethod() != PaymentMethod.CASH || transaction.getStatus() != PaymentTransactionStatus.SUCCEEDED) {
+            throw new BadRequestException("Seul un paiement en espèces réussi se réaffecte d'une session à l'autre");
+        }
+        if (!source.getSessionNumber().equals(transaction.getCashSessionNumber())) {
+            throw new BadRequestException("Le paiement " + transaction.getTransactionNumber() + " n'est pas rattaché à la session "
+                    + source.getSessionNumber());
+        }
+        String by = actors.resolve(actor);
+        String note = "Réaffectation du paiement " + transaction.getTransactionNumber() + " : " + reason.trim();
+        BigDecimal amount = money(transaction.getAmount());
+        CashMovement exit = saveMovement(source, CashMovementType.TRANSFER_OUT, amount, CashDocumentType.EXIT_VOUCHER,
+                transaction.getTransactionNumber(), "PAYMENT_REASSIGNMENT", "PAYMENT_TRANSACTION", transaction.getTransactionNumber(),
+                "CASH_SESSION", target.getSessionNumber(), null, note, by, null);
+        CashMovement entry = saveMovement(target, CashMovementType.TRANSFER_IN, amount, CashDocumentType.ENTRY_VOUCHER,
+                transaction.getTransactionNumber(), "PAYMENT_REASSIGNMENT", "PAYMENT_TRANSACTION", transaction.getTransactionNumber(),
+                "CASH_SESSION", source.getSessionNumber(), null, note, by, null);
+        transaction.setCashSessionNumber(target.getSessionNumber());
+        paymentTransactions.save(transaction);
+        org.slf4j.LoggerFactory.getLogger(CashRegisterServiceImpl.class).info("Paiement {} reaffecte de {} a {} par {}", transaction.getTransactionNumber(), source.getSessionNumber(),
+                target.getSessionNumber(), by);
+        return new ReassignedPayment(transaction.getTransactionNumber(), source.getSessionNumber(), target.getSessionNumber(),
+                amount, exit.getMovementNumber(), entry.getMovementNumber());
+    }
+
+    @Override
+    public void recordWalletRestitution(String sessionNumber, BigDecimal amount, String walletNumber, String actionNumber, String createdBy) {
+        CashSession session = requireOpenSession(sessionNumber);
+        assertManualEntryAllowed(session.getCashRegister());
+        validatePositive(amount);
+        saveMovement(session, CashMovementType.CASH_OUT, amount, CashDocumentType.EXIT_VOUCHER, trim(actionNumber), "WALLET_RESTITUTION",
+                "WALLET_ADMIN_ACTION", trim(actionNumber), "WALLET", trim(walletNumber), null,
+                "Restitution du solde du portefeuille " + walletNumber, actors.resolve(createdBy), null);
+    }
+
+    @Override
+    public void recordRefund(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy) {
+        CashSession session = requireOpenSession(sessionNumber);
+        assertManualEntryAllowed(session.getCashRegister());
+        validatePositive(amount);
+        saveMovement(session, CashMovementType.REFUND, amount, CashDocumentType.EXIT_VOUCHER, trim(referenceCode), "REFUND",
+                "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, "Remboursement en espèces",
+                actors.resolve(createdBy), null);
     }
 
     /**
@@ -1066,25 +1147,25 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private CashSession requireOpenSession(String sessionNumber) {
         CashSession session = session(sessionNumber);
         if (session.getStatus() != CashSessionStatus.OPEN) {
-            throw new BadRequestException("Cash session is not open");
+            throw new BadRequestException("La session " + session.getSessionNumber() + " n'est pas ouverte (" + session.getStatus() + ")");
         }
         return session;
     }
 
     private CashSession session(String sessionNumber) {
         if (!StringUtils.hasText(sessionNumber)) {
-            throw new BadRequestException("Cash session number is required");
+            throw new BadRequestException("Le numéro de la session est requis");
         }
         return sessionRepository.findBySessionNumber(sessionNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Cash session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session de caisse introuvable : " + sessionNumber));
     }
 
     private CashRegister register(String registerCode) {
         if (!StringUtils.hasText(registerCode)) {
-            throw new BadRequestException("Cash register code is required");
+            throw new BadRequestException("Le code de la caisse est requis");
         }
         return registerRepository.findByRegisterCode(registerCode.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Cash register not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Caisse introuvable : " + registerCode));
     }
 
     private CashMovement saveManualMovement(CashSession session,
@@ -1126,13 +1207,13 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         assertManualEntryAllowed(session.getCashRegister());
         String author = actors.resolve(createdBy);
         if (requiresReason(movementType) && !StringUtils.hasText(reason)) {
-            throw new BadRequestException("Reason is required for this cash movement type");
+            throw new BadRequestException("Le motif est requis pour ce type de mouvement");
         }
         if (requiresReason(documentType) && !StringUtils.hasText(reason)) {
-            throw new BadRequestException("Reason is required for this cash document type");
+            throw new BadRequestException("Le motif est requis pour ce type de pièce");
         }
         if (requiresDocumentNumber(documentType) && !StringUtils.hasText(documentNumber)) {
-            throw new BadRequestException("Document number is required for this cash document type");
+            throw new BadRequestException("Le numéro de pièce est requis pour ce type de pièce");
         }
         return saveMovement(session, movementType, amount, CASH_CURRENCY, documentType, documentNumber, flowCategory,
                 referenceType, referenceCode, counterpartyType, counterpartyCode, counterpartyName, reason, author, metadataJson, direction);
@@ -1214,13 +1295,13 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     private void validatePositive(BigDecimal amount) {
         if (amount == null || amount.signum() <= 0) {
-            throw new BadRequestException("Cash amount must be positive");
+            throw new BadRequestException("Le montant doit être positif");
         }
     }
 
     private BigDecimal money(BigDecimal amount) {
         if (amount.signum() < 0) {
-            throw new BadRequestException("Cash amount cannot be negative");
+            throw new BadRequestException("Le montant ne peut pas être négatif");
         }
         return amount.setScale(4, RoundingMode.HALF_UP);
     }
@@ -1254,6 +1335,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     }
 
     private String generateBusinessCode(String requestedCode, String name) {
+        // Code d'entite fourni : garde tel quel (il designe une entite existante, et sert de filtre).
+        if (StringUtils.hasText(requestedCode)) {
+            return requestedCode.trim();
+        }
         String base = compact(StringUtils.hasText(requestedCode) ? requestedCode : name, 16, "BIZ");
         String timestamp = CASH_CODE_FORMATTER.format(Instant.now());
         String token = compact(sequenceGenerator.next("cash_register"), 12, "000000");
@@ -1261,6 +1346,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     }
 
     private String generateDeviceCode(String requestedCode, String name, String businessCode) {
+        // Code de poste fourni : garde tel quel (le controle du poste a l'ouverture le compare).
+        if (StringUtils.hasText(requestedCode)) {
+            return requestedCode.trim();
+        }
         String hint = StringUtils.hasText(requestedCode) ? requestedCode : businessCode + "-" + name;
         String base = compact(hint, 18, "DEVICE");
         String timestamp = CASH_CODE_FORMATTER.format(Instant.now());

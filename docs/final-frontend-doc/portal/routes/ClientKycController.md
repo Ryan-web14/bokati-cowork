@@ -93,7 +93,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-client-documents-kyc-documents-id"></a>
 ### GET /sni/api/v1/client/documents/kyc/documents/{id}
@@ -105,7 +105,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-client-documents-kyc-documents-id"></a>
 ### PUT /sni/api/v1/client/documents/kyc/documents/{id}
@@ -118,7 +118,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `file` | partie multipart | `MultipartFile` | oui |  |
 
 <a id="r-put-sni-api-v1-client-documents-kyc-documents-id"></a>
@@ -132,7 +132,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-client-documents-kyc-documents-id-download"></a>
 ### GET /sni/api/v1/client/documents/kyc/documents/{id}/download
@@ -143,7 +143,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-client-documents-kyc-my-case"></a>
 ### GET /sni/api/v1/client/documents/kyc/my-case
@@ -256,7 +256,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-portal-kyc-documents-id"></a>
 ### GET /sni/api/v1/portal/kyc/documents/{id}
@@ -268,7 +268,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-put-sni-api-v1-portal-kyc-documents-id"></a>
 ### PUT /sni/api/v1/portal/kyc/documents/{id}
@@ -281,7 +281,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `file` | partie multipart | `MultipartFile` | oui |  |
 
 <a id="r-put-sni-api-v1-portal-kyc-documents-id"></a>
@@ -295,7 +295,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-portal-kyc-documents-id-download"></a>
 ### GET /sni/api/v1/portal/kyc/documents/{id}/download
@@ -306,7 +306,7 @@ Module [portal](../README.md) · 30 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-portal-kyc-my-case"></a>
 ### GET /sni/api/v1/portal/kyc/my-case
@@ -375,13 +375,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentCode` | texte |  |  |
 | `documentType` | texte |  |  |
 | `documentTypeName` | texte |  |  |
 | `documentNumber` | texte |  |  |
 | `fileName` | texte |  |  |
-| `fileSize` | entier int64 ⚠ |  |  |
+| `fileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `mimeType` | texte |  |  |
 | `status` | texte |  |  |
 | `requiresBackSide` | booléen |  |  |
@@ -391,7 +391,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `backQualityStatus` | texte |  |  |
 | `backQualityWarnings` | texte[] |  |  |
 | `backFileName` | texte |  |  |
-| `backFileSize` | entier int64 ⚠ |  |  |
+| `backFileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `backMimeType` | texte |  |  |
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |

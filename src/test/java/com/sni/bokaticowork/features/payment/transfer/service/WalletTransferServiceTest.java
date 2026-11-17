@@ -357,12 +357,12 @@ class WalletTransferServiceTest {
         WalletTransfer transfer = pending();
         when(transferRepository.findByTransferNumber("WTR-202609-000001")).thenReturn(Optional.of(transfer));
         when(ledgerService.debit(any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenThrow(new BadRequestException("Insufficient wallet balance"));
+                .thenThrow(new BadRequestException("Solde du portefeuille insuffisant"));
 
         assertThrows(BadRequestException.class, () -> service.confirm(alice, "WTR-202609-000001", "1357"));
 
         assertEquals(WalletTransferStatus.FAILED, transfer.getStatus());
-        assertEquals("Insufficient wallet balance", transfer.getFailureReason(),
+        assertEquals("Solde du portefeuille insuffisant", transfer.getFailureReason(),
                 "Le titulaire doit retrouver ce transfert dans son historique avec la raison");
     }
 

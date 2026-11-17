@@ -13,7 +13,7 @@ Le module recueille des confirmations de présence à un événement (la « Gran
 | Événement (`Event`) | `code` (ex. `OUVERTURE`), insensible à la casse dans les chemins | Nom, description, date (`eventDate`, facultative), indicateur `active`. Créé uniquement par migration (`src/main/resources/db/migration/V199__event_registration.sql`, renommé par `V200__rename_opening_event.sql`). |
 | Inscription (`EventRegistration`) | `id` numérique (dans les chemins du back-office) et `registrationNumber` lisible `REG-<millisecondes>` | Prénom, nom, courriel, téléphone, WhatsApp, statut. Après validation : `memberId` et `customerId` du membre créé. |
 
-L'`id` est un `BIGSERIAL` (petit entier) : il ne dépasse pas `2^53` en pratique, mais le modèle le marque int64 ; le garder en texte comme le demande le [README racine](../README.md#identifiants--attention-aux-grands-nombres) ne coûte rien.
+L'`id` est un `BIGSERIAL` (petit entier) : il ne dépasse pas `2^53` en pratique, mais le modèle le marque int64 ; le garder en texte comme le demande le [README racine](../README.md#identifiants--codes-en-texte) ne coûte rien.
 
 L'événement de l'ouverture est désigné côté serveur par `app.event.opening-code` (défaut `OUVERTURE`) : les routes `/public/opening` sont des raccourcis de `/public/events/OUVERTURE`.
 

@@ -60,6 +60,25 @@ public interface CashRegisterService {
     CashMetricsOverviewResponse overviewMetrics(String registerCode, String businessEntityCode, Instant fromDate, Instant toDate);
     java.util.List<CashRegisterMetricsResponse> registerMetrics(String businessEntityCode, Instant fromDate, Instant toDate);
     void recordPayment(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy);
+
+    /**
+     * Rattache a la bonne session un paiement en especes saisi dans la mauvaise : sortie de la
+     * session d'origine, entree dans la session cible (motif, meme montant), transaction rattachee a
+     * la cible. Les soldes courants des deux sessions restent justes.
+     */
+    ReassignedPayment reassignPayment(String sessionNumber, String transactionNumber, String targetSessionNumber,
+                                      String reason, String actor);
+
+    /** Resultat d'une reaffectation. */
+    record ReassignedPayment(String transactionNumber, String fromSession, String toSession, BigDecimal amount,
+                             String exitMovementNumber, String entryMovementNumber) {
+    }
+
+    /** Solde de portefeuille rendu en especes au titulaire : sortie de la session (action RESTITUTE visee). */
+    void recordWalletRestitution(String sessionNumber, BigDecimal amount, String walletNumber, String actionNumber, String createdBy);
+
+    /** Especes rendues a un client (remboursement d'un paiement en especes) : sortie de la session. */
+    void recordRefund(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy);
     void recordAutomaticPayment(PaymentTransaction transaction);
 
     /** Refuse une session close ou tenue par le systeme · pour rattacher un paiement saisi au guichet. */

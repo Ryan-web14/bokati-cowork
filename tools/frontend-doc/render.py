@@ -113,15 +113,19 @@ def anchor(short_name):
     return 'm-' + re.sub(r'[^A-Za-z0-9]+', '-', short_name)
 
 
-def field_type(prop, names):
+def id_like(name):
+    return bool(name) and (name == 'id' or name.endswith('Id') or name.endswith('Ids'))
+
+
+def field_type(prop, names, name=None):
     if '$ref' in prop:
         short = names(prop['$ref'][len(REF):])
         return f'[{short}](#{anchor(short)})'
     if 'allOf' in prop and len(prop['allOf']) == 1:
-        return field_type(prop['allOf'][0], names)
+        return field_type(prop['allOf'][0], names, name)
     kind = prop.get('type') or (prop.get('types') or [None])[0]
     if kind == 'array':
-        return field_type(prop.get('items', {}), names) + '[]'
+        return field_type(prop.get('items', {}), names, name) + '[]'
     if 'enum' in prop:
         return 'enum : ' + ', '.join(f'`{v}`' for v in prop['enum'])
     if kind == 'object' or (kind is None and 'additionalProperties' in prop):
@@ -130,8 +134,10 @@ def field_type(prop, names):
             return 'objet { clé : ' + field_type(extra, names) + ' }'
         return 'objet libre'
     fmt = prop.get('format')
+    if (kind, fmt) == ('integer', 'int64'):
+        # Identifiants lisibles (17/11/2026) : voir le README racine.
+        return 'code identifiant (texte)' if id_like(name) else 'entier int64 (texte au-delà de 2^53)'
     label = {
-        ('integer', 'int64'): 'entier int64 ⚠',
         ('integer', 'int32'): 'entier',
         ('number', None): 'nombre décimal',
         ('number', 'double'): 'nombre décimal',
@@ -193,7 +199,7 @@ def render_model(name, schemas, enums, names):
         return lines
     lines += ['| Champ | Type | Requis | Contraintes |', '| --- | --- | --- | --- |']
     for field, prop in properties.items():
-        lines.append(f'| `{field}` | {field_type(prop, names)} | {"oui" if field in required else ""} | {constraints(prop)} |')
+        lines.append(f'| `{field}` | {field_type(prop, names, field)} | {"oui" if field in required else ""} | {constraints(prop)} |')
     lines.append('')
     return lines
 
@@ -244,7 +250,9 @@ def render_route(route, names):
                      'header': 'en-tête', 'multipart': 'partie multipart',
                      'query-object': 'requête (champs de l\'objet)'}[param['in']]
             required = 'oui' if param.get('required') else ''
-            lines.append(f'| `{param["name"]}` | {where} | `{shorten(param.get("type", ""), names)}` | {required} | {param.get("default", "")} |')
+            kind = shorten(param.get("type", ""), names)
+            kind = f'`{kind}`' + (' (code identifiant ou nombre)' if kind in ('Long', 'long', 'List<Long>') else '')
+            lines.append(f'| `{param["name"]}` | {where} | {kind} | {required} | {param.get("default", "")} |')
     lines.append('')
     return lines
 

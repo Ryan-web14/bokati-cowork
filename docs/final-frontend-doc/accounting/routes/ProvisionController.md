@@ -52,7 +52,7 @@ Module [accounting](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-receivables-aging"></a>
 ### GET /sni/api/v1/accounting/receivables/aging
@@ -118,7 +118,7 @@ Module [accounting](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-receivables-write-offs"></a>
 ### GET /sni/api/v1/accounting/receivables/write-offs
@@ -147,7 +147,7 @@ Module [accounting](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-receivables-write-offs-id-reject"></a>
 ### POST /sni/api/v1/accounting/receivables/write-offs/{id}/reject
@@ -160,7 +160,7 @@ Module [accounting](../README.md) · 25 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-receivables-documentnumber"></a>
 ### GET /sni/api/v1/accounting/receivables/{documentNumber}
@@ -310,7 +310,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `fiscalYear` | texte |  |  |
 | `reviewDate` | date AAAA-MM-JJ |  |  |
 | `voucherNumber` | texte |  |  |
@@ -340,7 +340,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `status` | texte |  |  |
 | `account` | texte |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |
-| `daysOverdue` | entier int64 ⚠ |  |  |
+| `daysOverdue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `balanceDue` | nombre décimal |  |  |
 | `baseHt` | nombre décimal |  |  |
 | `impairment` | nombre décimal |  |  |
@@ -366,7 +366,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentNumber` | texte |  |  |
 | `customerCode` | texte |  |  |
 | `triggerCode` | texte |  |  |
@@ -397,7 +397,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `voucherNumber` | texte |  |  |
 | `customerCode` | texte |  |  |
 | `documentNumbers` | texte |  |  |
@@ -469,7 +469,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `nature` | texte |  |  |
 | `title` | texte |  |  |
@@ -535,7 +535,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `fiscalYear` | texte |  |  |
 | `computedAt` | date AAAA-MM-JJ |  |  |
 | `method` | texte |  |  |
@@ -591,7 +591,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `documentNumber` | texte |  |  |
 | `customerCode` | texte |  |  |
 | `status` | texte |  |  |
-| `daysOverdue` | entier int64 ⚠ |  |  |
+| `daysOverdue` | entier int64 (texte au-delà de 2^53) |  |  |
 | `remainingTtc` | nombre décimal |  |  |
 | `baseHt` | nombre décimal |  |  |
 | `guarantees` | nombre décimal |  |  |
@@ -607,8 +607,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `riskId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `riskId` | code identifiant (texte) |  |  |
 | `valuationDate` | date AAAA-MM-JJ |  |  |
 | `amount` | nombre décimal |  |  |
 | `probability` | texte |  |  |
@@ -622,8 +622,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `riskId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `riskId` | code identifiant (texte) |  |  |
 | `kind` | texte |  |  |
 | `moveDate` | date AAAA-MM-JJ |  |  |
 | `amount` | nombre décimal |  |  |

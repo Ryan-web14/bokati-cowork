@@ -18,7 +18,7 @@ Module [securite](../README.md) · 7 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `roleId` | chemin | `Long` | oui |  |
+| `roleId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-delete-sni-api-v1-admin-roles-roleid-permissions"></a>
 ### DELETE /sni/api/v1/admin/roles/{roleId}/permissions
@@ -29,7 +29,7 @@ Module [securite](../README.md) · 7 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `roleId` | chemin | `Long` | oui |  |
+| `roleId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-admin-roles-roleid-permissions"></a>
 ### GET /sni/api/v1/admin/roles/{roleId}/permissions
@@ -41,7 +41,7 @@ Module [securite](../README.md) · 7 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `roleId` | chemin | `Long` | oui |  |
+| `roleId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-admin-roles-roleid-permissions"></a>
 ### PATCH /sni/api/v1/admin/roles/{roleId}/permissions
@@ -55,7 +55,7 @@ Module [securite](../README.md) · 7 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `roleId` | chemin | `Long` | oui |  |
+| `roleId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-admin-users-userid-roles"></a>
 ### GET /sni/api/v1/admin/users/{userId}/roles
@@ -93,7 +93,7 @@ Module [securite](../README.md) · 7 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `userId` | chemin | `String` | oui |  |
-| `roleId` | chemin | `Long` | oui |  |
+| `roleId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -111,7 +111,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `name` | texte |  |  |
 | `displayName` | texte |  |  |
 | `module` | texte |  |  |
@@ -124,14 +124,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `permissionIds` | entier int64 ⚠[] | oui | éléments min `1` |
+| `permissionIds` | code identifiant (texte)[] | oui | éléments min `1` |
 
 <a id="m-RoleResponse"></a>
 #### RoleResponse
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `name` | texte |  |  |
 | `displayName` | texte |  |  |
 | `description` | texte |  |  |

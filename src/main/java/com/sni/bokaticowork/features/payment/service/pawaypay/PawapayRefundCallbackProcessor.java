@@ -71,6 +71,9 @@ public class PawapayRefundCallbackProcessor {
                 transactionRepository.save(original);
                 intent.setStatus(PaymentIntentStatus.REFUNDED);
                 intentRepository.save(intent);
+            } else if (intent.getStatus() == PaymentIntentStatus.SUCCEEDED) {
+                intent.setStatus(PaymentIntentStatus.PARTIALLY_REFUNDED);
+                intentRepository.save(intent);
             }
 
             outboxService.publish(
@@ -124,7 +127,6 @@ public class PawapayRefundCallbackProcessor {
     private boolean isTerminal(PaymentTransactionStatus status) {
         return status == PaymentTransactionStatus.REFUNDED
                 || status == PaymentTransactionStatus.REVERSED
-                || status == PaymentTransactionStatus.FAILED
-                || status == PaymentTransactionStatus.CANCELLED;
+                || status == PaymentTransactionStatus.FAILED;
     }
 }

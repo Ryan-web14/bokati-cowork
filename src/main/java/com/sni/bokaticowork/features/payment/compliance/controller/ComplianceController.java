@@ -230,9 +230,19 @@ public class ComplianceController {
     // ---- Piste d'audit -----------------------------------------------------------------------
 
     @GetMapping("/audit/{subjectType}/{subjectCode}")
-    public ResponseEntity<List<com.sni.bokaticowork.features.payment.compliance.model.ComplianceAuditEntry>> trail(
-            @PathVariable String subjectType, @PathVariable String subjectCode) {
-        return ResponseEntity.ok(auditService.trail(subjectType, subjectCode));
+    public ResponseEntity<List<AuditEntryView>> trail(@PathVariable String subjectType, @PathVariable String subjectCode) {
+        return ResponseEntity.ok(auditService.trail(subjectType, subjectCode).stream().map(AuditEntryView::of).toList());
+    }
+
+    /** Une entree de la piste de conformite, sans identifiant interne. */
+    public record AuditEntryView(String entryUuid, java.time.Instant occurredAt, String actor, String actorRole, String action,
+                                 String subjectType, String subjectCode, String beforeState, String afterState, String rationale,
+                                 String previousHash, String currentHash, java.time.LocalDate retainUntil) {
+        static AuditEntryView of(com.sni.bokaticowork.features.payment.compliance.model.ComplianceAuditEntry e) {
+            return new AuditEntryView(e.getEntryUuid() == null ? null : e.getEntryUuid().toString(), e.getOccurredAt(), e.getActor(),
+                    e.getActorRole(), e.getAction(), e.getSubjectType(), e.getSubjectCode(), e.getBeforeState(), e.getAfterState(),
+                    e.getRationale(), e.getPreviousHash(), e.getCurrentHash(), e.getRetainUntil());
+        }
     }
 
     @GetMapping("/audit/verify")

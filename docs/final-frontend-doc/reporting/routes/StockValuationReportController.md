@@ -63,8 +63,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `generatedAt` | date-heure ISO 8601 UTC |  |  |
 | `totalValue` | nombre décimal |  |  |
-| `totalItems` | entier int64 ⚠ |  |  |
-| `totalLocations` | entier int64 ⚠ |  |  |
+| `totalItems` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalLocations` | entier int64 (texte au-delà de 2^53) |  |  |
 | `byCategory` | [StockValuationReportResponse.CategoryValuation](#m-StockValuationReportResponse-CategoryValuation)[] |  |  |
 | `byLocation` | [StockValuationReportResponse.LocationValuation](#m-StockValuationReportResponse-LocationValuation)[] |  |  |
 | `lowStockItems` | [StockValuationReportResponse.LowStockItem](#m-StockValuationReportResponse-LowStockItem)[] |  |  |
@@ -77,7 +77,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `categoryCode` | texte |  |  |
 | `categoryName` | texte |  |  |
-| `itemCount` | entier int64 ⚠ |  |  |
+| `itemCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalQuantity` | nombre décimal |  |  |
 | `totalValue` | nombre décimal |  |  |
 | `percentage` | nombre décimal |  |  |
@@ -90,7 +90,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `locationCode` | texte |  |  |
 | `locationName` | texte |  |  |
 | `locationType` | texte |  |  |
-| `itemCount` | entier int64 ⚠ |  |  |
+| `itemCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalQuantity` | nombre décimal |  |  |
 | `totalValue` | nombre décimal |  |  |
 | `percentage` | nombre décimal |  |  |
@@ -119,4 +119,4 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `quantityOnHand` | nombre décimal |  |  |
 | `stockValue` | nombre décimal |  |  |
 | `lastMovementDate` | date AAAA-MM-JJ |  |  |
-| `daysSinceLastMovement` | entier int64 ⚠ |  |  |
+| `daysSinceLastMovement` | entier int64 (texte au-delà de 2^53) |  |  |

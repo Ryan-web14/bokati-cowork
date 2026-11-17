@@ -20,7 +20,7 @@ Module [document](../README.md) · 26 route(s).
 | `ownerType` | requête | `DocumentOwnerType` |  |  |
 | `submittedAfter` | requête | `Instant` |  |  |
 | `submittedBefore` | requête | `Instant` |  |  |
-| `reviewedBy` | requête | `Long` |  |  |
+| `reviewedBy` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `pendingReviewOnly` | requête | `Boolean` |  |  |
 | `expiringWithinDays` | requête | `Integer` |  |  |
 | `riskLevel` | requête | `KycRiskLevel` |  |  |
@@ -67,7 +67,7 @@ Module [document](../README.md) · 26 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `userId` | requête | `Long` |  |  |
+| `userId` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `page, size, sort` | requête (pagination) | `Pageable` |  | size=20 |
 
 <a id="r-get-sni-api-v1-kyc-cases-code"></a>
@@ -350,16 +350,16 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `ownerName` | texte |  |  |
 | `ownerCode` | texte |  |  |
 | `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
-| `ownerId` | entier int64 ⚠ |  |  |
+| `ownerId` | code identifiant (texte) |  |  |
 | `status` | enum : `NOT_STARTED`, `IN_PROGRESS`, `SUBMITTED`, `UNDER_REVIEW`, `APPROVED`, `REJECTED`, `PENDING_CORRECTION`, `RENEWAL_REQUIRED`, `EXPIRED` |  |  |
 | `startedAt` | date-heure ISO 8601 UTC |  |  |
 | `submittedAt` | date-heure ISO 8601 UTC |  |  |
 | `completedAt` | date-heure ISO 8601 UTC |  |  |
-| `reviewedBy` | entier int64 ⚠ |  |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `reviewedByEmail` | texte |  |  |
 | `reviewedAt` | date-heure ISO 8601 UTC |  |  |
 | `decisionComment` | texte |  |  |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `assignedToEmail` | texte |  |  |
 | `assignedAt` | date-heure ISO 8601 UTC |  |  |
 | `slaDeadline` | date-heure ISO 8601 UTC |  |  |
@@ -399,7 +399,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `generatedAt` | date-heure ISO 8601 UTC |  |  |
-| `summary` | objet { clé : entier int64 ⚠ } |  |  |
+| `summary` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
 | `sla` | [KycDashboardResponse.SlaMetrics](#m-KycDashboardResponse-SlaMetrics) |  |  |
 | `expiringSoon` | [KycDashboardResponse.ExpiringSoonMetrics](#m-KycDashboardResponse-ExpiringSoonMetrics) |  |  |
 | `byOwnerType` | [KycDashboardResponse.OwnerTypeMetrics](#m-KycDashboardResponse-OwnerTypeMetrics)[] |  |  |
@@ -410,7 +410,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `reviewedBy` | entier int64 ⚠ |  |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `comment` | texte |  |  |
 
 <a id="m-KycAssignRequest"></a>
@@ -418,7 +418,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `assignedTo` | entier int64 ⚠ |  |  |
+| `assignedTo` | entier int64 (texte au-delà de 2^53) |  |  |
 | `email` | texte |  |  |
 
 <a id="m-KycCrossCheckService-Result"></a>
@@ -450,7 +450,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `documentCodes` | texte[] | oui | éléments min `1` |
-| `reviewedBy` | entier int64 ⚠ |  |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-KycCaseBulkRejectRequest"></a>
 #### KycCaseBulkRejectRequest
@@ -458,20 +458,20 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `items` | [KycBulkRejectItemRequest](#m-KycBulkRejectItemRequest)[] | oui | éléments min `1` |
-| `reviewedBy` | entier int64 ⚠ |  |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-KycDocumentResponse"></a>
 #### KycDocumentResponse
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentCode` | texte |  |  |
 | `documentType` | texte |  |  |
 | `ownerName` | texte |  |  |
 | `documentNumber` | texte |  |  |
 | `fileName` | texte |  |  |
-| `fileSize` | entier int64 ⚠ |  |  |
+| `fileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `mimeType` | texte |  |  |
 | `previewUrl` | texte |  |  |
 | `downloadUrl` | texte |  |  |
@@ -482,14 +482,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `backQualityStatus` | texte |  |  |
 | `backQualityWarnings` | texte[] |  |  |
 | `backFileName` | texte |  |  |
-| `backFileSize` | entier int64 ⚠ |  |  |
+| `backFileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `backMimeType` | texte |  |  |
 | `backPreviewUrl` | texte |  |  |
 | `backDownloadUrl` | texte |  |  |
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
 | `status` | enum : `PENDING`, `VERIFIED`, `REJECTED`, `EXPIRED` |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadedByEmail` | texte |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -499,7 +499,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `documentCode` | texte | oui | longueur min `1` |
-| `reviewedBy` | entier int64 ⚠ |  |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `correctionNote` | texte | oui | longueur min `1` |
 | `deadlineDays` | entier |  | min `1` |
 
@@ -511,7 +511,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `documentCode` | texte |  |  |
 | `documentType` | texte |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
-| `daysUntilExpiry` | entier int64 ⚠ |  |  |
+| `daysUntilExpiry` | entier int64 (texte au-delà de 2^53) |  |  |
 | `expired` | booléen |  |  |
 | `status` | enum : `PENDING`, `VERIFIED`, `REJECTED`, `EXPIRED` |  |  |
 
@@ -541,10 +541,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `kycCaseCode` | texte |  |  |
 | `content` | texte |  |  |
-| `authorId` | entier int64 ⚠ |  |  |
+| `authorId` | code identifiant (texte) |  |  |
 | `authorEmail` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `internal` | booléen |  |  |
@@ -555,7 +555,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `content` | texte | oui | longueur min `1` |
-| `authorId` | entier int64 ⚠ |  |  |
+| `authorId` | code identifiant (texte) |  |  |
 | `internal` | booléen |  |  |
 
 <a id="m-KycCaseRequirementResponse"></a>
@@ -563,7 +563,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `kycCaseCode` | texte |  |  |
 | `documentTypeCode` | texte |  |  |
 | `documentTypeName` | texte |  |  |
@@ -586,7 +586,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `riskLevel` | enum : `LOW`, `MEDIUM`, `HIGH`, `VERY_HIGH` | oui |  |
-| `reviewedBy` | entier int64 ⚠ |  |  |
+| `reviewedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `comment` | texte |  |  |
 
 <a id="m-KycTimelineEntryResponse"></a>
@@ -604,8 +604,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `casesReviewedWithin24h` | entier int64 ⚠ |  |  |
-| `casesExceeding48h` | entier int64 ⚠ |  |  |
+| `casesReviewedWithin24h` | entier int64 (texte au-delà de 2^53) |  |  |
+| `casesExceeding48h` | entier int64 (texte au-delà de 2^53) |  |  |
 | `avgReviewTimeHours` | nombre décimal |  |  |
 
 <a id="m-KycDashboardResponse-ExpiringSoonMetrics"></a>
@@ -613,9 +613,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `within7Days` | entier int64 ⚠ |  |  |
-| `within30Days` | entier int64 ⚠ |  |  |
-| `within60Days` | entier int64 ⚠ |  |  |
+| `within7Days` | entier int64 (texte au-delà de 2^53) |  |  |
+| `within30Days` | entier int64 (texte au-delà de 2^53) |  |  |
+| `within60Days` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-KycDashboardResponse-OwnerTypeMetrics"></a>
 #### KycDashboardResponse.OwnerTypeMetrics
@@ -623,8 +623,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
-| `count` | entier int64 ⚠ |  |  |
-| `pendingReview` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
+| `pendingReview` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-KycDashboardResponse-ActivityMetrics"></a>
 #### KycDashboardResponse.ActivityMetrics
@@ -632,7 +632,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `action` | texte |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `period` | texte |  |  |
 
 <a id="m-KycBulkItemResult"></a>

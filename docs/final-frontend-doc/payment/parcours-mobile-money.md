@@ -82,8 +82,8 @@ Côté portail membre, le sondage passe par `GET /sni/api/v1/client/billing/mobi
 
 ### 3. Envoyer un lien de paiement (paiement sans compte)
 
-1. L'intention doit être `PENDING`, `PROCESSING` ou `AUTHORIZED` avec un reste dû positif. **Attention à son échéance** : une intention créée sans `expiresAt` expire 15 minutes après sa création (`PaymentServiceImpl.java:1092`), et la page du lien se ferme alors (« Ce lien de paiement n'est plus valable »). Pour un lien, créer l'intention avec un `expiresAt` au moins égal à la durée du lien.
-2. `POST /sni/api/v1/payments/intents/{intentNumber}/link` ([route](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-intentnumber-link)) avec un corps facultatif `{ "expiresInMinutes": 1440 }` (défaut 1440, minimum effectif 5). Un nouvel appel remplace le jeton précédent : l'ancien lien cesse de fonctionner.
+1. L'intention doit être `PENDING` ou `PROCESSING` avec un reste dû positif. Le lien prolonge l'intention jusqu'à sa propre échéance (24 h par défaut) : plus besoin de créer l'intention avec un `expiresAt` long.
+2. `POST /sni/api/v1/payments/intents/{intentNumber}/link` ([route](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-intentnumber-link)) avec un corps facultatif `{ "expiresInMinutes": 1440 }` (défaut 1440, minimum 5 : en dessous, `400` de validation). Un nouvel appel remplace le jeton précédent : l'ancien lien cesse de fonctionner. Réponse : `intentNumber`, `checkoutUrl`, `token`, `expiresAt`, `emailedTo` (`depositId` et `transactionNumber`, toujours nuls, ont été retirés).
 3. Réponse `PaymentLinkResponse` : `checkoutUrl` (`<app.api-base-url>/public/pay/<token>`), `token`, `expiresAt`, `emailedTo`. Si l'intention a une adresse de client (`customerEmail`), le lien lui est envoyé par courriel après validation de la transaction ; `emailedTo` est alors renseigné, sinon nul. `depositId` et `transactionNumber` sont toujours nuls.
 4. L'écran affiche `checkoutUrl` avec un bouton « Copier » et, si `emailedTo` est nul, l'indique (aucun courriel envoyé).
 5. Contrôle depuis le back-office : `GET /sni/api/v1/payment-links/{token}` ([route](routes/PaymentLinkController.md#r-get-sni-api-v1-payment-links-token)) renvoie l'intention, ou `400` « Payment link has expired » / « Payment link is no longer payable », `404` « Payment link not found ».
@@ -101,14 +101,14 @@ Les chemins `/public/**` sont publics (`src/main/java/com/sni/bokaticowork/secur
 
 ### 5. Superviser et rapprocher les paiements mobile money (back-office)
 
-Réservé aux rôles `ROLE_ADMIN`, `ROLE_SUPER_ADMIN`, `ROLE_MANAGER` en plus du droit (voir « À prévoir »).
+Droit `PAYMENT:READ` (lecture) ; plus de condition de rôle en plus du droit (17/11/2026).
 
 1. Liste : `GET /sni/api/v1/payments/mobile-money/operations` ([route](routes/MobileMoneyOperationsController.md#r-get-sni-api-v1-payments-mobile-money-operations)), filtres `from`, `to` (dates `AAAA-MM-JJ`, fuseau `app.time-zone`), `status` (statut technique du dépôt), `provider`, `customerCode`, `phone` (recherche partielle sur les chiffres), `reference` (égalité sur `depositId`, référence opérateur, `intentNumber`, `transactionNumber` ou `clientReferenceId`), `page`, `size` (plafonné à 100). Pour retrouver les dépôts d'une intention : `reference={intentNumber}`.
    Liste plus simple : `GET /sni/api/v1/payments/mobile-money/deposits?status=UNRESOLVED` ([route](routes/MobileMoneyController.md#r-get-sni-api-v1-payments-mobile-money-deposits)) donne la file à rapprocher.
 2. Synthèse : `GET /sni/api/v1/payments/mobile-money/operations/summary` (30 derniers jours par défaut) renvoie `[{ status, currency, count, amount }]`.
 3. Fiche : `GET /sni/api/v1/payments/mobile-money/operations/{depositId}` ([route](routes/MobileMoneyOperationsController.md#r-get-sni-api-v1-payments-mobile-money-operations-depositid)) renvoie `deposit`, `intentStatus`, `transactionStatus`, `provider` (ce que PawaPay dit du dépôt, relu en direct ; `available` = `false` si PawaPay n'a pas pu être lu), `discrepancies` (écarts avec, pour chacun, l'action conseillée) et `callbacks` (rappels reçus).
 4. Résolution : `POST /sni/api/v1/payments/mobile-money/operations/{depositId}/resolve` ([route](routes/MobileMoneyOperationsController.md#r-post-sni-api-v1-payments-mobile-money-operations-depositid-resolve)) avec `{ "action": "SYNC" | "MARK_SUCCEEDED" | "MARK_FAILED", "reason": "...", "providerTransactionId": "..." }`.
-   - `SYNC` : relit PawaPay et applique sa réponse ; ouvert à `ROLE_MANAGER`.
+   - `SYNC` : relit PawaPay et applique sa réponse ; ouvert à tout compte qui a `PAYMENT:PROCESS`.
    - `MARK_SUCCEEDED` / `MARK_FAILED` : forcent l'issue, réservés à `ROLE_ADMIN` et `ROLE_SUPER_ADMIN` (`403` sinon : « Seuls un administrateur ou un super-administrateur peuvent forcer l'issue d'un paiement. »). Motif d'au moins 10 caractères ; `providerTransactionId` obligatoire pour `MARK_SUCCEEDED`. Seulement sur un dépôt en attente ou `UNRESOLVED`. La décision est journalisée (`@Audited`) et envoyée aux super-administrateurs.
    - Réponse : la fiche à jour.
 5. Rapprochement d'une période : `GET /sni/api/v1/payments/mobile-money/operations/reconciliation?from=&to=` (7 derniers jours par défaut) renvoie `{ from, to, checked, truncated, discrepancies: [{ deposit, provider, discrepancies }] }`. `truncated` = `true` : la période contenait trop de dépôts, réduire l'intervalle.
@@ -137,16 +137,16 @@ Contrôles avant l'appel à l'opérateur (`src/main/java/com/sni/bokaticowork/fe
 | Numéro d'un autre pays | « Ce numéro n'est pas un numéro <opérateur> · il doit commencer par +242. » |
 | Préfixe hors plage (si `operator-prefixes` est configuré ; vide par défaut) | « Ce numéro ne semble pas être un compte <opérateur>... » |
 
-Contrôles sur l'intention (`PaymentServiceImpl.java:826` et `:1095`), messages en anglais, à traduire dans l'écran :
+Contrôles sur l'intention (`PaymentServiceImpl.java:826` et `:1095`), messages en français depuis le 17/11/2026 :
 
 | Statut | Message | À afficher |
 | --- | --- | --- |
-| `400` | « Payment intent is not payable » | L'intention n'est plus payable (payée, expirée, remboursée). |
-| `400` | « Payment intent has expired » | L'intention a expiré : en créer une nouvelle. |
-| `400` | « Payment intent is already fully paid » | Déjà réglée. |
-| `400` | « Payment intent has pending mobile money transactions. Wait for their final status before adding another payment » | Un dépôt est déjà en cours : retrouver son `depositId` (parcours 5, `reference={intentNumber}`) et reprendre l'attente. |
-| `400` | « Payment amount cannot exceed remaining payable intent balance » | Montant trop élevé. |
-| `404` | « Payment intent not found » | |
+| `400` | « Cette intention de paiement n'est pas payable » | L'intention n'est plus payable (payée, expirée, remboursée). |
+| `400` | « L'intention de paiement a expiré » | L'intention a expiré : en créer une nouvelle. |
+| `400` | « L'intention de paiement est déjà entièrement payée » | Déjà réglée. |
+| `400` | « Un paiement mobile money est en cours sur cette intention : attendez sa confirmation ou son échec avant un autre paiement » | Un dépôt est déjà en cours : retrouver son `depositId` (parcours 5, `reference={intentNumber}`) et reprendre l'attente. |
+| `400` | « Le montant ne peut dépasser le reste à payer de l'intention » | Montant trop élevé. |
+| `404` | « Intention de paiement introuvable » | |
 
 Autres :
 
@@ -166,12 +166,12 @@ Aucune route de ce parcours ne lit l'en-tête `Idempotency-Key` (aucune annotati
 
 ## À prévoir côté frontend
 
-- **Droits.** Toutes les routes de suivi du `MobileMoneyController` et du `MobileMoneyOperationsController` exigent en plus un rôle `ROLE_ADMIN`, `ROLE_SUPER_ADMIN` ou `ROLE_MANAGER` (`@PreAuthorize`). Un `ROLE_CASHIER` ou `ROLE_FINANCE` qui porte `PAYMENT:READ` reçoit `403` : masquer ces écrans selon le rôle, pas seulement le droit. L'envoi d'un dépôt (`PATCH .../mobile-money`) n'exige que `PAYMENT:PROCESS`, sans condition de rôle : un caissier peut lancer un dépôt mais pas le sonder par `GET .../deposits/{depositId}`. Pour lui, sonder plutôt `GET /sni/api/v1/payments/intents/{intentNumber}` (`PAYMENT:READ`) jusqu'à ce que `processingAmount` revienne à 0, puis lire les transactions de l'intention.
+- **Droits (17/11/2026).** Le suivi mobile money (`MobileMoneyController`, `MobileMoneyOperationsController`) suit le droit seul : `PAYMENT:READ` pour lire, `PAYMENT:PROCESS` pour relire chez PawaPay. Seul le forçage d'une issue (`resolve` autre que `SYNC`) reste réservé à `ROLE_ADMIN` et `ROLE_SUPER_ADMIN`, parce qu'il engage de l'argent.
 - **Écrans.** Formulaire de paiement mobile money (opérateur, numéro, montant) ; écran d'attente avec message, minuterie et bouton « Relire » ; écran de supervision (liste filtrable, synthèse par statut, fiche comparée à PawaPay, action de résolution avec motif) ; écran de génération de lien (URL à copier, échéance).
 - **Liste de référence** : `GET /sni/api/v1/payments/mobile-money/providers`, publique, à charger une fois.
 - **Montant** : entier, sans décimales ; par défaut ne rien envoyer (le serveur prend tout le reste payable).
-- **Champs à ne pas envoyer** : `createdBy` est accepté mais n'est qu'une étiquette ; `intentNumber` dans le corps du `PATCH` est inutile.
-- **Champs à ne pas montrer à un payeur** : `requestPayloadJson`, `providerResponseJson`, `callbackUrl`, `providerMessage`, `failureReason`, `metadata`.
+- **Champs à ne pas envoyer** : `createdBy` (l'auteur est le compte connecté) ; `intentNumber` dans le corps du `PATCH` est inutile.
+- **Champs à ne pas montrer à un payeur** : `providerMessage`, `failureReason`, `metadata` (montrer `userMessage`). Les routes du portail renvoient déjà `requestPayloadJson`, `providerResponseJson` et `callbackUrl` nuls.
 - **Temps réel** : aucun sujet WebSocket ne publie l'état d'un dépôt dans ce module ; le sondage est la seule voie.
 
 ## Effets automatiques
@@ -189,12 +189,12 @@ Aucune route de ce parcours ne lit l'en-tête `Idempotency-Key` (aucune annotati
 
 ## Écarts relevés
 
-- Dédoublonnage d'un dépôt en cours presque inatteignable : `requestedIntentAmount` (contrôle du reste payable) est appelé avant `inFlight`, donc un second envoi sur une intention dont le premier dépôt couvre tout le reste dû échoue en `400` au lieu de rendre le dépôt existant. `src/main/java/com/sni/bokaticowork/features/payment/service/implementation/PaymentServiceImpl.java:331` et `:337`.
-- Lien de paiement plus long que l'intention : le lien vaut 24 h par défaut mais l'intention créée sans `expiresAt` expire au bout de 15 minutes, et `createLink` ne prolonge pas l'intention. `src/main/java/com/sni/bokaticowork/features/payment/service/implementation/PaymentLinkServiceImpl.java:59` et `PaymentServiceImpl.java:1092`.
-- `CreatePaymentLinkRequest.expiresInMinutes` porte `@Min(5)` mais le contrôleur n'a pas `@Valid` : la contrainte n'est pas appliquée (le service ramène à 5 en silence). `src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java:153`.
-- `PaymentLinkResponse.depositId` et `transactionNumber` sont toujours nuls. `PaymentLinkServiceImpl.java:72`.
-- Le portail membre reçoit la même `MobileMoneyDepositResponse` que le back-office, avec `requestPayloadJson`, `providerResponseJson` et `callbackUrl` (URL interne du serveur). `src/main/java/com/sni/bokaticowork/features/portal/billing/service/ClientBillingService.java:139`, construit par `PawapayDepositService.java:316`.
-- Rôle `ROLE_MANAGER` autorisé par `@PreAuthorize` alors que les autres rôles d'administration (`ROLE_FINANCE`, `ROLE_CASHIER`…) sont refusés même avec `PAYMENT:READ` : règle d'accès à deux niveaux, invisible dans le droit seul. `src/main/java/com/sni/bokaticowork/features/payment/controller/MobileMoneyController.java:53`, `MobileMoneyOperationsController.java` (constante `STAFF`).
-- `GET /sni/api/v1/payments/mobile-money/pawapay/return` redirige vers `payment-page-result-url` avec `status` lu de la `phase` ; ce retour servait la page hébergée de PawaPay, que le lien de paiement n'utilise plus (`PaymentLinkServiceImpl.java:55`). Route publique probablement morte. `MobileMoneyController.java:204`.
-- Sans fournisseur configuré (`bokati.payment.pawaypay.enabled` = `false`), l'envoi reçoit `NOT_IMPLEMENTED` : la transaction passe `FAILED` mais le dépôt reste `PROCESSING` (phase `WAITING_FOR_PAYER`) pour toujours, le worker étant désactivé. `PawapayDepositService.java:160` et `PaymentServiceImpl.java:384`.
-- Messages d'erreur en anglais sur l'intention (« Payment intent is not payable », etc.), alors que les contrôles de l'opérateur sont en français. `PaymentServiceImpl.java:829`, `:1101`.
+- **Réglé (17/11/2026)** : le dépôt déjà en cours sur le même numéro est rendu avant le contrôle du reste payable, et les envois sur une même intention passent l'un après l'autre (verrou).
+- **Réglé (17/11/2026)** : le lien prolonge l'intention. Constat d'origine : le lien valait 24 h mais l'intention créée sans `expiresAt` expirait au bout de 15 minutes.
+- **Réglé (17/11/2026)** : `expiresInMinutes` est validé (`@Min(5)`), et `depositId` et `transactionNumber`, toujours nuls, sont retirés de la réponse du lien.
+- **Réglé (17/11/2026)** : `depositId` et `transactionNumber`, toujours nuls, retirés de la réponse du lien.
+- **Réglé (17/11/2026)** : le portail ne reçoit plus `requestPayloadJson`, `providerResponseJson` ni `callbackUrl` (filtre de réponse sur tout le portail).
+- **Réglé (17/11/2026)** : plus de règle de rôle à côté du droit sur le suivi mobile money.
+- **Réglé (17/11/2026)** : `GET /payments/mobile-money/pawapay/return` retiré (il servait la page hébergée de PawaPay, plus utilisée).
+- **Réglé (17/11/2026)** : sans fournisseur configuré, le dépôt passe aussitôt `FAILED` (code `NOT_ENABLED`, message « Le paiement mobile money n'est pas disponible pour le moment. Choisissez un autre moyen de paiement. »), au lieu de rester en cours pour toujours.
+- **Réglé (17/11/2026)** : messages de l'intention, des liens, des portefeuilles et des retenues en français.

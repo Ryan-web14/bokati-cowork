@@ -78,9 +78,13 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
     public CashSessionResponse toCashSessionResponse(CashSession cashSession) {
         CashSessionSummaryResponse summary = summarySupport.summarize(cashSession);
         BigDecimal expectedClosingAmount = firstNonNull(cashSession.getExpectedClosingAmount(), summary.expectedClosingAmount(), BigDecimal.ZERO);
-        BigDecimal countedClosingAmount = firstNonNull(cashSession.getCountedClosingAmount(), cashSession.getClosingAmount(), expectedClosingAmount);
-        BigDecimal closingAmount = firstNonNull(cashSession.getClosingAmount(), countedClosingAmount, expectedClosingAmount);
-        BigDecimal varianceAmount = firstNonNull(cashSession.getVarianceAmount(), countedClosingAmount.subtract(expectedClosingAmount));
+        // Rien n'est invente : une session non comptee (ouverte, cloture de fin de mois sans comptage)
+        // rend un compte, un montant de cloture et un ecart nuls, pas l'attendu et zero.
+        BigDecimal countedClosingAmount = cashSession.getCountedClosingAmount() != null
+                ? cashSession.getCountedClosingAmount() : cashSession.getClosingAmount();
+        BigDecimal closingAmount = cashSession.getClosingAmount() != null ? cashSession.getClosingAmount() : countedClosingAmount;
+        BigDecimal varianceAmount = cashSession.getVarianceAmount() != null ? cashSession.getVarianceAmount()
+                : (countedClosingAmount == null ? null : countedClosingAmount.subtract(expectedClosingAmount));
         boolean hidden = expectedHidden(cashSession);
         return new CashSessionResponse(
                 cashSession.getSessionNumber(),

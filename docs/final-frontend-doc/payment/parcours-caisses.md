@@ -53,8 +53,8 @@ Pas d'énumération : un booléen `active`.
 | `OPEN` | Session en cours, mouvements acceptés | `POST /sni/api/v1/cash-registers/sessions` ; ouverture automatique (caisse automatique, renouvellement de fin de mois) | `CLOSED` (clôture sans écart, fin de mois, seuil d'une caisse automatique), `CLOSING_REVIEW` (clôture avec écart) |
 | `CLOSING_REVIEW` | Clôturée avec un écart non nul, attend la validation d'un superviseur. Plus aucun mouvement. Bloque encore la caisse et le caissier. | `PATCH .../sessions/{sessionNumber}/close` (ou `POST .../closing-request`) avec un compté différent de l'attendu | `CLOSED` par `PATCH .../approve-variance` |
 | `CLOSED` | Définitivement close ; rapport PDF envoyé par courriel | clôture sans écart, validation de l'écart, worker de fin de mois, seuil automatique | aucun |
-| `SUSPENDED` | Jamais atteint dans le code | aucun | aucun |
-| `CANCELLED` | Jamais atteint dans le code | aucun | aucun |
+| `SUSPENDED` | Suspendue par un superviseur, la fin de mois ou une absence : aucune opération, seul un superviseur la lève (lot C2) | `PATCH .../sessions/{sessionNumber}/suspend` | `OPEN` par `PATCH .../unsuspend` |
+| `CANCELLED` | Ouverte par erreur sans opération, annulée sans trace financière (lot C2) | `PATCH .../sessions/{sessionNumber}/cancel` | aucun |
 
 Il n'existe pas de route pour rejeter un écart ni pour rouvrir une session.
 
@@ -66,11 +66,11 @@ Tout mouvement est créé `CONFIRMED` (`model/CashMovement.java:81`) et n'en cha
 
 | Statut | Signification | On y arrive par | On en sort vers |
 | --- | --- | --- | --- |
-| `PENDING` | Soumise, en attente de décision | `POST .../sessions/{sessionNumber}/requests` | `EXECUTED` (approbation), `REJECTED` |
+| `PENDING` | Soumise, en attente de décision | `POST .../sessions/{sessionNumber}/requests` (session `OPEN` seulement) | `EXECUTED` (approbation), `REJECTED`, `CANCELLED` |
 | `APPROVED` | Transitoire, jamais visible : l'approbation enchaîne l'exécution dans la même transaction | approbation | `EXECUTED` |
 | `EXECUTED` | Approuvée et mouvement créé (`executedMovementNumber`) | `PATCH .../requests/{requestNumber}/approve` | aucun |
 | `REJECTED` | Refusée | `PATCH .../requests/{requestNumber}/reject` | aucun |
-| `CANCELLED` | Jamais atteint dans le code | aucun | aucun |
+| `CANCELLED` | Annulée : par le demandeur ou un approbateur, à l'approbation si la session est close ou annulée, ou automatiquement à la clôture de la session (`reviewNote` donne la raison) | `PATCH .../requests/{requestNumber}/cancel`, approbation, clôture | aucun |
 
 Type de demande et mouvement créé à l'approbation (`CashRequestServiceImpl.java:198`) :
 
@@ -79,7 +79,7 @@ Type de demande et mouvement créé à l'approbation (`CashRequestServiceImpl.ja
 | `REMISE_DE_FONDS` | `SAFE_DEPOSIT` (sortie) | `BANK_SLIP` |
 | `CASH_ADVANCE` | `CASH_OUT` | `EXIT_VOUCHER` |
 | `EXPENSE_REIMBURSEMENT` | `CASH_OUT` | `EXPENSE_NOTE` |
-| `JUSTIFICATIF` | `ADJUSTMENT` (augmente le solde attendu) | `CASH_VOUCHER` |
+| `JUSTIFICATIF` | `ADJUSTMENT` sens `OUT` (justifie de l'argent sorti : diminue le solde attendu) | `CASH_VOUCHER` |
 
 Aucun type ne produit une entrée (`CASH_IN`) : il n'existe pas de demande d'approvisionnement. Un apport d'espèces se saisit directement en bon d'entrée.
 
@@ -106,7 +106,7 @@ Aucun type ne produit une entrée (`CASH_IN`) : il n'existe pas de demande d'app
 
 ### 1. Créer et gérer les caisses
 
-1. `POST /sni/api/v1/cash-registers` ([route](routes/CashRegisterController.md#r-post-sni-api-v1-cash-registers)) avec `name` (obligatoire), `locationCode`, `maxCashAmount`, `managerEmail`. `businessEntityCode` et `deviceCode` envoyés ne sont **pas** repris tels quels : ils servent d'indice pour fabriquer `BIZ-...` et `DEV-...` horodatés (`CashRegisterServiceImpl.java:910`). Le `registerCode` est aussi généré. Afficher les codes renvoyés, ne pas présumer ceux saisis.
+1. `POST /sni/api/v1/cash-registers` ([route](routes/CashRegisterController.md#r-post-sni-api-v1-cash-registers)) avec `name` (obligatoire), `locationCode`, `businessEntityCode`, `deviceCode`, `maxCashAmount`, `managerEmail`. `businessEntityCode` et `deviceCode` fournis sont **gardés tels quels** ; vides, ils sont générés (`BIZ-...`, `DEV-...` horodatés). Le `registerCode` est toujours généré.
 2. `GET /sni/api/v1/cash-registers?active=&locationCode=&businessEntityCode=&searchText=` pour la liste paginée.
 3. `PATCH .../{registerCode}/deactivate` ou `/activate`. La désactivation échoue tant qu'une session est `OPEN` ou `CLOSING_REVIEW`.
 4. Pour chaque caisse, si `systemManaged = true`, masquer toute action de saisie (ouverture, mouvement, bon, clôture) : le serveur les refuse.
@@ -134,7 +134,7 @@ Un mouvement ne se modifie ni ne se supprime. Pour corriger, saisir un mouvement
 ### 4. Pièces jointes, signature, impression
 
 1. Téléverser le fichier ailleurs (non vérifié : aucune route de téléversement n'existe dans le module caisse ; le serveur ne stocke que le chemin), puis `POST .../movements/{movementNumber}/attachments` ([route](routes/CashRegisterController.md#r-post-sni-api-v1-cash-registers-movements-movementnumber-attachments)) avec `fileName` et `storagePath` (obligatoires), `contentType`, `label`, `uploadedBy`. Retour : le mouvement complet avec `attachments` (plus récent d'abord). Aucun contrôle de statut de session : possible aussi sur une session close.
-2. Signer : `PATCH .../movements/{movementNumber}/sign?signedBy=<identifiant>` (paramètre de requête obligatoire, pas de corps). Écrase une signature précédente. `requiresSignature` vaut toujours `false` : aucun code ne le pose.
+2. Signer : `PATCH .../movements/{movementNumber}/sign?signedBy=<identifiant>` (paramètre de requête obligatoire, pas de corps). Écrase une signature précédente. `requiresSignature` vaut `true` pour un mouvement qui attend un second visa (avec `riskScore`, 0 à 100) ; `false` et `riskScore = null` pour un mouvement ordinaire.
 3. Imprimer : `GET /sni/api/v1/cash-registers/movements/{movementNumber}/document` ([route](routes/CashDocumentController.md#r-get-sni-api-v1-cash-registers-movements-movementnumber-document)) renvoie le PDF de la pièce (`Content-Disposition: inline; filename="<movementNumber>.pdf"`). Puis `PATCH .../movements/{movementNumber}/print` pour horodater `printedAt` (le serveur ne le fait pas seul à la génération).
 
 ### 5. Encaisser une intention de paiement en espèces (lien avec les paiements)
@@ -152,10 +152,11 @@ Autres chemins qui écrivent un paiement espèces en caisse : la confirmation d'
 
 ### 6. Demandes de caisse et leur approbation
 
-1. Caissier : `POST .../sessions/{sessionNumber}/requests` ([route](routes/CashRequestController.md#r-post-sni-api-v1-cash-registers-sessions-sessionnumber-requests)) avec `requestType`, `amount` (> 0), `reason` (obligatoire côté service), `requestedBy` (défaut : `openedBy` de la session), `attachments` (liste de références `fileName`, `contentType`, `storagePath`, `label`). Retour `PENDING`. Le statut de la session n'est pas vérifié à la soumission.
+1. Caissier : `POST .../sessions/{sessionNumber}/requests` ([route](routes/CashRequestController.md#r-post-sni-api-v1-cash-registers-sessions-sessionnumber-requests)) avec `requestType`, `amount` (> 0), `reason` (obligatoire côté service), `requestedBy` (défaut : `openedBy` de la session), `attachments` (liste de références `fileName`, `contentType`, `storagePath`, `label`). Retour `PENDING`. La session doit être `OPEN` (`400` « La session … n'est pas ouverte » sinon).
 2. Superviseur : `GET /sni/api/v1/cash-registers/requests?status=PENDING` (filtres `registerCode`, `sessionNumber`, `requestType`, `requestedBy`, `searchText`), puis `GET .../requests/{requestNumber}`.
-3. `PATCH .../requests/{requestNumber}/approve` avec `reviewedBy` et `note`. Le serveur crée le mouvement (table plus haut) dans la session de la demande, avec `createdBy = reviewedBy`, puis passe la demande en `EXECUTED`. Si la session n'est plus `OPEN`, l'approbation échoue en `400 Cash session is not open` et la demande reste `PENDING` : elle ne pourra plus qu'être rejetée.
+3. `PATCH .../requests/{requestNumber}/approve` avec `reviewedBy` et `note`. Le serveur crée le mouvement (table plus haut) dans la session de la demande, avec `createdBy = reviewedBy`, puis passe la demande en `EXECUTED`. Session close ou annulée : la demande passe `CANCELLED` (réponse `200`, lire `status`). Session en pause, suspendue ou en comptage : `400`, la demande reste `PENDING` et s'approuvera à la reprise.
 4. `PATCH .../requests/{requestNumber}/reject` avec `reviewedBy` et `note` (motif).
+5. `PATCH .../requests/{requestNumber}/cancel`, corps facultatif `{ "note": "…" }` : annulation d'une demande `PENDING` par le demandeur ou un compte ayant `CASH_MOVEMENT:APPROVE` (`403` sinon). Le demandeur est prévenu. À la clôture d'une session, ses demandes encore `PENDING` sont annulées.
 5. PDF de la demande : `GET .../requests/{requestNumber}/document` ([route](routes/CashDocumentController.md#r-get-sni-api-v1-cash-registers-requests-requestnumber-document)).
 
 ### 7. Clôturer une session (comptage et écart)
@@ -178,6 +179,22 @@ Autres chemins qui écrivent un paiement espèces en caisse : la confirmation d'
 ### 9. Rapport de clôture PDF
 
 `GET /sni/api/v1/cash-registers/sessions/{sessionNumber}/closing-report` ([route](routes/CashDocumentController.md#r-get-sni-api-v1-cash-registers-sessions-sessionnumber-closing-report)) : synthèse, statistiques de session et liste des mouvements. Disponible quel que soit le statut, y compris `OPEN` (rapport provisoire). Le même PDF part en pièce jointe à chaque clôture définitive.
+
+### 9 bis. Suivre une session en détail (17/11/2026)
+
+Routes sous `/sni/api/v1/cash-registers/sessions/{sessionNumber}` ([routes](routes/CashSessionInsightController.md)) :
+
+| Route | Droit | Contenu |
+| --- | --- | --- |
+| `GET .../payments?paymentMethod=&receivedBy=` | `CASH:READ` | `lines[]` : chaque encaissement et remboursement rattaché à la session (`transactionNumber`, `paymentMethod`, `status`, `amount`, `tenderedAmount`, `changeAmount`, `receivedBy`, `at`, client `customerType`/`customerCode`/`customerName`, objet `sourceType`/`sourceCode`/`sourceLabel` comme la facture, `receiptNumber`, `refund`) ; `byMethod[]` (`paymentMethod`, `count`, `amount`) ; `byHour[]` (heure de Brazzaville, `count`, `amount`) ; `paymentCount`, `paymentTotal`, `refundCount`, `refundTotal`. |
+| `GET .../timeline` | `CASH:READ` | Fil horodaté : `at`, `kind` (`OPENED`, `OPENING_VARIANCE`, `PAUSED`, `SUSPENDED`, `MOVEMENT_<type>`, `COUNT`, `VARIANCE`, `VARIANCE_DECIDED`, `ANOMALY`, `HANDOVER`, `CLOSING_REQUESTED`, `CLOSED`, `REVIEWED`), `label` en français, `actor`, `amount`, `reference`. Un mouvement annulé l'indique dans son libellé. |
+| `GET .../indicators` | `CASH:READ` | `expectedBalance` (solde théorique, nul et `expectedHidden = true` sous clôture à l'aveugle pour qui n'a pas `CASH_VARIANCE:DECIDE`), `paymentCount`, `customersServed`, `paymentTotal`, `averageTicket`, `refundCount`, `refundTotal`, `movementCount`, `lastMovementAt`, `activeMinutes` (hors pauses), `pauseMinutes`, `detentionCap` et `detentionRemaining` (plafond de détention de la caisse), `openAnomalies`. |
+| `PATCH .../payments/{transactionNumber}/reassign` | `CASH_VARIANCE:DECIDE` | Corps `{ "targetSessionNumber": "…", "reason": "…" }` (motif d'au moins 5 caractères). Un paiement en espèces saisi dans la mauvaise session passe dans la bonne : sortie `TRANSFER_OUT` dans l'origine, entrée `TRANSFER_IN` dans la cible (même montant, motif, catégorie `PAYMENT_REASSIGNMENT`), transaction rattachée à la cible. Origine ouverte, en pause ou suspendue ; cible ouverte. Réponse : `transactionNumber`, `fromSession`, `toSession`, `amount`, `exitMovementNumber`, `entryMovementNumber`. |
+| `POST .../report/send` | `CASH:READ` | Corps facultatif `{ "extraRecipients": "a@x.com,b@y.com" }`. Envoie le rapport PDF de la session (ouverte ou close) au responsable de la caisse, sinon au superviseur, et aux adresses indiquées. Réponse : `recipients`. |
+
+Annuler un bon avec motif : `PATCH /cash-registers/movements/{movementNumber}/cancel` (voir parcours 3). Rapport PDF à l'écran : parcours 9.
+
+Écran conseillé pour une session : onglets « Encaissements » (tableau filtrable, totaux par mode et graphique par heure), « Chronologie », « Indicateurs » (cartes rafraîchies toutes les minutes) ; actions « Réaffecter » sur une ligne d'espèces, « Envoyer le rapport ».
 
 ### 10. Anomalies
 
@@ -205,7 +222,7 @@ En plus, un `runningBalance` au-dessus du plafond envoie un courriel au responsa
 - Par caisse : `GET .../metrics/registers?businessEntityCode=&fromDate=&toDate=` (liste non paginée).
 - Session : `GET /sni/api/v1/cash-registers/statistics/sessions/{sessionNumber}` ([route](routes/CashStatisticsController.md#r-get-sni-api-v1-cash-registers-statistics-sessions-sessionnumber)) : durée, mouvements par heure, entrées, sorties, temps mort, écart en pourcentage. Pour une session ouverte, la fin de référence est l'instant présent.
 - Caissier : `GET .../statistics/cashiers/{cashierCode}` où `cashierCode` est la valeur exacte de `openedBy`. Renvoie fréquence d'écart, écart moyen et écart type, tendance `STABLE` / `IMPROVING` / `DEGRADING` (au moins 4 sessions closes), `riskScore` sur 100. Un code inconnu renvoie des zéros, pas une erreur.
-- Caisse : `GET .../statistics/registers/{registerCode}?fromDate=&toDate=` : heures de pointe (5 heures les plus chargées, en heure **UTC**), variation par rapport à la période précédente de même durée (`null` sans `fromDate` et `toDate`, ou si la période précédente est vide).
+- Caisse : `GET .../statistics/registers/{registerCode}?fromDate=&toDate=` : heures de pointe (5 heures les plus chargées, heure de Brazzaville), variation par rapport à la période précédente de même durée (`null` sans `fromDate` et `toDate`, ou si la période précédente est vide).
 
 ### 12. File des espèces annoncées depuis le portail
 
@@ -213,8 +230,8 @@ Le membre annonce depuis le portail (voir [portal/routes.md](../portal/routes.md
 
 1. File du guichet : `GET /sni/api/v1/payments/cash-declarations?status=AWAITING_CONFIRMATION` ([route](routes/CashPaymentDeclarationController.md#r-get-sni-api-v1-payments-cash-declarations)). Avec un `status`, la liste est triée de la plus ancienne à la plus récente (ordre de passage) ; sans `status`, de la plus récente à la plus ancienne. Afficher `customerName`, `documentNumber`, `bookingNumber`, `amount`, `expiresAt` (compte à rebours).
 2. Le membre se présente : `POST .../cash-declarations/{declarationNumber}/confirm` ([route](routes/CashPaymentDeclarationController.md#r-post-sni-api-v1-payments-cash-declarations-declarationnumber-confirm)) avec `cashSessionNumber` (obligatoire, session `OPEN` du caissier), `amount` facultatif (défaut : montant annoncé ; un montant plus faible encaisse partiellement), `receivedBy` (défaut : nom du compte connecté), `note`.
-3. Le serveur relit le solde de la facture, crée une intention de paiement sur la facture puis l'encaisse en espèces comme au parcours 5 : mouvement `PAYMENT` dans la session, imputation sur la facture, confirmation de la réservation quand l'intention est soldée. Retour : l'annonce `CONFIRMED` avec `transactionNumber`. Proposer ensuite l'impression du reçu (module paiements) ou de la pièce de caisse du mouvement.
-4. Le membre ne viendra pas : `POST .../cash-declarations/{declarationNumber}/cancel` avec `{ "reason": "..." }` facultatif (défaut « Annulée par la caisse »). La facture reste due, la réservation n'est pas touchée.
+3. Le serveur relit le solde de la facture, crée une intention de paiement sur la facture puis l'encaisse en espèces comme au parcours 5 : mouvement `PAYMENT` dans la session, imputation sur la facture, confirmation de la réservation quand l'intention est soldée. Retour : l'annonce `CONFIRMED` avec `transactionNumber` ; la `note` envoyée revient dans `confirmationNote` (`closeReason` ne sert qu'aux annonces annulées ou expirées). Si la facture a été soldée entre-temps, `400` et l'annonce passe `CANCELLED` (motif « Facture déjà soldée par un autre moyen »). Proposer ensuite l'impression du reçu (module paiements) ou de la pièce de caisse du mouvement.
+4. Le membre ne viendra pas : `POST .../cash-declarations/{declarationNumber}/cancel` avec `{ "reason": "..." }` facultatif (défaut « Annulée par la caisse »). La facture reste due, la réservation n'est pas touchée. Les destinataires du guichet reçoivent une notification interne `CASH_PAYMENT_DECLARATION_CANCELLED`.
 5. Une confirmation partielle clôt l'annonce : le reste de la facture reste dû sans nouvelle annonce.
 
 ## Règles et erreurs à refléter dans l'écran
@@ -236,17 +253,18 @@ Toutes les erreurs métier sont en `400 BAD_REQUEST` ou `404 RESOURCE_NOT_FOUND`
 | Motif absent (types `REFUND`, `CASH_OUT`, `SAFE_DEPOSIT`, `ADJUSTMENT`, `TRANSFER_OUT`) | 400 | `Reason is required for this cash movement type` |
 | Motif absent (pièces `ENTRY_VOUCHER`, `EXIT_VOUCHER`, `EXPENSE_NOTE`) | 400 | `Reason is required for this cash document type` |
 | Numéro de pièce absent (pièces `ENTRY_VOUCHER`, `EXIT_VOUCHER`, `CASH_VOUCHER`, `BANK_SLIP`, `EXPENSE_NOTE`) | 400 | `Document number is required for this cash document type` |
-| `relatedMovementNumber` inconnu | 404 | `Related cash movement not found: <numéro>` |
-| Mouvement inconnu | 404 | `Cash movement not found: <numéro>` |
+| `relatedMovementNumber` inconnu | 404 | `Mouvement lié introuvable : <numéro>` |
+| Mouvement inconnu | 404 | `Mouvement de caisse introuvable : <numéro>` |
 | `signedBy` vide | 400 | `Signer identifier is required` |
-| Clôture sans montant compté | 400 | `Counted closing amount is required` |
+| Clôture sans montant compté | 400 | `Le montant compté à la clôture est requis` |
 | Écart sans motif | 400 | `Variance reason is required when counted amount differs from expected amount` |
 | Validation d'écart hors `CLOSING_REVIEW` | 400 | `Cash session is not waiting for variance review` |
-| Demande : montant ou motif manquant | 400 | `Cash request amount must be positive` / `Cash request reason is required` |
-| Décision sur une demande non `PENDING` | 400 | `Cash request <numéro> is not pending` |
-| Demande inconnue | 404 | `Cash request not found: <numéro>` |
-| Revue d'une anomalie déjà close | 400 | `Anomaly flag <numéro> has already been resolved` |
-| Anomalie inconnue | 404 | `Anomaly flag not found: <numéro>` |
+| Demande : montant ou motif manquant | 400 | `Le montant de la demande doit être positif` / `Le motif de la demande est requis` |
+| Décision sur une demande non `PENDING` | 400 | `La demande <numéro> est <statut> : action possible seulement en PENDING` |
+| Demande inconnue | 404 | `Demande de caisse introuvable : <numéro>` |
+| Revue d'une anomalie déjà close | 400 | `Le signalement <numéro> est déjà <statut> : il ne se revoit plus` |
+| Revue vers `OPEN` ou vers le statut actuel | 400 | `Statut cible invalide pour le signalement <numéro> : …` |
+| Anomalie inconnue | 404 | `Signalement introuvable : <numéro>` |
 | Statistiques : session ou caisse inconnue | 404 | `Session de caisse introuvable : <numéro>` / `Caisse introuvable : <code>` |
 | Échec de génération PDF | 400 | `Unable to generate cash document PDF` |
 | Encaissement d'intention hors XAF | 400 | `Cash payments are only allowed in XAF` |
@@ -297,11 +315,11 @@ Le droit `CASH:OPEN_SESSION` existe en base mais n'est exigé par aucune route :
 ### Pièges
 
 - Les champs acteurs sont à remplir par le frontend avec l'identifiant du compte connecté (voir Notions). Ne pas proposer de les saisir librement.
-- `CashSessionResponse` d'une session `OPEN` renvoie `countedClosingAmount = closingAmount = expectedClosingAmount` et `varianceAmount = 0` (valeurs calculées, `CashRegisterMapperDecorator.java:72`). N'afficher compté et écart que si `status` n'est pas `OPEN`. Pour une session close par le worker de fin de mois (rien compté), la même réponse affiche aussi un compté égal à l'attendu et un écart nul ; `GET .../summary` renvoie, lui, `countedClosingAmount = null` : s'appuyer sur la synthèse et sur `closedBy = SYSTEM`.
+- `CashSessionResponse` ne remplit `countedClosingAmount`, `closingAmount` et `varianceAmount` que si la session a été comptée : ils sont `null` pour une session ouverte et pour une clôture de fin de mois sans comptage (avant le 17/11/2026, l'attendu et un écart nul y étaient inventés). Afficher « non compté » sur `null`.
 - Les sessions automatiques ont `openedBy` `SYSTEM_WALLET`, `SYSTEM_MOBILE_MONEY` ou `SYSTEM`, et sont closes à `SYSTEM` quand leur total atteint 10 000 000 XAF (configurable, `bokati.payment.cash-session.auto-limit`). Les exclure des écrans caissier.
 - `runningBalance` est souvent `null` (voir parcours 3) : ne pas en faire une colonne de solde du journal ; calculer le solde courant côté écran depuis la synthèse si besoin.
-- `relatedMovementNumber`, pas l'identifiant numérique, sert à lier deux mouvements. Seul l'`id` des pièces jointes est un int64 (voir [README racine](../README.md#identifiants--attention-aux-grands-nombres)).
-- Les heures des anomalies « hors horaires » et des heures de pointe sont en UTC ; le reste de l'application vit en `Africa/Brazzaville` (UTC+1).
+- `relatedMovementNumber`, pas l'identifiant numérique, sert à lier deux mouvements. Seul l'`id` des pièces jointes est un int64 (voir [README racine](../README.md#identifiants--codes-en-texte)).
+- Les heures des anomalies « hors horaires » et des heures de pointe sont à l'heure de Brazzaville, comme le reste de l'application (avant le 17/11/2026 : UTC).
 - Tri : les listes de caisses, sessions, mouvements, demandes et anomalies ignorent le paramètre `sort` (le service le retire, `CashRegisterServiceImpl.java:882`) ; les sessions sortent par `openedAt` décroissant, les autres selon l'ordre fixé dans leur requête.
 - Les routes d'écriture ne déclarent pas `Idempotency-Key` : désactiver le bouton pendant l'envoi pour éviter un double bon ou une double confirmation.
 
@@ -330,17 +348,17 @@ Le droit `CASH:OPEN_SESSION` existe en base mais n'est exigé par aucune route :
 - **Réglé (lot C0, 5fa2a16)** : l'ouverture `POST /cash-registers/sessions` exige désormais `CASH_SESSION:OPEN` ; `CASH:ADJUST` n'est plus exigé par aucune route. Ancien constat : `security/authorization/AdminApiAuthorizationManager.java:148` : la règle `/open` ne correspond à aucune route ; `CASH:OPEN_SESSION` n'est jamais exigé, l'ouverture passe sous `CASH:ADJUST`.
 - **Réglé (lot C0, 5fa2a16 ; décision d'écart reprise au lot C2)** : l'acteur vient du jeton (`CashActorResolver`), les champs du corps sont ignorés en contexte authentifié ; la décision d'écart est refusée en `403` à qui a ouvert ou clos la session (`CashSessionLifecycleServiceImpl#decideSessionVariance`), et la décision d'une demande à son demandeur. Ancien constat : `service/implementation/CashRegisterServiceImpl.java:142`, `:192`, `:229` et `CashRequestServiceImpl.java:97` : `openedBy`, `closedBy`, `reviewedBy` sont pris dans le corps, jamais du jeton ; aucune vérification que le valideur d'un écart ou d'une demande diffère du caissier.
 - **Réglé (lot C0, 5fa2a16)** : le solde courant part de zéro et additionne les mouvements selon la règle unique de sens (`CashFlowRules`) ; il est posé sur tous les mouvements et la migration a recalculé l'historique. Ancien constat : `service/implementation/CashRegisterServiceImpl.java:367` à `379` : `runningBalance` part de `openingAmount` puis ajoute à nouveau le mouvement `OPENING_FLOAT` de la même session ; le fonds d'ouverture est compté deux fois. Les anomalies `NEAR_MAX_CASH_RECURRENCE` et l'alerte de plafond s'appuient sur cette valeur.
-- **Partiellement réglé (lot C0, 5fa2a16)** : un ajustement exige un sens `IN` ou `OUT` et compte de la même façon dans le solde courant, l'attendu, les statistiques et les états. Reste : une demande `JUSTIFICATIF` approuvée produit toujours un ajustement `IN`, donc augmente encore l'attendu (`CashRequestServiceImpl#executeApprovedRequest`). Ancien constat : `service/implementation/CashRegisterServiceImpl.java:381` contre `repository/CashMovementRepository.java:27` : `ADJUSTMENT` est neutre pour `runningBalance` mais ajouté au solde attendu ; une demande `JUSTIFICATIF` approuvée augmente donc l'argent attendu en caisse.
-- `service/support/CashSessionAnomalyDetectionListener.java:21` : l'écouteur `AFTER_COMMIT` appelle un service `@Transactional` sans `REQUIRES_NEW` (le rapport de clôture, lui, le déclare, `CashClosingReportMailer.java:70`). Non vérifié par exécution : les signalements créés à la clôture risquent de ne jamais être enregistrés alors que courriels et alerte partent.
-- `cash/service/CashPaymentDeclarationService.java:210` à `215` : quand la facture est déjà soldée, l'annonce est passée en `CANCELLED` puis une exception est levée dans la même transaction ; l'annulation est annulée avec elle et l'annonce reste `AWAITING_CONFIRMATION` jusqu'à son expiration.
-- `cash/service/CashPaymentDeclarationService.java:242` : la note de confirmation est rangée dans `closeReason`.
+- **Réglé (lot C0, 5fa2a16, et 17/11/2026)** : un ajustement exige un sens `IN` ou `OUT` ; une demande `JUSTIFICATIF` approuvée produit désormais un ajustement `OUT` (elle diminue l'attendu). Constat restant d'alors : une demande `JUSTIFICATIF` approuvée produit toujours un ajustement `IN`, donc augmente encore l'attendu (`CashRequestServiceImpl#executeApprovedRequest`). Ancien constat : `service/implementation/CashRegisterServiceImpl.java:381` contre `repository/CashMovementRepository.java:27` : `ADJUSTMENT` est neutre pour `runningBalance` mais ajouté au solde attendu ; une demande `JUSTIFICATIF` approuvée augmente donc l'argent attendu en caisse.
+- **Réglé (17/11/2026)** : l'écouteur s'exécute dans sa propre transaction (`REQUIRES_NEW`) : les signalements de clôture sont enregistrés. Ancien constat : `service/support/CashSessionAnomalyDetectionListener.java:21` : l'écouteur `AFTER_COMMIT` appelle un service `@Transactional` sans `REQUIRES_NEW` (le rapport de clôture, lui, le déclare, `CashClosingReportMailer.java:70`). Non vérifié par exécution : les signalements créés à la clôture risquent de ne jamais être enregistrés alors que courriels et alerte partent.
+- **Réglé (17/11/2026)** : l'annulation d'une annonce dont la facture est déjà soldée est validée dans sa propre transaction avant l'erreur : l'annonce passe bien `CANCELLED`, et la caisse est prévenue. Ancien constat : `cash/service/CashPaymentDeclarationService.java:210` à `215` : quand la facture est déjà soldée, l'annonce est passée en `CANCELLED` puis une exception est levée dans la même transaction ; l'annulation est annulée avec elle et l'annonce reste `AWAITING_CONFIRMATION` jusqu'à son expiration.
+- **Réglé (17/11/2026)** : la note de confirmation est rendue dans `confirmationNote` ; `closeReason` n'est plus rempli que pour une annonce annulée ou expirée. Ancien constat : `cash/service/CashPaymentDeclarationService.java:242` : la note de confirmation est rangée dans `closeReason`.
 - **Réglé (avant les lots finance, c6089dc)** : un règlement en espèces sans session (vide compris) est refusé en `400` « La session de caisse est obligatoire pour un paiement en espèces », et `cashSessionNumber` n'est plus `@NotNull` dans `PayInvoiceRequest` (facultatif hors espèces). Ancien constat : `service/implementation/PaymentServiceImpl.java:508` : un règlement de facture `CASH` via `POST /sni/api/v1/billing/invoices/{documentNumber}/pay` avec `cashSessionNumber` vide (`""` passe le `@NotNull` de `PayInvoiceRequest`) réussit sans aucun mouvement de caisse, contrairement à `PATCH /payments/intents/{intentNumber}/cash` (`PaymentServiceImpl.java:290`). Le même `@NotNull` impose aussi le champ pour un paiement portefeuille.
-- `service/implementation/CashRequestServiceImpl.java:57` : la soumission d'une demande ne vérifie pas que la session est ouverte ; l'approbation échoue ensuite et la demande reste `PENDING` indéfiniment.
-- `mapper/decorator/CashRegisterMapperDecorator.java:72` à `75` : `CashSessionResponse` invente un compté et un écart nul pour les sessions ouvertes et pour les clôtures de fin de mois non comptées.
-- **Partiellement réglé (lots C2, C3 et C4)** : les sessions passent `SUSPENDED` et `CANCELLED` (suspension, annulation, lot C2), les mouvements `PENDING` (visa), `REVERSED` (contre-passation) et `CANCELLED` (lots C2 et C3), et `cashControlEnabled` est lu par le plafond de détention (lot C4). Reste : `CashRequestStatus.CANCELLED` jamais posé, `APPROVED` aussitôt remplacé par `EXECUTED`, `requiresSignature` et `riskScore` jamais renseignés. Ancien constat : Statuts jamais atteints : `CashSessionStatus.SUSPENDED` et `CANCELLED`, `CashRequestStatus.CANCELLED` (et `APPROVED` jamais visible), `CashMovementStatus.PENDING`, `REVERSED`, `CANCELLED`. `requiresSignature` et `riskScore` des mouvements ne sont jamais renseignés ; `cashControlEnabled` n'est lu nulle part.
-- `service/implementation/CashAnomalyDetectionServiceImpl.java:110` : la revue accepte n'importe quel statut cible, y compris `OPEN`. Message en anglais « has already been resolved » même pour `DISMISSED` ou `ESCALATED`.
-- `service/implementation/CashAnomalyDetectionServiceImpl.java:211` et `CashStatisticsServiceImpl.java` (heures de pointe) : heures calculées en UTC alors que le worker de fin de mois et les courriels utilisent `Africa/Brazzaville`.
-- `service/implementation/CashAnomalyDetectionServiceImpl.java:288` : le lien du courriel de dépassement de plafond pointe sur `/anomalies/{sessionNumber}` alors que les autres liens d'anomalie utilisent `flagNumber`.
-- `cash/service/CashDeclarationNotifier.java:97` : le commentaire annonce que la caisse est prévenue d'une annulation, le code ne fait que journaliser.
-- `controller/CashRegisterController.java:47` et suivants : `businessEntityCode` et `deviceCode` envoyés à la création sont transformés en codes générés, sans que le modèle de requête le signale.
-- Messages d'erreur des caisses, demandes et anomalies en anglais, ceux des annonces et statistiques en français.
+- **Réglé (17/11/2026)** : soumission refusée hors session `OPEN` ; à l'approbation, une demande d'une session close passe `CANCELLED` ; à la clôture, les demandes en attente sont annulées ; route d'annulation ajoutée. Ancien constat : `service/implementation/CashRequestServiceImpl.java:57` : la soumission d'une demande ne vérifie pas que la session est ouverte ; l'approbation échoue ensuite et la demande reste `PENDING` indéfiniment.
+- **Réglé (17/11/2026)** : compté, montant de clôture et écart `null` tant que rien n'est compté. Ancien constat : `mapper/decorator/CashRegisterMapperDecorator.java:72` à `75` : `CashSessionResponse` invente un compté et un écart nul pour les sessions ouvertes et pour les clôtures de fin de mois non comptées.
+- **Réglé (lots C2, C3, C4 et 17/11/2026)** : les sessions passent `SUSPENDED` et `CANCELLED`, les mouvements `PENDING`, `REVERSED` et `CANCELLED`, `cashControlEnabled` est lu par le plafond de détention ; `CashRequestStatus.CANCELLED` est posé (annulation, session close) ; un mouvement à viser a `requiresSignature = true` et un `riskScore` de 0 à 100 (ajustement 30, plafond par opération 30, plafond du jour 30, seuil de double visa 20) ; un mouvement ordinaire garde `requiresSignature = false` et `riskScore = null`. `APPROVED` reste transitoire, remplacé par `EXECUTED` dans la même transaction (voulu). Ancien constat : Statuts jamais atteints : `CashSessionStatus.SUSPENDED` et `CANCELLED`, `CashRequestStatus.CANCELLED` (et `APPROVED` jamais visible), `CashMovementStatus.PENDING`, `REVERSED`, `CANCELLED`. `requiresSignature` et `riskScore` des mouvements ne sont jamais renseignés ; `cashControlEnabled` n'est lu nulle part.
+- **Réglé (17/11/2026)** : la revue refuse `OPEN` et le statut actuel comme cible ; messages en français avec le statut réel. Ancien constat : `service/implementation/CashAnomalyDetectionServiceImpl.java:110` : la revue accepte n'importe quel statut cible, y compris `OPEN`. Message en anglais « has already been resolved » même pour `DISMISSED` ou `ESCALATED`.
+- **Réglé (17/11/2026)** : heures « hors horaires » et heures de pointe à l'heure de Brazzaville. Ancien constat : `service/implementation/CashAnomalyDetectionServiceImpl.java:211` et `CashStatisticsServiceImpl.java` (heures de pointe) : heures calculées en UTC alors que le worker de fin de mois et les courriels utilisent `Africa/Brazzaville`.
+- **Réglé (17/11/2026)** : le lien du courriel de dépassement de plafond mène à la session (`/payments/cash-registers/sessions/{sessionNumber}`). Ancien constat : `service/implementation/CashAnomalyDetectionServiceImpl.java:288` : le lien du courriel de dépassement de plafond pointe sur `/anomalies/{sessionNumber}` alors que les autres liens d'anomalie utilisent `flagNumber`.
+- **Réglé (17/11/2026)** : l'annulation d'une annonce prévient la caisse (notification interne `CASH_PAYMENT_DECLARATION_CANCELLED` aux destinataires du guichet). Ancien constat : `cash/service/CashDeclarationNotifier.java:97` : le commentaire annonce que la caisse est prévenue d'une annulation, le code ne fait que journaliser.
+- **Réglé (17/11/2026)** : `businessEntityCode` et `deviceCode` fournis à la création sont gardés tels quels, générés seulement s'ils sont vides. Ancien constat : `controller/CashRegisterController.java:47` et suivants : `businessEntityCode` et `deviceCode` envoyés à la création sont transformés en codes générés, sans que le modèle de requête le signale.
+- **Réglé (17/11/2026)** : messages des caisses, sessions, mouvements, demandes et anomalies traduits en français. Ancien constat : Messages d'erreur des caisses, demandes et anomalies en anglais, ceux des annonces et statistiques en français.

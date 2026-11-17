@@ -37,7 +37,7 @@ Module [document](../README.md) · 2 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `kycDocumentId` | chemin | `Long` | oui |  |
+| `kycDocumentId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -48,13 +48,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentCode` | texte |  |  |
 | `documentType` | texte |  |  |
 | `ownerName` | texte |  |  |
 | `documentNumber` | texte |  |  |
 | `fileName` | texte |  |  |
-| `fileSize` | entier int64 ⚠ |  |  |
+| `fileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `mimeType` | texte |  |  |
 | `previewUrl` | texte |  |  |
 | `downloadUrl` | texte |  |  |
@@ -65,14 +65,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `backQualityStatus` | texte |  |  |
 | `backQualityWarnings` | texte[] |  |  |
 | `backFileName` | texte |  |  |
-| `backFileSize` | entier int64 ⚠ |  |  |
+| `backFileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `backMimeType` | texte |  |  |
 | `backPreviewUrl` | texte |  |  |
 | `backDownloadUrl` | texte |  |  |
 | `issueDate` | date AAAA-MM-JJ |  |  |
 | `expiryDate` | date AAAA-MM-JJ |  |  |
 | `status` | enum : `PENDING`, `VERIFIED`, `REJECTED`, `EXPIRED` |  |  |
-| `uploadedBy` | entier int64 ⚠ |  |  |
+| `uploadedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `uploadedByEmail` | texte |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
 

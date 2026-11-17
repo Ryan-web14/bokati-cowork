@@ -81,7 +81,7 @@ Module [subscription](../README.md) · 16 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `versionId` | chemin | `Long` | oui |  |
+| `versionId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-subscriptions-derivations-protect"></a>
 ### POST /sni/api/v1/subscriptions/derivations/protect
@@ -225,7 +225,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `rejectionReason` | texte |  |  |
 | `appliedAt` | date-heure ISO 8601 UTC |  |  |
 | `endedAt` | date-heure ISO 8601 UTC |  |  |
-| `supersedesDerivationId` | entier int64 ⚠ |  |  |
+| `supersedesDerivationId` | code identifiant (texte) |  |  |
 | `batchCode` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 
@@ -263,7 +263,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `requestedBy` | texte |  |  |
 | `reason` | enum : `NEGOTIATION`, `GOODWILL`, `PARTNERSHIP`, `PILOT`, `GRANDFATHERING`, `LOYALTY`, `CORRECTION` |  |  |
-| `count` | entier int64 ⚠ |  |  |
+| `count` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalImpact` | nombre décimal |  |  |
 
 <a id="m-PlanDerivationController-ApprovalRuleView"></a>
@@ -292,7 +292,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `versionId` | entier int64 ⚠ |  |  |
+| `versionId` | code identifiant (texte) |  |  |
 | `planCode` | texte |  |  |
 | `versionNumber` | entier |  |  |
 | `floorPrice` | nombre décimal |  |  |
@@ -309,7 +309,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `previousVersionId` | entier int64 ⚠ | oui |  |
+| `previousVersionId` | code identifiant (texte) | oui |  |
 | `protectedUntil` | date AAAA-MM-JJ |  |  |
 | `simulateOnly` | booléen |  |  |
 

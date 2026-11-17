@@ -38,7 +38,7 @@ Module [accounting](../README.md) · 14 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-accruals-id-post"></a>
 ### POST /sni/api/v1/accounting/accruals/{id}/post
@@ -50,7 +50,7 @@ Module [accounting](../README.md) · 14 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-deferral-runs"></a>
 ### POST /sni/api/v1/accounting/deferral-runs
@@ -135,7 +135,7 @@ Module [accounting](../README.md) · 14 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-deferrals-schedules-id-events"></a>
 ### POST /sni/api/v1/accounting/deferrals/schedules/{id}/events
@@ -148,7 +148,7 @@ Module [accounting](../README.md) · 14 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-accounting-deferrals-schedules-id-usage"></a>
 ### POST /sni/api/v1/accounting/deferrals/schedules/{id}/usage
@@ -161,7 +161,7 @@ Module [accounting](../README.md) · 14 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-billing-documents-number-lines-lineid-service-period"></a>
 ### PATCH /sni/api/v1/billing/documents/{number}/lines/{lineId}/service-period
@@ -175,7 +175,7 @@ Module [accounting](../README.md) · 14 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `number` | chemin | `String` | oui |  |
-| `lineId` | chemin | `Long` | oui |  |
+| `lineId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -186,7 +186,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `kind` | texte |  |  |
 | `sourceType` | texte |  |  |
 | `reference` | texte |  |  |
@@ -250,7 +250,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `scheduleId` | entier int64 ⚠ |  |  |
+| `scheduleId` | code identifiant (texte) |  |  |
 | `kind` | texte |  |  |
 | `documentNumber` | texte |  |  |
 | `thirdParty` | texte |  |  |
@@ -289,11 +289,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `companyCode` | texte |  |  |
 | `kind` | texte |  |  |
 | `sourceType` | texte |  |  |
-| `sourceLineId` | entier int64 ⚠ |  |  |
+| `sourceLineId` | code identifiant (texte) |  |  |
 | `documentNumber` | texte |  |  |
 | `thirdParty` | texte |  |  |
 | `label` | texte |  |  |
@@ -339,7 +339,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `document` | [BillingDocument](#m-BillingDocument) |  |  |
 | `lineOrder` | entier |  |  |
 | `lineType` | enum : `PRODUCT`, `SERVICE`, `SUBSCRIPTION`, `PASS`, `ADDON`, `BOOKING`, `OVERAGE`, `PENALTY`, `WALLET`, `ADJUSTMENT`, `DISBURSEMENT` |  |  |
@@ -374,7 +374,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `serviceEnd` | date AAAA-MM-JJ |  |  |
 | `recognitionMethod` | texte |  |  |
 | `recognitionSource` | texte |  |  |
-| `originalLineId` | entier int64 ⚠ |  |  |
+| `originalLineId` | code identifiant (texte) |  |  |
 
 <a id="m-DeferralService-PeriodRequest"></a>
 #### DeferralService.PeriodRequest
@@ -391,7 +391,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `scheduleId` | entier int64 ⚠ |  |  |
+| `scheduleId` | code identifiant (texte) |  |  |
 | `documentNumber` | texte |  |  |
 | `label` | texte |  |  |
 | `account` | texte |  |  |
@@ -408,8 +408,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `scheduleId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `scheduleId` | code identifiant (texte) |  |  |
 | `type` | texte |  |  |
 | `eventDate` | date AAAA-MM-JJ |  |  |
 | `beforeValue` | texte |  |  |
@@ -423,8 +423,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
-| `scheduleId` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
+| `scheduleId` | code identifiant (texte) |  |  |
 | `usageDate` | date AAAA-MM-JJ |  |  |
 | `units` | nombre décimal |  |  |
 | `sourceRef` | texte |  |  |
@@ -435,7 +435,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `documentNumber` | texte |  |  |
 | `documentType` | enum : `QUOTE`, `PROFORMA_INVOICE`, `INVOICE`, `CREDIT_NOTE`, `CORRECTIVE_INVOICE`, `DEBIT_NOTE` |  |  |
 | `status` | enum : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `REFUNDED`, `APPLIED`, `WRITTEN_OFF` |  |  |
@@ -515,7 +515,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `customerCategory` | texte |  |  |
 | `customerIdentifiersJson` | texte |  |  |
 | `customerVatExemptionNote` | texte |  |  |
-| `companyCustomerId` | entier int64 ⚠ |  |  |
+| `companyCustomerId` | code identifiant (texte) |  |  |
 | `companyCustomerCode` | texte |  |  |
 | `companyName` | texte |  |  |
 | `companyIdentifiersJson` | texte |  |  |

@@ -17,7 +17,7 @@ Module [socle](../README.md) · 1 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `settingKey` | requête | `String` |  |  |
-| `changedBy` | requête | `Long` |  |  |
+| `changedBy` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `changedFrom` | requête | `Instant` |  |  |
 | `changedTo` | requête | `Instant` |  |  |
 | `page, size, sort` | requête (pagination) | `Pageable` |  | size=20, sort=changedAt,DESC |
@@ -31,10 +31,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `settingKey` | texte |  |  |
 | `oldValue` | texte |  |  |
 | `newValue` | texte |  |  |
-| `changedBy` | entier int64 ⚠ |  |  |
+| `changedBy` | entier int64 (texte au-delà de 2^53) |  |  |
 | `changedAt` | date-heure ISO 8601 UTC |  |  |
 | `reason` | texte |  |  |

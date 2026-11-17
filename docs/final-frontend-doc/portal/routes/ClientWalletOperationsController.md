@@ -41,7 +41,7 @@ Module [portal](../README.md) · 23 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `walletNumber` | chemin | `String` | oui |  |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-client-wallet-walletnumber-devices"></a>
 ### GET /sni/api/v1/client/wallet/{walletNumber}/devices
@@ -67,7 +67,7 @@ Module [portal](../README.md) · 23 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `walletNumber` | chemin | `String` | oui |  |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-client-wallet-walletnumber-devices-id-revoke"></a>
 ### POST /sni/api/v1/client/wallet/{walletNumber}/devices/{id}/revoke
@@ -80,7 +80,7 @@ Module [portal](../README.md) · 23 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `walletNumber` | chemin | `String` | oui |  |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-client-wallet-walletnumber-ledger-transactionnumber-receipt"></a>
 ### GET /sni/api/v1/client/wallet/{walletNumber}/ledger/{transactionNumber}/receipt
@@ -314,7 +314,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `alias` | texte |  |  |
 | `walletNumber` | texte |  |  |
 | `name` | texte |  |  |
@@ -335,7 +335,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `deviceId` | texte |  |  |
 | `label` | texte |  |  |
 | `firstSeenAt` | date-heure ISO 8601 UTC |  |  |

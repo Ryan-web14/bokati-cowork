@@ -25,7 +25,7 @@ Recherche : la recherche des ressources passe par la base (requête JPA et fonct
 
 Attention aux noms trompeurs : dans `ResourceRequest` (création) et `ChangeTypeRequest` (classification), les champs `typeId`, `groupId`, `policyId` attendent des **codes** (`RTY-...`, `RGP-...`, code de politique), pas des identifiants numériques. À l'inverse, `ResourceSearchCriteria` (`POST /resources/search`) attend de vrais identifiants numériques que l'API n'expose nulle part (voir [Écarts](#écarts-relevés)).
 
-Les identifiants `id` des créneaux et des fermetures sont des entiers 64 bits générés : les lire et les renvoyer en texte ([README racine](../README.md#identifiants--attention-aux-grands-nombres)).
+Les identifiants `id` des créneaux et des fermetures sont des entiers 64 bits générés : les lire et les renvoyer en texte ([README racine](../README.md#identifiants--codes-en-texte)).
 
 ### Dates et heures du module
 

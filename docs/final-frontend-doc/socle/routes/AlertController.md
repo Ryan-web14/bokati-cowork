@@ -49,7 +49,7 @@ Module [socle](../README.md) · 6 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `long` | oui |  |
+| `id` | chemin | `long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-post-sni-api-v1-admin-audit-alerts-id-acknowledge"></a>
 ### POST /sni/api/v1/admin/audit/alerts/{id}/acknowledge
@@ -62,7 +62,7 @@ Module [socle](../README.md) · 6 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `long` | oui |  |
+| `id` | chemin | `long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-admin-audit-dashboard"></a>
 ### GET /sni/api/v1/admin/audit/dashboard
@@ -80,7 +80,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `ruleCode` | texte |  |  |
 | `severity` | texte |  |  |
 | `status` | texte |  |  |
@@ -103,7 +103,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `code` | texte |  |  |
 | `settingKey` | texte |  |  |
-| `threshold` | entier int64 ⚠ |  |  |
+| `threshold` | entier int64 (texte au-delà de 2^53) |  |  |
 | `enabled` | booléen |  |  |
 | `severity` | texte |  |  |
 | `title` | texte |  |  |

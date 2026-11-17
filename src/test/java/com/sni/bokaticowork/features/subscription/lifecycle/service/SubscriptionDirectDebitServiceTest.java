@@ -190,7 +190,7 @@ class SubscriptionDirectDebitServiceTest {
 
     @Test
     void paymentFailureIsRecordedAsFailedOrInsufficient() {
-        doThrow(new BadRequestException("Insufficient wallet balance")).when(gateway).pay(anyString(), anyString(), any(), anyString());
+        doThrow(new BadRequestException("Solde du portefeuille insuffisant")).when(gateway).pay(anyString(), anyString(), any(), anyString());
         assertEquals(SubscriptionDebitAttempt.Status.INSUFFICIENT_FUNDS, service.collect(1L, "INV-1").orElseThrow().getStatus());
 
         doThrow(new IllegalStateException("gateway down")).when(gateway).pay(anyString(), anyString(), any(), anyString());

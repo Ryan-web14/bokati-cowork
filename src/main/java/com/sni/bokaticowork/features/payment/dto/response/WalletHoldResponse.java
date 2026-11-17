@@ -13,6 +13,16 @@ public record WalletHoldResponse(
         WalletHoldStatus status,
         String sourceType,
         String sourceCode,
-        Instant expiresAt
+        Instant expiresAt,
+        /** Ce que la retenue concerne, en clair (numero et libelle de la reservation, de l'abonnement...). */
+        String sourceLabel,
+        String createdBy,
+        Instant createdAt
 ) {
+    public WalletHoldResponse(String holdNumber, String walletNumber, BigDecimal amount, String currency,
+                              com.sni.bokaticowork.features.payment.enums.WalletHoldStatus status, String sourceType,
+                              String sourceCode, Instant expiresAt) {
+        this(holdNumber, walletNumber, amount, currency, status, sourceType, sourceCode, expiresAt, null, null, null);
+    }
+
 }

@@ -19,7 +19,7 @@ Trois publics : le back-office (`/sni/api/v1/support/**`, droits `SUPPORT:READ`,
 | Pièce jointe | `id` numérique (petit) | Rattachée au ticket, éventuellement à un message (côté serveur seulement : la réponse ne dit pas lequel). `internal` la cache au membre. |
 | Étiquette (tag) | son nom normalisé | Minuscules, espaces remplacés par `-` (`"Facture Erronée"` devient `facture-erronée`). Créée à la volée au premier usage. |
 | Événement de chronologie | `id` numérique | Journal lisible du ticket : `GET .../timeline`. |
-| Agent assigné | `assignedTo` : **le courriel de l'agent** (ex. `"assignedTo": "support@sni-cg.com"`), vide si personne | À afficher tel quel, à renvoyer tel quel dans le filtre de la file et pour réassigner. Ailleurs (règles de routage, statistiques par agent, `uploadedBy`) il arrive en nombre int64 : voir [Identifiants](../README.md#identifiants--attention-aux-grands-nombres). |
+| Agent assigné | `assignedTo` : **le courriel de l'agent** (ex. `"assignedTo": "support@sni-cg.com"`), vide si personne | À afficher tel quel, à renvoyer tel quel dans le filtre de la file et pour réassigner. Ailleurs (règles de routage, statistiques par agent, `uploadedBy`) il arrive en nombre int64 : voir [Identifiants](../README.md#identifiants--codes-en-texte). |
 | Règle de routage | `id` numérique (petit) | Assigne automatiquement un ticket neuf à un agent selon catégorie, priorité, type de propriétaire, type d'objet lié. |
 | Réponse rapide | `id` numérique (petit) | Modèle de texte par catégorie, pour l'agent. |
 | Article de connaissance | `articleCode` (`KB-` + horodatage) côté back-office, `slug` côté portail | `publicVisible` le rend lisible au portail. |
@@ -262,7 +262,7 @@ Les énumérations ci-dessus (statut, priorité, catégorie) sont fixes : les co
 
 - `SupportTicketResponse.assignedTo` est le courriel de l'agent : le garder tel quel, et le renvoyer tel quel dans le filtre `assignedTo` de la file et pour réassigner.
 - Réponses par courriel : un client (ou un agent) qui répond à une notification en gardant `TCK-...` dans l'objet voit sa réponse ajoutée au ticket. Les notifications automatiques que la plateforme reçoit dans sa propre boîte sont écartées.
-- `RoutingRuleResponse.assignedTo`, `RoutingRuleRequest.assignedTo`, `CreateTicketTaskRequest.assignedTo`, `AgentWorkloadEntry.agentId`, `AgentPerformanceEntry.agentId`, `AttachmentResponse.uploadedBy`, `KnowledgeArticleResponse.createdBy` et `updatedBy` restent des nombres int64 : lire avec un analyseur qui préserve les grands entiers, et écrire le nombre sans passer par un `number` JavaScript (voir [Identifiants](../README.md#identifiants--attention-aux-grands-nombres)).
+- `RoutingRuleResponse.assignedTo`, `RoutingRuleRequest.assignedTo`, `CreateTicketTaskRequest.assignedTo`, `AgentWorkloadEntry.agentId`, `AgentPerformanceEntry.agentId`, `AttachmentResponse.uploadedBy`, `KnowledgeArticleResponse.createdBy` et `updatedBy` restent des nombres int64 : lire avec un analyseur qui préserve les grands entiers, et écrire le nombre sans passer par un `number` JavaScript (voir [Identifiants](../README.md#identifiants--codes-en-texte)).
 - Les autres `id` du module (messages, pièces jointes, règles, réponses rapides, étiquettes, articles) sont de petites séquences, sans risque d'arrondi.
 
 ### Contenus riches

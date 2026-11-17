@@ -467,14 +467,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `folderCode` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
-| `childrenCount` | entier int64 ⚠ |  |  |
-| `documentsCount` | entier int64 ⚠ |  |  |
+| `childrenCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `documentsCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `color` | texte |  |  |
 | `icon` | texte |  |  |
 | `fileName` | texte |  |  |
 | `extension` | texte |  |  |
 | `mimeType` | texte |  |  |
-| `size` | entier int64 ⚠ |  |  |
+| `size` | entier int64 (texte au-delà de 2^53) |  |  |
 | `status` | texte |  |  |
 | `documentTypeCode` | texte |  |  |
 | `documentTypeName` | texte |  |  |
@@ -519,7 +519,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `filed` | entier |  |  |
 | `skipped` | entier |  |  |
-| `remaining` | entier int64 ⚠ |  |  |
+| `remaining` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-GedDtos-GedCreateFolderRequest"></a>
 #### GedDtos.GedCreateFolderRequest
@@ -563,20 +563,20 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `folderCode` | texte |  |  |
 | `folderName` | texte |  |  |
-| `usedBytes` | entier int64 ⚠ |  |  |
-| `files` | entier int64 ⚠ |  |  |
-| `quotaBytes` | entier int64 ⚠ |  |  |
-| `remainingBytes` | entier int64 ⚠ |  |  |
+| `usedBytes` | entier int64 (texte au-delà de 2^53) |  |  |
+| `files` | entier int64 (texte au-delà de 2^53) |  |  |
+| `quotaBytes` | entier int64 (texte au-delà de 2^53) |  |  |
+| `remainingBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 | `limitingFolderCode` | texte |  |  |
-| `totalUsedBytes` | entier int64 ⚠ |  |  |
-| `totalQuotaBytes` | entier int64 ⚠ |  |  |
+| `totalUsedBytes` | entier int64 (texte au-delà de 2^53) |  |  |
+| `totalQuotaBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-GedDtos-GedQuotaRequest"></a>
 #### GedDtos.GedQuotaRequest
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `quotaBytes` | entier int64 ⚠ |  |  |
+| `quotaBytes` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-GedDtos-GedRestrictRequest"></a>
 #### GedDtos.GedRestrictRequest
@@ -680,7 +680,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `hits` | [GedDtos.GedSearchHit](#m-GedDtos-GedSearchHit)[] |  |  |
 | `page` | entier |  |  |
 | `size` | entier |  |  |
-| `totalElements` | entier int64 ⚠ |  |  |
+| `totalElements` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalPages` | entier |  |  |
 
 <a id="m-GedDtos-GedTextRunResult"></a>
@@ -693,15 +693,15 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `empty` | entier |  |  |
 | `unsupported` | entier |  |  |
 | `failed` | entier |  |  |
-| `remaining` | entier int64 ⚠ |  |  |
+| `remaining` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-GedDtos-GedTextStatus"></a>
 #### GedDtos.GedTextStatus
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `pending` | entier int64 ⚠ |  |  |
-| `byStatus` | objet { clé : entier int64 ⚠ } |  |  |
+| `pending` | entier int64 (texte au-delà de 2^53) |  |  |
+| `byStatus` | objet { clé : entier int64 (texte au-delà de 2^53) } |  |  |
 
 <a id="m-GedDtos-GedTrashBatch"></a>
 #### GedDtos.GedTrashBatch
@@ -710,9 +710,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `batch` | texte |  |  |
 | `trashedAt` | date-heure ISO 8601 UTC |  |  |
-| `trashedBy` | entier int64 ⚠ |  |  |
-| `folders` | entier int64 ⚠ |  |  |
-| `documents` | entier int64 ⚠ |  |  |
+| `trashedBy` | entier int64 (texte au-delà de 2^53) |  |  |
+| `folders` | entier int64 (texte au-delà de 2^53) |  |  |
+| `documents` | entier int64 (texte au-delà de 2^53) |  |  |
 | `items` | [GedDtos.GedItem](#m-GedDtos-GedItem)[] |  |  |
 
 <a id="m-GedDtos-GedTrashResult"></a>
@@ -721,8 +721,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `batch` | texte |  |  |
-| `folders` | entier int64 ⚠ |  |  |
-| `documents` | entier int64 ⚠ |  |  |
+| `folders` | entier int64 (texte au-delà de 2^53) |  |  |
+| `documents` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-GedDtos-GedSelectionRequest"></a>
 #### GedDtos.GedSelectionRequest
@@ -742,7 +742,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `icon` | texte |  |  |
 | `color` | texte |  |  |
 | `depth` | entier |  |  |
-| `documentsCount` | entier int64 ⚠ |  |  |
+| `documentsCount` | entier int64 (texte au-delà de 2^53) |  |  |
 | `children` | [DocumentFolderTreeNode](#m-DocumentFolderTreeNode)[] |  |  |
 
 <a id="m-GedDtos-GedUploadFailure"></a>
@@ -800,10 +800,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `page` | entier |  |  |
 | `size` | entier |  |  |
-| `totalElements` | entier int64 ⚠ |  |  |
+| `totalElements` | entier int64 (texte au-delà de 2^53) |  |  |
 | `totalPages` | entier |  |  |
-| `folderCount` | entier int64 ⚠ |  |  |
-| `fileCount` | entier int64 ⚠ |  |  |
+| `folderCount` | entier int64 (texte au-delà de 2^53) |  |  |
+| `fileCount` | entier int64 (texte au-delà de 2^53) |  |  |
 
 <a id="m-GedDtos-GedAccessSummary"></a>
 #### GedDtos.GedAccessSummary

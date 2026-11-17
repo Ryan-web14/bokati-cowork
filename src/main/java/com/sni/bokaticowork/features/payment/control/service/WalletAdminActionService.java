@@ -256,6 +256,45 @@ public class WalletAdminActionService {
                 // La revue elle-meme est faite par le service des signalements · l'action ne fait
                 // qu'en garder la trace dans l'historique du portefeuille.
             }
+
+            case RELEASE_HOLD -> {
+                var hold = holdRepository.findByHoldNumber(action.getReference().trim())
+                        .orElseThrow(() -> new ResourceNotFoundException("Retenue introuvable"));
+                if (!hold.getWallet().getId().equals(wallet.getId())) {
+                    throw new BadRequestException("Cette retenue n'appartient pas à ce portefeuille");
+                }
+                holdService().release(hold.getHoldNumber(), actor);
+                action.setResultReference(hold.getHoldNumber());
+            }
+
+            case TRANSFER -> {
+                WalletAccount target = walletRepository.findByWalletNumber(action.getReference().trim())
+                        .orElseThrow(() -> new ResourceNotFoundException("Portefeuille cible introuvable"));
+                if (target.getId().equals(wallet.getId())) {
+                    throw new BadRequestException("Le portefeuille cible est le même que le portefeuille d'origine");
+                }
+                if (!target.getCurrency().equalsIgnoreCase(wallet.getCurrency())) {
+                    throw new BadRequestException("Les deux portefeuilles n'ont pas la même devise");
+                }
+                WalletLedgerEntry out = ledgerService.debit(wallet, action.getAmount(), WalletEntryType.TRANSFER_OUT, SOURCE_TYPE,
+                        action.getActionNumber(), "Virement vers " + target.getWalletNumber() + " · " + action.getReason(), actor, key + ":OUT");
+                ledgerService.credit(target, action.getAmount(), WalletEntryType.TRANSFER_IN, SOURCE_TYPE,
+                        action.getActionNumber(), "Virement de " + wallet.getWalletNumber() + " · " + action.getReason(), actor, key + ":IN");
+                action.setResultReference(out.getEntryNumber());
+            }
+
+            case RESTITUTE -> {
+                String reference = action.getReference().trim();
+                WalletLedgerEntry entry = ledgerService.debit(wallet, action.getAmount(), WalletEntryType.ADMIN_DEBIT, SOURCE_TYPE,
+                        action.getActionNumber(), "Restitution " + reference + " · " + action.getReason(), actor, key);
+                if (reference.toUpperCase(java.util.Locale.ROOT).startsWith("CASH:")) {
+                    cashRegisterService().recordWalletRestitution(reference.substring(5).trim(), action.getAmount(),
+                            wallet.getWalletNumber(), action.getActionNumber(), actor);
+                }
+                action.setResultReference(entry.getEntryNumber());
+                notifier.securityEvent(wallet, "WALLET_RESTITUTION", "Une partie de votre solde vous a été rendue",
+                        Map.of("actionNumber", action.getActionNumber(), "amount", action.getAmount().toPlainString()));
+            }
         }
         action.setExecutedAt(Instant.now());
         log.info("Portefeuille {} · action {} {} executee par {}", wallet.getWalletNumber(),
@@ -348,17 +387,62 @@ public class WalletAdminActionService {
             case SUSPEND, UNSUSPEND, RESET_PIN, REVIEW_FLAG -> {
                 // Rien de plus que le motif, deja verifie.
             }
+            case RELEASE_HOLD -> {
+                if (!StringUtils.hasText(request.reference())) {
+                    throw new BadRequestException("Indiquez le numéro de la retenue à lever");
+                }
+            }
+            case TRANSFER -> {
+                requirePositive(request.amount());
+                if (!StringUtils.hasText(request.reference())) {
+                    throw new BadRequestException("Indiquez le numéro du portefeuille cible");
+                }
+            }
+            case RESTITUTE -> {
+                requirePositive(request.amount());
+                if (!StringUtils.hasText(request.reference())) {
+                    throw new BadRequestException("Indiquez par où l'argent est rendu : CASH:<session de caisse> ou la référence du virement");
+                }
+            }
         }
         if (wallet.getStatus() == WalletStatus.CLOSED && request.type() != WalletAdminAction.Type.REVIEW_FLAG) {
             throw new ConflictException("wallet", "ce portefeuille est clôturé");
         }
     }
 
+    private com.sni.bokaticowork.features.payment.repository.WalletHoldRepository holdRepository;
+    private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.payment.service.interfaces.WalletHoldService> holdServiceProvider;
+    private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService> cashRegisterProvider;
+
+    @Autowired
+    void setActionCollaborators(com.sni.bokaticowork.features.payment.repository.WalletHoldRepository holdRepository,
+                                org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.payment.service.interfaces.WalletHoldService> holdServiceProvider,
+                                org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService> cashRegisterProvider) {
+        this.holdRepository = holdRepository;
+        this.holdServiceProvider = holdServiceProvider;
+        this.cashRegisterProvider = cashRegisterProvider;
+    }
+
+    private com.sni.bokaticowork.features.payment.service.interfaces.WalletHoldService holdService() {
+        return holdServiceProvider.getObject();
+    }
+
+    private com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService cashRegisterService() {
+        return cashRegisterProvider.getObject();
+    }
+
+    /** Un mouvement de ce montant exige-t-il un second visa ? (meme seuil pour toutes les voies) */
+    public boolean exceedsFourEyesThreshold(BigDecimal amount) {
+        return amount != null && amount.abs().compareTo(fourEyesThreshold()) >= 0;
+    }
+
     private boolean requiresSecondApproval(WalletAccount wallet, ActionRequest request) {
         return switch (request.type()) {
             case REVERSE -> true;
             case CLOSE -> wallet.getLedgerBalance() != null && wallet.getLedgerBalance().signum() > 0;
-            case TOPUP, DEBIT, ADJUST -> request.amount().abs().compareTo(fourEyesThreshold()) >= 0;
+            case TOPUP, DEBIT, ADJUST, TRANSFER -> request.amount().abs().compareTo(fourEyesThreshold()) >= 0;
+            // Rendre de l'argent hors du portefeuille passe toujours par un second visa.
+            case RESTITUTE -> true;
             default -> false;
         };
     }

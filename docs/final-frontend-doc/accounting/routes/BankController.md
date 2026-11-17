@@ -110,7 +110,7 @@ Module [accounting](../README.md) · 32 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `code` | chemin | `String` | oui |  |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-bank-accounts-code-statements"></a>
 ### GET /sni/api/v1/accounting/bank-accounts/{code}/statements
@@ -278,7 +278,7 @@ Module [accounting](../README.md) · 32 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `number` | chemin | `String` | oui |  |
-| `statementLineId` | requête | `Long` |  |  |
+| `statementLineId` | requête | `Long` (code identifiant ou nombre) |  |  |
 | `date` | requête | `LocalDate` |  |  |
 
 <a id="r-patch-sni-api-v1-accounting-deposit-slips-number-deposit"></a>
@@ -358,7 +358,7 @@ Module [accounting](../README.md) · 32 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-accounting-reconciliations-id-validate"></a>
 ### PATCH /sni/api/v1/accounting/reconciliations/{id}/validate
@@ -370,7 +370,7 @@ Module [accounting](../README.md) · 32 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -381,7 +381,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `kind` | texte |  |  |
 | `bankName` | texte |  |  |
@@ -415,7 +415,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `bankAccountCode` | texte |  |  |
 | `kind` | texte |  |  |
@@ -434,8 +434,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `statementLineIds` | entier int64 ⚠[] |  |  |
-| `entryLineIds` | entier int64 ⚠[] |  |  |
+| `statementLineIds` | code identifiant (texte)[] |  |  |
+| `entryLineIds` | code identifiant (texte)[] |  |  |
 
 <a id="m-BankController-Reason"></a>
 #### BankController.Reason
@@ -449,7 +449,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `number` | texte |  |  |
 | `bankAccountCode` | texte |  |  |
 | `reconciliationDate` | date AAAA-MM-JJ |  |  |
@@ -482,14 +482,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `preparedBy` | texte |  |  |
 | `validatedBy` | texte |  |  |
 | `validatedAt` | date-heure ISO 8601 UTC |  |  |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 
 <a id="m-BankService-Line"></a>
 #### BankService.Line
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `statementNumber` | texte |  |  |
 | `date` | date AAAA-MM-JJ |  |  |
 | `valueDate` | date AAAA-MM-JJ |  |  |
@@ -505,7 +505,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `ruleId` | entier int64 ⚠ |  |  |
+| `ruleId` | code identifiant (texte) |  |  |
 | `accountNumber` | texte |  |  |
 | `thirdParty` | texte |  |  |
 | `label` | texte |  |  |
@@ -516,7 +516,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `number` | texte |  |  |
 | `bankAccountCode` | texte |  |  |
 | `periodFrom` | date AAAA-MM-JJ |  |  |
@@ -559,7 +559,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `label` | texte |  |  |
 | `labelPattern` | texte |  |  |
 | `direction` | texte |  |  |
@@ -584,7 +584,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `bookBalance` | nombre décimal |  |  |
 | `bookOutstanding` | entier |  |  |
 | `statementOutstanding` | entier |  |  |
-| `oldestOutstandingDays` | entier int64 ⚠ |  |  |
+| `oldestOutstandingDays` | entier int64 (texte au-delà de 2^53) |  |  |
 | `lastStatement` | date AAAA-MM-JJ |  |  |
 | `lastReconciliation` | date AAAA-MM-JJ |  |  |
 
@@ -593,7 +593,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `code` | texte |  |  |
 | `label` | texte |  |  |
 | `format` | texte |  |  |
@@ -637,7 +637,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `transactionNumber` | texte |  |  |
 | `chequeNumber` | texte |  |  |
 | `bankName` | texte |  |  |
@@ -658,7 +658,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `number` | texte |  |  |
 | `bankAccountCode` | texte |  |  |
 | `registerCode` | texte |  |  |
@@ -695,7 +695,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `currency` | texte |  |  |
 | `rate` | nombre décimal |  |  |
 | `validOn` | date AAAA-MM-JJ |  |  |
@@ -720,7 +720,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `entryNumber` | texte |  |  |
 | `date` | date AAAA-MM-JJ |  |  |
 | `label` | texte |  |  |
@@ -734,8 +734,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `statementLineIds` | entier int64 ⚠[] |  |  |
-| `entryLineIds` | entier int64 ⚠[] |  |  |
+| `statementLineIds` | code identifiant (texte)[] |  |  |
+| `entryLineIds` | code identifiant (texte)[] |  |  |
 | `amount` | nombre décimal |  |  |
 | `kind` | texte |  |  |
 | `confidence` | entier |  |  |

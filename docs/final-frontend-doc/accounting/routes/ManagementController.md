@@ -101,7 +101,7 @@ Module [accounting](../README.md) · 12 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
-| `id` | chemin | `Long` | oui |  |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-get-sni-api-v1-accounting-tax-result-year"></a>
 ### GET /sni/api/v1/accounting/tax-result/{year}
@@ -214,7 +214,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `id` | entier int64 ⚠ |  |  |
+| `id` | code identifiant (texte) |  |  |
 | `kind` | texte |  |  |
 | `code` | texte |  |  |
 | `label` | texte |  |  |

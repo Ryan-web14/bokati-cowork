@@ -38,7 +38,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MobileMoneyOperationsController {
 
-    private static final String STAFF = "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')";
+    // Droits : PAYMENT:READ (lecture) et PAYMENT:PROCESS (resolution), comme le reste de /payments ;
+    // plus de seconde regle par role (ROLE_MANAGER admis, ROLE_FINANCE refuse malgre ses droits).
     private static final String DECIDERS = "hasRole('ADMIN') or hasRole('SUPER_ADMIN')";
 
     private final MobileMoneyOperationsService service;
@@ -51,7 +52,6 @@ public class MobileMoneyOperationsController {
     }
 
     @GetMapping
-    @PreAuthorize(STAFF)
     public ResponseEntity<PaginatedResponse<MobileMoneyDepositResponse>> search(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -70,7 +70,6 @@ public class MobileMoneyOperationsController {
 
     /** Nombre et montant par statut sur la periode · 30 derniers jours par defaut. */
     @GetMapping("/summary")
-    @PreAuthorize(STAFF)
     public ResponseEntity<List<MobileMoneyOperationsService.StatusTotal>> summary(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
@@ -79,7 +78,6 @@ public class MobileMoneyOperationsController {
 
     /** Les paiements de la periode qui divergent de PawaPay · 7 derniers jours par defaut. */
     @GetMapping("/reconciliation")
-    @PreAuthorize(STAFF)
     public ResponseEntity<MobileMoneyOperationsService.Reconciliation> reconciliation(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
@@ -89,14 +87,12 @@ public class MobileMoneyOperationsController {
 
     /** La fiche d'un paiement · notre base, PawaPay relu en direct, les rappels, les ecarts. */
     @GetMapping("/{depositId}")
-    @PreAuthorize(STAFF)
     public ResponseEntity<MobileMoneyOperationsService.Detail> detail(@PathVariable String depositId) {
         return ResponseEntity.ok(service.detail(depositId));
     }
 
     @PostMapping("/{depositId}/resolve")
     @Audited(module = "MOBILE_MONEY", action = "RESOLVE", ressource = "pawapay_deposit")
-    @PreAuthorize(STAFF)
     public ResponseEntity<MobileMoneyOperationsService.Detail> resolve(@PathVariable String depositId,
                                                                      @RequestBody ResolveRequest request,
                                                                      Authentication authentication) {

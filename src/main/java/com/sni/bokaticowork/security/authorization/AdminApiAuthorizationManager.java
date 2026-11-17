@@ -257,6 +257,10 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         }
         if (path.equals("/cash-registers/sessions")) return permission("CASH_SESSION", "OPEN");
         if (path.startsWith("/cash-registers/sessions/")) {
+            // Detail de session (17/11/2026) : reaffecter un paiement est un geste d'encadrement ;
+            // envoyer le rapport, une lecture.
+            if (path.endsWith("/reassign")) return permission("CASH_VARIANCE", "DECIDE");
+            if (path.endsWith("/report/send")) return permission("CASH", "READ");
             if (path.endsWith("/close") || path.endsWith("/closing-request") || path.endsWith("/start-closing")
                     || path.endsWith("/counts") || path.endsWith("/handover") || path.endsWith("/confirm-opening")
                     || path.endsWith("/cancel") || path.endsWith("/contest")) {

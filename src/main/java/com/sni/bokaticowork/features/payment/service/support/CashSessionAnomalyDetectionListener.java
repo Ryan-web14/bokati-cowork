@@ -17,9 +17,30 @@ public class CashSessionAnomalyDetectionListener {
 
     private final CashAnomalyDetectionService anomalyDetectionService;
     private final AdminInAppNotifier adminInAppNotifier;
+    private com.sni.bokaticowork.features.payment.service.interfaces.CashRequestService cashRequestService;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCashRequestService(com.sni.bokaticowork.features.payment.service.interfaces.CashRequestService cashRequestService) {
+        this.cashRequestService = cashRequestService;
+    }
+
+    /**
+     * Apres validation de la cloture, la transaction d'origine est terminee : sans transaction
+     * neuve, les signalements crees ici n'etaient jamais enregistres alors que l'alerte partait.
+     */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void onSessionClosed(CashSessionClosedEvent event) {
+        try {
+            if (cashRequestService != null) {
+                int cancelled = cashRequestService.cancelPendingOfSession(event.sessionNumber());
+                if (cancelled > 0) {
+                    log.info("Session {} close : {} demande(s) en attente annulee(s)", event.sessionNumber(), cancelled);
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Annulation des demandes en attente impossible pour la session {} : {}", event.sessionNumber(), ex.getMessage());
+        }
         try {
             var anomalies = anomalyDetectionService.analyzeSession(event.sessionNumber());
             if (anomalies != null && !anomalies.isEmpty()) {

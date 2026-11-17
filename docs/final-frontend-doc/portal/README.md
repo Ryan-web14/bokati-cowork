@@ -39,7 +39,7 @@ Ces routes sont aussi sous `/sni/api/v1/client/**` (même contrôle d'accès, m�
 | --- | --- | --- |
 | Membre connecté | `memberId` (code `MBR...`) | Jamais passé dans un chemin : le serveur le déduit du jeton (`ClientContextService.getAuthenticatedMember`, `src/main/java/com/sni/bokaticowork/features/portal/context/ClientContextService.java:29`). |
 | Dossier KYC | `caseCode` | Un seul dossier courant par membre (le plus récent). Créé à la création du membre. |
-| Pièce KYC | `id` (numéro court, `short_id`) | Petit entier, sans risque d'arrondi en pratique, mais typé `int64 ⚠` dans les modèles. |
+| Pièce KYC | `id` (numéro court, `short_id`) | Code identifiant en texte comme les autres (voir le README racine). |
 | Abonnement | `subscriptionNumber` | Seuls ceux dont l'abonné est le membre (`subscriberType = MEMBER`). Ceux d'une organisation passent par `/client/companies/{customerId}/...`. |
 | Pass | `passNumber` | Seuls ceux dont le titulaire est le membre. |
 | Devis d'abonnement | `quoteNumber` | |
@@ -53,7 +53,7 @@ Ces routes sont aussi sous `/sni/api/v1/client/**` (même contrôle d'accès, m�
 | Annonce d'espèces | `declarationNumber` | |
 | Portefeuille | `walletNumber` | |
 | Transfert, demande de paiement | `transferNumber`, `requestNumber` | |
-| Bénéficiaire, appareil du portefeuille | `id` | **Grand entier généré** (`@IdGeneration`) : arrondi par JavaScript, voir [../README.md#identifiants--attention-aux-grands-nombres](../README.md#identifiants--attention-aux-grands-nombres). |
+| Bénéficiaire, appareil du portefeuille | `id` | **Grand entier généré** (`@IdGeneration`) : arrondi par JavaScript, voir [../README.md#identifiants--codes-en-texte](../README.md#identifiants--codes-en-texte). |
 | Session (jeton de rafraîchissement) | `id` | **Grand entier généré** : même précaution. |
 | Contrat, avenant | `contractCode`, `amendmentCode` | |
 | Notification | `notificationNumber` | |
