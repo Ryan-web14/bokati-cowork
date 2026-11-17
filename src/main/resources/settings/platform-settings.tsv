@@ -397,6 +397,7 @@ bokati.payment.cash-session.auto-limit	PAYMENT	INTEGER	LIVE	10000000	Plafond d'u
 bokati.payment.cash-session.closing-report.enabled	PAYMENT	BOOLEAN	LIVE	true	Rapport de clôture de caisse actif
 bokati.payment.cash-session.month-end-cron	PAYMENT	CRON	LIVE	0 5 0 * * *	Planification de la clôture de fin de mois
 bokati.payment.cash-session.supervisor-email	PAYMENT	EMAIL	LIVE	supportela@elleaose.com	Adresse du superviseur de caisse
+bokati.payment.duplicate-window-seconds	PAYMENT	INTEGER	LIVE	30	Paiements : délai (secondes) pendant lequel un paiement identique (même mode, montant, auteur) est rendu au lieu d'être enregistré deux fois ; 0 coupe le contrôle
 bokati.payment.pawaypay.enabled-providers	PAYMENT	TEXT	LIVE		Opérateurs mobile money actifs
 bokati.payment.pawaypay.operator-prefixes	PAYMENT	TEXT	LIVE		Préfixes des opérateurs
 bokati.payment.pawaypay.polling-delay-ms	PAYMENT	INTEGER	LIVE	60000	Cadence de lecture de l'opérateur (ms)

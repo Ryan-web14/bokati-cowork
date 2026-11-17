@@ -95,6 +95,16 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             """)
     List<PaymentTransaction> findAllByOriginalTransactionNumber(@Param("transactionNumber") String transactionNumber);
 
+    /** Paiements recents d'une facture (toutes ses intentions) : detection d'un double envoi. */
+    @Query("""
+            SELECT t FROM PaymentTransaction t
+            WHERE t.paymentIntent.sourceType = 'BILLING_DOCUMENT'
+              AND t.paymentIntent.sourceCode = :documentNumber
+              AND t.createdAt >= :since
+            """)
+    List<PaymentTransaction> findRecentForBillingDocument(@Param("documentNumber") String documentNumber,
+                                                          @Param("since") java.time.Instant since);
+
     /** Les remboursements mobile money encore en cours, les plus anciens d'abord · a relire chez PawaPay. */
     @Query(nativeQuery = true, value = """
             SELECT *

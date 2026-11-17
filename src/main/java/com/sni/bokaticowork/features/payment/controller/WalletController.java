@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.payment.controller;
 
+import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.payment.dto.request.WalletLookupRequest;
@@ -44,6 +45,7 @@ public class WalletController {
      * creee en attente du second visa du centre de controle, {@code 202} avec l'action (rien n'est credite
      * avant le visa). L'auteur est le compte connecte.
      */
+    @Idempotent(operation = "WALLET_ADMIN_TOPUP", requestBodyArgIndex = 0)
     @PostMapping("/admin/top-up")
     public ResponseEntity<?> adminTopUp(@Valid @RequestBody WalletTopUpRequest request) {
         String actor = paymentOrigin.currentActor() != null ? paymentOrigin.currentActor() : request.createdBy();

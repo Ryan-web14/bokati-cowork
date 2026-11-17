@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.payment.controller;
 
+import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
@@ -102,6 +103,7 @@ public class PaymentController {
         ));
     }
 
+    @Idempotent(operation = "PAYMENT_CASH", requestBodyArgIndex = 1)
     @PatchMapping("/intents/{intentNumber}/cash")
     public ResponseEntity<PaymentTransactionResponse> registerCashPayment(@PathVariable String intentNumber,
                                                                           @Valid @RequestBody RegisterCashPaymentRequest request) {
@@ -109,6 +111,7 @@ public class PaymentController {
     }
 
     /** Cheque, virement ou mobile money hors plateforme (MTN MoMo Pay, Airtel Money) saisi au guichet. */
+    @Idempotent(operation = "PAYMENT_OFFLINE", requestBodyArgIndex = 1)
     @PatchMapping("/intents/{intentNumber}/offline")
     public ResponseEntity<PaymentTransactionResponse> registerOfflinePayment(@PathVariable String intentNumber,
                                                                              @Valid @RequestBody RegisterOfflinePaymentRequest request) {
@@ -145,12 +148,14 @@ public class PaymentController {
         return ResponseEntity.ok(intentLifecycleService.relaunch(intentNumber, request));
     }
 
+    @Idempotent(operation = "PAYMENT_WALLET", requestBodyArgIndex = 1)
     @PatchMapping("/intents/{intentNumber}/wallet")
     public ResponseEntity<PaymentTransactionResponse> payWithWallet(@PathVariable String intentNumber,
                                                                     @Valid @RequestBody WalletPaymentRequest request) {
         return ResponseEntity.ok(paymentService.payWithWallet(intentNumber, request));
     }
 
+    @Idempotent(operation = "PAYMENT_MOBILE_MONEY", requestBodyArgIndex = 1)
     @PatchMapping("/intents/{intentNumber}/mobile-money")
     public ResponseEntity<MobileMoneyDepositResponse> initiateMobileMoneyDeposit(
             @PathVariable String intentNumber,
@@ -161,6 +166,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.initiateMobileMoneyDeposit(intentNumber, request));
     }
 
+    @Idempotent(operation = "PAYMENT_MOBILE_MONEY_DEPOSIT", requestBodyArgIndex = 0)
     @PostMapping("/mobile-money/deposits")
     public ResponseEntity<MobileMoneyDepositResponse> initiateMobileMoneyDeposit(
             @Valid @RequestBody InitiateMobileMoneyDepositRequest request) {
@@ -170,6 +176,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.initiateMobileMoneyDeposit(request.intentNumber().trim(), request));
     }
 
+    @Idempotent(operation = "PAYMENT_REFUND", requestBodyArgIndex = 1)
     @PostMapping("/transactions/{transactionNumber}/refund")
     public ResponseEntity<PaymentTransactionResponse> refund(@PathVariable String transactionNumber,
                                                              @Valid @RequestBody RefundPaymentRequest request) {
@@ -181,6 +188,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.listRefunds(transactionNumber));
     }
 
+    @Idempotent(operation = "PAYMENT_REVERSE", requestBodyArgIndex = 1)
     @PostMapping("/transactions/{transactionNumber}/reverse")
     public ResponseEntity<PaymentTransactionResponse> reverse(@PathVariable String transactionNumber,
                                                               @Valid @RequestBody RefundPaymentRequest request) {

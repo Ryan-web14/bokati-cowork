@@ -75,6 +75,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.Optional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -283,6 +284,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentTransactionResponse registerCashPayment(String intentNumber, RegisterCashPaymentRequest request) {
+        Optional<PaymentTransactionResponse> replay = replayed(intentNumber, PaymentMethod.CASH, request.amount(), actorOr(request.receivedBy()));
+        if (replay.isPresent()) {
+            return replay.get();
+        }
         PaymentIntent intent = pendingIntent(intentNumber);
         if (!"XAF".equalsIgnoreCase(intent.getCurrency())) {
             throw new BadRequestException("Cash payments are only allowed in XAF");
@@ -313,6 +318,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentTransactionResponse registerOfflinePayment(String intentNumber, RegisterOfflinePaymentRequest request) {
+        Optional<PaymentTransactionResponse> replay = replayed(intentNumber, request.paymentMethod(), request.amount(), actorOr(request.receivedBy()));
+        if (replay.isPresent()) {
+            return replay.get();
+        }
         PaymentIntent intent = pendingIntent(intentNumber);
         ManualPaymentDetailsSupport.ManualPaymentDetails details = manualPaymentDetails.validate(
                 request.paymentMethod(), request.reference(), request.bankName(), request.payerName(),
@@ -389,6 +398,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentTransactionResponse payWithWallet(String intentNumber, WalletPaymentRequest request) {
+        Optional<PaymentTransactionResponse> replay = replayed(intentNumber, PaymentMethod.WALLET, request.amount(), actorOr(request.createdBy()));
+        if (replay.isPresent()) {
+            return replay.get();
+        }
         PaymentIntent intent = pendingIntent(intentNumber);
         WalletAccount wallet = walletService.serviceWallet(request.walletNumber());
         String normalizedWalletOwnerType = normalizeCustomerType(wallet.getOwnerType(), wallet.getOwnerCode());
@@ -431,6 +444,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public MobileMoneyDepositResponse initiateMobileMoneyDeposit(String intentNumber, InitiateMobileMoneyDepositRequest request) {
+        if (duplicateGuard != null && StringUtils.hasText(intentNumber)) {
+            duplicateGuard.lock("intent:" + intentNumber.trim());
+        }
         PaymentIntent intent = pendingIntent(intentNumber);
 
         // Une demande deja partie sur ce numero pour cette intention est rendue telle quelle :
@@ -518,6 +534,16 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PayInvoiceResponse payInvoice(String documentNumber, PayInvoiceRequest request) {
+        if (duplicateGuard != null && StringUtils.hasText(documentNumber)) {
+            // Deux appuis sur « Encaisser » : le second attend le premier, puis le retrouve.
+            duplicateGuard.lock("document:" + documentNumber.trim());
+            Optional<PaymentTransaction> twin = duplicateGuard.recentTwin(
+                    transactionRepository.findRecentForBillingDocument(documentNumber.trim(), Instant.now().minusSeconds(3600)),
+                    request.paymentMethod(), request.amount() == null ? null : money(request.amount()), actorOr(request.processedBy()));
+            if (twin.isPresent()) {
+                return new PayInvoiceResponse(billingDocumentService.get(documentNumber), mapper.toTransactionResponse(twin.get()));
+            }
+        }
         BillingDocument document = billingDocumentService.serviceByNumber(documentNumber);
         if (document.getBalanceDue().signum() <= 0) {
             throw new BadRequestException("La facture n'a pas de solde restant à payer");
@@ -1312,6 +1338,28 @@ public class PaymentServiceImpl implements PaymentService {
 
     private BigDecimal money(BigDecimal amount) {
         return amount.setScale(4, RoundingMode.HALF_UP);
+    }
+
+    private com.sni.bokaticowork.features.payment.service.support.PaymentDuplicateGuard duplicateGuard;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setDuplicateGuard(com.sni.bokaticowork.features.payment.service.support.PaymentDuplicateGuard duplicateGuard) {
+        this.duplicateGuard = duplicateGuard;
+    }
+
+    /**
+     * Double envoi d'un meme paiement sur une intention : verrou sur l'intention, puis paiement
+     * identique recent rendu tel quel (voir {@link com.sni.bokaticowork.features.payment.service.support.PaymentDuplicateGuard}).
+     */
+    private Optional<PaymentTransactionResponse> replayed(String intentNumber, PaymentMethod method, BigDecimal amount, String actor) {
+        if (duplicateGuard == null || !StringUtils.hasText(intentNumber)) {
+            return Optional.empty();
+        }
+        duplicateGuard.lock("intent:" + intentNumber.trim());
+        PaymentIntent intent = serviceIntent(intentNumber);
+        return duplicateGuard.recentTwin(transactionRepository.findAllByPaymentIntentIdOrderByCreatedAtDesc(intent.getId()),
+                        method, amount == null ? null : money(amount), actor)
+                .map(mapper::toTransactionResponse);
     }
 
     /**

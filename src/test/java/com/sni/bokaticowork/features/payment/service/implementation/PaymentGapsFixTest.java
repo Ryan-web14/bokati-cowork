@@ -143,6 +143,49 @@ class PaymentGapsFixTest {
     }
 
     @Test
+    @DisplayName("Double clic sur un paiement en especes : le paiement deja enregistre est rendu, rien n'est cree")
+    void aDoubleClickOnCashReturnsTheFirstPayment() {
+        service.setDuplicateGuard(new com.sni.bokaticowork.features.payment.service.support.PaymentDuplicateGuard());
+        when(paymentOrigin.currentActor()).thenReturn("caissier@elleaose.com");
+        PaymentTransaction first = new PaymentTransaction();
+        first.setTransactionNumber("TXN-CASH-1");
+        first.setPaymentMethod(PaymentMethod.CASH);
+        first.setStatus(PaymentTransactionStatus.SUCCEEDED);
+        first.setAmount(new BigDecimal("50.0000"));
+        first.setReceivedBy("caissier@elleaose.com");
+        first.setCreatedAt(Instant.now().minusSeconds(2));
+        when(transactionRepository.findAllByPaymentIntentIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(first));
+        var expected = mock(com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse.class);
+        when(mapper.toTransactionResponse(first)).thenReturn(expected);
+        // Le premier clic a tout paye : sans le controle, le second echouerait ou paierait deux fois.
+        intent.setStatus(PaymentIntentStatus.SUCCEEDED);
+
+        var response = service.registerCashPayment("PI-1",
+                new com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest(null, "CS-1", new BigDecimal("50"), null, null, null));
+
+        assertThat(response).isSameAs(expected);
+        org.mockito.Mockito.verify(transactionRepository, org.mockito.Mockito.never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Paiement identique mais plus ancien que la fenetre, ou d'un autre montant : un nouveau paiement")
+    void onlyARecentIdenticalPaymentIsReplayed() {
+        var guard = new com.sni.bokaticowork.features.payment.service.support.PaymentDuplicateGuard();
+        PaymentTransaction old = new PaymentTransaction();
+        old.setPaymentMethod(PaymentMethod.CASH);
+        old.setStatus(PaymentTransactionStatus.SUCCEEDED);
+        old.setAmount(new BigDecimal("50.0000"));
+        old.setReceivedBy("caissier@elleaose.com");
+        old.setCreatedAt(Instant.now().minusSeconds(120));
+
+        assertThat(guard.recentTwin(List.of(old), PaymentMethod.CASH, new BigDecimal("50.0000"), "caissier@elleaose.com")).isEmpty();
+        old.setCreatedAt(Instant.now().minusSeconds(5));
+        assertThat(guard.recentTwin(List.of(old), PaymentMethod.CASH, new BigDecimal("40.0000"), "caissier@elleaose.com")).isEmpty();
+        assertThat(guard.recentTwin(List.of(old), PaymentMethod.WALLET, new BigDecimal("50.0000"), "caissier@elleaose.com")).isEmpty();
+        assertThat(guard.recentTwin(List.of(old), PaymentMethod.CASH, new BigDecimal("50.0000"), "caissier@elleaose.com")).contains(old);
+    }
+
+    @Test
     @DisplayName("Vue du portail : sans adresse de rappel ni echanges bruts avec PawaPay")
     void thePortalViewHidesProviderPayloads() {
         MobileMoneyDepositResponse full = new MobileMoneyDepositResponse("dep-1", "TXN-1", null, null, null, "MTN", BigDecimal.TEN, "XAF",
