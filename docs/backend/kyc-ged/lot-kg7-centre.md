@@ -28,11 +28,11 @@
 
 ## Action de l'exploitant
 
-Modèle WhatsApp `kyc_pieces_demandees` à créer chez Infobip et à faire approuver par Meta (catégorie « Utility »), puis à enregistrer avec l'objet `KYC_DOCUMENTS_REQUESTED`. Texte proposé :
+Le modèle `kyc_pieces_demandees` (objet `KYC_DOCUMENTS_REQUESTED`, catégorie « Utility ») fait partie des modèles fournis (`WhatsAppService.DEFAULTS`, 17/11/2026) :
 
-> Bonjour {{1}}, pour compléter votre dossier de vérification ({{3}}), merci de déposer : {{2}}. Vous pouvez le faire depuis votre espace client.
+> Bonjour {{1}}, pour compléter votre dossier de vérification chez ELLE A OSE, merci de déposer : {{2}} (dossier {{3}}). Vous pouvez le faire depuis votre espace client, en quelques minutes.
 
-Bouton « Ouvrir mon espace » vers `https://espace.elleaose.com/{{1}}`. Rien n'est soumis à Meta sans votre accord.
+Pied « ELLE A OSE », bouton « Déposer mes pièces » vers la page KYC de l'espace client. Pour le soumettre à Meta, une fois la version déployée : `POST /sni/api/v1/admin/whatsapp/templates/defaults` (crée chez Infobip les modèles fournis qui manquent), puis, après l'approbation de Meta (quelques minutes à 48 h), `POST /sni/api/v1/admin/whatsapp/templates/sync` pour relire le statut. Les messages partent dès que le modèle est `APPROVED`.
 
 ## Tests
 
