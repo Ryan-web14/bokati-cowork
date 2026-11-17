@@ -9481,6 +9481,15 @@
       "type": "string"
      }
     },
+    "identityVerdict": {
+     "type": "string"
+    },
+    "backIdentityVerdict": {
+     "type": "string"
+    },
+    "identityEngine": {
+     "type": "string"
+    },
     "backFileName": {
      "type": "string"
     },

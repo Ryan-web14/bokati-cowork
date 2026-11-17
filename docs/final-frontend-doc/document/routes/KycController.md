@@ -512,6 +512,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `qualityWarnings` | texte[] |  |  |
 | `backQualityStatus` | texte |  |  |
 | `backQualityWarnings` | texte[] |  |  |
+| `identityVerdict` | texte |  |  |
+| `backIdentityVerdict` | texte |  |  |
+| `identityEngine` | texte |  |  |
 | `backFileName` | texte |  |  |
 | `backFileSize` | entier int64 (texte au-delà de 2^53) |  |  |
 | `backMimeType` | texte |  |  |

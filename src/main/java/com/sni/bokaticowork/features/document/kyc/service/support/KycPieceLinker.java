@@ -52,6 +52,15 @@ public class KycPieceLinker {
         String status = report == null ? null : report.status().name();
         String warnings = report == null || report.warnings().isEmpty() ? null : String.join("\n", report.warnings());
         java.math.BigDecimal blur = report == null || report.blurScore() == null ? null : java.math.BigDecimal.valueOf(report.blurScore());
+        // Lot KG9 : verdict « piece d'identite » de la face deposee.
+        if (report != null && report.identity() != null) {
+            if (back) {
+                piece.setBackIdentityVerdict(report.identity().verdict().name());
+            } else {
+                piece.setIdentityVerdict(report.identity().verdict().name());
+            }
+            piece.setIdentityEngine(report.identity().engine().name());
+        }
         if (back) {
             piece.setBackQualityStatus(status);
             piece.setBackQualityWarnings(warnings);

@@ -77,6 +77,16 @@ public class KycDocument {
     @Column(name = "back_quality_blur_score")
     private java.math.BigDecimal backQualityBlurScore;
 
+    /** Lot KG9 : verdict de l'analyse « piece d'identite » du recto et du verso, et moteur employe. */
+    @Column(name = "identity_verdict", length = 30)
+    private String identityVerdict;
+
+    @Column(name = "back_identity_verdict", length = 30)
+    private String backIdentityVerdict;
+
+    @Column(name = "identity_engine", length = 10)
+    private String identityEngine;
+
     @Column(name = "document_number", length = 100)
     private String documentNumber;
 

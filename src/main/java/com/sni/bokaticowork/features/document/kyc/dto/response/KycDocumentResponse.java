@@ -30,6 +30,11 @@ public class KycDocumentResponse {
     private java.util.List<String> qualityWarnings;
     private String backQualityStatus;
     private java.util.List<String> backQualityWarnings;
+    /** Lot KG9 : LIKELY_IDENTITY, UNCERTAIN, NOT_IDENTITY ou NOT_CHECKED (nul si non analysee). */
+    private String identityVerdict;
+    private String backIdentityVerdict;
+    /** JAVA ou OPENCV. */
+    private String identityEngine;
     private String backFileName;
     private Long backFileSize;
     private String backMimeType;
