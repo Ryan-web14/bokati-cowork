@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [payment](../README.md) · 5 route(s).
+Module [payment](../README.md) · 6 route(s).
 
 ## Routes
 
@@ -44,6 +44,19 @@ Module [payment](../README.md) · 5 route(s).
 - Réponse : `CashRequestResponse`
 - Modèles : [CashRequestResponse](#m-CashRequestResponse), [ReviewCashRequestRequest](#m-ReviewCashRequestRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/CashRequestController.java`, méthode `approve`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `requestNumber` | chemin | `String` | oui |  |
+
+<a id="r-patch-sni-api-v1-cash-registers-requests-requestnumber-cancel"></a>
+### PATCH /sni/api/v1/cash-registers/requests/{requestNumber}/cancel
+
+- Accès : back-office : rôle d'administration et droit `CASH_MOVEMENT:CREATE`
+- Corps JSON (facultatif) : `ReviewCashRequestRequest`
+- Réponse : `CashRequestResponse`
+- Modèles : [CashRequestResponse](#m-CashRequestResponse), [ReviewCashRequestRequest](#m-ReviewCashRequestRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/CashRequestController.java`, méthode `cancel`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |

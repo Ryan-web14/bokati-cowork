@@ -224,8 +224,9 @@ public class CashPaymentDeclarationService {
         BigDecimal balance = document.balanceDue() == null ? BigDecimal.ZERO : document.balanceDue();
         if (balance.signum() <= 0) {
             // Regle entre-temps par un autre moyen · encaisser en plus ferait payer deux fois.
-            close(declaration, CashDeclarationStatus.CANCELLED, actor,
-                    "Facture déjà soldée par un autre moyen");
+            // L'annulation est validee dans sa propre transaction : l'exception qui suit annule la
+            // transaction de la confirmation, et l'annonce restait sinon en attente jusqu'a expiration.
+            cancelSettled(declarationNumber, actor);
             throw new BadRequestException("La facture " + declaration.getDocumentNumber()
                     + " a été réglée entre-temps · rien à encaisser.");
         }
@@ -255,7 +256,9 @@ public class CashPaymentDeclarationService {
         declaration.setConfirmedAmount(received);
         declaration.setCashSessionNumber(request.cashSessionNumber());
         declaration.setTransactionNumber(transaction.transactionNumber());
-        declaration.setCloseReason(StringUtils.hasText(request.note()) ? request.note() : null);
+        // Note de la caisse a la confirmation : rendue dans confirmationNote (closeReason reste le
+        // motif d'une annulation ou d'une expiration).
+        declaration.setCloseReason(StringUtils.hasText(request.note()) ? request.note().trim() : null);
         CashPaymentDeclaration saved = repository.save(declaration);
 
         log.info("Annonce {} confirmee · {} {} encaisses en caisse {} par {}",
@@ -286,6 +289,26 @@ public class CashPaymentDeclarationService {
     @Transactional
     public CashPaymentDeclaration expire(CashPaymentDeclaration declaration, String reason) {
         return close(declaration, CashDeclarationStatus.EXPIRED, "SYSTEM", reason);
+    }
+
+    private org.springframework.transaction.support.TransactionTemplate requiresNew;
+
+    @Autowired(required = false)
+    void setTransactionManager(org.springframework.transaction.PlatformTransactionManager transactionManager) {
+        this.requiresNew = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        this.requiresNew.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    private void cancelSettled(String declarationNumber, String actor) {
+        Runnable work = () -> repository.findByDeclarationNumber(declarationNumber)
+                .filter(CashPaymentDeclaration::open)
+                .ifPresent(fresh -> notifier.cancelled(close(fresh, CashDeclarationStatus.CANCELLED, actor,
+                        "Facture déjà soldée par un autre moyen")));
+        if (requiresNew == null) {
+            work.run();
+        } else {
+            requiresNew.executeWithoutResult(status -> work.run());
+        }
     }
 
     private CashPaymentDeclaration close(CashPaymentDeclaration declaration, CashDeclarationStatus status,

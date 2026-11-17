@@ -242,6 +242,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `closedAt` | date-heure ISO 8601 UTC |  |  |
 | `closedBy` | texte |  |  |
 | `closeReason` | texte |  |  |
+| `confirmationNote` | texte |  |  |
 
 <a id="m-DeclareCashPaymentRequest"></a>
 #### DeclareCashPaymentRequest

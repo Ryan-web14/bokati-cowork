@@ -5353,6 +5353,9 @@
     },
     "closeReason": {
      "type": "string"
+    },
+    "confirmationNote": {
+     "type": "string"
     }
    }
   },

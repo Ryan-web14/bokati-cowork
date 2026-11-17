@@ -127,7 +127,13 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
     public CashAnomalyFlagResponse review(String flagNumber, ReviewCashAnomalyRequest request) {
         CashAnomalyFlag flag = find(flagNumber);
         if (flag.getStatus() != CashAnomalyStatus.OPEN && flag.getStatus() != CashAnomalyStatus.ACKNOWLEDGED) {
-            throw new BadRequestException("Anomaly flag " + flagNumber + " has already been resolved");
+            throw new BadRequestException("Le signalement " + flagNumber + " est déjà " + flag.getStatus() + " : il ne se revoit plus");
+        }
+        // Cible : prise en compte (depuis OPEN seulement), classement, escalade ou resolution. OPEN n'est pas une decision.
+        CashAnomalyStatus target = request.status();
+        if (target == null || target == CashAnomalyStatus.OPEN || target == flag.getStatus()) {
+            throw new BadRequestException("Statut cible invalide pour le signalement " + flagNumber + " : "
+                    + target + " (ACKNOWLEDGED depuis OPEN, DISMISSED, ESCALATED ou RESOLVED)");
         }
         flag.setStatus(request.status());
         flag.setReviewedBy(actors.resolve(request.reviewedBy()));
@@ -228,13 +234,13 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
         if (session.getOpenedAt() == null) {
             return;
         }
-        ZonedDateTime openedAt = session.getOpenedAt().atZone(ZoneOffset.UTC);
+        ZonedDateTime openedAt = session.getOpenedAt().atZone(com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.ZONE);
         int hour = openedAt.getHour();
         boolean offHours = hour >= OFF_HOURS_START || hour < OFF_HOURS_END;
         if (!offHours) {
             return;
         }
-        String description = "Session de caisse ouverte en dehors des heures habituelles d'activité, à " + hour + "h (UTC), par "
+        String description = "Session de caisse ouverte en dehors des heures habituelles d'activité, à " + hour + "h (heure de Brazzaville), par "
                 + session.getOpenedBy() + ".";
         flag(session, null, CashAnomalyType.OFF_HOURS_SESSION, CashAnomalySeverity.LOW, BigDecimal.valueOf(hour), description, newFlags);
     }
@@ -305,7 +311,9 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
                 "Dépassement du plafond de caisse · " + register.getRegisterCode(),
                 description,
                 session.getSessionNumber(),
-                CASH_ANOMALIES_PATH + session.getSessionNumber()
+                // Pas de signalement pour un depassement : le lien mene a la session (avant : une page
+                // d'anomalie au numero de session, qui n'existe pas).
+                "/payments/cash-registers/sessions/" + session.getSessionNumber()
         );
         register.setLastAnomalyAlertSentAt(Instant.now());
         cashRegisterRepository.save(register);
@@ -446,18 +454,18 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
 
     private CashSession session(String sessionNumber) {
         if (!StringUtils.hasText(sessionNumber)) {
-            throw new BadRequestException("Cash session number is required");
+            throw new BadRequestException("Le numéro de la session est requis");
         }
         return sessionRepository.findBySessionNumber(sessionNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Cash session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session de caisse introuvable : " + sessionNumber));
     }
 
     private CashAnomalyFlag find(String flagNumber) {
         if (!StringUtils.hasText(flagNumber)) {
-            throw new BadRequestException("Anomaly flag number is required");
+            throw new BadRequestException("Le numéro du signalement est requis");
         }
         return anomalyFlagRepository.findByFlagNumber(flagNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Anomaly flag not found: " + flagNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Signalement introuvable : " + flagNumber));
     }
 
     private BigDecimal toBigDecimal(Object value) {

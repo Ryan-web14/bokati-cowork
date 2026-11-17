@@ -61,6 +61,14 @@ public class CashRequestController {
         return ResponseEntity.ok(cashRequestService.approve(requestNumber, request));
     }
 
+    /** Annulation d'une demande en attente, par le demandeur ou un approbateur. Corps facultatif { "note": "…" }. */
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_CANCEL_REQUEST", ressource = "cash_register")
+    @PatchMapping("/requests/{requestNumber}/cancel")
+    public ResponseEntity<CashRequestResponse> cancel(@PathVariable String requestNumber,
+                                                       @RequestBody(required = false) ReviewCashRequestRequest request) {
+        return ResponseEntity.ok(cashRequestService.cancel(requestNumber, request));
+    }
+
     @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_REJECT", ressource = "cash_register")
     @PatchMapping("/requests/{requestNumber}/reject")
     public ResponseEntity<CashRequestResponse> reject(@PathVariable String requestNumber,
