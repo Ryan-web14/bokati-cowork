@@ -104,10 +104,27 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 | **B6. Notifications et liste d'attente** | Rappels automatiques (courriel et WhatsApp) ; courriel des réservations en attente ; liste d'attente refaite (offre limitée dans le temps, notification, réservation à l'acceptation, portail) | 6, Bn-15 à Bn-17 |
 | **B7. Listes, recherche, performances** | `GET /bookings/reference`, listes de motifs de l'administrateur, recherche unique du titulaire, pagination et tri, politiques et dérogations modifiables, réponse complète, mapper allégé, réparation réelle ou retirée | 7, 12, 13, 14, 16, Bn-22, Bn-24, Bn-25 |
 | **B8. Messages et fuseau** | Messages en français ; fuseau de l'application appliqué partout | 18, Bn-26, Bn-27 |
-| **B9. Fonctions nouvelles** | Selon le choix (voir décision D7) | |
+| **B9a. Rappels et venue** | Rappels automatiques (courriel et WhatsApp) la veille et 2 h avant, lien « je viens » ou « j'annule » ; libération anticipée d'une réservation sans arrivée après N minutes | |
+| **B9b. Planning et séries** | Planning d'accueil du jour (toutes ressources, arrivées, retards) ; séries récurrentes modifiables ou annulables en bloc ou à partir d'une date | |
+| **B9c. Fiabilité et acompte** | Score de fiabilité du client (absences, annulations tardives) qui impose le prépaiement ou un acompte au-delà d'un seuil ; acompte partiel pour confirmer, le reste sur place | |
+| **B9d. Invitations et demandes** | Invités d'une réunion (courriel ou WhatsApp, réponse, pointage) ; disposition de la salle et demandes spéciales ; notes internes et étiquettes ; modification autonome au portail dans la politique | |
+| **B9e. Entreprises** | Budget par collaborateur ou par entreprise ; relevé mensuel groupé (une facture par mois, option par entreprise) ; forfait d'heures entreprise partagé ; couverture partielle d'une réservation par les heures incluses | reste ressources |
+| **B9f. Remplissage** | Offres de dernière minute au portail (et avis WhatsApp aux membres volontaires) ; alternatives proposées quand un créneau est pris ; prolongation en un clic (sur place, et renouvellement des locations au mois) | |
+| **B9g. Suivi** | Tableau de bord des réservations (absences, annulations tardives, délai, canal, chiffre d'affaires par canal) ; avis après utilisation (lien à jeton, qualité par ressource, alerte) ; agenda personnel synchronisé (coupé par défaut) ; **rapport de réservations par client imprimable** (PDF) | |
 | **B10. Visibilité des ressources par client** | Ressource visible de tous, réservée à des clients désignés, ou visible sur demande | demande 6 |
 | **B11. Doc et tests** | Doc frontend booking, portail et ressource ; tests par lot ; backfill KYC | reste ressources |
 
-## Décisions
+## Décisions (18/11/2026)
 
-À trancher avant l'implémentation : voir la conversation du 18/11/2026 ; reportées ici une fois prises.
+| N° | Sujet | Décision |
+| --- | --- | --- |
+| D1 | Validité d'un rendez-vous sans paiement | **Selon l'éloignement** : 2 h par défaut ; créneau qui commence avant : échéance 30 min avant le début ; créneau à plus de 3 jours : 24 h ; échéance un week-end ou un jour férié : prochain jour ouvré à 10:00. Durées en paramètres. |
+| D2 | Créneau pendant la validité | **Retenu**, rappel au client avant l'échéance, puis à l'échéance sans paiement : annulation automatique, créneau rendu, équipe prévenue. |
+| D3 | Accès côté client | **Réglage global** (coupé par défaut) et **option par client** (membre, entreprise, client) posée par l'équipe, qui l'emporte ; retirée d'office après N absences. |
+| D4 | Ajustement du prix par l'équipe | **Motif** (liste) + **plafond** (par exemple 20 %) par un droit dédié ; au-delà, **approbation** par le moteur d'approbation avant confirmation. Tarifs préférentiels par client ou segment en plus. |
+| D5 | Appelant inconnu au téléphone | **Prospect du CRM** (source téléphone) relié à la réservation, converti en client à la venue ou au paiement ; canal enregistré ; note d'appel ; confirmation par WhatsApp ou courriel. |
+| D6 | Visibilité d'une ressource | Trois modes : **visible de tous** ; **réservée** aux clients désignés (membres, entreprises, clients, ou un segment), invisible des autres ; **sur demande** : visible de tous, réservation par demande approuvée (les clients désignés réservent directement). |
+| D7 | Fonctions nouvelles | Rappels et venue ; planning et séries ; fiabilité et acompte ; invitations et demandes ; budget par collaborateur ; relevé mensuel groupé ; forfait d'heures entreprise ; offres de dernière minute ; alternatives ; prolongation ; tableau de bord ; avis ; agenda personnel ; rapport de réservations par client imprimable. Non retenue : approbation par le gérant. |
+| D8 | Listes de choix | **Socle commun** (lot L0 du [constat](../listes-de-choix/README.md)), fait avant B7 ; listes de la caisse migrées sans changer leurs routes. |
+
+Ordre : B0, B1, B2, B8, L0 (socle des listes), B7, B3, B4, B5, B6, B10, B9a à B9g, B11.
