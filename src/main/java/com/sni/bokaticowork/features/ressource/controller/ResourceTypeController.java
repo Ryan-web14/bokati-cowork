@@ -35,9 +35,8 @@ public class ResourceTypeController {
     @PostMapping
     @Audited(module = "RESOURCE", action = "CREATE_TYPE", ressource = "resource_type")
     @Idempotent(operation = "RESOURCE_TYPE_CREATE")
-    public ResponseEntity<Void> create(@Valid @RequestBody CreateResourceTypeRequest request) {
-        resourceTypeService.createType(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse> create(@Valid @RequestBody CreateResourceTypeRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(resourceTypeService.createType(request));
     }
 
     @PutMapping("/{code}")

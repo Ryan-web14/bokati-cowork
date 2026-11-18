@@ -8,7 +8,7 @@ import com.sni.bokaticowork.features.ressource.model.ResourceGroup;
 
 public interface ResourceGroupService {
 
-    void createResourceGroup(CreateResourceGroupRequest request);
+    com.sni.bokaticowork.features.ressource.dto.response.ResourceGroupResponse createResourceGroup(CreateResourceGroupRequest request);
     void updateResourceGroup(String code, UpdateResourceGroupRequest request);
     void deleteResourceGroup(String code);
     void deleteAllResourceGroups();

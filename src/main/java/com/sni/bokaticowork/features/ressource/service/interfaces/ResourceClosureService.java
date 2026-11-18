@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface ResourceClosureService {
 
-    void createClosure(CreateResourceClosureRequest request);
+    com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse createClosure(CreateResourceClosureRequest request);
 
     ResourceClosureResponse getClosure(Long id);
 

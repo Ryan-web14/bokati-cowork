@@ -41,7 +41,7 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
     }
 
     @Override
-    public void createClosure(CreateResourceClosureRequest request) {
+    public com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse createClosure(CreateResourceClosureRequest request) {
         List<String> errors = validateRequest(request);
         if (!errors.isEmpty()) {
             throw new ValidationException("Invalid resource closure request", errors);
@@ -66,6 +66,7 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
         if (Boolean.TRUE.equals(savedClosure.getActive())) {
             applyClosureToAvailability(savedClosure);
         }
+        return toResponse(savedClosure);
     }
 
     @Override

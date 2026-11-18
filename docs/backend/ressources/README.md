@@ -2,7 +2,7 @@
 
 Branche `feature/ressources`, partie de new-main f33d6089 le 17/11/2026. Plan à valider : les décisions de l'exploitant sont plus bas, à trancher avant le lot concerné.
 
-État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 fait** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md)), **R2 fait** ([lot-r2-politiques-cycle-de-vie.md](lot-r2-politiques-cycle-de-vie.md)), **R3 fait** ([lot-r3-creneaux-horizon.md](lot-r3-creneaux-horizon.md)).
+État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 fait** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md)), **R2 fait** ([lot-r2-politiques-cycle-de-vie.md](lot-r2-politiques-cycle-de-vie.md)), **R3 fait** ([lot-r3-creneaux-horizon.md](lot-r3-creneaux-horizon.md)), **R4 fait** ([lot-r4-listes-recherche.md](lot-r4-listes-recherche.md)).
 
 ## Constat (vérifié dans le code le 17/11/2026)
 
@@ -101,8 +101,8 @@ Absentes aujourd'hui (approbation, quotas, liste d'attente, pointage et non-pré
 | N° | Écart | État |
 | --- | --- | --- |
 | 1 | Deux moteurs de prix divergents | Réglé (R1) |
-| 2 | `POST /resources/search` en `RESOURCE:CREATE`, filtres par identifiants numériques | en partie réglé (R0 : droit ; filtres au R4) |
-| 3 | `GET /resources` sans filtres hors résumé | confirmé |
+| 2 | `POST /resources/search` en `RESOURCE:CREATE`, filtres par identifiants numériques | Réglé (R0 et R4) |
+| 3 | `GET /resources` sans filtres hors résumé | Réglé (R4) |
 | 4 | Politique désactivée toujours appliquée | Réglé (R2) |
 | 5 | `allowCancellation` faux par défaut | Réglé (R2) |
 | 6 | Suppression d'un groupe sans contrôle (500 sur clé étrangère) | Réglé (R2) |
@@ -128,7 +128,7 @@ Absentes aujourd'hui (approbation, quotas, liste d'attente, pointage et non-pré
 | Rn-10 | `ResourcePricingRule.deleted` mort | Réglé (R1) |
 | Rn-11 | `extraPrice` et `optional` des équipements jamais lus | nouveau |
 | Rn-12 | Maintenance ou hors service sans effet sur l'existant | Réglé (R2) |
-| Rn-13 | N+1 sur les listes de ressources | nouveau |
-| Rn-14 | Nouvel essai dans une transaction compromise | nouveau |
-| Rn-15 | Créations en `201` vide (code jamais rendu) | nouveau |
-| Rn-16 | Identifiants numériques des fermetures et créneaux | nouveau |
+| Rn-13 | N+1 sur les listes de ressources | Réglé (R4) |
+| Rn-14 | Nouvel essai dans une transaction compromise | Réglé (R4) |
+| Rn-15 | Créations en `201` vide (code jamais rendu) | Réglé (R4) |
+| Rn-16 | Identifiants numériques des fermetures et créneaux | Réglé (codes réversibles du 17/11, constaté au R4) |

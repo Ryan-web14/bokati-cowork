@@ -32,9 +32,8 @@ public class ResourceGroupController {
     @PostMapping
     @Audited(module = "RESOURCE", action = "CREATE_GROUP", ressource = "resource_group")
     @Idempotent(operation = "RESOURCE_GROUP_CREATE")
-    public ResponseEntity<Void> create(@Valid @RequestBody CreateResourceGroupRequest request) {
-        resourceGroupService.createResourceGroup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceGroupResponse> create(@Valid @RequestBody CreateResourceGroupRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(resourceGroupService.createResourceGroup(request));
     }
 
     @PutMapping("/{code}")

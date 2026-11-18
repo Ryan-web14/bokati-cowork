@@ -44,7 +44,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
     private final RetryPolicy defaultRetryPolicy;
 
     @Override
-    public void createAmenity(CreateAmenityRequest request) {
+    public com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse createAmenity(CreateAmenityRequest request) {
         List<String> errors = validateForCreate(request);
 
         if (!errors.isEmpty()) {
@@ -64,7 +64,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         LocalDate businessDate = LocalDate.now();
         amenity.setCode(buildAmenityCode(normalizedName, businessDate));
 
-        retryExecutor.execute("create resource amenity", defaultRetryPolicy, () -> amenitiesRepository.save(amenity));
+        return amenitiesMapper.toResponse(amenitiesRepository.save(amenity));
     }
 
     @Override
@@ -93,7 +93,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         request.setDescription(normalizeText(request.getDescription()));
 
         amenitiesMapper.updateEntity(amenity, request);
-        retryExecutor.execute("update resource amenity", defaultRetryPolicy, () -> amenitiesRepository.save(amenity));
+        amenitiesRepository.save(amenity);
     }
 
     @Override
@@ -104,7 +104,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
             throw new ConflictException("resource amenity", "it is currently linked to one or more resources");
         }
 
-        retryExecutor.run("delete resource amenity", defaultRetryPolicy, () -> amenitiesRepository.delete(amenity));
+        amenitiesRepository.delete(amenity);
     }
 
     @Override
@@ -122,7 +122,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
             throw new ConflictException("resource amenities", "some amenities are currently linked to resources");
         }
 
-        retryExecutor.run("delete all resource amenities", defaultRetryPolicy, () -> amenitiesRepository.deleteAll(amenities));
+        amenitiesRepository.deleteAll(amenities);
     }
 
     @Override

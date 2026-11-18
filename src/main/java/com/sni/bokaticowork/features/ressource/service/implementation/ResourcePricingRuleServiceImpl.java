@@ -159,7 +159,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     }
 
     @Override
-    public void createPricingRule(CreateResourcePricingRuleRequest request) {
+    public com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse createPricingRule(CreateResourcePricingRuleRequest request) {
         List<String> errors = validateRequest(request);
         if (!errors.isEmpty()) {
             throw new ValidationException("Invalid resource pricing rule request", errors);
@@ -198,6 +198,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         governance.rejectDuplicate(rule);
         pricingRuleRepository.saveAndFlush(rule);
         governance.record(rule, "CREATE");
+        return toResponse(rule);
     }
 
     @Override

@@ -84,7 +84,7 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public void createResource(ResourceRequest request) {
+    public com.sni.bokaticowork.features.ressource.dto.response.ResourceResponse createResource(ResourceRequest request) {
         validateForCreate(request);
 
         ResourceType type = resourceTypeService.getTypeForService(normalizeCode(request.getTypeId(), "Resource type code is required"));
@@ -104,7 +104,7 @@ public class ResourceServiceImpl implements ResourceService {
             resource.setDisplayOrder(0);
         }
 
-        retryExecutor.execute("create resource", defaultRetryPolicy, () -> resourceRepository.save(resource));
+        return resourceMapper.toResponse(resourceRepository.save(resource));
     }
 
     @Override
@@ -116,7 +116,7 @@ public class ResourceServiceImpl implements ResourceService {
         resourceMapper.updateEntity(resource, request);
         applyUpdateFlags(resource, request.getBookingEnabled(), request.getPortalVisible());
 
-        retryExecutor.execute("update resource", defaultRetryPolicy, () -> resourceRepository.save(resource));
+        resourceRepository.save(resource);
     }
 
     @Override
@@ -132,7 +132,7 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setDeleted(Boolean.TRUE);
         resource.setActive(Boolean.FALSE);
         resource.setStatus(ResourceStatus.ARCHIVED);
-        retryExecutor.execute("delete resource", defaultRetryPolicy, () -> resourceRepository.save(resource));
+        resourceRepository.save(resource);
     }
 
     @Override
@@ -147,7 +147,7 @@ public class ResourceServiceImpl implements ResourceService {
             resource.setActive(Boolean.FALSE);
             resource.setStatus(ResourceStatus.ARCHIVED);
         });
-        retryExecutor.execute("delete all resources", defaultRetryPolicy, () -> resourceRepository.saveAll(resources));
+        resourceRepository.saveAll(resources);
     }
 
     @Override
@@ -217,6 +217,22 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public PaginatedResponse<ResourceSummaryResponse> basicSearch(String query, Pageable pageable) {
+        List<ResourceSummaryResponse> all = basicSearch(query);
+        int from = (int) Math.min(all.size(), pageable.getOffset());
+        int to = Math.min(all.size(), from + pageable.getPageSize());
+        return new PaginatedResponse<>(new org.springframework.data.domain.PageImpl<>(all.subList(from, to), pageable, all.size()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginatedResponse<ResourceResponse> listDetailed(ResourceSearchCriteria criteria, Pageable pageable) {
+        Page<ResourceResponse> page = resourceRepository.findAll(ResourceSpecification.search(criteria), pageable)
+                .map(resourceMapper::toResponse);
+        return new PaginatedResponse<>(page);
+    }
+
+    @Override
     public List<ResourceSummaryResponse> basicSearch(String query) {
         if (!StringUtils.hasText(query)) {
             throw new BadRequestException("Search query is required");
@@ -250,7 +266,7 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setResourceType(type);
         resource.setResourceGroup(group);
         resource.setResourcePolicy(policy);
-        retryExecutor.execute("change resource classification", defaultRetryPolicy, () -> resourceRepository.save(resource));
+        resourceRepository.save(resource);
     }
 
     @Override
@@ -270,7 +286,7 @@ public class ResourceServiceImpl implements ResourceService {
                     "Ressource " + resource.getCode() + " indisponible (" + status + ")");
         }
         resource.setStatus(status);
-        retryExecutor.execute("update resource status", defaultRetryPolicy, () -> resourceRepository.save(resource));
+        resourceRepository.save(resource);
     }
 
     @Override
@@ -280,7 +296,7 @@ public class ResourceServiceImpl implements ResourceService {
         }
         Resource resource = getResourceForService(code);
         resource.setBookingEnabled(bookingEnabled);
-        retryExecutor.execute("update resource booking flag", defaultRetryPolicy, () -> resourceRepository.save(resource));
+        resourceRepository.save(resource);
     }
 
     @Override
@@ -290,7 +306,7 @@ public class ResourceServiceImpl implements ResourceService {
         }
         Resource resource = getResourceForService(code);
         resource.setPortalVisible(portalVisible);
-        retryExecutor.execute("update resource portal visibility", defaultRetryPolicy, () -> resourceRepository.save(resource));
+        resourceRepository.save(resource);
     }
 
     @Override
@@ -300,7 +316,7 @@ public class ResourceServiceImpl implements ResourceService {
         }
         Resource resource = getResourceForService(code);
         resource.setActive(active);
-        retryExecutor.execute("update resource active flag", defaultRetryPolicy, () -> resourceRepository.save(resource));
+        resourceRepository.save(resource);
     }
 
     @Override
@@ -310,7 +326,7 @@ public class ResourceServiceImpl implements ResourceService {
         }
         Resource resource = getResourceForService(code);
         resource.setDisplayOrder(displayOrder);
-        retryExecutor.execute("update resource display order", defaultRetryPolicy, () -> resourceRepository.save(resource));
+        resourceRepository.save(resource);
     }
 
     @Override

@@ -36,9 +36,8 @@ public class ResourcePolicyController {
     @PostMapping
     @Audited(module = "RESOURCE", action = "CREATE_POLICY", ressource = "resource_policy")
     @Idempotent(operation = "RESOURCE_POLICY_CREATE")
-    public ResponseEntity<Void> create(@Valid @RequestBody CreateResourcePolicyRequest request) {
-        resourcePolicyService.createPolicy(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourcePolicyResponse> create(@Valid @RequestBody CreateResourcePolicyRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(resourcePolicyService.createPolicy(request));
     }
 
     @PutMapping("/{code}")

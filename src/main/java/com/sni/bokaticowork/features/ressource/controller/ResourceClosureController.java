@@ -35,9 +35,8 @@ public class ResourceClosureController {
     @PostMapping
     @Audited(module = "RESOURCE", action = "CREATE_CLOSURE", ressource = "resource_closure")
     @Idempotent(operation = "RESOURCE_CLOSURE_CREATE")
-    public ResponseEntity<Void> create(@Valid @RequestBody CreateResourceClosureRequest request) {
-        resourceClosureService.createClosure(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse> create(@Valid @RequestBody CreateResourceClosureRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(resourceClosureService.createClosure(request));
     }
 
     @GetMapping("/{id}")

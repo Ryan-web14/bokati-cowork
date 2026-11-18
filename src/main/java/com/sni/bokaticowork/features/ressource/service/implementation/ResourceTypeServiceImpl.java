@@ -46,7 +46,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
     private final RetryPolicy defaultRetryPolicy;
 
     @Override
-    public void createType(CreateResourceTypeRequest request) {
+    public com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse createType(CreateResourceTypeRequest request) {
         List<String> errors = validateForCreate(request);
 
         if (!errors.isEmpty()) {
@@ -66,7 +66,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         long typeSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_type", LocalDate.now()));
         type.setCode(CodeComposer.refWithYear("RTY", LocalDate.now(), typeSeq));
 
-        retryExecutor.execute("create resource type", defaultRetryPolicy, () -> typeRepository.save(type));
+        return typeMapper.toResponse(typeRepository.save(type));
     }
 
     @Override
@@ -95,7 +95,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         request.setDescription(normalizeText(request.getDescription()));
 
         typeMapper.updateEntity(type, request);
-        retryExecutor.execute("update resource type", defaultRetryPolicy, () -> typeRepository.save(type));
+        typeRepository.save(type);
     }
 
     @Override
@@ -109,7 +109,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
                     + " ressource(s) rattachée(s), archivées comprises : changez-leur de type d'abord");
         }
 
-        retryExecutor.run("delete resource type", defaultRetryPolicy, () -> typeRepository.delete(type));
+        typeRepository.delete(type);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
             throw new ConflictException("resource types", "some types are currently assigned to resources");
         }
 
-        retryExecutor.run("delete all resource types", defaultRetryPolicy, () -> typeRepository.deleteAll(types));
+        typeRepository.deleteAll(types);
     }
 
     @Override

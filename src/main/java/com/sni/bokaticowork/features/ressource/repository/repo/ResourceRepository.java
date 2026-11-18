@@ -18,6 +18,16 @@ import java.util.Optional;
 @Repository
 public interface ResourceRepository extends JpaRepository<Resource, Long>, JpaSpecificationExecutor<Resource> {
 
+    /** Lot R4 : type, groupe et politique charges avec la page (fin du N+1 des listes). */
+    @Override
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"resourceType", "resourceGroup", "resourcePolicy"})
+    Page<Resource> findAll(Pageable pageable);
+
+    @Override
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"resourceType", "resourceGroup", "resourcePolicy"})
+    Page<Resource> findAll(org.springframework.data.jpa.domain.Specification<Resource> spec, Pageable pageable);
+
+
     @Query(nativeQuery = true, value = "SELECT EXISTS(SELECT 1 FROM resource WHERE code = :code)")
     Boolean existsByCode(@Param("code") String code);
 
@@ -37,6 +47,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long>, JpaSp
     List<Resource> basicSearch(@Param("query") String query);
 
     List<Resource> findAllByResourceType(ResourceType resourceType);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"resourceType", "resourceGroup", "resourcePolicy"})
     Page<Resource> findAllByResourceType(ResourceType resourceType, Pageable pageable);
 
     List<Resource> findAllByResourceGroup(ResourceGroup resourceGroup);
@@ -50,8 +61,10 @@ public interface ResourceRepository extends JpaRepository<Resource, Long>, JpaSp
 
     @org.springframework.data.jpa.repository.Query(nativeQuery = true, value = "SELECT count(*) FROM resource WHERE policy_id = :id")
     long countAttachedToPolicy(@org.springframework.data.repository.query.Param("id") Long id);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"resourceType", "resourceGroup", "resourcePolicy"})
     Page<Resource> findAllByResourceGroup(ResourceGroup resourceGroup, Pageable pageable);
 
     List<Resource> findAllByResourcePolicy(ResourcePolicy resourcePolicy);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"resourceType", "resourceGroup", "resourcePolicy"})
     Page<Resource> findAllByResourcePolicy(ResourcePolicy resourcePolicy, Pageable pageable);
 }

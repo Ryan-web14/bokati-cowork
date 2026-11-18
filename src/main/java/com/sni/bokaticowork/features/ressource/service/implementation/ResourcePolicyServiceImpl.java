@@ -45,7 +45,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
     private final RetryPolicy defaultRetryPolicy;
 
     @Override
-    public void createPolicy(CreateResourcePolicyRequest request) {
+    public com.sni.bokaticowork.features.ressource.dto.response.ResourcePolicyResponse createPolicy(CreateResourcePolicyRequest request) {
         validateForCreate(request);
 
         String normalizedName = request.getName().trim();
@@ -66,7 +66,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
         ResourcePolicy policy = policyMapper.toEntity(request);
         policy.setCode(sequenceGenerator.next("resource_policy", LocalDate.now()));
 
-        retryExecutor.execute("create resource policy", defaultRetryPolicy, () -> policyRepository.save(policy));
+        return policyMapper.toResponse(policyRepository.save(policy));
     }
 
     @Override
@@ -95,21 +95,21 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
         request.setDescription(normalizeText(request.getDescription()));
 
         policyMapper.updateEntity(policy, request);
-        retryExecutor.execute("update resource policy", defaultRetryPolicy, () -> policyRepository.save(policy));
+        policyRepository.save(policy);
     }
 
     @Override
     public void updatePolicyStatus(String code, Boolean status) {
         ResourcePolicy policy = getPolicyForService(code);
         policy.setActive(status);
-        retryExecutor.execute("update resource policy status", defaultRetryPolicy, () -> policyRepository.save(policy));
+        policyRepository.save(policy);
     }
 
     @Override
     public void updateCancellationPolicy(String code, Boolean status) {
         ResourcePolicy policy = getPolicyForService(code);
         policy.setAllowCancellation(status);
-        retryExecutor.execute("update resource policy cancellation policy", defaultRetryPolicy, () -> policyRepository.save(policy));
+        policyRepository.save(policy);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
                     + " ressource(s) rattachée(s), archivées comprises : changez-leur de politique d'abord, ou désactivez-la");
         }
 
-        retryExecutor.run("delete resource policy", defaultRetryPolicy, () -> policyRepository.delete(policy));
+        policyRepository.delete(policy);
     }
 
     @Override
@@ -141,7 +141,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
             throw new ConflictException("resource policies", "some policies are currently assigned to resources");
         }
 
-        retryExecutor.run("delete all resource policies", defaultRetryPolicy, () -> policyRepository.deleteAll(policies));
+        policyRepository.deleteAll(policies);
     }
 
     @Override

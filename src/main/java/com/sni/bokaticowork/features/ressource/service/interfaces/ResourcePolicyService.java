@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface ResourcePolicyService {
 
-    void createPolicy(CreateResourcePolicyRequest request);
+    com.sni.bokaticowork.features.ressource.dto.response.ResourcePolicyResponse createPolicy(CreateResourcePolicyRequest request);
     void updatePolicy(String code, UpdateResourcePolicyRequest request);
     void updatePolicyStatus(String code, Boolean status);
     void updateCancellationPolicy(String code, Boolean status);

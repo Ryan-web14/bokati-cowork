@@ -44,6 +44,17 @@ public final class ResourceSpecification {
                 predicates.add(cb.equal(root.get("resourcePolicy").get("id"), criteria.getPolicyId()));
             }
 
+            // Lot R4 : par code, comme partout ailleurs dans l'API.
+            if (StringUtils.hasText(criteria.getTypeCode())) {
+                predicates.add(cb.equal(cb.upper(root.get("resourceType").get("code")), criteria.getTypeCode().trim().toUpperCase()));
+            }
+            if (StringUtils.hasText(criteria.getGroupCode())) {
+                predicates.add(cb.equal(cb.upper(root.get("resourceGroup").get("code")), criteria.getGroupCode().trim().toUpperCase()));
+            }
+            if (StringUtils.hasText(criteria.getPolicyCode())) {
+                predicates.add(cb.equal(cb.upper(root.get("resourcePolicy").get("code")), criteria.getPolicyCode().trim().toUpperCase()));
+            }
+
             if (StringUtils.hasText(criteria.getName())) {
                 predicates.add(
                         cb.like(

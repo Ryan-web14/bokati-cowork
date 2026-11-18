@@ -48,9 +48,8 @@ public class ResourceController {
     @PostMapping
     @Audited(module = "RESOURCE", action = "CREATE", ressource = "resource")
     @Idempotent(operation = "RESOURCE_CREATE", required = false)
-    public ResponseEntity<Void> create(@Valid @RequestBody ResourceRequest request) {
-        resourceService.createResource(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceResponse> create(@Valid @RequestBody ResourceRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(resourceService.createResource(request));
     }
 
     @GetMapping("/{code}")
@@ -78,12 +77,21 @@ public class ResourceController {
             return ResponseEntity.ok(resourceService.listSummary(pageable));
         }
 
+        // Lot R4 : les filtres valent aussi pour la liste detaillee (avant : ignores hors resume).
+        if (typeCode != null || groupCode != null || policyCode != null) {
+            return ResponseEntity.ok(resourceService.listDetailed(
+                    com.sni.bokaticowork.features.ressource.repository.specification.criteria.ResourceSearchCriteria.builder()
+                            .typeCode(typeCode).groupCode(groupCode).policyCode(policyCode).build(), pageable));
+        }
         return ResponseEntity.ok(resourceService.list(pageable));
     }
 
     @GetMapping("/search/basic")
-    public ResponseEntity<List<ResourceSummaryResponse>> basicSearch(@RequestParam("query") String query) {
-        return ResponseEntity.ok(resourceService.basicSearch(query));
+    public ResponseEntity<PaginatedResponse<ResourceSummaryResponse>> basicSearch(
+            @RequestParam("query") String query,
+            @PageableDefault(size = 20) Pageable pageable) {
+        // Lot R4 : paginee, comme les autres recherches du module.
+        return ResponseEntity.ok(resourceService.basicSearch(query, pageable));
     }
 
     @PostMapping("/search")

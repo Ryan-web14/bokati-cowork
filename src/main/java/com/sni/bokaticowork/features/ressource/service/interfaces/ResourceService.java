@@ -17,7 +17,7 @@ import java.util.List;
 
 public interface ResourceService {
 
-    void createResource(ResourceRequest request);
+    com.sni.bokaticowork.features.ressource.dto.response.ResourceResponse createResource(ResourceRequest request);
     void updateResource(String code, UpdateResourceRequest request);
     void deleteResource(String code);
 
@@ -43,6 +43,14 @@ public interface ResourceService {
     PaginatedResponse<ResourceSummaryResponse> listSummaryByGroup(String groupCode, Pageable pageable);
     PaginatedResponse<ResourceSummaryResponse> listSummaryByPolicy(String policyCode, Pageable pageable);
     List<ResourceSummaryResponse> basicSearch(String query);
+
+    /** Lot R4 : recherche simple paginee. */
+    PaginatedResponse<ResourceSummaryResponse> basicSearch(String query, org.springframework.data.domain.Pageable pageable);
+
+    /** Lot R4 : liste detaillee filtree (type, groupe, politique par code). */
+    PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceResponse> listDetailed(
+            com.sni.bokaticowork.features.ressource.repository.specification.criteria.ResourceSearchCriteria criteria,
+            org.springframework.data.domain.Pageable pageable);
     PaginatedResponse<ResourceSummaryResponse> search(ResourceSearchCriteria criteria, Pageable pageable);
 
     void changeClassification(String code, ChangeTypeRequest request);

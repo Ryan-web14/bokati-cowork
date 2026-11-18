@@ -43,7 +43,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     }
 
     @Override
-    public void createResourceGroup(CreateResourceGroupRequest request) {
+    public com.sni.bokaticowork.features.ressource.dto.response.ResourceGroupResponse createResourceGroup(CreateResourceGroupRequest request) {
         validateForCreate(request);
 
         log.debug("Creating resource group");
@@ -55,7 +55,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
         ResourceGroup group = groupMapper.toEntity(request);
         long groupSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_group", LocalDate.now()));
         group.setCode(CodeComposer.refWithYear("RGP", LocalDate.now(), groupSeq));
-        groupRepo.save(group);
+        return groupMapper.toResponse(groupRepo.save(group));
     }
 
     @Override
