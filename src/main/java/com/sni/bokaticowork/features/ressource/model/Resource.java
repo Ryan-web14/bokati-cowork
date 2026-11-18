@@ -80,6 +80,27 @@ public class Resource {
     @Column(name = "floor_label", length = 50)
     private String floorLabel;
 
+    /** Lot R5b : site de la ressource. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "site_id")
+    private ResourceSite site;
+
+    /** Lot R5b : etage (plan) de la ressource. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "floor_id")
+    private ResourceFloor floor;
+
+    /** Lot R5b : position sur le plan de l'etage, en pourcentage depuis le coin haut gauche. */
+    @Column(name = "plan_x", precision = 5, scale = 2)
+    private java.math.BigDecimal planX;
+
+    @Column(name = "plan_y", precision = 5, scale = 2)
+    private java.math.BigDecimal planY;
+
+    /** Lot R5b : jeton du flux d'abonnement iCalendar (coupe par defaut). */
+    @Column(name = "ical_token", length = 60)
+    private String icalToken;
+
     @Column(name = "status", length = 60)
     @Enumerated(EnumType.STRING)
     private ResourceStatus status;

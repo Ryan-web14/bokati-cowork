@@ -454,6 +454,8 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             }
             // Lot R0 : la recherche passe en POST (criteres dans le corps) mais reste une lecture.
             if (path.equals("/resources/search") || path.endsWith("/search")) return permission("RESOURCE", "READ");
+            // Lot R5b : « Trouver une salle » est une lecture, comme le calendrier iCalendar.
+            if (path.equals("/resources/find") || path.endsWith("/calendar.ics")) return permission("RESOURCE", "READ");
             // Lot R0 : horaires d'ouverture, une modification de la ressource (avant : role ADMIN seul).
             if (path.contains("/opening-hours")) {
                 return HttpMethod.GET.matches(method) ? permission("RESOURCE", "READ") : permission("RESOURCE", "UPDATE");

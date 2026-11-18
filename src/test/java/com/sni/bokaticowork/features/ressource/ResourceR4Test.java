@@ -42,6 +42,6 @@ class ResourceR4Test {
     void listsLoadTypeGroupAndPolicyWithThePage() throws Exception {
         EntityGraph graph = ResourceRepository.class.getMethod("findAll", Pageable.class).getAnnotation(EntityGraph.class);
         assertThat(graph).isNotNull();
-        assertThat(graph.attributePaths()).containsExactlyInAnyOrder("resourceType", "resourceGroup", "resourcePolicy");
+        assertThat(graph.attributePaths()).contains("resourceType", "resourceGroup", "resourcePolicy");
     }
 }

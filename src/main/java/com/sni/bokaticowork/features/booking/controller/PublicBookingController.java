@@ -47,6 +47,36 @@ public class PublicBookingController {
         return mav;
     }
 
+    /** Lot R5b : invitation iCalendar de la reservation (lien « Ajouter à mon agenda » du courriel). */
+    @GetMapping("/{bookingNumber}/invitation.ics")
+    public ResponseEntity<String> invitation(@PathVariable String bookingNumber, @RequestParam String token) {
+        var booking = confirmationDocumentService.publicBooking(bookingNumber, token);
+        var resource = booking.getResource();
+        String location = null;
+        java.time.ZoneId zone = java.time.ZoneId.of("Africa/Brazzaville");
+        if (resource != null) {
+            StringBuilder where = new StringBuilder(resource.getName() == null ? "" : resource.getName());
+            if (resource.getFloor() != null) where.append(", ").append(resource.getFloor().getName());
+            if (resource.getSite() != null) {
+                where.append(", ").append(resource.getSite().getName());
+                if (resource.getSite().getAddress() != null) where.append(", ").append(resource.getSite().getAddress());
+                try {
+                    zone = java.time.ZoneId.of(resource.getSite().getTimeZone());
+                } catch (RuntimeException ignored) {
+                    // fuseau par defaut
+                }
+            }
+            location = where.toString();
+        }
+        String ics = com.sni.bokaticowork.features.ressource.service.support.ResourceIcal.invitation(
+                booking.getBookingNumber(), resource == null ? null : resource.getName(), location,
+                booking.getStartedAt(), booking.getEndedAt(), zone, "Réservation " + booking.getBookingNumber());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"reservation-" + bookingNumber + ".ics\"")
+                .contentType(MediaType.parseMediaType("text/calendar; charset=UTF-8"))
+                .body(ics);
+    }
+
     @GetMapping("/{bookingNumber}/confirmation.pdf")
     public ResponseEntity<byte[]> confirmationPdf(@PathVariable String bookingNumber,
                                                   @RequestParam String token) {

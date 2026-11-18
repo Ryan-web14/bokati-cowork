@@ -22,6 +22,11 @@ public class ResourceResponse {
     private String locationLabel;
     /** Lot R2 : etage. */
     private String floorLabel;
+    /** Lot R5b : site, etage et position sur le plan. */
+    private String siteCode;
+    private String floorCode;
+    private java.math.BigDecimal planX;
+    private java.math.BigDecimal planY;
     private String status;
     private Boolean bookingEnabled;
     private Boolean portalVisible;

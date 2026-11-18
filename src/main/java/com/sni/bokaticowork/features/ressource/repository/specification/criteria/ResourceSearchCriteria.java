@@ -32,6 +32,11 @@ public class ResourceSearchCriteria {
 
     private String locationLabel;
 
+    /** Lot R5b : filtre par site et par etage. */
+    private String siteCode;
+
+    private String floorCode;
+
     private ResourceStatus status;
 
     private Boolean portalVisible;
