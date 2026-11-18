@@ -45,4 +45,12 @@ public class UpdateResourcePricingRuleRequest {
     private Boolean perParticipant;
 
     private Boolean active;
+
+    /**
+     * Ecart Rn-6 : conditions a vider (un champ absent n'est pas modifie). Noms admis : startsAt,
+     * endsAt, validFrom, validUntil, dayOfWeek, daysOfWeek, lastMinuteMinutes, minLeadMinutes,
+     * minParticipants, maxParticipants, minDurationMinutes, maxDurationMinutes, customerSegment,
+     * planCode, channel, holidayMode, adjustment (type et valeur).
+     */
+    private java.util.List<String> clear;
 }

@@ -25,8 +25,8 @@ Module [ressource](../README.md) · 12 route(s).
 - Accès : back-office : rôle d'administration et droit `RESOURCE:PRICE`
 - En-tête `Idempotency-Key` : conseillé (opération `RESOURCE_PRICING_RULE_CREATE`, voir le README racine)
 - Corps JSON (obligatoire) : `CreateResourcePricingRuleRequest`
-- Réponse : `vide`
-- Modèles : [CreateResourcePricingRuleRequest](#m-CreateResourcePricingRuleRequest)
+- Réponse : `ResourcePricingRuleResponse`
+- Modèles : [ResourcePricingRuleResponse](#m-ResourcePricingRuleResponse), [CreateResourcePricingRuleRequest](#m-CreateResourcePricingRuleRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java`, méthode `create`
 
 <a id="r-post-sni-api-v1-resource-pricing-rules-bulk"></a>
@@ -179,6 +179,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `maxDurationMinutes` | entier |  |  |
 | `minLeadMinutes` | entier |  |  |
 | `channel` | texte |  |  |
+| `holidayMode` | texte |  |  |
 | `stackable` | booléen |  |  |
 | `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
@@ -210,6 +211,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `maxDurationMinutes` | entier |  |  |
 | `minLeadMinutes` | entier |  |  |
 | `channel` | texte |  |  |
+| `holidayMode` | texte |  |  |
 | `stackable` | booléen |  |  |
 | `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
@@ -327,9 +329,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `maxDurationMinutes` | entier |  |  |
 | `minLeadMinutes` | entier |  |  |
 | `channel` | texte |  |  |
+| `holidayMode` | texte |  |  |
 | `stackable` | booléen |  |  |
 | `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
+| `clear` | texte[] |  |  |
 
 <a id="m-ResourcePricingRuleVersion"></a>
 #### ResourcePricingRuleVersion

@@ -350,6 +350,16 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         if (request.getHolidayMode() != null)       rule.setHolidayMode(upper(request.getHolidayMode()));
         if (request.getStackable() != null)        rule.setStackable(request.getStackable());
         if (request.getPerParticipant() != null)   rule.setPerParticipant(request.getPerParticipant());
+        // Ecart Rn-6 : vider une condition, puis revalider la regle telle qu'elle sera enregistree.
+        if (request.getClear() != null) {
+            for (String field : request.getClear()) {
+                clearField(rule, field);
+            }
+        }
+        List<String> mergedErrors = validateMerged(rule);
+        if (!mergedErrors.isEmpty()) {
+            throw new ValidationException("Demande de règle tarifaire invalide", mergedErrors);
+        }
         governance.rejectDuplicate(rule);
         ResourcePricingRule saved = pricingRuleRepository.save(rule);
         governance.record(saved, "UPDATE");
@@ -508,6 +518,75 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
             case MONTH    -> Math.max(1, ChronoUnit.MONTHS.between(startedAt, endedAt)
                     + (startedAt.plusMonths(ChronoUnit.MONTHS.between(startedAt, endedAt)).isBefore(endedAt) ? 1 : 0));
         };
+    }
+
+    private static void clearField(ResourcePricingRule rule, String field) {
+        if (field == null) {
+            return;
+        }
+        switch (field.trim()) {
+            case "startsAt" -> rule.setStartsAt(null);
+            case "endsAt" -> rule.setEndsAt(null);
+            case "validFrom" -> rule.setValidFrom(null);
+            case "validUntil" -> rule.setValidUntil(null);
+            case "dayOfWeek" -> rule.setDayOfWeek(null);
+            case "daysOfWeek" -> rule.setDaysOfWeek(null);
+            case "lastMinuteMinutes" -> rule.setLastMinuteMinutes(null);
+            case "minLeadMinutes" -> rule.setMinLeadMinutes(null);
+            case "minParticipants" -> rule.setMinParticipants(null);
+            case "maxParticipants" -> rule.setMaxParticipants(null);
+            case "minDurationMinutes" -> rule.setMinDurationMinutes(null);
+            case "maxDurationMinutes" -> rule.setMaxDurationMinutes(null);
+            case "customerSegment" -> rule.setCustomerSegment(null);
+            case "planCode" -> rule.setPlanCode(null);
+            case "channel" -> rule.setChannel(null);
+            case "holidayMode" -> rule.setHolidayMode(null);
+            case "adjustment" -> {
+                rule.setAdjustmentType(null);
+                rule.setAdjustmentValue(null);
+            }
+            default -> throw new BadRequestException("Champ à vider inconnu : " + field.trim());
+        }
+    }
+
+    /** Ecart Rn-6 : les memes controles qu'a la creation, sur la regle modifiee. */
+    private static List<String> validateMerged(ResourcePricingRule rule) {
+        List<String> errors = new java.util.ArrayList<>();
+        if (rule.getPrice() != null && rule.getPrice() < 0) {
+            errors.add("Demande de règle tarifaire invalide : le prix doit être positif ou nul");
+        }
+        if (rule.getAdjustmentType() == null && rule.getPrice() == null) {
+            errors.add("Une règle sans ajustement est un prix de base : le prix est requis");
+        }
+        if (rule.getAdjustmentType() != null && rule.getAdjustmentValue() == null) {
+            errors.add("Un ajustement demande sa valeur (adjustmentValue)");
+        }
+        if (rule.getDayOfWeek() != null && (rule.getDayOfWeek() < 1 || rule.getDayOfWeek() > 7)) {
+            errors.add("Demande de règle tarifaire invalide : dayOfWeek doit être compris entre 1 et 7");
+        }
+        if (rule.getStartsAt() != null && rule.getEndsAt() != null && !rule.getEndsAt().isAfter(rule.getStartsAt())) {
+            errors.add("Demande de règle tarifaire invalide : endsAt doit suivre startsAt");
+        }
+        if (rule.getValidFrom() != null && rule.getValidUntil() != null && rule.getValidUntil().isBefore(rule.getValidFrom())) {
+            errors.add("Demande de règle tarifaire invalide : validUntil doit suivre validFrom");
+        }
+        if (StringUtils.hasText(rule.getCustomerSegment()) && !SEGMENTS.contains(rule.getCustomerSegment())) {
+            errors.add("customerSegment : PUBLIC, MEMBER, SUBSCRIBER, COMPANY ou PARTNER");
+        }
+        if (StringUtils.hasText(rule.getChannel()) && !CHANNELS.contains(rule.getChannel())) {
+            errors.add("channel : PORTAL ou TEAM");
+        }
+        if (StringUtils.hasText(rule.getHolidayMode()) && !java.util.Set.of("ONLY", "EXCLUDED").contains(rule.getHolidayMode())) {
+            errors.add("holidayMode : ONLY (jours fériés seulement) ou EXCLUDED (hors jours fériés)");
+        }
+        if (rule.getMinParticipants() != null && rule.getMaxParticipants() != null && rule.getMinParticipants() > rule.getMaxParticipants()) {
+            errors.add("minParticipants doit être inférieur ou égal à maxParticipants");
+        }
+        if (rule.getMinDurationMinutes() != null && rule.getMaxDurationMinutes() != null
+                && rule.getMinDurationMinutes() > rule.getMaxDurationMinutes()) {
+            errors.add("minDurationMinutes doit être inférieur ou égal à maxDurationMinutes");
+        }
+        return errors;
     }
 
     private List<String> validateRequest(CreateResourcePricingRuleRequest request) {

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 9 route(s).
+Module [booking](../README.md) · 10 route(s).
 
 ## Routes
 
@@ -102,6 +102,18 @@ Module [booking](../README.md) · 9 route(s).
 - Accès : public, sans jeton
 - Réponse : `page HTML (vue serveur)`
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java`, méthode `confirmationPdf`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `bookingNumber` | chemin | `String` | oui |  |
+| `token` | requête | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-public-bookings-bookingnumber-invitation-ics"></a>
+### GET /sni/api/v1/public/bookings/{bookingNumber}/invitation.ics
+
+- Accès : public, sans jeton
+- Réponse : `page HTML (vue serveur)`
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java`, méthode `invitation`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |

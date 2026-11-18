@@ -24,8 +24,8 @@ Module [ressource](../README.md) · 7 route(s).
 - Accès : back-office : rôle d'administration et droit `RESOURCE:CREATE`
 - En-tête `Idempotency-Key` : conseillé (opération `RESOURCE_TYPE_CREATE`, voir le README racine)
 - Corps JSON (obligatoire) : `CreateResourceTypeRequest`
-- Réponse : `vide`
-- Modèles : [CreateResourceTypeRequest](#m-CreateResourceTypeRequest)
+- Réponse : `ResourceTypeResponse`
+- Modèles : [ResourceTypeResponse](#m-ResourceTypeResponse), [CreateResourceTypeRequest](#m-CreateResourceTypeRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceTypeController.java`, méthode `create`
 
 <a id="r-get-sni-api-v1-resource-types-search"></a>

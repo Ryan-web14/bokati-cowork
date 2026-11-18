@@ -20,8 +20,8 @@ Module [ressource](../README.md) · 7 route(s).
 - Accès : back-office : rôle d'administration et droit `RESOURCE:CREATE`
 - En-tête `Idempotency-Key` : conseillé (opération `RESOURCE_GROUP_CREATE`, voir le README racine)
 - Corps JSON (obligatoire) : `CreateResourceGroupRequest`
-- Réponse : `vide`
-- Modèles : [CreateResourceGroupRequest](#m-CreateResourceGroupRequest)
+- Réponse : `ResourceGroupResponse`
+- Modèles : [ResourceGroupResponse](#m-ResourceGroupResponse), [CreateResourceGroupRequest](#m-CreateResourceGroupRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceGroupController.java`, méthode `create`
 
 <a id="r-get-sni-api-v1-resource-groups-search"></a>

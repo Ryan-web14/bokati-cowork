@@ -66,6 +66,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `fromDate` | date AAAA-MM-JJ |  |  |
 | `toDate` | date AAAA-MM-JJ |  |  |
 | `days` | [AdminResourceCalendarResponse.Day](#m-AdminResourceCalendarResponse-Day)[] |  |  |
+| `blocks` | [AdminResourceCalendarResponse.Block](#m-AdminResourceCalendarResponse-Block)[] |  |  |
 
 <a id="m-AdminResourceCalendarResponse-Day"></a>
 #### AdminResourceCalendarResponse.Day
@@ -83,6 +84,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `occupancyLevel` | texte |  |  |
 | `status` | texte |  |  |
 | `windows` | [AdminResourceCalendarResponse.Window](#m-AdminResourceCalendarResponse-Window)[] |  |  |
+| `dayLabel` | texte |  |  |
+
+<a id="m-AdminResourceCalendarResponse-Block"></a>
+#### AdminResourceCalendarResponse.Block
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `closureId` | code identifiant (texte) |  |  |
+| `kind` | texte |  |  |
+| `reason` | texte |  |  |
+| `startedAt` | date-heure locale sans fuseau |  |  |
+| `endedAt` | date-heure locale sans fuseau |  |  |
+| `recurrence` | texte |  |  |
 
 <a id="m-AdminResourceCalendarResponse-Window"></a>
 #### AdminResourceCalendarResponse.Window
