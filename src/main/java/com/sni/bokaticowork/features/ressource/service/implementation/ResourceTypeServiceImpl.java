@@ -63,8 +63,8 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         request.setDescription(normalizeText(request.getDescription()));
 
         ResourceType type = typeMapper.toEntity(request);
-        long typeSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_type", LocalDate.now()));
-        type.setCode(CodeComposer.refWithYear("RTY", LocalDate.now(), typeSeq));
+        long typeSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_type", com.sni.bokaticowork.core.utils.time.AppTime.today()));
+        type.setCode(CodeComposer.refWithYear("RTY", com.sni.bokaticowork.core.utils.time.AppTime.today(), typeSeq));
 
         return typeMapper.toResponse(typeRepository.save(type));
     }

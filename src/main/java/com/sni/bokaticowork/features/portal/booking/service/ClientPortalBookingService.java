@@ -127,7 +127,7 @@ public class ClientPortalBookingService {
                 && booking.status() != BookingStatus.PENDING_APPROVAL
                 && booking.status() != BookingStatus.PENDING_PAYMENT) {
             throw new BadRequestException(
-                    "Only CONFIRMED, PENDING_APPROVAL or PENDING_PAYMENT bookings can be cancelled. Current status: " + booking.status()
+                    "Seule une réservation confirmée ou en attente (paiement ou approbation) s'annule ; celle-ci est " + booking.status().label()
             );
         }
         String reason = request != null ? request.getReason() : null;
@@ -170,7 +170,7 @@ public class ClientPortalBookingService {
     private void verifyOwnership(Member member, BookingResponse booking) {
         if (booking.ownerType() != SubscriberType.MEMBER
                 || !member.getMemberId().equals(booking.ownerCode())) {
-            throw new ResourceNotFoundException("Booking not found");
+            throw new ResourceNotFoundException("Réservation introuvable");
         }
     }
 

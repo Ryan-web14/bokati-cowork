@@ -27,9 +27,10 @@ import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
  * personne d autre ne peut prendre. Sans echeance, une annonce oubliee immobilisait une salle
  * indefiniment, et la file de la caisse se remplissait de lignes mortes.</p>
  *
- * <p>Ce qui tombe, et ce qui ne tombe pas : la <b>reservation</b> est annulee, son creneau rendu.
- * La <b>facture</b>, elle, reste due · le client n a pas paye, et une annonce non honoree n a
- * jamais eteint une creance. Elle n est simplement plus annoncee.</p>
+ * <p>Ce qui tombe : l annonce, puis la <b>reservation</b> si elle attendait encore son paiement ;
+ * son creneau est rendu. La <b>facture</b> de cette reservation suit l annulation (lot B8, ecart
+ * Bn-27) : une prestation jamais rendue ni payee ne reste pas due, elle est annulee comme pour toute
+ * reservation impayee echue (lot B1). Une reservation deja confirmee n est pas touchee.</p>
  */
 @Slf4j
 @Component

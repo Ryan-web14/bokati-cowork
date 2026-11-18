@@ -70,28 +70,28 @@ public class BookingPolicyEnforcer {
 
         int minutes = Math.toIntExact(Duration.between(startedAt, endedAt).toMinutes());
         if (policy.getMaxBookingDurationMinutes() != null && minutes > policy.getMaxBookingDurationMinutes()) {
-            throw new ConflictException("booking policy", "audience maximum booking duration exceeded");
+            throw new ConflictException("Durée maximale de réservation dépassée pour ce profil");
         }
         if (!staffOverride && policy.getMinBookingNoticeMinutes() != null
-                && startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
-            throw new ConflictException("booking policy", "audience minimum booking notice is not respected");
+                && startedAt.isBefore(com.sni.bokaticowork.core.utils.time.AppTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
+            throw new ConflictException("Délai minimal de réservation non respecté pour ce profil");
         }
-        checkLimit(policy.getMaxActiveBookings(), extraActive, bookingRepository.countActiveForOwner(ownerType.name(), ownerCode), "active booking quota exceeded");
+        checkLimit(policy.getMaxActiveBookings(), extraActive, bookingRepository.countActiveForOwner(ownerType.name(), ownerCode), "Nombre maximal de réservations en cours atteint");
 
         LocalDate day = startedAt.toLocalDate();
-        checkLimit(policy.getMaxBookingsPerDay(), extraDay, bookingRepository.countForOwnerBetween(ownerType.name(), ownerCode, day.atStartOfDay(), day.plusDays(1).atStartOfDay()), "daily booking quota exceeded");
+        checkLimit(policy.getMaxBookingsPerDay(), extraDay, bookingRepository.countForOwnerBetween(ownerType.name(), ownerCode, day.atStartOfDay(), day.plusDays(1).atStartOfDay()), "Nombre maximal de réservations par jour atteint");
 
         LocalDate weekStart = day.minusDays(day.getDayOfWeek().getValue() - 1L);
-        checkLimit(policy.getMaxBookingsPerWeek(), extraWeek, bookingRepository.countForOwnerBetween(ownerType.name(), ownerCode, weekStart.atStartOfDay(), weekStart.plusDays(7).atStartOfDay()), "weekly booking quota exceeded");
+        checkLimit(policy.getMaxBookingsPerWeek(), extraWeek, bookingRepository.countForOwnerBetween(ownerType.name(), ownerCode, weekStart.atStartOfDay(), weekStart.plusDays(7).atStartOfDay()), "Nombre maximal de réservations par semaine atteint");
 
         LocalDate monthStart = day.withDayOfMonth(1);
-        checkLimit(policy.getMaxBookingsPerMonth(), extraMonth, bookingRepository.countForOwnerBetween(ownerType.name(), ownerCode, monthStart.atStartOfDay(), monthStart.plusMonths(1).atStartOfDay()), "monthly booking quota exceeded");
+        checkLimit(policy.getMaxBookingsPerMonth(), extraMonth, bookingRepository.countForOwnerBetween(ownerType.name(), ownerCode, monthStart.atStartOfDay(), monthStart.plusMonths(1).atStartOfDay()), "Nombre maximal de réservations par mois atteint");
 
         if (policy.getMaxNoShowsPerMonth() != null) {
             long noShows = bookingRepository.countNoShowsForOwnerBetween(ownerType.name(), ownerCode, monthStart.atStartOfDay(), monthStart.plusMonths(1).atStartOfDay());
             if (noShows >= policy.getMaxNoShowsPerMonth()) {
                 createNoShowTicket(ownerType, ownerCode, noShows);
-                throw new ConflictException("booking policy", "monthly no-show quota exceeded");
+                throw new ConflictException("Trop d'absences ce mois-ci : nouvelles réservations bloquées");
             }
         }
 
@@ -121,7 +121,7 @@ public class BookingPolicyEnforcer {
 
     private void checkLimit(Integer baseLimit, int extra, long current, String message) {
         if (baseLimit != null && current >= baseLimit + extra) {
-            throw new ConflictException("booking quota", message);
+            throw new ConflictException(message);
         }
     }
 

@@ -92,8 +92,8 @@ public class ResourceServiceImpl implements ResourceService {
         ResourcePolicy policy = resolvePolicy(request.getPolicyId());
 
         Resource resource = resourceMapper.toEntity(request);
-        long resourceSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource", LocalDate.now()));
-        resource.setCode(CodeComposer.withMonth("RES", CodeComposer.abbrev(type.getName()), LocalDate.now(), resourceSeq));
+        long resourceSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource", com.sni.bokaticowork.core.utils.time.AppTime.today()));
+        resource.setCode(CodeComposer.withMonth("RES", CodeComposer.abbrev(type.getName()), com.sni.bokaticowork.core.utils.time.AppTime.today(), resourceSeq));
         resource.setResourceType(type);
         resource.setResourceGroup(group);
         resource.setResourcePolicy(policy);

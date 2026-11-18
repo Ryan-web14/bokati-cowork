@@ -65,12 +65,12 @@ public class BookingConfirmationDocumentService {
 
     public Booking publicBooking(String bookingNumber, String token) {
         if (!StringUtils.hasText(bookingNumber) || !StringUtils.hasText(token)) {
-            throw new BadRequestException("Booking number and token are required");
+            throw new BadRequestException("Le numéro de réservation et le jeton sont requis");
         }
         Booking booking = bookingRepository.findPublicByBookingNumberWithResource(bookingNumber.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Booking " + bookingNumber + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Réservation introuvable : " + bookingNumber));
         if (!StringUtils.hasText(booking.getCheckInToken()) || !booking.getCheckInToken().equals(token.trim())) {
-            throw new ResourceNotFoundException("Booking public access token not found");
+            throw new ResourceNotFoundException("Jeton d'accès inconnu");
         }
         return booking;
     }
@@ -107,7 +107,7 @@ public class BookingConfirmationDocumentService {
     public byte[] confirmationPdf(String bookingNumber, String token) {
         Booking booking = publicBooking(bookingNumber, token);
         Context ctx = new Context(appLocale);
-        ctx.setVariable("generatedAt", DateTimeFormatter.ofPattern("dd/MM/yyyy").format(LocalDate.now()));
+        ctx.setVariable("generatedAt", DateTimeFormatter.ofPattern("dd/MM/yyyy").format(com.sni.bokaticowork.core.utils.time.AppTime.today()));
         ctx.setVariable("operator", operatorIdentity.current());
         ctx.setVariable("logo", brandLogo.base64());
         ctx.setVariable("bookingNumber", booking.getBookingNumber());
@@ -176,14 +176,14 @@ public class BookingConfirmationDocumentService {
         try {
             return PdfRenderer.render(html);
         } catch (Exception e) {
-            throw new BadRequestException("Unable to generate booking confirmation PDF", e);
+            throw new BadRequestException("Le PDF de confirmation de la réservation ne peut pas être produit", e);
         }
     }
 
     private byte[] qrBytes(Booking booking) {
         byte[] png = qrCodeRenderer.toPng(scanUrl(booking), 260);
         if (png == null) {
-            throw new BadRequestException("Unable to generate booking QR code");
+            throw new BadRequestException("Le code QR de la réservation ne peut pas être produit");
         }
         return png;
     }

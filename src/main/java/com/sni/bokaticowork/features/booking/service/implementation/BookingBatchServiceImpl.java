@@ -105,7 +105,7 @@ public class BookingBatchServiceImpl implements BookingBatchService {
                 try {
                     BookingResponse response = bookingService.create(booking.request());
                     Booking entity = bookingRepository.findByBookingNumber(response.bookingNumber())
-                            .orElseThrow(() -> new IllegalStateException("Booking " + response.bookingNumber() + " not found after creation"));
+                            .orElseThrow(() -> new IllegalStateException("Réservation " + response.bookingNumber() + " introuvable après sa création"));
                     entity.setBatchNumber(batchNumber);
                     if (entity.getStatus() == BookingStatus.PENDING_APPROVAL && !StringUtils.hasText(entity.getBillableNumber())) {
                         // Soumise a approbation : elle entre quand meme dans la facture commune. Un

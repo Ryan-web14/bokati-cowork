@@ -72,7 +72,10 @@ public class BookingExtras {
 
     public static final String ADDON_SOURCE = "BOOKING_ADDON";
     public static final String DEPOSIT_SOURCE = "DEPOSIT";
-    static final ZoneId ZONE = ZoneId.of("Africa/Brazzaville");
+    /** Lot B8 (ecart Bn-26) : fuseau de l'application, comme le reste du module. */
+    static ZoneId zone() {
+        return com.sni.bokaticowork.core.utils.time.AppTime.zone();
+    }
 
     /** Une ligne de la reservation, telle que l'equipe la voit. */
     public record LineView(String type, String code, String description, BigDecimal quantity, BigDecimal unitPrice,
@@ -249,7 +252,7 @@ public class BookingExtras {
         if (policy == null || policy.getOverrunGraceMinutes() == null || booking.getCheckedOutAt() == null) {
             return;
         }
-        LocalDateTime left = LocalDateTime.ofInstant(booking.getCheckedOutAt(), ZONE);
+        LocalDateTime left = LocalDateTime.ofInstant(booking.getCheckedOutAt(), zone());
         long over = Duration.between(booking.getEndedAt(), left).toMinutes();
         if (over <= policy.getOverrunGraceMinutes()) {
             return;

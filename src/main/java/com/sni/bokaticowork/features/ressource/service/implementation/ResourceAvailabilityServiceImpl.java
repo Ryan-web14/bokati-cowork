@@ -164,7 +164,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     @Override
     public PaginatedResponse<ResourceAvailabilityResponse> list(Pageable pageable) {
-        Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByEndedAtAfter(LocalDateTime.now(), pageable)
+        Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByEndedAtAfter(com.sni.bokaticowork.core.utils.time.AppTime.now(), pageable)
                 .map(this::toResponse);
         return new PaginatedResponse<>(page);
     }
@@ -172,7 +172,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     @Override
     public PaginatedResponse<ResourceAvailabilityResponse> listByResource(String resourceCode, Pageable pageable) {
         Resource resource = resourceService.getResourceForService(resourceCode);
-        Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByResourceAndEndedAtAfter(resource, LocalDateTime.now(), pageable)
+        Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByResourceAndEndedAtAfter(resource, com.sni.bokaticowork.core.utils.time.AppTime.now(), pageable)
                 .map(this::toResponse);
         return new PaginatedResponse<>(page);
     }
@@ -181,7 +181,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     public List<ResourceAvailabilityGroupResponse> listGroupedByResource() {
         Map<String, ResourceAvailabilityGroupResponse> grouped = new LinkedHashMap<>();
 
-        availabilityRepository.findFutureForGroupedView(LocalDateTime.now()).forEach(slot -> {
+        availabilityRepository.findFutureForGroupedView(com.sni.bokaticowork.core.utils.time.AppTime.now()).forEach(slot -> {
             Resource resource = slot.getResource();
             grouped.computeIfAbsent(resource.getCode(), code -> ResourceAvailabilityGroupResponse.builder()
                     .resourceCode(code)
@@ -230,7 +230,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             return List.of();
         }
         boolean staff = staffOverride != null && staffOverride.actorFor(resource.getEffectivePolicy()).isPresent();
-        LocalDateTime earliestStaffStart = staff ? staffOverride.earliestStart(LocalDateTime.now()) : LocalDateTime.now();
+        LocalDateTime earliestStaffStart = staff ? staffOverride.earliestStart(com.sni.bokaticowork.core.utils.time.AppTime.now()) : com.sni.bokaticowork.core.utils.time.AppTime.now();
 
         // Sans le droit aux soirees, un creneau d'abonnes n'existe pas · une fenetre qui le
         // traverserait n'est donc pas contigue, et n'est pas proposee.
@@ -391,7 +391,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         if (requestedMinutes > policy.getMaxBookingDurationMinutes()) {
             return "La durée demandée dépasse le maximum de la politique";
         }
-        if (startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
+        if (startedAt.isBefore(com.sni.bokaticowork.core.utils.time.AppTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
             return "L'heure de début ne respecte pas le préavis minimal de réservation";
         }
         if (beyondMaxAdvance(resource, startedAt)) {
@@ -404,7 +404,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private static boolean beyondMaxAdvance(Resource resource, LocalDateTime startedAt) {
         ResourcePolicy policy = resource.getEffectivePolicy();
         return policy != null && policy.getMaxAdvanceDays() != null && policy.getMaxAdvanceDays() > 0
-                && startedAt.toLocalDate().isAfter(java.time.LocalDate.now().plusDays(policy.getMaxAdvanceDays()));
+                && startedAt.toLocalDate().isAfter(com.sni.bokaticowork.core.utils.time.AppTime.today().plusDays(policy.getMaxAdvanceDays()));
     }
 
     /**
@@ -451,7 +451,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     /** Lot R3 : pas dans le passe, et pas au-dela de l'horizon de reservation (90 jours par defaut). */
     private void assertAvailabilityCreationWindow(LocalDateTime startedAt, LocalDateTime endedAt) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = com.sni.bokaticowork.core.utils.time.AppTime.now();
         if (startedAt.isBefore(now)) {
             throw new ConflictException("Impossible d'ouvrir des créneaux dans le passé");
         }
@@ -509,7 +509,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     public void updateSlotActive(Long id, boolean active) {
         ResourceAvailability slot = availabilityRepository.findById(id)
                 .orElseThrow(() -> new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Créneau introuvable : " + id));
-        if (!slot.getEndedAt().isAfter(LocalDateTime.now())) {
+        if (!slot.getEndedAt().isAfter(com.sni.bokaticowork.core.utils.time.AppTime.now())) {
             throw new ConflictException("Créneau passé : il ne se modifie plus");
         }
         if (!active && reserved(slot)) {
@@ -541,7 +541,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     @Override
     public java.util.Map<String, Integer> deleteFutureSlots(String resourceCode, LocalDateTime from, LocalDateTime to) {
         Resource resource = resourceService.getResourceForService(resourceCode);
-        LocalDateTime start = from == null || from.isBefore(LocalDateTime.now()) ? LocalDateTime.now() : from;
+        LocalDateTime start = from == null || from.isBefore(com.sni.bokaticowork.core.utils.time.AppTime.now()) ? com.sni.bokaticowork.core.utils.time.AppTime.now() : from;
         LocalDateTime end = to == null ? start.plusYears(2) : to;
         List<ResourceAvailability> slots = availabilityRepository.lockAllSlotsInRange(resource, start, end);
         List<ResourceAvailability> free = slots.stream().filter(slot -> !reserved(slot)).toList();
@@ -605,7 +605,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         if (policy == null) {
             return true;
         }
-        return !startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()));
+        return !startedAt.isBefore(com.sni.bokaticowork.core.utils.time.AppTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()));
     }
 
     private List<ResourceAvailability> buildSlots(Resource resource,
@@ -770,7 +770,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         if (requested == current) {
             return resource;
         }
-        long futureSlots = availabilityRepository.countByResourceAndEndedAtAfter(resource, LocalDateTime.now());
+        long futureSlots = availabilityRepository.countByResourceAndEndedAtAfter(resource, com.sni.bokaticowork.core.utils.time.AppTime.now());
         if (futureSlots > 0) {
             throw new ConflictException("La ressource " + resource.getCode() + " a " + futureSlots + " creneau(x) futur(s) de "
                             + current + " minutes · supprimez-les avant de passer a " + requested
@@ -825,7 +825,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private static final int EXPIRY_BATCH_SIZE = 200;
 
     private int expirePastAvailabilitySlots() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = com.sni.bokaticowork.core.utils.time.AppTime.now();
         List<ResourceAvailability> expiredSlots = availabilityRepository.findExpiredSlots(now, Limit.of(EXPIRY_BATCH_SIZE));
         if (expiredSlots.isEmpty()) {
             return 0;
@@ -846,7 +846,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     private List<ResourceAvailabilityWindowResponse> findFullRemainingWindows(Resource resource, int quantity,
                                                                               boolean includeSubscribersOnly) {
-        List<ResourceAvailability> slots = availabilityRepository.findFutureActiveSlots(resource, LocalDateTime.now(), Pageable.unpaged())
+        List<ResourceAvailability> slots = availabilityRepository.findFutureActiveSlots(resource, com.sni.bokaticowork.core.utils.time.AppTime.now(), Pageable.unpaged())
                 .stream()
                 .filter(slot -> includeSubscribersOnly || !Boolean.TRUE.equals(slot.getSubscribersOnly()))
                 .toList();

@@ -150,7 +150,7 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
 
     /** Lot R5a : occurrences a venir d'une fermeture, jusqu'a 400 jours (horizon des creneaux largement couvert). */
     private static List<LocalDateTime[]> upcoming(ResourceClosure closure) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = com.sni.bokaticowork.core.utils.time.AppTime.now();
         if (closure.getRecurrence() == null || closure.getRecurrence() == com.sni.bokaticowork.features.ressource.model.ResourceClosureRecurrence.NONE) {
             return closure.occurrences(null, null);
         }
@@ -187,7 +187,7 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
             return;
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = com.sni.bokaticowork.core.utils.time.AppTime.now();
         List<ResourceAvailability> changedSlots = new ArrayList<>();
         for (ResourceAvailability slot : slots) {
             boolean shouldBeAvailable = Boolean.TRUE.equals(slot.getActive())

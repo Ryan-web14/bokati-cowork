@@ -41,24 +41,23 @@ public class BookingResourceGuard {
         validateRange(startedAt, endedAt);
         slotPolicy.assertAligned(resource, startedAt, endedAt);
         if (!Boolean.TRUE.equals(resource.getBookingEnabled()) || !Boolean.TRUE.equals(resource.getActive())) {
-            throw new ConflictException("booking", "resource is not enabled for booking");
+            throw new ConflictException("La ressource n'est pas ouverte à la réservation");
         }
         if (resource.getStatus() != ResourceStatus.ACTIVE) {
-            throw new ConflictException("booking", "resource status does not allow booking");
+            throw new ConflictException("L'état de la ressource ne permet pas de la réserver");
         }
         if (quantity < 1) {
-            throw new BadRequestException("Booking quantity must be greater than zero");
+            throw new BadRequestException("La quantité doit être supérieure à zéro");
         }
         // Une salle se loue entiere : la quantite y designe des participants, pas des places
         // consommees. La comparer au nombre de reservations simultanees admises, qui vaut un pour
         // une salle, refusait toute reservation de plus d'une personne.
         if (resource.isWholeResourceBooking()) {
             if (quantity > resource.resolveSeatingCapacity()) {
-                throw new ConflictException("booking",
-                        "requested attendees exceed the resource seating capacity");
+                throw new ConflictException("Trop de participants pour la capacité de la ressource");
             }
         } else if (quantity > resource.resolveBookableSlots()) {
-            throw new ConflictException("booking", "requested quantity exceeds resource bookable slots");
+            throw new ConflictException("Quantité supérieure aux places réservables de la ressource");
         }
         validatePolicy(resource.getEffectivePolicy(), startedAt, endedAt, staffOverride);
     }
@@ -68,16 +67,16 @@ public class BookingResourceGuard {
             return;
         }
         if (bookingRepository.existsActiveConflict(resource.getId(), startedAt, endedAt, excludedBookingNumber)) {
-            throw new ConflictException("booking", "resource is already booked for the requested range");
+            throw new ConflictException("La ressource est déjà réservée sur ce créneau");
         }
     }
 
     private void validateRange(LocalDateTime startedAt, LocalDateTime endedAt) {
         if (startedAt == null || endedAt == null) {
-            throw new BadRequestException("Booking start and end dates are required");
+            throw new BadRequestException("Le début et la fin sont requis");
         }
         if (!endedAt.isAfter(startedAt)) {
-            throw new BadRequestException("Booking end date must be after start date");
+            throw new BadRequestException("La fin doit être après le début");
         }
         // L'alignement se verifie par ResourceSlotPolicy, seule source de la duree de creneau.
         // Cette classe en redefinissait sa propre constante : deux sources de verite pour la
@@ -85,12 +84,12 @@ public class BookingResourceGuard {
         // plage sans creneau. Le controle dependant de la ressource, il migre vers validateRange
         // (Resource, ...) ci-dessous.
         if (startedAt.getSecond() != 0 || endedAt.getSecond() != 0 || startedAt.getNano() != 0 || endedAt.getNano() != 0) {
-            throw new BadRequestException("Booking range must not contain seconds or fractional seconds");
+            throw new BadRequestException("Le début et la fin se donnent à la minute, sans secondes");
         }
     }
 
     private void validatePolicy(ResourcePolicy policy, LocalDateTime startedAt, LocalDateTime endedAt, boolean staffOverride) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = com.sni.bokaticowork.core.utils.time.AppTime.now();
         if (staffOverride) {
             if (startedAt.isBefore(staffOverride().earliestStart(now))) {
                 throw new BadRequestException("Une reservation saisie apres coup ne remonte pas au-dela de "
@@ -98,20 +97,20 @@ public class BookingResourceGuard {
             }
         } else if (startedAt.isBefore(now)) {
             // Sans politique, rien n'empechait de reserver dans le passe.
-            throw new ConflictException("booking", "the requested start time is in the past");
+            throw new ConflictException("Le début demandé est déjà passé");
         }
         if (policy == null) {
             return;
         }
         int requestedMinutes = Math.toIntExact(Duration.between(startedAt, endedAt).toMinutes());
         if (requestedMinutes < policy.getMinBookingDurationMinutes()) {
-            throw new ConflictException("booking", "requested duration is below resource policy minimum");
+            throw new ConflictException("Durée inférieure au minimum de la ressource");
         }
         if (requestedMinutes > policy.getMaxBookingDurationMinutes()) {
-            throw new ConflictException("booking", "requested duration exceeds resource policy maximum");
+            throw new ConflictException("Durée supérieure au maximum de la ressource");
         }
         if (!staffOverride && startedAt.isBefore(now.plusMinutes(policy.getMinBookingNoticeMinutes()))) {
-            throw new ConflictException("booking", "minimum booking notice is not respected");
+            throw new ConflictException("Délai minimal de réservation de la ressource non respecté");
         }
     }
 }

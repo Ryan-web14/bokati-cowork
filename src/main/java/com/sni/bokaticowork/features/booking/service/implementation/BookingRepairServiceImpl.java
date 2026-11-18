@@ -20,7 +20,7 @@ public class BookingRepairServiceImpl implements BookingRepairService {
     @Override
     public BookingRepairResponse repair(int limit) {
         var candidates = bookingRepository.findRepairCandidates(limit);
-        candidates.forEach(candidate -> eventWriter.write(candidate, BookingEventType.REPAIR_APPLIED, "Booking inspected by repair job", "No automatic mutation was required", null));
+        candidates.forEach(candidate -> eventWriter.write(candidate, BookingEventType.REPAIR_APPLIED, "Réservation vérifiée par la tâche de réparation", "Aucune correction automatique nécessaire", null));
         return new BookingRepairResponse(candidates.size(), 0, 0);
     }
 }

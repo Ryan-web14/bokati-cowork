@@ -39,9 +39,9 @@ class StaffBookingGuardTest {
     @DisplayName("Client : un creneau passe ou dans le preavis est refuse")
     void clientKeepsNotice() {
         assertThatThrownBy(() -> guard.validateBookable(resource(), hour.minusHours(2), hour.minusHours(1), 1))
-                .isInstanceOf(ConflictException.class).hasMessageContaining("past");
+                .isInstanceOf(ConflictException.class).hasMessageContaining("déjà passé");
         assertThatThrownBy(() -> guard.validateBookable(resource(), hour.plusHours(1), hour.plusHours(2), 1))
-                .isInstanceOf(ConflictException.class).hasMessageContaining("notice");
+                .isInstanceOf(ConflictException.class).hasMessageContaining("Délai minimal");
     }
 
     @Test

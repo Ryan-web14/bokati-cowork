@@ -145,7 +145,7 @@ public class ResourceCalendarDays {
 
     @Transactional(readOnly = true)
     public List<ResourceCalendarDayResponse> list(LocalDate from, LocalDate to, String resourceCode) {
-        LocalDate start = from == null ? LocalDate.now() : from;
+        LocalDate start = from == null ? com.sni.bokaticowork.core.utils.time.AppTime.today() : from;
         LocalDate end = to == null ? start.plusMonths(3) : to;
         if (end.isBefore(start)) {
             throw new BadRequestException("La date de fin doit suivre la date de début");

@@ -58,7 +58,7 @@ class BookingServiceImplTest {
 
         String description = ReflectionTestUtils.invokeMethod(service, "resourceLineDescription", booking);
 
-        assertEquals("Booking resource - Bureau Prive (Abonne - couvert par abonnement SUB-0001)", description);
+        assertEquals("Réservation de ressource · Bureau Prive (Abonne - couvert par abonnement SUB-0001)", description);
     }
 
     @Test

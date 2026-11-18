@@ -79,7 +79,7 @@ class StaffBookingHoldTest {
     @Test
     void clientCannotHoldAPastStart() {
         assertThatThrownBy(() -> service.create(request)).isInstanceOf(ConflictException.class)
-                .hasMessageContaining("in the past");
+                .hasMessageContaining("déjà passé");
     }
 
     @Test

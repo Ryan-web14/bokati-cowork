@@ -45,17 +45,17 @@ public class BookingIdentityResolver {
 
         int explicitTargets = count(memberId, customerId, businessCode);
         if (explicitTargets > 1) {
-            throw new BadRequestException("Only one owner selector is allowed: memberId, customerId or businessCode");
+            throw new BadRequestException("Un seul titulaire à la fois : memberId, customerId ou businessCode");
         }
 
         if (StringUtils.hasText(memberId)) {
             Member member = memberRepository.findByMemberIdAndDeletedFalse(memberId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Member " + memberId + " not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Membre introuvable : " + memberId));
             return fromMember(member, safeLookup, false);
         }
         if (StringUtils.hasText(customerId)) {
             Customer customer = customerRepository.findByCustomerId(customerId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Customer " + customerId + " not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Client introuvable : " + customerId));
             if (customer.isDeleted()) {
                 throw new BadRequestException("Le client " + customerId + " est supprimé et ne peut pas effectuer de nouvelles réservations");
             }
@@ -63,7 +63,7 @@ public class BookingIdentityResolver {
         }
         if (StringUtils.hasText(businessCode)) {
             BusinessEntity business = businessRepository.findByCode(businessCode)
-                    .orElseThrow(() -> new ResourceNotFoundException("Business entity " + businessCode + " not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Entreprise introuvable : " + businessCode));
             return fromBusiness(business, safeLookup, false);
         }
 
@@ -84,7 +84,7 @@ public class BookingIdentityResolver {
             return guest(safeLookup, email, phone);
         }
 
-        throw new BadRequestException("A memberId, customerId, businessCode, email or phone is required");
+        throw new BadRequestException("Un titulaire est requis : memberId, customerId, businessCode, email ou phone");
     }
 
     private ResolvedBookingIdentity findByEmail(String email, BookingIdentityLookup lookup) {

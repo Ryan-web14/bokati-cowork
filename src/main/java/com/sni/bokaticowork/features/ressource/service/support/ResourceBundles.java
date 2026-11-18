@@ -64,9 +64,9 @@ public class ResourceBundles {
         if (request.items() == null || request.items().size() < 2) {
             throw new BadRequestException("Un lot réunit au moins deux ressources");
         }
-        long seq = CodeComposer.extractSeq(sequenceGenerator.next("resource_bundle", LocalDate.now()));
+        long seq = CodeComposer.extractSeq(sequenceGenerator.next("resource_bundle", com.sni.bokaticowork.core.utils.time.AppTime.today()));
         ResourceBundle bundle = ResourceBundle.builder()
-                .code(CodeComposer.refWithYear("LOT", LocalDate.now(), seq))
+                .code(CodeComposer.refWithYear("LOT", com.sni.bokaticowork.core.utils.time.AppTime.today(), seq))
                 .name(request.name().trim())
                 .build();
         apply(bundle, request);

@@ -97,7 +97,7 @@ public class MonthlyAvailabilityWorker implements SchedulingConfigurer {
             return;
         }
         try {
-            MonthlyAvailabilityGenerator.Report report = generator.generate(LocalDateTime.now());
+            MonthlyAvailabilityGenerator.Report report = generator.generate(com.sni.bokaticowork.core.utils.time.AppTime.now());
             log.info("Disponibilites mensuelles ({}) · {} ressources ouvertes ({} plages), {} deja pourvues sautees, "
                             + "{} plages refusees (fermeture, chevauchement)",
                     trigger, report.resourcesFilled(), report.rangesCreated(), report.resourcesSkipped(),

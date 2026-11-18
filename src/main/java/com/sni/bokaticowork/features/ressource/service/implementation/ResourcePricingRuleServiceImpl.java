@@ -468,7 +468,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
             throw new BadRequestException("Durée de réservation (" + durationMinutes + " min) supérieure au maximum autorisé (" + policy.getMaxBookingDurationMinutes() + " min)");
         }
         if (policy.getMinBookingNoticeMinutes() != null && policy.getMinBookingNoticeMinutes() > 0) {
-            long noticeMinutes = java.time.Duration.between(LocalDateTime.now(), startedAt).toMinutes();
+            long noticeMinutes = java.time.Duration.between(com.sni.bokaticowork.core.utils.time.AppTime.now(), startedAt).toMinutes();
             if (noticeMinutes < policy.getMinBookingNoticeMinutes()) {
                 throw new BadRequestException("La réservation demande un préavis d'au moins " + policy.getMinBookingNoticeMinutes() + " minutes");
             }
@@ -495,7 +495,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     }
 
     private boolean appliesLastMinute(ResourcePricingRule rule, LocalDateTime startedAt) {
-        return rule.getLastMinuteMinutes() == null || !LocalDateTime.now().plusMinutes(rule.getLastMinuteMinutes()).isBefore(startedAt);
+        return rule.getLastMinuteMinutes() == null || !com.sni.bokaticowork.core.utils.time.AppTime.now().plusMinutes(rule.getLastMinuteMinutes()).isBefore(startedAt);
     }
 
     private Integer applyAdjustment(Integer basePrice, ResourcePricingRule applied) {

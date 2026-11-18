@@ -104,7 +104,7 @@ public class BookingEmailNotifier {
                 || eventType == BookingEventType.BOOKING_CONFIRMED;
 
         String body = templated ? body(eventType, booking, isConfirmation, zone) : plainTextBody(eventType, booking, zone);
-        eventWriter.write(booking, BookingEventType.EMAIL_QUEUED, "Email queued", subject, null);
+        eventWriter.write(booking, BookingEventType.EMAIL_QUEUED, "Courriel mis en file", subject, null);
         try {
             CompletableFuture<Boolean> future;
             if (isConfirmation && StringUtils.hasText(booking.getCheckInToken())) {
@@ -123,12 +123,12 @@ public class BookingEmailNotifier {
             future.thenAccept(sent -> eventWriter.write(
                     booking,
                     sent ? BookingEventType.EMAIL_SENT : BookingEventType.EMAIL_FAILED,
-                    sent ? "Email sent" : "Email failed",
+                    sent ? "Courriel envoyé" : "Courriel en échec",
                     subject,
                     null
             ));
         } catch (MessagingException ex) {
-            eventWriter.write(booking, BookingEventType.EMAIL_FAILED, "Email failed", subject, null);
+            eventWriter.write(booking, BookingEventType.EMAIL_FAILED, "Courriel en échec", subject, null);
             log.warn("Failed to queue booking email {} for {}", eventType, booking.getBookingNumber(), ex);
         }
     }
@@ -280,7 +280,7 @@ public class BookingEmailNotifier {
             case BOOKING_CHECKED_IN -> "Check-in";
             case BOOKING_CHECKED_OUT -> "Check-out";
             case BOOKING_COMPLETED  -> "Terminé";
-            case BOOKING_NO_SHOW    -> "No-show";
+            case BOOKING_NO_SHOW    -> "Absence";
             default -> "Réservation";
         };
     }

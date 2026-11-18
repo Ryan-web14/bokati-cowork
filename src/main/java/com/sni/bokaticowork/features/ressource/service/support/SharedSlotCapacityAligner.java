@@ -53,7 +53,7 @@ public class SharedSlotCapacityAligner {
         int aligned = 0;
         while (true) {
             List<Long> ids = availabilityRepository.findMisalignedSlotIds(
-                    LocalDateTime.now(), Limit.of(BATCH_SIZE));
+                    com.sni.bokaticowork.core.utils.time.AppTime.now(), Limit.of(BATCH_SIZE));
             if (ids.isEmpty()) {
                 return aligned;
             }

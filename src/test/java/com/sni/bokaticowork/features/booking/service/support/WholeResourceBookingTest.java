@@ -69,7 +69,7 @@ class WholeResourceBookingTest {
         ConflictException ex = assertThrows(ConflictException.class,
                 () -> guard().validateBookable(room, start(), start().plusHours(1), 20));
 
-        assertTrue(ex.getMessage().contains("seating capacity"));
+        assertTrue(ex.getMessage().contains("capacité"));
     }
 
     /** Un open space garde l'ancienne règle : on y prend des places, une à la fois. */

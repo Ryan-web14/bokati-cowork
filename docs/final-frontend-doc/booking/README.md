@@ -296,3 +296,10 @@ Quotas du public : `maxActiveBookings` compte les réservations `CONFIRMED`, `IN
 - Création : `options: [{ kind: "SERVICE" | "AMENITY", code, quantity }]` et `channel` (PHONE, DESK, EMAIL, WHATSAPP) pour l'équipe.
 
 Détail : [lot B2b](../../backend/booking/lot-b2b-reports-options.md).
+
+## Messages et fuseau (lot B8, 18/11/2026)
+
+- Les messages d'erreur, l'historique et les événements d'une réservation sont en français, sans le préfixe « Could not process booking: ». Afficher `message` tel quel ; pour une logique d'écran, tester le code d'erreur, jamais le texte.
+- Les heures des créneaux sont en heure locale de l'application (Africa/Brazzaville), quel que soit le fuseau du serveur.
+
+Détail : [lot B8](../../backend/booking/lot-b8-messages-fuseau.md).

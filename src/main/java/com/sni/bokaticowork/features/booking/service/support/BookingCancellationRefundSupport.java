@@ -87,7 +87,7 @@ public class BookingCancellationRefundSupport {
             }
             return;
         }
-        long hoursBeforeStart = Duration.between(LocalDateTime.now(), booking.getStartedAt()).toHours();
+        long hoursBeforeStart = Duration.between(com.sni.bokaticowork.core.utils.time.AppTime.now(), booking.getStartedAt()).toHours();
         // Lot B2 (ecart Bn-6) : la grille de la politique de la ressource, sinon la grille generale ;
         // rien d'engage (reservation en attente) : tout le paye est rendu.
         BigDecimal percent = wasActive ? refundPercent(booking, hoursBeforeStart) : BigDecimal.valueOf(100);
@@ -262,7 +262,7 @@ public class BookingCancellationRefundSupport {
             return;
         }
 
-        long hoursBeforeStart = Duration.between(LocalDateTime.now(), booking.getStartedAt()).toHours();
+        long hoursBeforeStart = Duration.between(com.sni.bokaticowork.core.utils.time.AppTime.now(), booking.getStartedAt()).toHours();
         CancellationPolicy policy = cancellationPolicyRepository.findAllByActiveTrueOrderByRuleOrderAsc().stream()
                 .filter(p -> hoursBeforeStart >= p.getHoursBeforeStart())
                 .findFirst()

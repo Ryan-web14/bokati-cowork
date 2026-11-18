@@ -64,7 +64,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
         request.setDescription(normalizeText(request.getDescription()));
 
         ResourcePolicy policy = policyMapper.toEntity(request);
-        policy.setCode(sequenceGenerator.next("resource_policy", LocalDate.now()));
+        policy.setCode(sequenceGenerator.next("resource_policy", com.sni.bokaticowork.core.utils.time.AppTime.today()));
 
         return policyMapper.toResponse(policyRepository.save(policy));
     }

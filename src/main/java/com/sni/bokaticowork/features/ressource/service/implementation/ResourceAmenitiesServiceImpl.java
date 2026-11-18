@@ -61,7 +61,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         request.setDescription(normalizeText(request.getDescription()));
 
         ResourceAmenities amenity = amenitiesMapper.toEntity(request);
-        LocalDate businessDate = LocalDate.now();
+        LocalDate businessDate = com.sni.bokaticowork.core.utils.time.AppTime.today();
         amenity.setCode(buildAmenityCode(normalizedName, businessDate));
 
         return amenitiesMapper.toResponse(amenitiesRepository.save(amenity));

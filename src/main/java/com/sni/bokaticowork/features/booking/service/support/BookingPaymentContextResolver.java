@@ -51,7 +51,7 @@ public class BookingPaymentContextResolver {
             return BookingPaymentContext.direct();
         }
         if (identity.transientOwner()) {
-            throw new BadRequestException("Subscription or pass booking requires an existing member, customer or business entity");
+            throw new BadRequestException("Une réservation par abonnement ou par pass demande un membre, un client ou une entreprise existant");
         }
 
         Instant now = Instant.now();
@@ -61,7 +61,7 @@ public class BookingPaymentContextResolver {
         String resourceGroupCode = resource.getResourceGroup() == null ? null : resource.getResourceGroup().getCode();
 
         if (paymentMode == BookingPaymentMode.SUBSCRIPTION) {
-            List<Subscription> subscriptions = subscriptionRepository.findAllCurrentActive(ownerType, ownerCode, LocalDate.now());
+            List<Subscription> subscriptions = subscriptionRepository.findAllCurrentActive(ownerType, ownerCode, com.sni.bokaticowork.core.utils.time.AppTime.today());
             for (Subscription subscription : subscriptions) {
                 Optional<EntitlementGrant> grant = usableSubscriptionGrant(ownerType, ownerCode, subscription, resourceTypeCode, resourceGroupCode, now);
                 if (grant.isPresent()) {
@@ -80,7 +80,7 @@ public class BookingPaymentContextResolver {
                             ? seatLocator.usableSeats(ownerCode, requestedCompanyCode)
                             : List.of();
             if (subscriptions.isEmpty() && seats.isEmpty()) {
-                throw new ResourceNotFoundException("No active subscription found for booking owner");
+                throw new ResourceNotFoundException("Aucun abonnement actif pour ce titulaire");
             }
             for (var seat : seats) {
                 Subscription subscription = seat.getSubscription();
@@ -120,9 +120,9 @@ public class BookingPaymentContextResolver {
             }
 
             throw new ResourceNotFoundException(
-                    "No active subscription with a matching entitlement found for resource type="
-                    + (resourceTypeCode == null ? "none" : resourceTypeCode)
-                    + ", group=" + (resourceGroupCode == null ? "none" : resourceGroupCode));
+                    "Aucun abonnement actif ne donne droit à cette ressource (type "
+                    + (resourceTypeCode == null ? "aucun" : resourceTypeCode)
+                    + ", groupe " + (resourceGroupCode == null ? "aucun" : resourceGroupCode) + ")");
         }
 
         if (paymentMode == BookingPaymentMode.PASS) {
@@ -148,10 +148,10 @@ public class BookingPaymentContextResolver {
                     }
                 }
             }
-            throw new ResourceNotFoundException("No usable pass entitlement found for this resource");
+            throw new ResourceNotFoundException("Aucun pass utilisable pour cette ressource");
         }
 
-        throw new BadRequestException("Unsupported booking payment mode");
+        throw new BadRequestException("Mode de paiement de réservation non pris en charge");
     }
 
     private Optional<EntitlementGrant> usableSubscriptionGrant(String ownerType,

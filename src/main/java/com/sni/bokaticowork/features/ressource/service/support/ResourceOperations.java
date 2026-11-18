@@ -203,9 +203,9 @@ public class ResourceOperations {
         }
         boolean team = reporter != null && "TEAM".equals(reporter.type());
         Resource resource = resource(request.resourceCode());
-        long seq = CodeComposer.extractSeq(sequenceGenerator.next("resource_incident", LocalDate.now()));
+        long seq = CodeComposer.extractSeq(sequenceGenerator.next("resource_incident", com.sni.bokaticowork.core.utils.time.AppTime.today()));
         ResourceIncident incident = ResourceIncident.builder()
-                .code(CodeComposer.refWithYear("INC", LocalDate.now(), seq))
+                .code(CodeComposer.refWithYear("INC", com.sni.bokaticowork.core.utils.time.AppTime.today(), seq))
                 .resource(resource)
                 .bookingNumber(StringUtils.hasText(request.bookingNumber()) ? request.bookingNumber().trim() : null)
                 .reportedByType(team ? "TEAM" : "MEMBER")

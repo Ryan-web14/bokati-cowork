@@ -43,7 +43,7 @@ public class BookingNotificationServiceImpl implements BookingNotificationServic
     @Override
     public int queueReminder(String bookingNumber, int minutesBefore) {
         Booking booking = bookingRepository.findByBookingNumber(bookingNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking " + bookingNumber + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Réservation introuvable : " + bookingNumber));
         if (!StringUtils.hasText(booking.getContactEmail())) {
             return 0;
         }
@@ -52,9 +52,9 @@ public class BookingNotificationServiceImpl implements BookingNotificationServic
                 .booking(booking)
                 .notificationType(BookingNotificationType.REMINDER)
                 .recipient(booking.getContactEmail())
-                .subject("Booking reminder " + booking.getBookingNumber())
-                .body("Reminder for booking " + booking.getBookingNumber() + " at " + reminderTime(booking))
-                .scheduledAt(booking.getStartedAt().minusMinutes(minutesBefore).atZone(ZoneId.systemDefault()).toInstant())
+                .subject("Rappel de réservation " + booking.getBookingNumber())
+                .body("Rappel pour la réservation " + booking.getBookingNumber() + " at " + reminderTime(booking))
+                .scheduledAt(booking.getStartedAt().minusMinutes(minutesBefore).atZone(com.sni.bokaticowork.core.utils.time.AppTime.zone()).toInstant())
                 .status(BookingNotificationStatus.PENDING)
                 .build());
         return 1;
@@ -78,7 +78,7 @@ public class BookingNotificationServiceImpl implements BookingNotificationServic
             notification.setStatus(sent ? BookingNotificationStatus.SENT : BookingNotificationStatus.FAILED);
             notification.setDispatchedAt(Instant.now());
             if (!sent) {
-                notification.setErrorMessage("Email provider returned failure");
+                notification.setErrorMessage("Le service d'envoi a refusé le courriel");
             }
             notificationRepository.save(notification);
         });

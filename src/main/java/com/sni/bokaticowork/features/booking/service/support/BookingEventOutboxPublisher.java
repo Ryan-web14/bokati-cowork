@@ -22,7 +22,7 @@ public class BookingEventOutboxPublisher {
 
         Booking booking = event.getBooking();
         if (booking == null || booking.getBookingNumber() == null || booking.getBookingNumber().isBlank()) {
-            throw new IllegalStateException("Booking event cannot be published without a booking number");
+            throw new IllegalStateException("Un événement de réservation sans numéro ne peut pas être publié");
         }
 
         BookingEventOutboxPayload payload = new BookingEventOutboxPayload(

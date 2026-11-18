@@ -81,7 +81,7 @@ class StaffAvailabilityCheckTest {
         var response = service.check(request);
 
         assertThat(response.available()).isFalse();
-        assertThat(response.message()).contains("past");
+        assertThat(response.message()).contains("déjà passé");
     }
 
     @Test

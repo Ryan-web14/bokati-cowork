@@ -105,13 +105,13 @@ public class BookingEntitlementBridge {
      */
     public void reserve(Booking booking) {
         if (!StringUtils.hasText(booking.getEntitlementCode())) {
-            throw new BadRequestException("Entitlement code is required for subscription or pass booking");
+            throw new BadRequestException("Le code du droit est requis pour une réservation par abonnement ou par pass");
         }
         BigDecimal quantity = charge(booking).quantity();
         // Lot B2 (ecart Bn-2) : la quantite retenue est gardee, pour rendre exactement ce qui a ete pris.
         booking.setEntitlementQuantity(quantity);
         EntitlementOperationRequest request = operation(booking, quantity, "reserve",
-                "Booking confirmed", holdUntil(booking));
+                "Réservation confirmée", holdUntil(booking));
         // Sur la place d'un collaborateur, sa part, son plafond et le pot commun passent d'abord.
         if (booking.getSubscriptionSeatId() != null) {
             seatGate.reserve(booking.getSubscriptionSeatId(), booking.getEntitlementCode(), REFERENCE_TYPE,
@@ -139,7 +139,7 @@ public class BookingEntitlementBridge {
         if (booking.getEndedAt() == null) {
             return null;
         }
-        return booking.getEndedAt().plusDays(7).atZone(java.time.ZoneId.systemDefault()).toInstant();
+        return booking.getEndedAt().plusDays(7).atZone(com.sni.bokaticowork.core.utils.time.AppTime.zone()).toInstant();
     }
 
     /**
@@ -171,7 +171,7 @@ public class BookingEntitlementBridge {
             return false;
         }
         Charge charge = charge(booking);
-        EntitlementOperationRequest request = operation(booking, charge.quantity(), "consume", "Booking completed", null);
+        EntitlementOperationRequest request = operation(booking, charge.quantity(), "consume", "Réservation terminée", null);
         if (booking.getSubscriptionSeatId() != null) {
             seatGate.consume(booking.getSubscriptionSeatId(), booking.getEntitlementCode(), REFERENCE_TYPE,
                     booking.getBookingNumber(), charge.quantity());
@@ -230,7 +230,7 @@ public class BookingEntitlementBridge {
             return;
         }
         java.math.BigDecimal retained = booking.getEntitlementQuantity() != null ? booking.getEntitlementQuantity() : charge(booking).quantity();
-        entitlementService.release(operation(booking, retained, "release", "Booking cancelled"));
+        entitlementService.release(operation(booking, retained, "release", "Réservation annulée"));
         booking.setEntitlementQuantity(null);
         if (booking.getSubscriptionSeatId() != null) {
             seatGate.release(booking.getSubscriptionSeatId(), booking.getEntitlementCode(), REFERENCE_TYPE, booking.getBookingNumber());

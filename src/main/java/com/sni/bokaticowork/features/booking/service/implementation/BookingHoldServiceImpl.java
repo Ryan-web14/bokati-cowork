@@ -75,7 +75,7 @@ public class BookingHoldServiceImpl implements BookingHoldService {
         // tranche) ; une seule sur une piece entiere.
         if (resource.isWholeResourceBooking()
                 && holdRepository.existsActiveOverlap(resource.getId(), request.startedAt(), request.endedAt(), null)) {
-            throw new ConflictException("booking hold", "resource already has an active hold for the requested range");
+            throw new ConflictException("La ressource est déjà pré-réservée sur ce créneau");
         }
         availabilityService.reserve(ReserveResourceAvailabilityRequest.builder()
                 .resourceCode(resource.getCode())
@@ -125,7 +125,7 @@ public class BookingHoldServiceImpl implements BookingHoldService {
 
     private BookingHold get(String holdNumber) {
         return holdRepository.findByHoldNumber(holdNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking hold " + holdNumber + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pré-réservation introuvable : " + holdNumber));
     }
 
     private void releaseCapacity(BookingHold hold) {

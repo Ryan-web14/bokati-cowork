@@ -53,8 +53,8 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
         }
 
         ResourceGroup group = groupMapper.toEntity(request);
-        long groupSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_group", LocalDate.now()));
-        group.setCode(CodeComposer.refWithYear("RGP", LocalDate.now(), groupSeq));
+        long groupSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_group", com.sni.bokaticowork.core.utils.time.AppTime.today()));
+        group.setCode(CodeComposer.refWithYear("RGP", com.sni.bokaticowork.core.utils.time.AppTime.today(), groupSeq));
         return groupMapper.toResponse(groupRepo.save(group));
     }
 

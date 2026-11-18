@@ -166,8 +166,8 @@ public class ResourceAnalytics {
 
     @Transactional(readOnly = true)
     public OccupancyReport occupancy(LocalDate from, LocalDate to, String groupBy, String siteCode) {
-        LocalDate start = from == null ? LocalDate.now().withDayOfMonth(1) : from;
-        LocalDate end = to == null ? LocalDate.now() : to;
+        LocalDate start = from == null ? com.sni.bokaticowork.core.utils.time.AppTime.today().withDayOfMonth(1) : from;
+        LocalDate end = to == null ? com.sni.bokaticowork.core.utils.time.AppTime.today() : to;
         checkRange(start, end);
         String group = StringUtils.hasText(groupBy) ? groupBy.trim().toUpperCase(Locale.ROOT) : "RESOURCE";
         if (!Set.of("RESOURCE", "TYPE", "GROUP", "SITE").contains(group)) {
@@ -258,8 +258,8 @@ public class ResourceAnalytics {
 
     @Transactional(readOnly = true)
     public MarginReport margins(LocalDate from, LocalDate to, String resourceCode) {
-        LocalDate start = from == null ? LocalDate.now().withDayOfMonth(1) : from;
-        LocalDate end = to == null ? LocalDate.now() : to;
+        LocalDate start = from == null ? com.sni.bokaticowork.core.utils.time.AppTime.today().withDayOfMonth(1) : from;
+        LocalDate end = to == null ? com.sni.bokaticowork.core.utils.time.AppTime.today() : to;
         checkRange(start, end);
         LocalDateTime rangeStart = start.atStartOfDay();
         LocalDateTime rangeEnd = end.plusDays(1).atStartOfDay();
@@ -363,8 +363,8 @@ public class ResourceAnalytics {
     @Transactional(readOnly = true)
     public List<AppliedPrice> priceHistory(String resourceCode, LocalDate from, LocalDate to) {
         Resource resource = resource(resourceCode);
-        LocalDate start = from == null ? LocalDate.now().minusMonths(3) : from;
-        LocalDate end = to == null ? LocalDate.now().plusMonths(3) : to;
+        LocalDate start = from == null ? com.sni.bokaticowork.core.utils.time.AppTime.today().minusMonths(3) : from;
+        LocalDate end = to == null ? com.sni.bokaticowork.core.utils.time.AppTime.today().plusMonths(3) : to;
         checkRange(start, end);
         List<Booking> found = entityManager.createQuery("""
                         select b from Booking b where b.resource = :resource and b.startedAt >= :from and b.startedAt < :to

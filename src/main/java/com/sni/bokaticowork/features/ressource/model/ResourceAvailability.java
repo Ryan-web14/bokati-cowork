@@ -85,8 +85,8 @@ public class ResourceAvailability {
 
     @PrePersist
     public void prePersist() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = com.sni.bokaticowork.core.utils.time.AppTime.now();
+        updatedAt = com.sni.bokaticowork.core.utils.time.AppTime.now();
     }
 
 }

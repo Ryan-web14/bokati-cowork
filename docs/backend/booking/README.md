@@ -40,7 +40,7 @@
 | 15 | `changedBy` et `reason` inversés après paiement | **Réglé (B0)** | `PaymentTransactionWorkflowProcessor.java:311-315` |
 | 16 | `sort` ignoré par `GET /bookings` (et au portail) | confirmé | BSI:366 ; `BookingRepository.java:118-127` |
 | 17 | 3 requêtes par 10 minutes sur tout `/public/bookings/check-in/scanner*`, page d'installation comprise | **Réglé (B0)** | `RateLimitRules.java:158-160` |
-| 18 | Messages en anglais (environ 65 sur 112), préfixe « Could not process booking » | en partie | `ConflictException.java:15-17` |
+| 18 | Messages en anglais (environ 65 sur 112), préfixe « Could not process booking » | en partie | `ConflictException.java:15-17` · **Réglé (B8)** |
 
 ## Écarts nouveaux (Bn)
 
@@ -78,9 +78,9 @@
 | Bn-24 | Par ligne de liste : deux requêtes, chargements paresseux et rendu d'un QR en PNG | `BookingMapperDecorator.java:81-134` |
 | Bn-25 | Listes non paginées (attente, historique, événements, politiques, dérogations), moteur de suggestion par entrée d'attente | `BookingWaitlistServiceImpl.java:82-87` |
 | **Fuseau** | | |
-| Bn-26 | Dépassement calculé en heure de Brazzaville, le reste en heure du serveur ; `app.time-zone` jamais appliqué par défaut : un serveur en UTC facture une heure de dépassement à chaque départ | `BookingExtras.java:75, 252` ; `ApplicationConfig.java:37` |
+| Bn-26 | Dépassement calculé en heure de Brazzaville, le reste en heure du serveur ; `app.time-zone` jamais appliqué par défaut : un serveur en UTC facture une heure de dépassement à chaque départ | `BookingExtras.java:75, 252` ; `ApplicationConfig.java:37` · **Réglé (B8)** |
 | **Contradiction** | | |
-| Bn-27 | La tâche d'expiration des déclarations d'espèces annule et archive la facture que sa doc dit maintenue ; les commentaires du portail promettent un créneau retenu qui ne l'est pas | `CashDeclarationExpiryWorker.java:30-32` ; `ClientPortalBookingService.java:104-106` |
+| Bn-27 | La tâche d'expiration des déclarations d'espèces annule et archive la facture que sa doc dit maintenue ; les commentaires du portail promettent un créneau retenu qui ne l'est pas | `CashDeclarationExpiryWorker.java:30-32` ; `ClientPortalBookingService.java:104-106` · **Réglé (B8)** |
 
 Listes de choix, recherches et automatisations du module : voir [constat des listes de choix](../listes-de-choix/documents-audit-ressources-portail.md#réservations).
 
@@ -93,7 +93,7 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 
 ## Avancement
 
-**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)), **B2 fait** ([lot-b2-argent.md](lot-b2-argent.md)), couverture partielle par les heures incluses comprise. **B2b fait** ([lot-b2b-reports-options.md](lot-b2b-reports-options.md)) : aperçu de l'écart de prix, hausse confirmée puis encaissée, modifications marquées, équipe informée, politique d'annulation pour tous, options à la création.
+**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)), **B2 fait** ([lot-b2-argent.md](lot-b2-argent.md)), couverture partielle par les heures incluses comprise. **B2b fait** ([lot-b2b-reports-options.md](lot-b2b-reports-options.md)) : aperçu de l'écart de prix, hausse confirmée puis encaissée, modifications marquées, équipe informée, politique d'annulation pour tous, options à la création. **B8 fait** ([lot-b8-messages-fuseau.md](lot-b8-messages-fuseau.md)) : messages, historique et événements en français, heure de l'application partout dans les réservations et les ressources.
 
 ## Lots proposés
 

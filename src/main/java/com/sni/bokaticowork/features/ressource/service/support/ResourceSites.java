@@ -284,8 +284,8 @@ public class ResourceSites {
     }
 
     private String code(String sequence, String prefix) {
-        long seq = CodeComposer.extractSeq(sequenceGenerator.next(sequence, LocalDate.now()));
-        return CodeComposer.refWithYear(prefix, LocalDate.now(), seq);
+        long seq = CodeComposer.extractSeq(sequenceGenerator.next(sequence, com.sni.bokaticowork.core.utils.time.AppTime.today()));
+        return CodeComposer.refWithYear(prefix, com.sni.bokaticowork.core.utils.time.AppTime.today(), seq);
     }
 
     private static String blankToNull(String value) {

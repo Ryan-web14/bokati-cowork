@@ -107,7 +107,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
                     : org.springframework.util.StringUtils.hasText(request.businessCode()) ? request.businessCode() : request.customerId();
             BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity,
                     request.bookingUnit(), priceContextResolver == null ? null : priceContextResolver.forOwner(ownerType, ownerCode));
-            String message = staff && request.startedAt().isBefore(java.time.LocalDateTime.now().plusMinutes(noticeMinutes(resource)))
+            String message = staff && request.startedAt().isBefore(com.sni.bokaticowork.core.utils.time.AppTime.now().plusMinutes(noticeMinutes(resource)))
                     ? "Disponible · réservation de l'équipe hors préavis"
                     : "Disponible";
             if (request.paymentMode() == BookingPaymentMode.SUBSCRIPTION) {

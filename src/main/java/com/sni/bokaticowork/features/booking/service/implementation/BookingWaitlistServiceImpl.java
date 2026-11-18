@@ -57,7 +57,7 @@ public class BookingWaitlistServiceImpl implements BookingWaitlistService {
     @Override
     public BookingWaitlistEntryResponse join(JoinBookingWaitlistRequest request) {
         if (!request.endedAt().isAfter(request.startedAt())) {
-            throw new BadRequestException("Waitlist end time must be after start time");
+            throw new BadRequestException("La fin doit être après le début");
         }
         Resource resource = resourceService.getResourceForService(request.resourceCode().trim());
         BookingIdentityResolver.ResolvedBookingIdentity identity = identityResolver.resolve(request.identityLookup());
@@ -89,7 +89,7 @@ public class BookingWaitlistServiceImpl implements BookingWaitlistService {
     @Override
     public BookingWaitlistEntryResponse cancel(Long id) {
         BookingWaitlistEntry entry = waitlistRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking waitlist entry not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Inscription en liste d'attente introuvable"));
         entry.setStatus(BookingWaitlistStatus.CANCELLED);
         return toResponse(waitlistRepository.save(entry), alternatives(entry));
     }
