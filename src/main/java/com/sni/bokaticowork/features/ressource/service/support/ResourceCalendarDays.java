@@ -117,7 +117,14 @@ public class ResourceCalendarDays {
         if ("CLOSED".equalsIgnoreCase(value.trim())) {
             return Optional.of(List.of());
         }
-        return Optional.of(parse(value));
+        try {
+            return Optional.of(parse(value));
+        } catch (RuntimeException ex) {
+            // Reglage mal ecrit : les horaires de la semaine s'appliquent, rien ne se bloque.
+            org.slf4j.LoggerFactory.getLogger(ResourceCalendarDays.class)
+                    .warn("{} mal ecrit ({}) : horaires de la semaine appliques", HOLIDAY_HOURS_KEY, value);
+            return Optional.empty();
+        }
     }
 
     static List<OpeningHours> parse(String value) {

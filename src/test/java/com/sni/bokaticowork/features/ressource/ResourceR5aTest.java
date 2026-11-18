@@ -129,4 +129,19 @@ class ResourceR5aTest {
         assertThat((boolean) bufferTaken.invoke(service, room, start, start.plusHours(1))).isTrue();
         assertThat((boolean) bufferTaken.invoke(service, room, start.plusHours(2), start.plusHours(3))).isFalse();
     }
+
+    @Test
+    void aMalformedHolidaySettingFallsBackToTheWeek() {
+        ResourceCalendarDayRepository repository = mock(ResourceCalendarDayRepository.class);
+        when(repository.findFirstByDayDateAndResource(any(), any())).thenReturn(Optional.empty());
+        when(repository.findFirstByDayDateAndResourceIsNull(any())).thenReturn(Optional.empty());
+        ResourceCalendarDays calendar = days(repository);
+        com.sni.bokaticowork.core.settings.platform.PlatformSettings settings =
+                mock(com.sni.bokaticowork.core.settings.platform.PlatformSettings.class);
+        when(settings.bool(any(), org.mockito.ArgumentMatchers.anyBoolean())).thenReturn(true);
+        when(settings.text(org.mockito.ArgumentMatchers.eq(ResourceCalendarDays.HOLIDAY_HOURS_KEY), any())).thenReturn("matin seulement");
+        org.springframework.test.util.ReflectionTestUtils.setField(calendar, "settings", settings);
+
+        assertThat(calendar.hoursOn(Resource.builder().id(1L).build(), LocalDate.of(2026, 12, 25))).isEmpty();
+    }
 }

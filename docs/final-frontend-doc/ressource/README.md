@@ -170,6 +170,22 @@ Un seul moteur de prix sert la réservation, la disponibilité, le devis, le por
 - Ne pas utiliser `/resource-availabilities/reserve` et `/release` dans un écran ordinaire : rattrapage seulement, avec motif obligatoire.
 - `GET /resources/search/basic` rend une page (lot R4), plus une liste nue.
 
+## Réglages (module parametres)
+
+Tous modifiables à chaud par `PUT /sni/api/v1/admin/settings/{key}` (droit `SYSTEM:SETTINGS`, domaine `RESOURCES`), effet sans redémarrage. Une valeur absente ou mal écrite ne bloque jamais le démarrage : elle est signalée dans les journaux et le défaut s'applique.
+
+| Clé | Défaut | Rôle |
+| --- | --- | --- |
+| `app.resources.booking-horizon-days` | `90` | Horizon des créneaux, en jours |
+| `app.resources.holidays.national` | `true` | Jours fériés nationaux du Congo calculés |
+| `app.resources.holidays.hours` | `NORMAL` | Horaires des jours fériés : `NORMAL` (semaine type), `CLOSED`, ou plages `HH:mm-HH:mm,HH:mm-HH:mm` |
+| `app.resources.ical.public-feed-enabled` | `false` | Flux iCalendar public par lien à jeton (« Occupé », « Fermé » seulement) |
+| `app.resources.peak-hours` | `09:00-12:00,14:00-17:00` | Heures pleines du lundi au vendredi (pilotage) |
+| `app.resources.pricing.half-day-hours`, `...day-hours` | `5`, `10` | Durées facturées de la demi-journée et de la journée |
+| `bokati.resource.availability.generation.*-hours` | voir « Horaires d'ouverture » | Horaires globaux |
+| `bokati.resource.workers.monthly-availability-cron` | `0 0 3 * * *` | Heure de l'ouverture quotidienne des créneaux |
+| `bokati.resource.bulk-max-resources` | `20` | Ressources par opération groupée |
+
 ## Effets automatiques
 
 - **Ouverture des créneaux** (`MonthlyAvailabilityWorker`) : au démarrage puis chaque jour à 03:00 (`bokati.resource.workers.monthly-availability-cron`), jusqu'à l'horizon ; un jour déjà ouvert est laissé tel quel ; une fermeture répétée rend ses créneaux indisponibles au lieu de refuser la journée.

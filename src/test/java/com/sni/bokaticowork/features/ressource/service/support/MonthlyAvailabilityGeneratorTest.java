@@ -179,9 +179,11 @@ class MonthlyAvailabilityGeneratorTest {
     }
 
     @Test
-    @DisplayName("Une plage horaire mal ecrite arrete le demarrage plutot que d'ouvrir n'importe quoi")
+    @DisplayName("Une plage horaire mal ecrite ne bloque pas le demarrage : le defaut de la plateforme s applique")
     void rejectsMalformedHours() {
-        assertThatThrownBy(() -> new OpeningHoursResolver(null, null, "18:00-08:00", "18:00-22:00", "08:00-12:00", ""))
-                .isInstanceOf(IllegalArgumentException.class);
+        // Une plage mal ecrite ne bloque plus le demarrage : le defaut de la plateforme s'applique.
+        OpeningHoursResolver resolver = new OpeningHoursResolver(null, null, "18:00-08:00", "18:00-22:00", "08:00-12:00", "");
+        assertThat(resolver.global().get(java.time.DayOfWeek.MONDAY).getFirst())
+                .isEqualTo(new MonthlyAvailabilityGenerator.OpeningHours(java.time.LocalTime.of(8, 0), java.time.LocalTime.of(18, 0)));
     }
 }
