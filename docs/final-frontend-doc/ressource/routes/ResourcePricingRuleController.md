@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [ressource](../README.md) · 10 route(s).
+Module [ressource](../README.md) · 12 route(s).
 
 ## Routes
 
@@ -46,6 +46,18 @@ Module [ressource](../README.md) · 10 route(s).
 - Réponse : `PricingRuleConflictPreviewResponse`
 - Modèles : [PricingRuleConflictPreviewResponse](#m-PricingRuleConflictPreviewResponse), [BulkCreateResourcePricingRuleRequest](#m-BulkCreateResourcePricingRuleRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java`, méthode `previewBulk`
+
+<a id="r-get-sni-api-v1-resource-pricing-rules-conflicts"></a>
+### GET /sni/api/v1/resource-pricing-rules/conflicts
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:PRICE`
+- Réponse : `List<PricingRuleGovernance.Conflict>`
+- Modèles : [PricingRuleGovernance.Conflict](#m-PricingRuleGovernance-Conflict)
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java`, méthode `conflicts`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `resourceCode` | requête | `String` | oui |  |
 
 <a id="r-get-sni-api-v1-resource-pricing-rules-quote"></a>
 ### GET /sni/api/v1/resource-pricing-rules/quote
@@ -122,6 +134,18 @@ Module [ressource](../README.md) · 10 route(s).
 | --- | --- | --- | --- | --- |
 | `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `active` | requête | `Boolean` | oui |  |
+
+<a id="r-get-sni-api-v1-resource-pricing-rules-id-history"></a>
+### GET /sni/api/v1/resource-pricing-rules/{id}/history
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:PRICE`
+- Réponse : `List<ResourcePricingRuleVersion>`
+- Modèles : [ResourcePricingRuleVersion](#m-ResourcePricingRuleVersion)
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java`, méthode `history`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles
 
@@ -229,6 +253,18 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `strictDuplicates` | entier |  |  |
 | `results` | [PricingRuleConflictPreviewResponse.ResourcePreview](#m-PricingRuleConflictPreviewResponse-ResourcePreview)[] |  |  |
 
+<a id="m-PricingRuleGovernance-Conflict"></a>
+#### PricingRuleGovernance.Conflict
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `firstRuleId` | code identifiant (texte) |  |  |
+| `firstLabel` | texte |  |  |
+| `secondRuleId` | code identifiant (texte) |  |  |
+| `secondLabel` | texte |  |  |
+| `unit` | texte |  |  |
+| `reason` | texte |  |  |
+
 <a id="m-ResourcePriceQuoteResponse"></a>
 #### ResourcePriceQuoteResponse
 
@@ -294,6 +330,20 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `stackable` | booléen |  |  |
 | `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
+
+<a id="m-ResourcePricingRuleVersion"></a>
+#### ResourcePricingRuleVersion
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `id` | code identifiant (texte) |  |  |
+| `ruleShortId` | code identifiant (texte) |  |  |
+| `resourceCode` | texte |  |  |
+| `version` | entier |  |  |
+| `changeType` | texte |  |  |
+| `snapshot` | texte |  |  |
+| `changedBy` | texte |  |  |
+| `changedAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-LocalTime"></a>
 #### LocalTime

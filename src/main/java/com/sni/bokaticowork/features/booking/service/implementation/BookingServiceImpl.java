@@ -98,6 +98,12 @@ public class BookingServiceImpl implements BookingService {
     private final BookingPaymentContextResolver paymentContextResolver;
     private final BookingPricingCalculator pricingCalculator;
     private com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver;
+    private com.sni.bokaticowork.features.booking.service.support.BookingRepricer repricer;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setRepricer(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingRepricer repricer) {
+        this.repricer = repricer;
+    }
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     void setPriceContextResolver(com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver) {
@@ -677,6 +683,10 @@ public class BookingServiceImpl implements BookingService {
         booking.setStartedAt(newStart);
         booking.setEndedAt(newEnd);
         booking.setDurationMinutes((int) Duration.between(newStart, newEnd).toMinutes());
+        // Lot R1 (D1) : nouveau prix ; ecart facture en complement ou rendu par un avoir.
+        if (repricer != null) {
+            repricer.reprice(booking, "nouvel horaire " + newStart + " – " + newEnd);
+        }
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, booking.getStatus(), request.actor(), reason(request.note(), "Booking rescheduled"));
         eventWriter.write(booking, BookingEventType.BOOKING_RESCHEDULED, "Booking rescheduled",
@@ -703,6 +713,10 @@ public class BookingServiceImpl implements BookingService {
         reserveResourceSlot(newResource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
         eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after resource change",
                 newResource.getCode(), null);
+        // Lot R1 (D1) : prix de la nouvelle ressource ; ecart facture en complement ou rendu par un avoir.
+        if (repricer != null) {
+            repricer.reprice(booking, "ressource " + oldResource.getCode() + " → " + newResource.getCode());
+        }
         booking = bookingRepository.save(booking);
         eventWriter.write(booking, BookingEventType.BOOKING_RESOURCE_CHANGED,
                 "Resource changed from " + oldResource.getCode() + " to " + newResource.getCode(),

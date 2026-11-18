@@ -96,6 +96,19 @@ public class ResourcePricingRuleController {
                 ownerType, ownerCode, null));
     }
 
+    /** Lot R1 : versions d'une regle (photo complete a chaque changement), la plus recente d'abord. */
+    @GetMapping("/{id}/history")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.ressource.model.ResourcePricingRuleVersion>> history(@PathVariable Long id) {
+        return ResponseEntity.ok(resourcePricingRuleService.history(id));
+    }
+
+    /** Lot R1 : regles ambigues d'une ressource (meme unite, role, priorite et precision sur les memes creneaux). */
+    @GetMapping("/conflicts")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.ressource.service.pricing.PricingRuleGovernance.Conflict>> conflicts(
+            @RequestParam String resourceCode) {
+        return ResponseEntity.ok(resourcePricingRuleService.conflicts(resourceCode));
+    }
+
     /** Lot R1 : corps du simulateur de prix. */
     public record SimulateRequest(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt,
                                   Integer quantity, String ownerType, String ownerCode, String channel) {

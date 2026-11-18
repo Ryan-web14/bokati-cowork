@@ -37,6 +37,10 @@ public interface ResourcePricingRuleService {
 
     ResourcePriceQuoteResponse quote(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt);
 
+    java.util.List<com.sni.bokaticowork.features.ressource.model.ResourcePricingRuleVersion> history(Long id);
+
+    java.util.List<com.sni.bokaticowork.features.ressource.service.pricing.PricingRuleGovernance.Conflict> conflicts(String resourceCode);
+
     /** Lot R1 : devis et simulateur par le moteur unique, avec le contexte du titulaire. */
     ResourcePriceQuoteResponse quote(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt,
                                      Integer quantity, String ownerType, String ownerCode, String channel);

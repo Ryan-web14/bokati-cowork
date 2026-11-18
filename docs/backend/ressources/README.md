@@ -2,7 +2,7 @@
 
 Branche `feature/ressources`, partie de new-main f33d6089 le 17/11/2026. Plan à valider : les décisions de l'exploitant sont plus bas, à trancher avant le lot concerné.
 
-État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 en partie** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md) : moteur unique ; reste le recalcul D1, les versions et les conflits).
+État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 fait** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md)).
 
 ## Constat (vérifié dans le code le 17/11/2026)
 
@@ -100,7 +100,7 @@ Absentes aujourd'hui (approbation, quotas, liste d'attente, pointage et non-pré
 
 | N° | Écart | État |
 | --- | --- | --- |
-| 1 | Deux moteurs de prix divergents | en partie réglé (R1 : moteur unique ; recalcul D1 à venir) |
+| 1 | Deux moteurs de prix divergents | Réglé (R1) |
 | 2 | `POST /resources/search` en `RESOURCE:CREATE`, filtres par identifiants numériques | en partie réglé (R0 : droit ; filtres au R4) |
 | 3 | `GET /resources` sans filtres hors résumé | confirmé |
 | 4 | Politique désactivée toujours appliquée | confirmé |
@@ -116,12 +116,12 @@ Absentes aujourd'hui (approbation, quotas, liste d'attente, pointage et non-pré
 | 14 | Lectures de créneaux qui écrivent | confirmé |
 | 15 | `floorLabel` perdu | confirmé |
 | 16 | Messages en anglais | confirmé (environ 165) |
-| Rn-1 | Prix non recalculé au changement d'horaire ou de ressource | nouveau, haute |
+| Rn-1 | Prix non recalculé au changement d'horaire ou de ressource | Réglé (R1) |
 | Rn-2 | Horizon limité à la fin du mois courant | nouveau, haute |
 | Rn-3 | Création manuelle de créneaux en 08:00-22:00 fixe | nouveau |
 | Rn-4 | Fermeture sans contrôle des réservations ni avis | nouveau |
 | Rn-5 | Devis : base prise sur une règle de week-end ; pourcentage en division entière | Réglé (R1) |
-| Rn-6 | Modification de règle non revalidée, champ impossible à vider | nouveau |
+| Rn-6 | Modification de règle non revalidée, champ impossible à vider | en partie réglé (R1 : champs texte vidables, doublons refusés) |
 | Rn-7 | Traitements groupés, photos, horaires non journalisés | Réglé (R0) |
 | Rn-8 | Horaires d'ouverture réservés au rôle ADMIN | Réglé (R0) |
 | Rn-9 | Lecture de la galerie en `RESOURCE:GALLERY` | Réglé (R0) |

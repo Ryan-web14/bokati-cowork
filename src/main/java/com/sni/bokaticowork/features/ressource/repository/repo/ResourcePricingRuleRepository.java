@@ -19,6 +19,11 @@ public interface ResourcePricingRuleRepository extends JpaRepository<ResourcePri
 
     Page<ResourcePricingRule> findAllByResource(Resource resource, Pageable pageable);
 
+    /** Lot R1 : listes sans les regles supprimees. */
+    Page<ResourcePricingRule> findAllByDeletedFalse(Pageable pageable);
+
+    Page<ResourcePricingRule> findAllByResourceAndDeletedFalse(Resource resource, Pageable pageable);
+
     Optional<ResourcePricingRule> findByIdAndResource(Long id, Resource resource);
 
     Optional<ResourcePricingRule> findByShortId(Long shortId);

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-78 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+80 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -71,12 +71,14 @@
 | POST | `/sni/api/v1/resource-pricing-rules` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-post-sni-api-v1-resource-pricing-rules) |
 | POST | `/sni/api/v1/resource-pricing-rules/bulk` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-post-sni-api-v1-resource-pricing-rules-bulk) |
 | POST | `/sni/api/v1/resource-pricing-rules/bulk/preview` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-post-sni-api-v1-resource-pricing-rules-bulk-preview) |
+| GET | `/sni/api/v1/resource-pricing-rules/conflicts` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-get-sni-api-v1-resource-pricing-rules-conflicts) |
 | GET | `/sni/api/v1/resource-pricing-rules/quote` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-get-sni-api-v1-resource-pricing-rules-quote) |
 | POST | `/sni/api/v1/resource-pricing-rules/simulate` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-post-sni-api-v1-resource-pricing-rules-simulate) |
 | DELETE | `/sni/api/v1/resource-pricing-rules/{id}` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-delete-sni-api-v1-resource-pricing-rules-id) |
 | GET | `/sni/api/v1/resource-pricing-rules/{id}` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-get-sni-api-v1-resource-pricing-rules-id) |
 | PATCH PUT | `/sni/api/v1/resource-pricing-rules/{id}` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-patch-put-sni-api-v1-resource-pricing-rules-id) |
 | PATCH | `/sni/api/v1/resource-pricing-rules/{id}/active` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-patch-sni-api-v1-resource-pricing-rules-id-active) |
+| GET | `/sni/api/v1/resource-pricing-rules/{id}/history` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-get-sni-api-v1-resource-pricing-rules-id-history) |
 | GET | `/sni/api/v1/resource-types` | RESOURCE:READ | [ResourceTypeController](routes/ResourceTypeController.md#r-get-sni-api-v1-resource-types) |
 | POST | `/sni/api/v1/resource-types` | RESOURCE:CREATE | [ResourceTypeController](routes/ResourceTypeController.md#r-post-sni-api-v1-resource-types) |
 | GET | `/sni/api/v1/resource-types/search` | RESOURCE:READ | [ResourceTypeController](routes/ResourceTypeController.md#r-get-sni-api-v1-resource-types-search) |

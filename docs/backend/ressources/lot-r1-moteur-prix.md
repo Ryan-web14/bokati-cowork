@@ -1,6 +1,6 @@
 # Lot R1 : un seul moteur de prix
 
-> Partie du [plan ressources](README.md). Première partie faite le 18/11/2026 sur `feature/ressources`.
+> Partie du [plan ressources](README.md). Fait le 18/11/2026 sur `feature/ressources`.
 
 ## Avant
 
@@ -35,12 +35,25 @@ L'unité la moins chère est retenue : 4 heures à 5000 l'heure (20000) passent 
 
 ## Migration
 
-Dev `V373__ressources_r1_moteur_prix.sql`, prod `V367` : conditions nouvelles des règles, `booking.price_trace`.
+Dev `V373__ressources_r1_moteur_prix.sql` et `V374__ressources_r1_versions_regles.sql`, prod `V367` et `V368` : conditions nouvelles des règles, `booking.price_trace`, versions des règles.
 
-## Reste au lot R1
+## Recalcul d'une réservation modifiée (D1)
 
-Recalcul quand l'horaire, la durée ou la ressource d'une réservation change, avec facture complémentaire ou avoir (D1) ; versions des règles ; signalement des règles en conflit à l'enregistrement.
+`BookingRepricer`, appelé par le déplacement (`reschedule`) et le changement de ressource (`changeResource`) :
+
+- nouveau prix par le moteur, même contexte de titulaire ; montant, ligne de ressource et trace mis à jour ;
+- rien encore facturé (élément `PENDING`) : l'élément suit le nouveau montant ;
+- déjà facturé, hausse : élément complémentaire facturé (`BillableItemInvoiceSupport.ensureInvoiced`) ;
+- déjà facturé, baisse : avoir sur la facture d'origine (`createCreditNote`), validé et imputé sur le solde s'il en reste ; si la validation échoue, avoir laissé en brouillon ;
+- réservation non payante (droit d'abonnement, pass) : seul le montant change ;
+- événement `BOOKING_PRICE_ADJUSTED` dans l'historique (ancien et nouveau montant, pièce émise).
+
+## Versions et cohérence des règles
+
+- `resource_pricing_rule_version` : photo complète de la règle à chaque création, modification, activation, désactivation et suppression, avec l'auteur ; `GET /resource-pricing-rules/{id}/history`.
+- Suppression douce (`deleted`, inactive) : hors des listes et du calcul, historique conservé.
+- Doublon strict refusé en `409` à la création et à la modification ; conflits listés par `GET /resource-pricing-rules/conflicts?resourceCode=` (`PricingRuleGovernance`).
 
 ## Tests
 
-`ResourcePriceEngineTest` (heures pleines au prorata, base la plus précise un samedi, remise membre, cumul des ajustements, prix fixe d'un plan, salle entière ou par participant, réservation anticipée, règle supprimée ignorée, plusieurs jours) ; `BookingPricingCalculatorTest` adapté (unité la moins chère).
+`ResourcePriceEngineTest` (heures pleines au prorata, base la plus précise un samedi, remise membre, cumul des ajustements, prix fixe d'un plan, salle entière ou par participant, réservation anticipée, règle supprimée ignorée, plusieurs jours) ; `BookingPricingCalculatorTest` adapté (unité la moins chère) ; `BookingRepricerTest` (hausse facturée en complément, baisse en avoir, rien de facturé, prix inchangé) ; `PricingRuleGovernanceTest` (doublon refusé, conflit, conditions disjointes).

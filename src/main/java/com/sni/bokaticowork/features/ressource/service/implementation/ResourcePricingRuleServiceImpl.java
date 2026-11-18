@@ -194,7 +194,10 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .perParticipant(Boolean.TRUE.equals(request.getPerParticipant()))
                 .build();
 
-        pricingRuleRepository.save(rule);
+        // Lot R1 : doublon strict refuse ; version 1 gardee (numero court relu apres l'insertion).
+        governance.rejectDuplicate(rule);
+        pricingRuleRepository.saveAndFlush(rule);
+        governance.record(rule, "CREATE");
     }
 
     @Override
@@ -206,7 +209,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponse<ResourcePricingRuleResponse> list(Pageable pageable) {
-        Page<ResourcePricingRuleResponse> page = pricingRuleRepository.findAll(pageable).map(this::toResponse);
+        Page<ResourcePricingRuleResponse> page = pricingRuleRepository.findAllByDeletedFalse(pageable).map(this::toResponse);
         return new PaginatedResponse<>(page);
     }
 
@@ -214,7 +217,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     @Transactional(readOnly = true)
     public PaginatedResponse<ResourcePricingRuleResponse> listByResource(String resourceCode, Pageable pageable) {
         Resource resource = resourceService.getResourceForService(resourceCode);
-        Page<ResourcePricingRuleResponse> page = pricingRuleRepository.findAllByResource(resource, pageable).map(this::toResponse);
+        Page<ResourcePricingRuleResponse> page = pricingRuleRepository.findAllByResourceAndDeletedFalse(resource, pageable).map(this::toResponse);
         return new PaginatedResponse<>(page);
     }
 
@@ -256,9 +259,8 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Line first = result.lines().get(0);
         com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Adjustment adjustment =
                 first.adjustments().isEmpty() ? null : first.adjustments().get(0);
-        Integer basePrice = pricingRuleRepository.findAll().stream()
-                .filter(rule -> java.util.Objects.equals(rule.getShortId(), first.baseRuleId()))
-                .map(ResourcePricingRule::getPrice).findFirst().orElse(null);
+        Integer basePrice = first.baseRuleId() == null ? null
+                : pricingRuleRepository.findByShortId(first.baseRuleId()).map(ResourcePricingRule::getPrice).orElse(null);
         return ResourcePriceQuoteResponse.builder()
                 .resourceCode(resource.getCode())
                 .bookingUnit(result.unit().name())
@@ -280,6 +282,29 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     }
 
     private com.sni.bokaticowork.features.ressource.service.pricing.ResourcePriceEngine priceEngine;
+    private com.sni.bokaticowork.features.ressource.service.pricing.PricingRuleGovernance governance;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setGovernance(com.sni.bokaticowork.features.ressource.service.pricing.PricingRuleGovernance governance) {
+        this.governance = governance;
+    }
+
+    /** Lot R1 : versions d'une regle, de la plus recente a la plus ancienne. */
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<com.sni.bokaticowork.features.ressource.model.ResourcePricingRuleVersion> history(Long id) {
+        Long shortId = pricingRuleRepository.findByShortId(id).or(() -> pricingRuleRepository.findById(id))
+                .map(ResourcePricingRule::getShortId)
+                .orElseThrow(() -> new ResourceNotFoundException("Règle tarifaire introuvable : " + id));
+        return governance.history(shortId);
+    }
+
+    /** Lot R1 : regles ambigues d'une ressource. */
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<com.sni.bokaticowork.features.ressource.service.pricing.PricingRuleGovernance.Conflict> conflicts(String resourceCode) {
+        return governance.conflicts(resourceService.getResourceForService(resourceCode).getId());
+    }
     private com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver;
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -322,7 +347,10 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         if (request.getChannel() != null)           rule.setChannel(upper(request.getChannel()));
         if (request.getStackable() != null)        rule.setStackable(request.getStackable());
         if (request.getPerParticipant() != null)   rule.setPerParticipant(request.getPerParticipant());
-        return toResponse(pricingRuleRepository.save(rule));
+        governance.rejectDuplicate(rule);
+        ResourcePricingRule saved = pricingRuleRepository.save(rule);
+        governance.record(saved, "UPDATE");
+        return toResponse(saved);
     }
 
     @Override
@@ -333,11 +361,17 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         ResourcePricingRule rule = getPricingRuleForService(id);
         rule.setActive(active);
         pricingRuleRepository.save(rule);
+        governance.record(rule, active ? "ACTIVATE" : "DEACTIVATE");
     }
 
     @Override
     public void deletePricingRule(Long id) {
-        pricingRuleRepository.delete(getPricingRuleForService(id));
+        // Lot R1 : suppression douce ; la regle et son historique restent pour expliquer les prix passes.
+        ResourcePricingRule rule = getPricingRuleForService(id);
+        rule.setDeleted(Boolean.TRUE);
+        rule.setActive(Boolean.FALSE);
+        pricingRuleRepository.save(rule);
+        governance.record(rule, "DELETE");
     }
 
     private static final java.util.Set<String> SEGMENTS = java.util.Set.of("PUBLIC", "MEMBER", "SUBSCRIBER", "COMPANY", "PARTNER");
@@ -381,7 +415,8 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         // clients qui l'avaient garde, et ne peut pas se confondre avec un numero court.
         return pricingRuleRepository.findByShortId(id)
                 .or(() -> pricingRuleRepository.findById(id))
-                .orElseThrow(() -> new ResourceNotFoundException("Resource pricing rule with id " + id + " not found"));
+                .filter(rule -> !Boolean.TRUE.equals(rule.getDeleted()))
+                .orElseThrow(() -> new ResourceNotFoundException("Règle tarifaire introuvable : " + id));
     }
 
     private ResourcePricingRuleResponse toResponse(ResourcePricingRule rule) {
