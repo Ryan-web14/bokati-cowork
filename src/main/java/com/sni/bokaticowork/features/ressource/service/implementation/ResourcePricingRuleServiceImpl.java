@@ -190,6 +190,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .maxDurationMinutes(request.getMaxDurationMinutes())
                 .minLeadMinutes(request.getMinLeadMinutes())
                 .channel(upper(request.getChannel()))
+                .holidayMode(upper(request.getHolidayMode()))
                 .stackable(Boolean.TRUE.equals(request.getStackable()))
                 .perParticipant(Boolean.TRUE.equals(request.getPerParticipant()))
                 .build();
@@ -346,6 +347,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         if (request.getMaxDurationMinutes() != null) rule.setMaxDurationMinutes(request.getMaxDurationMinutes());
         if (request.getMinLeadMinutes() != null)    rule.setMinLeadMinutes(request.getMinLeadMinutes());
         if (request.getChannel() != null)           rule.setChannel(upper(request.getChannel()));
+        if (request.getHolidayMode() != null)       rule.setHolidayMode(upper(request.getHolidayMode()));
         if (request.getStackable() != null)        rule.setStackable(request.getStackable());
         if (request.getPerParticipant() != null)   rule.setPerParticipant(request.getPerParticipant());
         governance.rejectDuplicate(rule);
@@ -435,6 +437,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .validFrom(rule.getValidFrom())
                 .validUntil(rule.getValidUntil())
                 .lastMinuteMinutes(rule.getLastMinuteMinutes())
+                .holidayMode(rule.getHolidayMode())
                 .priority(rule.getPriority())
                 .active(rule.getActive())
                 .build();
@@ -536,6 +539,10 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         }
         if (StringUtils.hasText(request.getChannel()) && !CHANNELS.contains(request.getChannel().trim().toUpperCase(java.util.Locale.ROOT))) {
             errors.add("channel : PORTAL ou TEAM");
+        }
+        if (StringUtils.hasText(request.getHolidayMode()) && !java.util.Set.of("ONLY", "EXCLUDED")
+                .contains(request.getHolidayMode().trim().toUpperCase(java.util.Locale.ROOT))) {
+            errors.add("holidayMode : ONLY (jours fériés seulement) ou EXCLUDED (hors jours fériés)");
         }
         if (request.getMinParticipants() != null && request.getMaxParticipants() != null && request.getMinParticipants() > request.getMaxParticipants()) {
             errors.add("minParticipants doit être inférieur ou égal à maxParticipants");

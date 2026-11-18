@@ -65,6 +65,27 @@ public class OpeningHoursResolver {
         return hours;
     }
 
+    private ResourceCalendarDays calendarDays;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCalendarDays(ResourceCalendarDays calendarDays) {
+        this.calendarDays = calendarDays;
+    }
+
+    /**
+     * Lot R5a : horaires d'une date precise · jour particulier (ressource, puis general), jour ferie
+     * (parametre), sinon la semaine type.
+     */
+    public List<OpeningHours> forDate(Resource resource, java.time.LocalDate date) {
+        if (calendarDays != null) {
+            java.util.Optional<List<OpeningHours>> special = calendarDays.hoursOn(resource, date);
+            if (special.isPresent()) {
+                return special.get();
+            }
+        }
+        return forResource(resource).getOrDefault(date.getDayOfWeek(), List.of());
+    }
+
     public List<ResourceOpeningHours> own(Resource resource) {
         return resourceHours == null ? List.of() : resourceHours.findAllByResourceOrderByDayOfWeekAscOpenTimeAsc(resource);
     }

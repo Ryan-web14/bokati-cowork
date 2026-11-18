@@ -22,8 +22,28 @@ public interface ResourceClosureRepository extends JpaRepository<ResourceClosure
             from ResourceClosure rc
             where rc.resource = :resource
               and rc.active = true
+              and rc.recurrence = com.sni.bokaticowork.features.ressource.model.ResourceClosureRecurrence.NONE
               and rc.startedAt < :endedAt
               and rc.endedAt > :startedAt
             """)
     boolean existsActiveOverlap(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt);
+
+    /** Lot R5a : fermetures repetees actives d'une ressource (les occurrences se calculent en Java). */
+    @org.springframework.data.jpa.repository.Query("""
+            select rc from ResourceClosure rc
+            where rc.resource = :resource
+              and rc.active = true
+              and rc.recurrence <> com.sni.bokaticowork.features.ressource.model.ResourceClosureRecurrence.NONE
+            """)
+    java.util.List<ResourceClosure> findActiveRecurring(Resource resource);
+
+    /** Lot R5a : fermetures (actives) d'une ressource pour le calendrier. */
+    @org.springframework.data.jpa.repository.Query("""
+            select rc from ResourceClosure rc
+            where rc.resource = :resource
+              and rc.active = true
+              and (rc.recurrence <> com.sni.bokaticowork.features.ressource.model.ResourceClosureRecurrence.NONE
+                   or (rc.startedAt < :endedAt and rc.endedAt > :startedAt))
+            """)
+    java.util.List<ResourceClosure> findActiveForCalendar(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt);
 }

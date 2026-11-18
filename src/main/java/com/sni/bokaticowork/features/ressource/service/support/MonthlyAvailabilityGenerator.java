@@ -104,7 +104,12 @@ public class MonthlyAvailabilityGenerator {
                     resource, day.atStartOfDay(), day.plusDays(1).atStartOfDay()) > 0) {
                 continue;
             }
-            for (OpeningHours hours : hoursByDay.getOrDefault(day.getDayOfWeek(), List.of())) {
+            // Lot R5a : jours feries, horaires exceptionnels et jours fermes.
+            List<OpeningHours> dayHours = openingHours.forDate(resource, day);
+            if (dayHours == null) {
+                dayHours = hoursByDay.getOrDefault(day.getDayOfWeek(), List.of());
+            }
+            for (OpeningHours hours : dayHours) {
                 LocalDateTime start = day.atTime(hours.open());
                 LocalDateTime end = day.atTime(hours.close());
                 if (start.isBefore(now)) {

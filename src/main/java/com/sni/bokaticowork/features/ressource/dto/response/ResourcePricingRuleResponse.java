@@ -41,6 +41,9 @@ public class ResourcePricingRuleResponse {
     private Integer minLeadMinutes;
     /** PORTAL ou TEAM ; vide = tous. */
     private String channel;
+
+    /** Lot R5a : ONLY (jours feries seulement), EXCLUDED (hors jours feries) ou vide. */
+    private String holidayMode;
     private Boolean stackable;
     private Boolean perParticipant;
 

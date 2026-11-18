@@ -20,5 +20,11 @@ public class UpdateResourcePolicyRequest {
     private Boolean allowCancellation;
     /** L'equipe peut-elle reserver hors preavis et sur un debut passe ? Vrai par defaut. */
     private Boolean staffOverrideAllowed;
+
+    /** Lot R5a : battement entre deux reservations d'une ressource louee entiere (menage, installation), en minutes. */
+    private Integer bufferMinutes;
+
+    /** Lot R5a : reservation au plus tant de jours a l'avance (vide : l'horizon des creneaux). */
+    private Integer maxAdvanceDays;
     private Boolean active;
 }

@@ -50,9 +50,14 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
         // Lot R2 (D4) : reservations de la plage, refus ou annulation explicite.
         if (request.getActive() == null || Boolean.TRUE.equals(request.getActive())) {
-            if (impactGuard != null) impactGuard.check(resource, request.getStartedAt(), request.getEndedAt(), Boolean.TRUE.equals(request.getCancelBookings()),
-                    "fermer la ressource", "Fermeture de " + resource.getCode()
-                            + (StringUtils.hasText(request.getReason()) ? " : " + request.getReason().trim() : ""));
+            ResourceClosure draft = ResourceClosure.builder().resource(resource).startedAt(request.getStartedAt())
+                    .endedAt(request.getEndedAt()).recurrence(closureRecurrence(request.getRecurrence()))
+                    .recurrenceUntil(request.getRecurrenceUntil()).build();
+            for (LocalDateTime[] occurrence : upcoming(draft)) {
+                if (impactGuard != null) impactGuard.check(resource, occurrence[0], occurrence[1], Boolean.TRUE.equals(request.getCancelBookings()),
+                        "fermer la ressource", "Fermeture de " + resource.getCode()
+                                + (StringUtils.hasText(request.getReason()) ? " : " + request.getReason().trim() : ""));
+            }
         }
         ResourceClosure closure = ResourceClosure.builder()
                 .resource(resource)
@@ -60,7 +65,11 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
                 .endedAt(request.getEndedAt())
                 .reason(StringUtils.hasText(request.getReason()) ? request.getReason().trim() : null)
                 .active(request.getActive() == null ? Boolean.TRUE : request.getActive())
+                .kind(closureKind(request.getKind()))
+                .recurrence(closureRecurrence(request.getRecurrence()))
+                .recurrenceUntil(request.getRecurrenceUntil())
                 .build();
+        assertRecurrenceFits(closure);
 
         ResourceClosure savedClosure = closureRepository.save(closure);
         if (Boolean.TRUE.equals(savedClosure.getActive())) {
@@ -103,9 +112,11 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
         ResourceClosure closure = getClosureForService(id);
         boolean wasActive = Boolean.TRUE.equals(closure.getActive());
         if (!wasActive && Boolean.TRUE.equals(active)) {
-            if (impactGuard != null) impactGuard.check(closure.getResource(), closure.getStartedAt(), closure.getEndedAt(), cancelBookings,
-                    "fermer la ressource", "Fermeture de " + closure.getResource().getCode()
-                            + (StringUtils.hasText(closure.getReason()) ? " : " + closure.getReason() : ""));
+            for (LocalDateTime[] occurrence : upcoming(closure)) {
+                if (impactGuard != null) impactGuard.check(closure.getResource(), occurrence[0], occurrence[1], cancelBookings,
+                        "fermer la ressource", "Fermeture de " + closure.getResource().getCode()
+                                + (StringUtils.hasText(closure.getReason()) ? " : " + closure.getReason() : ""));
+            }
         }
         closure.setActive(active);
         ResourceClosure savedClosure = closureRepository.save(closure);
@@ -137,12 +148,20 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fermeture introuvable : " + id));
     }
 
+    /** Lot R5a : occurrences a venir d'une fermeture, jusqu'a 400 jours (horizon des creneaux largement couvert). */
+    private static List<LocalDateTime[]> upcoming(ResourceClosure closure) {
+        LocalDateTime now = LocalDateTime.now();
+        if (closure.getRecurrence() == null || closure.getRecurrence() == com.sni.bokaticowork.features.ressource.model.ResourceClosureRecurrence.NONE) {
+            return closure.occurrences(null, null);
+        }
+        return closure.occurrences(now, now.plusDays(400));
+    }
+
     private void applyClosureToAvailability(ResourceClosure closure) {
-        List<ResourceAvailability> slots = availabilityRepository.lockOverlappingSlots(
-                closure.getResource(),
-                closure.getStartedAt(),
-                closure.getEndedAt()
-        );
+        List<ResourceAvailability> slots = new ArrayList<>();
+        for (LocalDateTime[] occurrence : upcoming(closure)) {
+            slots.addAll(availabilityRepository.lockOverlappingSlots(closure.getResource(), occurrence[0], occurrence[1]));
+        }
         if (slots.isEmpty()) {
             return;
         }
@@ -160,11 +179,10 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
     }
 
     private void restoreAvailability(ResourceClosure closure) {
-        List<ResourceAvailability> slots = availabilityRepository.lockOverlappingSlots(
-                closure.getResource(),
-                closure.getStartedAt(),
-                closure.getEndedAt()
-        );
+        List<ResourceAvailability> slots = new ArrayList<>();
+        for (LocalDateTime[] occurrence : upcoming(closure)) {
+            slots.addAll(availabilityRepository.lockOverlappingSlots(closure.getResource(), occurrence[0], occurrence[1]));
+        }
         if (slots.isEmpty()) {
             return;
         }
@@ -177,7 +195,7 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
                     && slot.getEndedAt().isAfter(now)
                     && slot.getRemainingCapacity() != null
                     && slot.getRemainingCapacity() > 0
-                    && !closureRepository.existsActiveOverlap(closure.getResource(), slot.getStartedAt(), slot.getEndedAt());
+                    && !closedDuring(closure.getResource(), slot.getStartedAt(), slot.getEndedAt());
 
             if (!Boolean.valueOf(shouldBeAvailable).equals(slot.getAvailable())) {
                 slot.setAvailable(shouldBeAvailable);
@@ -197,7 +215,54 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
                 .endedAt(closure.getEndedAt())
                 .active(closure.getActive())
                 .reason(closure.getReason())
+                .kind(closure.getKind() == null ? null : closure.getKind().name())
+                .recurrence(closure.getRecurrence() == null ? null : closure.getRecurrence().name())
+                .recurrenceUntil(closure.getRecurrenceUntil())
                 .build();
+    }
+
+    private static com.sni.bokaticowork.features.ressource.model.ResourceClosureKind closureKind(String value) {
+        if (!StringUtils.hasText(value)) {
+            return com.sni.bokaticowork.features.ressource.model.ResourceClosureKind.CLOSURE;
+        }
+        try {
+            return com.sni.bokaticowork.features.ressource.model.ResourceClosureKind.valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Nature de blocage invalide : CLOSURE, MAINTENANCE, CLEANING, PRIVATE_EVENT ou OTHER");
+        }
+    }
+
+    private static com.sni.bokaticowork.features.ressource.model.ResourceClosureRecurrence closureRecurrence(String value) {
+        if (!StringUtils.hasText(value)) {
+            return com.sni.bokaticowork.features.ressource.model.ResourceClosureRecurrence.NONE;
+        }
+        try {
+            return com.sni.bokaticowork.features.ressource.model.ResourceClosureRecurrence.valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Répétition invalide : NONE, WEEKLY ou YEARLY");
+        }
+    }
+
+    /** Une occurrence ne deborde pas sur la suivante : une semaine au plus chaque semaine, un an chaque annee. */
+    private static void assertRecurrenceFits(ResourceClosure closure) {
+        java.time.Duration length = java.time.Duration.between(closure.getStartedAt(), closure.getEndedAt());
+        switch (closure.getRecurrence()) {
+            case WEEKLY -> {
+                if (length.compareTo(java.time.Duration.ofDays(7)) > 0) {
+                    throw new BadRequestException("Une fermeture hebdomadaire dure au plus une semaine");
+                }
+            }
+            case YEARLY -> {
+                if (length.compareTo(java.time.Duration.ofDays(365)) > 0) {
+                    throw new BadRequestException("Une fermeture annuelle dure au plus un an");
+                }
+            }
+            default -> {
+            }
+        }
+        if (closure.getRecurrenceUntil() != null && closure.getRecurrenceUntil().isBefore(closure.getStartedAt().toLocalDate())) {
+            throw new BadRequestException("La fin de la répétition doit suivre la première occurrence");
+        }
     }
 
     private List<String> validateRequest(CreateResourceClosureRequest request) {
@@ -219,5 +284,14 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
             errors.add("Demande de fermeture invalide : la date de fin doit suivre la date de début");
         }
         return errors;
+    }
+
+    /** Lot R5a : une fermeture, unique ou repetee, couvre-t-elle une partie de la plage ? */
+    private boolean closedDuring(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+        if (closureRepository.existsActiveOverlap(resource, startedAt, endedAt)) {
+            return true;
+        }
+        List<com.sni.bokaticowork.features.ressource.model.ResourceClosure> recurring = closureRepository.findActiveRecurring(resource);
+        return recurring != null && recurring.stream().anyMatch(closure -> closure.occursWithin(startedAt, endedAt));
     }
 }

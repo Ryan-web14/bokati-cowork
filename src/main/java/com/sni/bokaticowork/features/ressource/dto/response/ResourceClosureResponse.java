@@ -20,4 +20,11 @@ public class ResourceClosureResponse {
     private Boolean active;
     /** Lot R2 : motif de la fermeture (avant : jamais rendu). */
     private String reason;
+
+    /** Lot R5a. */
+    private String kind;
+
+    private String recurrence;
+
+    private java.time.LocalDate recurrenceUntil;
 }

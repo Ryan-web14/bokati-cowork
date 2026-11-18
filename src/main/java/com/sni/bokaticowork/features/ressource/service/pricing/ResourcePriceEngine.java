@@ -59,6 +59,17 @@ public class ResourcePriceEngine {
             ResourceBookingUnit.DAY, ResourceBookingUnit.WEEK, ResourceBookingUnit.MONTH);
 
     private final ResourcePricingRuleRepository ruleRepository;
+
+    /** Lot R5a : jours feries ; les feries nationaux seuls tant que le calendrier n'est pas branche (tests). */
+    private java.util.function.Predicate<LocalDate> holidays =
+            com.sni.bokaticowork.features.ressource.service.support.CongoHolidays::isHoliday;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCalendarDays(com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarDays calendarDays) {
+        if (calendarDays != null) {
+            this.holidays = calendarDays::isHoliday;
+        }
+    }
     private PlatformSettings settings;
 
     @Autowired(required = false)
@@ -321,6 +332,13 @@ public class ResourcePriceEngine {
         }
         if (!inWindow(rule.getStartsAt(), rule.getEndsAt(), at.toLocalTime())) {
             return false;
+        }
+        // Lot R5a : jours feries (nationaux calcules et ajoutes par l'equipe).
+        if (StringUtils.hasText(rule.getHolidayMode())) {
+            boolean holiday = holidays.test(at.toLocalDate());
+            if ("ONLY".equalsIgnoreCase(rule.getHolidayMode()) != holiday) {
+                return false;
+            }
         }
         if (StringUtils.hasText(rule.getCustomerSegment())
                 && (ctx.segments() == null || ctx.segments().stream().noneMatch(s -> s.equalsIgnoreCase(rule.getCustomerSegment())))) {

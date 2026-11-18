@@ -198,4 +198,12 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
             where ra.id in :ids
             """)
     List<ResourceAvailability> lockAllByIdIn(@Param("ids") List<Long> ids);
+
+    /** Lot R5a : creneaux qui chevauchent la plage (lecture simple, sans verrou). */
+    @org.springframework.data.jpa.repository.Query("""
+            select a from ResourceAvailability a
+            where a.resource = :resource and a.startedAt < :to and a.endedAt > :from
+            """)
+    List<ResourceAvailability> findOverlapping(@Param("resource") Resource resource, @Param("from") LocalDateTime from,
+                                               @Param("to") LocalDateTime to);
 }

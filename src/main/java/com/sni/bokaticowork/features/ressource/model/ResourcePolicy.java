@@ -59,6 +59,14 @@ public class ResourcePolicy {
     @Builder.Default
     private Boolean staffOverrideAllowed = Boolean.TRUE;
 
+    /** Lot R5a : battement entre deux reservations d'une ressource louee entiere, en minutes. */
+    @Column(name = "buffer_minutes")
+    private Integer bufferMinutes;
+
+    /** Lot R5a : reservation au plus tant de jours a l'avance (vide : l'horizon des creneaux). */
+    @Column(name = "max_advance_days")
+    private Integer maxAdvanceDays;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

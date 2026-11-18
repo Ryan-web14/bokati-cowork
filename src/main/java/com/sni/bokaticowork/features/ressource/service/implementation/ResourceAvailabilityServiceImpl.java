@@ -150,6 +150,15 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
         int capacity = resolveCapacity(resource);
         List<ResourceAvailability> slots = buildSlots(resource, request.getStartedAt(), request.getEndedAt(), capacity, request.getActive());
+        // Lot R5a : une fermeture repetee ne refuse pas la journee, elle rend indisponibles les creneaux qu'elle couvre.
+        List<com.sni.bokaticowork.features.ressource.model.ResourceClosure> recurring = closureRepository.findActiveRecurring(resource);
+        if (recurring != null && !recurring.isEmpty()) {
+            for (ResourceAvailability slot : slots) {
+                if (recurring.stream().anyMatch(closure -> closure.occursWithin(slot.getStartedAt(), slot.getEndedAt()))) {
+                    slot.setAvailable(Boolean.FALSE);
+                }
+            }
+        }
         availabilityRepository.saveAll(slots);
     }
 
@@ -246,6 +255,11 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             if (!allReservable(candidate, normalizedQuantity, resource, staff)) {
                 continue;
             }
+            // Lot R5a : avance maximale et battement.
+            if (!staff && (beyondMaxAdvance(resource, candidate.getFirst().getStartedAt())
+                    || bufferTaken(resource, candidate.getFirst().getStartedAt(), candidate.getLast().getEndedAt()))) {
+                continue;
+            }
 
             int remainingCapacity = candidate.stream()
                     .map(ResourceAvailability::getRemainingCapacity)
@@ -287,12 +301,17 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             assertPolicyAllowsWindow(resource, request.getStartedAt(), request.getEndedAt());
         }
 
-        if (closureRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
+        if (closedDuring(resource, request.getStartedAt(), request.getEndedAt())) {
             throw new ConflictException("La plage demandée chevauche une fermeture active");
         }
 
         List<ResourceAvailability> slots = availabilityRepository.lockAllSlotsInRange(resource, request.getStartedAt(), request.getEndedAt());
         assertExactRequestedCoverage(slots, request.getStartedAt(), request.getEndedAt());
+        // Lot R5a : battement de la politique autour d'une piece louee entiere (l'equipe peut passer outre).
+        if (!staff && bufferTaken(resource, request.getStartedAt(), request.getEndedAt())) {
+            throw new ConflictException("Le battement de " + resource.getEffectivePolicy().getBufferMinutes()
+                    + " minutes entre deux réservations n'est pas respecté (ménage, installation)");
+        }
 
         if (!allReservable(slots, request.getQuantity(), resource, staff)) {
             throw new ConflictException("Disponibilité restante insuffisante sur la plage demandée");
@@ -375,7 +394,37 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         if (startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
             return "L'heure de début ne respecte pas le préavis minimal de réservation";
         }
+        if (beyondMaxAdvance(resource, startedAt)) {
+            return "Réservation au plus " + policy.getMaxAdvanceDays() + " jours à l'avance pour cette ressource";
+        }
         return null;
+    }
+
+    /** Lot R5a : au-dela de l'avance maximale de la politique. */
+    private static boolean beyondMaxAdvance(Resource resource, LocalDateTime startedAt) {
+        ResourcePolicy policy = resource.getEffectivePolicy();
+        return policy != null && policy.getMaxAdvanceDays() != null && policy.getMaxAdvanceDays() > 0
+                && startedAt.toLocalDate().isAfter(java.time.LocalDate.now().plusDays(policy.getMaxAdvanceDays()));
+    }
+
+    /**
+     * Lot R5a : une reservation occupe-t-elle le battement avant ou apres la plage ? Seulement pour
+     * une piece louee entiere ; un creneau entame dans le battement suffit a refuser.
+     */
+    private boolean bufferTaken(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+        ResourcePolicy policy = resource.getEffectivePolicy();
+        if (policy == null || policy.getBufferMinutes() == null || policy.getBufferMinutes() <= 0
+                || !resource.isWholeResourceBooking()) {
+            return false;
+        }
+        int buffer = policy.getBufferMinutes();
+        List<ResourceAvailability> around = new ArrayList<>();
+        List<ResourceAvailability> before = availabilityRepository.findOverlapping(resource, startedAt.minusMinutes(buffer), startedAt);
+        List<ResourceAvailability> after = availabilityRepository.findOverlapping(resource, endedAt, endedAt.plusMinutes(buffer));
+        if (before != null) around.addAll(before);
+        if (after != null) around.addAll(after);
+        return around.stream().anyMatch(slot -> slot.getTotalCapacity() != null && slot.getRemainingCapacity() != null
+                && slot.getRemainingCapacity() < slot.getTotalCapacity());
     }
 
     /** La duree seule, au regard de la politique · le motif du refus, ou {@code null}. */
@@ -422,7 +471,8 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         if (!startedAt.toLocalDate().equals(endedAt.toLocalDate()) && !endedAt.toLocalTime().equals(LocalTime.MIDNIGHT)) {
             return false;
         }
-        var ranges = openingHours.forResource(resource).getOrDefault(startedAt.getDayOfWeek(), List.of());
+        // Lot R5a : jour ferie, horaires exceptionnels et jours fermes compris.
+        var ranges = openingHours.forDate(resource, startedAt.toLocalDate());
         LocalTime from = startedAt.toLocalTime();
         LocalTime to = endedAt.toLocalTime();
         return ranges.stream().anyMatch(range -> !from.isBefore(range.open()) && !to.isAfter(range.close()));
@@ -467,7 +517,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
         slot.setActive(active);
         slot.setAvailable(active && slot.getRemainingCapacity() != null && slot.getRemainingCapacity() > 0
-                && !closureRepository.existsActiveOverlap(slot.getResource(), slot.getStartedAt(), slot.getEndedAt()));
+                && !closedDuring(slot.getResource(), slot.getStartedAt(), slot.getEndedAt()));
         availabilityRepository.save(slot);
     }
 
@@ -921,5 +971,14 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
                 errors.add("La plage demandée ne doit pas contenir de secondes");
             }
         }
+    }
+
+    /** Lot R5a : une fermeture, unique ou repetee, couvre-t-elle une partie de la plage ? */
+    private boolean closedDuring(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+        if (closureRepository.existsActiveOverlap(resource, startedAt, endedAt)) {
+            return true;
+        }
+        List<com.sni.bokaticowork.features.ressource.model.ResourceClosure> recurring = closureRepository.findActiveRecurring(resource);
+        return recurring != null && recurring.stream().anyMatch(closure -> closure.occursWithin(startedAt, endedAt));
     }
 }

@@ -247,6 +247,8 @@ app.phone.keep-trunk-zero	LOCALE	TEXT	LIVE	CG,GA,CI,IT	Pays qui gardent le zéro
 app.portal.kyc-grace-period-days	PORTAL	INTEGER	LIVE	7	Grâce KYC du portail (jours)
 app.referral.share-url-template	ENVIRONMENT	TEXT	LIVE	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
 app.resources.booking-horizon-days	RESOURCES	INTEGER	LIVE	90	Ressources : horizon de réservation, en jours (créneaux ouverts jusque-là)
+app.resources.holidays.hours	RESOURCES	TEXT	LIVE	NORMAL	Ressources : horaires des jours fériés (NORMAL = semaine type, CLOSED = fermé, ou plages HH:mm-HH:mm séparées par des virgules)
+app.resources.holidays.national	RESOURCES	BOOLEAN	LIVE	true	Ressources : jours fériés nationaux du Congo calculés (créneaux, prix, calendrier)
 app.resources.pricing.day-hours	RESOURCES	INTEGER	LIVE	10	Ressources : durée d'une journée facturée, en heures (décision D2 : 10)
 app.resources.pricing.half-day-hours	RESOURCES	INTEGER	LIVE	5	Ressources : durée d'une demi-journée facturée, en heures (décision D2 : 5)
 app.security.bootstrap.secret	SECURITY	SECRET	RESTART		Secret d'initialisation
