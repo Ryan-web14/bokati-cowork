@@ -2,7 +2,7 @@
 
 Branche `feature/ressources`, partie de new-main f33d6089 le 17/11/2026. Plan à valider : les décisions de l'exploitant sont plus bas, à trancher avant le lot concerné.
 
-État : plan validé le 18/11/2026 (décisions ci-dessous) ; aucun lot commencé.
+État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)).
 
 ## Constat (vérifié dans le code le 17/11/2026)
 
@@ -22,7 +22,7 @@ Les 16 écarts relevés par la doc frontend (`docs/final-frontend-doc/ressource/
 
 | Lot | Contenu | Écarts |
 | --- | --- | --- |
-| **R0. Sécurité et accès** | Calendrier public : seulement une ressource visible au portail, active et réservable ; plage bornée (62 jours) ; dates inversées refusées ; jour sans créneau marqué `CLOSED` et non plus `FULL`. Même borne pour le calendrier de l'équipe. `POST /resources/search` en lecture (`RESOURCE:READ`). Photos : la photo doit appartenir à la ressource du chemin, le document doit exister dans la GED, une seule couverture, lecture de la galerie en `RESOURCE:READ`. Horaires d'ouverture ouverts à `RESOURCE:UPDATE` (plus seulement le rôle ADMIN). Journal (`@Audited`) sur les traitements groupés, les photos et les horaires. | 2 (droit), 8, 13, Rn-7, Rn-8, Rn-9 |
+| **R0. Sécurité et accès** | Calendrier public : seulement une ressource visible au portail, active et réservable ; plage bornée (92 jours, l'horizon de 90 jours tient dans une demande) ; dates inversées refusées ; jour sans créneau marqué `CLOSED` et non plus `FULL`. Même borne pour le calendrier de l'équipe. `POST /resources/search` en lecture (`RESOURCE:READ`). Photos : la photo doit appartenir à la ressource du chemin, le document doit exister dans la GED, une seule couverture, lecture de la galerie en `RESOURCE:READ`. Horaires d'ouverture ouverts à `RESOURCE:UPDATE` (plus seulement le rôle ADMIN). Journal (`@Audited`) sur les traitements groupés, les photos et les horaires. | 2 (droit), 8, 13, Rn-7, Rn-8, Rn-9 |
 | **R1. Un seul moteur de prix** | `ResourcePriceEngine` dans le module ressource, appelé par la réservation, le devis, l'aperçu groupé, le portail et le catalogue. Il applique jour, heures, validité, ajustement (pourcentage en décimal), priorité, dernier moment et quantité. Durées de demi-journée et de journée en paramètres (décision D2). Le prix d'une réservation est recalculé quand son horaire, sa durée ou sa ressource change (décision D1). Équipements optionnels facturés (`extraPrice`). Modification d'une règle revalidée (jour, heures) avec possibilité de vider un champ ; suppression d'une règle douce et cohérente (champ `deleted` lu partout). Le devis expose le détail : règle retenue, base, ajustements, quantité. | 1, Rn-1, Rn-5, Rn-6, Rn-10, Rn-11 |
 | **R2. Politiques et cycle de vie** | Une politique désactivée ne s'applique plus (contrôles des réservations, des créneaux, de l'annulation, du devis) et ne peut plus être rattachée. `allowCancellation` vrai par défaut (décision D3). Suppression d'un groupe, d'un type ou d'une politique refusée en `409` s'il reste des ressources, celles supprimées en douce comprises (fini le 500). Suppression, mise en maintenance ou hors service d'une ressource qui a des réservations à venir : traitement selon la décision D4. Fermeture : liste des réservations touchées dans la réponse, traitement selon D4, `reason` rendu. Étage (`floorLabel`) enregistré. | 4, 5, 6, 7, 12, 15, Rn-4, Rn-12 |
 | **R3. Créneaux et horizon** | Horizon glissant paramétrable (`app.resources.booking-horizon-days`, 90 jours par défaut, décision D5) : génération quotidienne jusqu'à l'horizon, et non plus au mois. Création manuelle d'après les horaires d'ouverture de la ressource (fini le 08:00-22:00 en dur). Routes pour désactiver, réactiver et supprimer un créneau sans réservation, ce qui débloque le changement de durée de créneau. `capacity` retiré de la requête, ou appliqué. Expiration des créneaux passés faite par une tâche, plus jamais dans une lecture. `/reserve` et `/release` manuels réservés au rattrapage, liés à une réservation et journalisés (décision D6). | 9, 10, 11, 14, Rn-2, Rn-3 |
@@ -101,18 +101,18 @@ Absentes aujourd'hui (approbation, quotas, liste d'attente, pointage et non-pré
 | N° | Écart | État |
 | --- | --- | --- |
 | 1 | Deux moteurs de prix divergents | confirmé (trois sources) |
-| 2 | `POST /resources/search` en `RESOURCE:CREATE`, filtres par identifiants numériques | confirmé |
+| 2 | `POST /resources/search` en `RESOURCE:CREATE`, filtres par identifiants numériques | en partie réglé (R0 : droit ; filtres au R4) |
 | 3 | `GET /resources` sans filtres hors résumé | confirmé |
 | 4 | Politique désactivée toujours appliquée | confirmé |
 | 5 | `allowCancellation` faux par défaut | confirmé |
 | 6 | Suppression d'un groupe sans contrôle (500 sur clé étrangère) | confirmé (aussi type et politique) |
 | 7 | Suppression d'une ressource sans contrôle des réservations | confirmé |
-| 8 | Photos : appartenance, document, couverture | confirmé |
+| 8 | Photos : appartenance, document, couverture | Réglé (R0) |
 | 9 | `/reserve` et `/release` manuels sans réservation | confirmé |
 | 10 | Pas de suppression ni réactivation de créneau | confirmé |
 | 11 | `capacity` de création de créneaux ignoré | confirmé (voulu, mais validé) |
 | 12 | Fermeture sans `reason` dans la réponse | confirmé |
-| 13 | Calendrier public sans contrôle ni borne, jour vide `FULL` | confirmé (public sans jeton) |
+| 13 | Calendrier public sans contrôle ni borne, jour vide `FULL` | Réglé (R0) |
 | 14 | Lectures de créneaux qui écrivent | confirmé |
 | 15 | `floorLabel` perdu | confirmé |
 | 16 | Messages en anglais | confirmé (environ 165) |
@@ -122,9 +122,9 @@ Absentes aujourd'hui (approbation, quotas, liste d'attente, pointage et non-pré
 | Rn-4 | Fermeture sans contrôle des réservations ni avis | nouveau |
 | Rn-5 | Devis : base prise sur une règle de week-end ; pourcentage en division entière | nouveau |
 | Rn-6 | Modification de règle non revalidée, champ impossible à vider | nouveau |
-| Rn-7 | Traitements groupés, photos, horaires non journalisés | nouveau |
-| Rn-8 | Horaires d'ouverture réservés au rôle ADMIN | nouveau |
-| Rn-9 | Lecture de la galerie en `RESOURCE:GALLERY` | nouveau |
+| Rn-7 | Traitements groupés, photos, horaires non journalisés | Réglé (R0) |
+| Rn-8 | Horaires d'ouverture réservés au rôle ADMIN | Réglé (R0) |
+| Rn-9 | Lecture de la galerie en `RESOURCE:GALLERY` | Réglé (R0) |
 | Rn-10 | `ResourcePricingRule.deleted` mort | nouveau |
 | Rn-11 | `extraPrice` et `optional` des équipements jamais lus | nouveau |
 | Rn-12 | Maintenance ou hors service sans effet sur l'existant | nouveau |

@@ -49,6 +49,7 @@ public class ResourcePricingRuleController {
 
     /** Pose la meme regle sur plusieurs ressources · compte rendu par ressource. */
     @PostMapping("/bulk")
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "RESOURCE", action = "BULK_CREATE_PRICING_RULE", ressource = "resource")
     public ResponseEntity<BulkResourceOperationResponse> createBulk(
             @Valid @RequestBody BulkCreateResourcePricingRuleRequest request) {
         return ResponseEntity.ok(resourcePricingRuleService.createPricingRuleBulk(request));

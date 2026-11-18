@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(ApiPath.V1 + "/resources/{resourceCode}/opening-hours")
-@PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+// Lot R0 : droits par la regle d'URL (lecture RESOURCE:READ, modification RESOURCE:UPDATE), plus le role ADMIN seul.
 public class ResourceOpeningHoursController {
 
     private final ResourceOpeningHoursService service;
@@ -31,6 +31,7 @@ public class ResourceOpeningHoursController {
     }
 
     @PutMapping
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "RESOURCE", action = "UPDATE_OPENING_HOURS", ressource = "resource")
     public ResponseEntity<ResourceOpeningHoursService.View> replace(@PathVariable String resourceCode,
                                                                     @RequestBody List<ResourceOpeningHoursService.Range> hours,
                                                                     Authentication authentication) {
@@ -38,6 +39,7 @@ public class ResourceOpeningHoursController {
     }
 
     @DeleteMapping
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "RESOURCE", action = "RESET_OPENING_HOURS", ressource = "resource")
     public ResponseEntity<ResourceOpeningHoursService.View> clear(@PathVariable String resourceCode) {
         return ResponseEntity.ok(service.clear(resourceCode));
     }

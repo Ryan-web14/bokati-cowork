@@ -732,7 +732,7 @@
    "declaredIn": "ResourceController",
    "access": {
     "kind": "admin",
-    "permission": "RESOURCE:CREATE"
+    "permission": "RESOURCE:READ"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.ressource.repository.specification.criteria.ResourceSearchCriteria",
@@ -1290,9 +1290,8 @@
    "handler": "clear",
    "declaredIn": "ResourceOpeningHoursController",
    "access": {
-    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
     "kind": "admin",
-    "permission": "RESOURCE:DELETE"
+    "permission": "RESOURCE:UPDATE"
    },
    "params": [
     {
@@ -1315,7 +1314,6 @@
    "handler": "get",
    "declaredIn": "ResourceOpeningHoursController",
    "access": {
-    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
     "kind": "admin",
     "permission": "RESOURCE:READ"
    },
@@ -1340,7 +1338,6 @@
    "handler": "replace",
    "declaredIn": "ResourceOpeningHoursController",
    "access": {
-    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
     "kind": "admin",
     "permission": "RESOURCE:UPDATE"
    },
@@ -1370,7 +1367,7 @@
    "declaredIn": "ResourcePhotoController",
    "access": {
     "kind": "admin",
-    "permission": "RESOURCE:GALLERY"
+    "permission": "RESOURCE:READ"
    },
    "params": [
     {
@@ -1429,6 +1426,12 @@
    "params": [
     {
      "in": "path",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
      "name": "id",
      "required": true,
      "type": "Long"
@@ -1456,6 +1459,12 @@
     "required": true
    },
    "params": [
+    {
+     "in": "path",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    },
     {
      "in": "path",
      "name": "id",

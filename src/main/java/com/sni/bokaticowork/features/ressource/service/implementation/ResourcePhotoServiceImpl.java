@@ -28,6 +28,9 @@ public class ResourcePhotoServiceImpl implements ResourcePhotoService {
     public ResourcePhotoResponse add(String resourceCode, ResourcePhotoRequest request) {
         validate(request);
         Resource resource = resourceService.getResourceForService(resourceCode);
+        if (Boolean.TRUE.equals(request.getCover())) {
+            clearCover(resource, null);
+        }
         ResourcePhoto photo = ResourcePhoto.builder()
                 .resource(resource)
                 .documentCode(request.getDocumentCode().trim())
@@ -49,9 +52,12 @@ public class ResourcePhotoServiceImpl implements ResourcePhotoService {
     }
 
     @Override
-    public ResourcePhotoResponse update(Long id, ResourcePhotoRequest request) {
+    public ResourcePhotoResponse update(String resourceCode, Long id, ResourcePhotoRequest request) {
         validate(request);
-        ResourcePhoto photo = get(id);
+        ResourcePhoto photo = get(resourceCode, id);
+        if (Boolean.TRUE.equals(request.getCover())) {
+            clearCover(photo.getResource(), photo.getId());
+        }
         photo.setDocumentCode(request.getDocumentCode().trim());
         photo.setCaption(request.getCaption());
         photo.setCover(Boolean.TRUE.equals(request.getCover()));
@@ -61,23 +67,55 @@ public class ResourcePhotoServiceImpl implements ResourcePhotoService {
     }
 
     @Override
-    public void delete(Long id) {
-        ResourcePhoto photo = get(id);
+    public void delete(String resourceCode, Long id) {
+        ResourcePhoto photo = get(resourceCode, id);
         photo.setActive(Boolean.FALSE);
         repository.save(photo);
     }
 
-    private ResourcePhoto get(Long id) {
+    /** Lot R0 : la photo doit appartenir a la ressource du chemin (avant : l'identifiant seul suffisait). */
+    private ResourcePhoto get(String resourceCode, Long id) {
         if (id == null) {
-            throw new BadRequestException("Photo id is required");
+            throw new BadRequestException("L'identifiant de la photo est requis");
         }
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource photo not found: " + id));
+        ResourcePhoto photo = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Photo introuvable : " + id));
+        if (photo.getResource() == null || resourceCode == null || !resourceCode.trim().equalsIgnoreCase(photo.getResource().getCode())) {
+            throw new ResourceNotFoundException("Photo introuvable : " + id + " pour la ressource " + resourceCode);
+        }
+        return photo;
+    }
+
+    /** Lot R0 : une seule photo de couverture par ressource. */
+    private void clearCover(Resource resource, Long keepId) {
+        repository.findAllByResourceAndActiveTrueOrderByDisplayOrderAscIdAsc(resource).stream()
+                .filter(other -> Boolean.TRUE.equals(other.getCover()) && !other.getId().equals(keepId))
+                .forEach(other -> {
+                    other.setCover(Boolean.FALSE);
+                    repository.save(other);
+                });
+    }
+
+    private com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository documentRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setDocumentRepository(com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository documentRepository) {
+        this.documentRepository = documentRepository;
     }
 
     private void validate(ResourcePhotoRequest request) {
         if (request == null || !StringUtils.hasText(request.getDocumentCode())) {
-            throw new BadRequestException("Document code is required");
+            throw new BadRequestException("Le code du document de la photo est requis");
+        }
+        // Lot R0 : le document doit exister dans la GED et etre une image.
+        if (documentRepository != null) {
+            com.sni.bokaticowork.features.document.documentMaster.model.Document document = documentRepository
+                    .findByCode(request.getDocumentCode().trim())
+                    .orElseThrow(() -> new BadRequestException("Document introuvable dans la GED : " + request.getDocumentCode().trim()));
+            String mime = document.getMimeType();
+            if (mime == null || !mime.toLowerCase(java.util.Locale.ROOT).startsWith("image/")) {
+                throw new BadRequestException("Le document " + document.getCode() + " n'est pas une image (" + mime + ")");
+            }
         }
     }
 

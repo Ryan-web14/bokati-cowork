@@ -44,7 +44,7 @@ Module [ressource](../README.md) · 16 route(s).
 <a id="r-post-sni-api-v1-resources-search"></a>
 ### POST /sni/api/v1/resources/search
 
-- Accès : back-office : rôle d'administration et droit `RESOURCE:CREATE`
+- Accès : back-office : rôle d'administration et droit `RESOURCE:READ`
 - Corps JSON (facultatif) : `ResourceSearchCriteria`
 - Réponse : `PaginatedResponse<ResourceSummaryResponse>`
 - Modèles : [PaginatedResponse](#m-PaginatedResponse), [ResourceSummaryResponse](#m-ResourceSummaryResponse), [ResourceSearchCriteria](#m-ResourceSearchCriteria)

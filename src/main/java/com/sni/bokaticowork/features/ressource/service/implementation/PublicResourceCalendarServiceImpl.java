@@ -33,8 +33,17 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
     public PublicResourceCalendarResponse calendar(String resourceCode, LocalDate fromDate, LocalDate toDate,
                                                    boolean includeSubscribersOnly) {
         Resource resource = resourceService.getResourceForService(resourceCode);
-        LocalDate start = fromDate == null ? LocalDate.now() : fromDate;
-        LocalDate end = toDate == null ? start.plusMonths(1) : toDate;
+        // Lot R0 : seulement une ressource proposee aux clients (visible au portail, active,
+        // reservable) ; sinon introuvable, comme une ressource inexistante (pas d'enumeration).
+        if (!Boolean.TRUE.equals(resource.getPortalVisible()) || !Boolean.TRUE.equals(resource.getActive())
+                || !Boolean.TRUE.equals(resource.getBookingEnabled())
+                || resource.getStatus() != com.sni.bokaticowork.features.ressource.enums.ResourceStatus.ACTIVE) {
+            throw new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Ressource introuvable : " + resourceCode);
+        }
+        com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarRange range =
+                com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarRange.of(fromDate, toDate);
+        LocalDate start = range.start();
+        LocalDate end = range.end();
         List<ResourceAvailability> slots = availabilityRepository.findAllSlotsInRange(
                 resource,
                 start.atStartOfDay(),
@@ -89,8 +98,12 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
                 .build();
     }
 
+    /** CLOSED : aucun creneau ce jour (ferme, hors horaires) ; FULL : des creneaux, tous pris. */
     private String status(int totalSlots, int availableSlots) {
-        if (totalSlots == 0 || availableSlots == 0) {
+        if (totalSlots == 0) {
+            return "CLOSED";
+        }
+        if (availableSlots == 0) {
             return "FULL";
         }
         if (availableSlots == totalSlots) {
