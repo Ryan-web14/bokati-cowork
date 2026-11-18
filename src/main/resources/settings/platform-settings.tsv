@@ -250,6 +250,7 @@ app.resources.booking-horizon-days	RESOURCES	INTEGER	LIVE	90	Ressources : horizo
 app.resources.holidays.hours	RESOURCES	TEXT	LIVE	NORMAL	Ressources : horaires des jours fériés (NORMAL = semaine type, CLOSED = fermé, ou plages HH:mm-HH:mm séparées par des virgules)
 app.resources.holidays.national	RESOURCES	BOOLEAN	LIVE	true	Ressources : jours fériés nationaux du Congo calculés (créneaux, prix, calendrier)
 app.resources.ical.public-feed-enabled	RESOURCES	BOOLEAN	LIVE	false	Ressources : flux iCalendar public par lien à jeton (« Occupé » et « Fermé » seulement)
+app.resources.peak-hours	RESOURCES	TEXT	LIVE	09:00-12:00,14:00-17:00	Ressources : heures pleines du lundi au vendredi, pour le pilotage (plages HH:mm-HH:mm séparées par des virgules)
 app.resources.pricing.day-hours	RESOURCES	INTEGER	LIVE	10	Ressources : durée d'une journée facturée, en heures (décision D2 : 10)
 app.resources.pricing.half-day-hours	RESOURCES	INTEGER	LIVE	5	Ressources : durée d'une demi-journée facturée, en heures (décision D2 : 5)
 app.security.bootstrap.secret	SECURITY	SECRET	RESTART		Secret d'initialisation

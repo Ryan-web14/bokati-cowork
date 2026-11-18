@@ -446,6 +446,13 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("/approve")) return permission("INVENTORY", "APPROVE");
             return permission("INVENTORY", actionFor("INVENTORY", method));
         }
+        // Lot R5e : pilotage (occupation, marges, couts) : lecture des rapports ; couts saisis par la gestion des ressources.
+        if (path.startsWith("/resource-analytics")) {
+            return permission("REPORT", "VIEW");
+        }
+        if (path.startsWith("/resource-costs") || (path.startsWith("/resources/") && path.endsWith("/costs"))) {
+            return HttpMethod.GET.matches(method) ? permission("REPORT", "VIEW") : permission("RESOURCE", "UPDATE");
+        }
         // Lot R5c : reserver un lot de ressources est une creation de reservation.
         if (path.startsWith("/resource-bundles/") && path.endsWith("/book")) {
             return permission("BOOKING", "CREATE");
