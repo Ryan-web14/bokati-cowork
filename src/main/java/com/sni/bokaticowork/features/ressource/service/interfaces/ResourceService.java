@@ -47,6 +47,9 @@ public interface ResourceService {
     /** Lot R5c : reglages de vente (participants compris, prix d'un participant en plus, caution). */
     void updateSalesSettings(String code, Integer includedParticipants, Integer extraParticipantPrice, Integer depositAmount);
 
+    /** Lot R5d : reglement d'usage et points de l'etat des lieux de fin. */
+    void updateUsageSettings(String code, String usageRules, java.util.List<String> endChecklist);
+
     /** Lot R4 : recherche simple paginee. */
     PaginatedResponse<ResourceSummaryResponse> basicSearch(String query, org.springframework.data.domain.Pageable pageable);
 

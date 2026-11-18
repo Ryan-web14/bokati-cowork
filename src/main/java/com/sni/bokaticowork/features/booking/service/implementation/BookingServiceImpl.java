@@ -875,6 +875,10 @@ public class BookingServiceImpl implements BookingService {
         booking.setCancellationReason(reason(request, "Booking cancelled"));
         booking.setCancelledAt(Instant.now());
         booking = bookingRepository.save(booking);
+        // Lot R5d : taches ouvertes de la reservation annulees avec elle.
+        if (bookingOperations != null) {
+            bookingOperations.cancelTasks(booking);
+        }
         writeHistory(booking, from, BookingStatus.CANCELLED, changedBy(request), reason(request, "Booking cancelled"));
         eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Booking cancelled", booking.getCancellationReason(), null,
                 emailRequested(request));
@@ -890,6 +894,12 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private com.sni.bokaticowork.features.booking.service.support.BookingExtras bookingExtras;
+    private com.sni.bokaticowork.features.booking.service.support.BookingOperations bookingOperations;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setBookingOperations(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingOperations bookingOperations) {
+        this.bookingOperations = bookingOperations;
+    }
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     void setBookingExtras(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingExtras bookingExtras) {
@@ -939,6 +949,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void createBookingPreparationTask(Booking booking) {
+        // Lot R5d : les modeles de taches de la ressource remplacent la tache par defaut.
+        if (bookingOperations != null && bookingOperations.hasTemplates(booking)) {
+            bookingOperations.createBookingTasks(booking);
+            return;
+        }
         try {
             taskManagementService.createFromAutomation(new CreateTaskRequest(
                     "Preparer la ressource " + booking.getResource().getName(),
@@ -963,6 +978,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void createBookingCleanupTask(Booking booking) {
+        // Lot R5d : avec des modeles, les taches d'apres sont deja creees a la confirmation.
+        if (bookingOperations != null && bookingOperations.hasTemplates(booking)) {
+            return;
+        }
         try {
             taskManagementService.createFromAutomation(new CreateTaskRequest(
                     "Nettoyer la ressource " + booking.getResource().getName(),

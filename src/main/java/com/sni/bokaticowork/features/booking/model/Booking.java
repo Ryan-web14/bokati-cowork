@@ -125,6 +125,13 @@ public class Booking {
     @Column(name = "price_trace", columnDefinition = "TEXT")
     private String priceTrace;
 
+    /** Lot R5d : reglement d'usage accepte (quand, et quelle version). */
+    @Column(name = "usage_rules_accepted_at")
+    private java.time.Instant usageRulesAcceptedAt;
+
+    @Column(name = "usage_rules_version", length = 20)
+    private String usageRulesVersion;
+
     @Column(name = "currency", length = 10)
     private String currency;
 

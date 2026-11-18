@@ -104,6 +104,13 @@ public class BookingExtras {
         this.eventWriter = eventWriter;
     }
 
+    private BookingOperations operations;
+
+    @Autowired(required = false)
+    void setOperations(@Lazy BookingOperations operations) {
+        this.operations = operations;
+    }
+
     @Autowired(required = false)
     void setOptional(ServiceCatalogItemRepository catalog, ResourceAmenityLinkRepository amenityLinks,
                      @Lazy ResourcePricingRuleService pricing, PricingEngine promotions, DiscountApplicationService discounts,
@@ -143,8 +150,13 @@ public class BookingExtras {
             throw new ConflictException("Le service " + item.getItemCode() + " est désactivé");
         }
         int qty = quantity == null || quantity < 1 ? 1 : quantity;
-        return view(charge(booking, BookingLineType.SERVICE, item.getItemCode(), item.getName(), qty,
-                item.getUnitPrice() == null ? BigDecimal.ZERO : item.getUnitPrice(), ADDON_SOURCE));
+        BookingLine line = charge(booking, BookingLineType.SERVICE, item.getItemCode(), item.getName(), qty,
+                item.getUnitPrice() == null ? BigDecimal.ZERO : item.getUnitPrice(), ADDON_SOURCE);
+        // Lot R5d : taches du service (servir le cafe), selon les modeles.
+        if (operations != null) {
+            operations.createServiceTasks(booking, item.getItemCode());
+        }
+        return view(line);
     }
 
     /** Equipement optionnel de la ressource, a son supplement (equipement rattache comme optionnel). */

@@ -121,6 +121,18 @@ public class ResourceController {
         return ResponseEntity.ok(resourceService.getResource(code));
     }
 
+    /** Lot R5d : reglement d'usage et points de l'etat des lieux de fin. */
+    public record UsageSettings(String usageRules, java.util.List<String> endChecklist) {
+    }
+
+    /** Lot R5d : un reglement modifie doit etre re-accepte (sa version change). */
+    @PutMapping("/{code}/usage-settings")
+    @Audited(module = "RESOURCE", action = "UPDATE_USAGE_SETTINGS", ressource = "resource")
+    public ResponseEntity<ResourceResponse> usageSettings(@PathVariable String code, @RequestBody UsageSettings request) {
+        resourceService.updateUsageSettings(code, request.usageRules(), request.endChecklist());
+        return ResponseEntity.ok(resourceService.getResource(code));
+    }
+
     /** Lot R5b : « Trouver une salle » par besoin, avec alternatives. */
     @PostMapping("/find")
     public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceLocationResponses.FindResult> find(

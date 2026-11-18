@@ -31,6 +31,9 @@ public class ResourceResponse {
     private Integer includedParticipants;
     private Integer extraParticipantPrice;
     private Integer depositAmount;
+    /** Lot R5d : reglement d'usage et points de l'etat des lieux de fin. */
+    private String usageRules;
+    private java.util.List<String> endChecklist;
     private String status;
     private Boolean bookingEnabled;
     private Boolean portalVisible;

@@ -109,6 +109,14 @@ public class Resource {
     @Column(name = "deposit_amount")
     private Integer depositAmount;
 
+    /** Lot R5d : reglement d'usage accepte a la reservation (texte). */
+    @Column(name = "usage_rules", columnDefinition = "TEXT")
+    private String usageRules;
+
+    /** Lot R5d : points de l'etat des lieux de fin, un par ligne. */
+    @Column(name = "end_checklist", length = 2000)
+    private String endChecklist;
+
     /** Lot R5b : jeton du flux d'abonnement iCalendar (coupe par defaut). */
     @Column(name = "ical_token", length = 60)
     private String icalToken;

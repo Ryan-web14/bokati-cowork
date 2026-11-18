@@ -225,6 +225,16 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public void updateUsageSettings(String code, String usageRules, java.util.List<String> endChecklist) {
+        Resource resource = getResourceForService(code);
+        resource.setUsageRules(StringUtils.hasText(usageRules) ? usageRules.trim() : null);
+        java.util.List<String> points = endChecklist == null ? java.util.List.of()
+                : endChecklist.stream().filter(StringUtils::hasText).map(String::trim).toList();
+        resource.setEndChecklist(points.isEmpty() ? null : String.join("\n", points));
+        resourceRepository.save(resource);
+    }
+
+    @Override
     public void updateSalesSettings(String code, Integer includedParticipants, Integer extraParticipantPrice, Integer depositAmount) {
         for (Integer value : new Integer[]{includedParticipants, extraParticipantPrice, depositAmount}) {
             if (value != null && value < 0) {
