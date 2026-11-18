@@ -451,6 +451,12 @@
                         <tr th:if="${document.additionalCentAmount() != null and document.additionalCentAmount().signum() > 0}"><td class="lbl">Centimes additionnels</td><td class="val num" th:text="${fmt.money(document.additionalCentAmount())}">0</td></tr>
                     </th:block>
                     <tr class="total-row"><td>TOTAL TTC</td><td class="r num" th:text="${fmt.money(document.totalAmount())}">0</td></tr>
+                    <th:block th:if="${equivalents != null}">
+                    <tr th:each="eq : ${equivalents}">
+                        <td class="lbl" style="font-size:7.5px;" th:text="|Soit en ${eq.currency()} (1 ${eq.currency()} = ${#numbers.formatDecimal(eq.rate(), 1, 'WHITESPACE', 2, 'COMMA')} ${document.currency()}, taux du ${#temporals.format(eq.rateDate(), 'dd/MM/yyyy')})|">Soit en USD</td>
+                        <td class="val num" style="font-size:7.5px;" th:text="|${#numbers.formatDecimal(eq.totalAmount(), 1, 'WHITESPACE', 2, 'COMMA')} ${eq.currency()}|">0</td>
+                    </tr>
+                    </th:block>
                     <tr th:if="${document.advance() != null and document.advance().status() != null and document.advance().status().name() == 'PAID'}">
                         <td class="lbl" style="color:#1f1430;">
                             Acompte reçu

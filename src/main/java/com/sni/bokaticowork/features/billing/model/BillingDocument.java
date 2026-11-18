@@ -260,6 +260,10 @@ public class BillingDocument {
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;
 
+    /** Montants en devises etrangeres figes a l'emission (USD, EUR par defaut), a titre indicatif. */
+    @Column(name = "currency_equivalents_json", columnDefinition = "TEXT")
+    private String currencyEquivalentsJson;
+
     @Column(name = "internal_notes", columnDefinition = "text")
     private String internalNotes;
 

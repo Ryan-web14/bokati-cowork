@@ -299,6 +299,7 @@ billing.catalog.reference-lists.strict	BILLING	BOOLEAN	LIVE	false	Catalogue : re
 billing.collection.plan-approval-months	BILLING	INTEGER	LIVE	3	Recouvrement : au-delà de ce nombre de mois, un plan de règlement demande le droit d'approbation de la facturation (responsable N+1)
 billing.deal.auto-create	BILLING	BOOLEAN	LIVE	true	Affaires : le premier devis d'un client sans affaire ouverte en crée une (sinon il rejoint son unique affaire ouverte)
 billing.discount.override-mode	BILLING	ENUM	LIVE	APPROVAL	Remise ou prix hors limites : APPROVAL (demande au responsable N+1 par le centre d'approbation, l'émission attend son accord) ou PERMISSION (droit de dérogation et motif, sans circuit)
+billing.invoice.equivalent-currencies	BILLING	TEXT	LIVE	USD,EUR	Facturation : devises dont l'équivalent figure sur les factures (codes séparés par des virgules ; vide : aucune)
 billing.quote.revision-validity-days	BILLING	INTEGER	LIVE	30	Devis : jours de validité garantis après une révision (la date de validité est prolongée si besoin)
 billing.stock.issue-on	BILLING	ENUM	LIVE	INVOICE	Sortie de stock des articles vendus : INVOICE (à l'émission de la facture), DELIVERY (à la livraison de chaque bon de livraison, la facture ne sort plus rien) ou NONE (aucune sortie automatique)
 bokati.audit.alerts.channels	AUDIT	TEXT	LIVE	APP,EMAIL,WHATSAPP	Canaux des alertes du centre d'audit (APP, EMAIL, WHATSAPP, séparés par des virgules)

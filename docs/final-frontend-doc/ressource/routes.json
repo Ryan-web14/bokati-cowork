@@ -4821,6 +4821,9 @@
      "type": "integer",
      "format": "int32"
     },
+    "refundRules": {
+     "type": "string"
+    },
     "allowCancellation": {
      "type": "boolean"
     },
@@ -4880,6 +4883,9 @@
      "type": "integer",
      "format": "int32"
     },
+    "refundRules": {
+     "type": "string"
+    },
     "allowCancellation": {
      "type": "boolean"
     },
@@ -4931,6 +4937,9 @@
     "cancellationNoticeMinutes": {
      "type": "integer",
      "format": "int32"
+    },
+    "refundRules": {
+     "type": "string"
     },
     "allowCancellation": {
      "type": "boolean"

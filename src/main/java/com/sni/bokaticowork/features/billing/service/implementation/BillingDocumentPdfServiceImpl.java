@@ -61,6 +61,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService {
 
+    private com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents currencyEquivalents;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCurrencyEquivalents(com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents currencyEquivalents) {
+        this.currencyEquivalents = currencyEquivalents;
+    }
+
+
     private final BillingDocumentService billingDocumentService;
     private final SpringTemplateEngine templateEngine;
     private final ObjectMapper objectMapper;
@@ -398,6 +406,9 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         context.setVariable("fmt", new BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale));
         context.setVariable("qrCode", generateQrCode(document));
         context.setVariable("payments", fetchPaymentInfos(document.documentNumber()));
+        context.setVariable("equivalents", currencyEquivalents == null ? java.util.List.of()
+                : documentRepository.findByDocumentNumber(document.documentNumber())
+                .map(currencyEquivalents::forDocument).orElse(java.util.List.of()));
         context.setVariable("logo", brandLogo.base64());
         context.setVariable("operator", currentOperator());
         // Les identifiants saisis sur la fiche de l'organisation et sa mention d'exoneration,

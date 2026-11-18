@@ -866,6 +866,30 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/currency-equivalents",
+   "package": "features.billing.controller",
+   "controller": "BillingDocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java",
+   "handler": "currencyEquivalents",
+   "declaredIn": "BillingDocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents.Equivalent>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/billing/documents/{documentNumber}/deposits",
    "package": "features.billing.controller",
    "controller": "BillingDocumentController",
@@ -6809,6 +6833,30 @@
     }
    }
   },
+  "BillingCurrencyEquivalents.Equivalent": {
+   "type": "object",
+   "properties": {
+    "currency": {
+     "type": "string"
+    },
+    "rate": {
+     "type": "number"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "rateDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "frozen": {
+     "type": "boolean"
+    }
+   }
+  },
   "UpdateBillingRecipientRequest": {
    "type": "object",
    "properties": {
@@ -12299,6 +12347,7 @@
   "SimulateBillingLineResponse": "com.sni.bokaticowork.features.billing.dto.response.SimulateBillingLineResponse",
   "SimulateBillingLineRequest": "com.sni.bokaticowork.features.billing.dto.request.SimulateBillingLineRequest",
   "UpdateBillingDocumentRequest": "com.sni.bokaticowork.features.billing.dto.request.UpdateBillingDocumentRequest",
+  "BillingCurrencyEquivalents.Equivalent": "com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents.Equivalent",
   "UpdateBillingRecipientRequest": "com.sni.bokaticowork.features.billing.dto.request.UpdateBillingRecipientRequest",
   "BillingRecoverableResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingRecoverableResponse",
   "AddRecoverableItemsRequest": "com.sni.bokaticowork.features.billing.dto.request.AddRecoverableItemsRequest",

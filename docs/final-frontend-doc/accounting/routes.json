@@ -18926,6 +18926,9 @@
     "metadataJson": {
      "type": "string"
     },
+    "currencyEquivalentsJson": {
+     "type": "string"
+    },
     "internalNotes": {
      "type": "string"
     },

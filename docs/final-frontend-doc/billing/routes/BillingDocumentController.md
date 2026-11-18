@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [billing](../README.md) · 71 route(s).
+Module [billing](../README.md) · 72 route(s).
 
 ## Routes
 
@@ -277,6 +277,18 @@ Module [billing](../README.md) · 71 route(s).
 - Réponse : `BillingDocumentResponse`
 - Modèles : [BillingDocumentResponse](#m-BillingDocumentResponse), [UpdateBillingDocumentRequest](#m-UpdateBillingDocumentRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `update`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `documentNumber` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-billing-documents-documentnumber-currency-equivalents"></a>
+### GET /sni/api/v1/billing/documents/{documentNumber}/currency-equivalents
+
+- Accès : back-office : rôle d'administration et droit `BILLING:READ`
+- Réponse : `List<BillingCurrencyEquivalents.Equivalent>`
+- Modèles : [BillingCurrencyEquivalents.Equivalent](#m-BillingCurrencyEquivalents-Equivalent)
+- Code : `src/main/java/com/sni/bokaticowork/features/billing/controller/BillingDocumentController.java`, méthode `currencyEquivalents`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -1243,6 +1255,18 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `lines` | [UpdateBillingDocumentLineRequest](#m-UpdateBillingDocumentLineRequest)[] |  |  |
 | `discounts` | [CreateBillingDocumentDiscountRequest](#m-CreateBillingDocumentDiscountRequest)[] |  |  |
 | `clauses` | [CreateBillingDocumentClauseRequest](#m-CreateBillingDocumentClauseRequest)[] |  |  |
+
+<a id="m-BillingCurrencyEquivalents-Equivalent"></a>
+#### BillingCurrencyEquivalents.Equivalent
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `currency` | texte |  |  |
+| `rate` | nombre décimal |  |  |
+| `totalAmount` | nombre décimal |  |  |
+| `balanceDue` | nombre décimal |  |  |
+| `rateDate` | date AAAA-MM-JJ |  |  |
+| `frozen` | booléen |  |  |
 
 <a id="m-UpdateBillingRecipientRequest"></a>
 #### UpdateBillingRecipientRequest

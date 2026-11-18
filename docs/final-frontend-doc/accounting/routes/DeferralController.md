@@ -495,6 +495,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `paymentInstructions` | texte |  |  |
 | `bankDetailsJson` | texte |  |  |
 | `metadataJson` | texte |  |  |
+| `currencyEquivalentsJson` | texte |  |  |
 | `internalNotes` | texte |  |  |
 | `locked` | booléen |  |  |
 | `validatedAt` | date-heure ISO 8601 UTC |  |  |

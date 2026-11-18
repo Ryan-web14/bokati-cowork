@@ -488,6 +488,28 @@ public class BillingDocumentController {
         return ResponseEntity.ok(paymentService.payInvoice(documentNumber, request));
     }
 
+    /**
+     * Montants de la piece en devises etrangeres (USD, EUR par defaut, reglage
+     * {@code billing.invoice.equivalent-currencies}) : figes a l'emission ({@code frozen}), sinon au
+     * taux du jour. Le reste du est converti au meme taux.
+     */
+    @GetMapping("/documents/{documentNumber}/currency-equivalents")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents.Equivalent>> currencyEquivalents(@PathVariable String documentNumber) {
+        var document = documentRepositoryForEquivalents.findByDocumentNumber(documentNumber.trim())
+                .orElseThrow(() -> new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Pièce introuvable : " + documentNumber));
+        return ResponseEntity.ok(currencyEquivalents.forDocument(document));
+    }
+
+    private com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository documentRepositoryForEquivalents;
+    private com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents currencyEquivalents;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setCurrencyEquivalents(com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository repository,
+                                com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents currencyEquivalents) {
+        this.documentRepositoryForEquivalents = repository;
+        this.currencyEquivalents = currencyEquivalents;
+    }
+
     @GetMapping("/documents/{documentNumber}")
     public ResponseEntity<BillingDocumentResponse> get(@PathVariable String documentNumber) {
         return ResponseEntity.ok(billingDocumentService.get(documentNumber));

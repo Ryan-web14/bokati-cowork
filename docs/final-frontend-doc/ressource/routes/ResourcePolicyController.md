@@ -131,6 +131,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `maxBookingDurationMinutes` | entier |  |  |
 | `minBookingNoticeMinutes` | entier |  |  |
 | `cancellationNoticeMinutes` | entier |  |  |
+| `refundRules` | texte |  |  |
 | `allowCancellation` | booléen |  |  |
 | `staffOverrideAllowed` | booléen |  |  |
 | `bufferMinutes` | entier |  |  |
@@ -150,6 +151,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `maxBookingDurationMinutes` | entier | oui |  |
 | `minBookingNoticeMinutes` | entier | oui |  |
 | `cancellationNoticeMinutes` | entier |  |  |
+| `refundRules` | texte |  |  |
 | `allowCancellation` | booléen |  |  |
 | `staffOverrideAllowed` | booléen |  |  |
 | `bufferMinutes` | entier |  |  |
@@ -169,6 +171,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `maxBookingDurationMinutes` | entier |  |  |
 | `minBookingNoticeMinutes` | entier |  |  |
 | `cancellationNoticeMinutes` | entier |  |  |
+| `refundRules` | texte |  |  |
 | `allowCancellation` | booléen |  |  |
 | `staffOverrideAllowed` | booléen |  |  |
 | `bufferMinutes` | entier |  |  |

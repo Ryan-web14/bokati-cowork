@@ -92,6 +92,18 @@ Préfixe : `/sni/api/v1/billing`.
 16. **Relances d'impayés** ([routes/DunningController.md](routes/DunningController.md)) : politiques par segment (`PUT /dunning/policies`), paliers (`REMINDER`, `FORMAL_NOTICE`, `GRACE_PERIOD`, `SUSPEND`, `HANDOVER`), journal (`/dunning/notices...`), lancement manuel (`POST /dunning/run`).
 17. **Intégrité de la certification** : `GET /admin/fiscal-integrity/last-report`, `GET /admin/fiscal-integrity/check` (continuité de la numérotation, chaîne d'empreintes, signatures).
 
+## Montants en USD et en EUR (18/11/2026)
+
+Une facture affiche son total en devises étrangères, à titre indicatif (USD et EUR par défaut, paramètre `billing.invoice.equivalent-currencies`).
+
+- Route : `GET /billing/documents/{documentNumber}/currency-equivalents` rend `[{ currency, rate, totalAmount, balanceDue, rateDate, frozen }]`. `rate` est le nombre d'unités de la devise de la pièce pour une unité étrangère.
+- Taux de la comptabilité ; l'euro a sa parité fixe (655,957). Une devise sans taux est omise.
+- Les équivalents sont **figés à l'émission** (`frozen: true`, taux de la date d'émission) ; avant, ils sont au taux du jour (`frozen: false`, « indicatif »).
+- Le PDF les imprime sous le total TTC.
+- Écran : sous le total de la fiche, la liste des équivalents avec la date du taux ; un sélecteur « Afficher en » (XAF, USD, EUR) convertit le total et le reste dû.
+
+Détail : [facturation-devises](../../backend/facturation-devises/README.md).
+
 ## Droits pour masquer les boutons
 
 | Action | Droit (règle d'URL) | Contrôle supplémentaire |

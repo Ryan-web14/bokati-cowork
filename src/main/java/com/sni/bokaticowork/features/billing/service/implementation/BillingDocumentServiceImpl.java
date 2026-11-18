@@ -111,6 +111,14 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class BillingDocumentServiceImpl implements BillingDocumentService {
 
+    private com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents currencyEquivalents;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCurrencyEquivalents(com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents currencyEquivalents) {
+        this.currencyEquivalents = currencyEquivalents;
+    }
+
+
     private final ObjectMapper objectMapper;
     private final BillingDocumentRepository documentRepository;
     private final BillingDocumentLineRepository lineRepository;
@@ -3509,6 +3517,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         document.setFiscalSignature(signature);
         document.setSignatureAlgorithm(FiscalSignatureService.ALGORITHM);
         document.setSignedAt(Instant.now());
+        // Equivalents en devises figes au taux de la date d'emission.
+        if (currencyEquivalents != null) {
+            currencyEquivalents.freeze(document);
+        }
         document.setLocked(true);
         document.setValidatedAt(Instant.now());
         // Le scellement ne defait ni un encaissement ni une imputation : une facture payee reste PAID.

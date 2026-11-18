@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-201 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+202 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -35,6 +35,7 @@
 | DELETE | `/sni/api/v1/billing/documents/{documentNumber}` | BILLING:CANCEL | [BillingDocumentController](routes/BillingDocumentController.md#r-delete-sni-api-v1-billing-documents-documentnumber) |
 | GET | `/sni/api/v1/billing/documents/{documentNumber}` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber) |
 | PUT | `/sni/api/v1/billing/documents/{documentNumber}` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-put-sni-api-v1-billing-documents-documentnumber) |
+| GET | `/sni/api/v1/billing/documents/{documentNumber}/currency-equivalents` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber-currency-equivalents) |
 | GET | `/sni/api/v1/billing/documents/{documentNumber}/deposits` | BILLING:READ | [BillingDocumentController](routes/BillingDocumentController.md#r-get-sni-api-v1-billing-documents-documentnumber-deposits) |
 | POST | `/sni/api/v1/billing/documents/{documentNumber}/duplicate` | BILLING:CREATE | [BillingDocumentController](routes/BillingDocumentController.md#r-post-sni-api-v1-billing-documents-documentnumber-duplicate) |
 | PATCH | `/sni/api/v1/billing/documents/{documentNumber}/issue` | BILLING:UPDATE | [BillingDocumentController](routes/BillingDocumentController.md#r-patch-sni-api-v1-billing-documents-documentnumber-issue) |
