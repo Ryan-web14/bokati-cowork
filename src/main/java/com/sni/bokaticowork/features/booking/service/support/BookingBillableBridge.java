@@ -103,7 +103,9 @@ public class BookingBillableBridge {
         }
 
         BookingPaymentMode mode = booking.getPaymentMode();
-        boolean payable = mode == null || mode.isPayable();
+        // Lot B2 : en couverture partielle, le reste non couvert est facture.
+        boolean payable = mode == null || mode.isPayable()
+                || (booking.getCoveredMinutes() != null && booking.getTotalAmount() != null && booking.getTotalAmount().signum() > 0);
 
         BigDecimal amount = payable ? booking.getTotalAmount() : BigDecimal.ZERO;
         String description = buildDescription(booking);

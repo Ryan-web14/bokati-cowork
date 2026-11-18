@@ -28,6 +28,9 @@ public class CreateResourcePolicyRequest {
     private Integer minBookingNoticeMinutes;
 
     private Integer cancellationNoticeMinutes;
+
+    /** Lot B2 : grille de remboursement « heures:pourcentage », par exemple « 72:100,24:50,0:0 ». */
+    private String refundRules;
     private Boolean allowCancellation;
     /** L'equipe peut-elle reserver hors preavis et sur un debut passe ? Vrai par defaut. */
     private Boolean staffOverrideAllowed;

@@ -43,6 +43,13 @@ public class ResourcePolicy {
     @Column(name = "cancellation_notice_minutes", nullable = false)
     private Integer cancellationNoticeMinutes;
 
+    /**
+     * Lot B2 (ecart Bn-6) : grille de remboursement propre a la politique, « heures:pourcentage »
+     * separees par des virgules (par exemple « 72:100,24:50,0:0 ») ; vide : la grille generale.
+     */
+    @Column(name = "refund_rules", length = 300)
+    private String refundRules;
+
     @Column(name = "allow_cancellation", nullable = false)
     @Builder.Default
     private Boolean allowCancellation = Boolean.TRUE; // Lot R2 (D3) : annulation permise par defaut

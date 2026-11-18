@@ -272,6 +272,15 @@ public class BookingServiceImpl implements BookingService {
         booking.setSubtotalAmount(price.amount());
         booking.setTotalAmount(price.amount());
         booking.setCurrency(price.currency());
+        booking.setUnitForced(request.bookingUnit() != null);
+        // Lot B2 : le solde du droit ne couvre qu'une partie ; le reste est facture au prorata.
+        if (partialCoverage != null) {
+            Integer covered = partialCoverage.coveredMinutes(booking);
+            if (covered != null) {
+                booking.setCoveredMinutes(covered);
+                booking.setTotalAmount(BookingPartialCoverage.uncoveredAmount(price.amount(), booking.getDurationMinutes(), covered));
+            }
+        }
         // Lot B10 : ressource sur demande, client du portail non designe : approbation de l'equipe.
         boolean onRequest = resourceVisibility != null
                 && booking.getChannel() == com.sni.bokaticowork.features.booking.enums.BookingChannel.PORTAL
@@ -731,10 +740,22 @@ public class BookingServiceImpl implements BookingService {
             eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after reschedule",
                     newStart + " – " + newEnd, null);
         }
+        boolean entitlementRetained = booking.getPaymentMode().usesEntitlement()
+                && (booking.getStatus() == BookingStatus.CONFIRMED || booking.getStatus() == BookingStatus.IN_PROGRESS);
+        if (entitlementRetained) {
+            entitlementBridge.release(booking);
+        }
         BookingStatus from = booking.getStatus();
         booking.setStartedAt(newStart);
         booking.setEndedAt(newEnd);
         booking.setDurationMinutes((int) Duration.between(newStart, newEnd).toMinutes());
+        if (booking.getCoveredMinutes() != null) {
+            booking.setCoveredMinutes(Math.min(booking.getCoveredMinutes(), booking.getDurationMinutes()));
+        }
+        // Lot B2 (ecart Bn-2) : le droit est rendu sur l'ancienne duree et repris sur la nouvelle.
+        if (entitlementRetained) {
+            entitlementBridge.reserve(booking);
+        }
         // Lot R1 (D1) : nouveau prix ; ecart facture en complement ou rendu par un avoir.
         if (repricer != null) {
             repricer.reprice(booking, "nouvel horaire " + newStart + " – " + newEnd);
@@ -764,7 +785,21 @@ public class BookingServiceImpl implements BookingService {
             eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released for resource change",
                     oldResource.getCode(), null);
         }
+        // Lot B2 (ecart Bn-2) : le droit doit couvrir la nouvelle ressource ; il est repris.
+        boolean entitlementRetained = booking.getPaymentMode().usesEntitlement();
+        if (entitlementRetained) {
+            entitlementBridge.release(booking);
+            var identity = new BookingIdentityResolver.ResolvedBookingIdentity(booking.getOwnerType(), booking.getOwnerCode(),
+                    booking.getContactName(), booking.getContactEmail(), booking.getContactPhone(), false);
+            var context = paymentContextResolver.resolve(booking.getPaymentMode(), identity, newResource, booking.getBillingCompanyCode());
+            booking.setEntitlementCode(context.entitlementCode());
+            booking.setSubscriptionNumber(context.subscriptionNumber());
+            booking.setPassNumber(context.passNumber());
+        }
         booking.setResource(newResource);
+        if (entitlementRetained) {
+            entitlementBridge.reserve(booking);
+        }
         if (retained) {
             reserveResourceSlot(newResource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
             eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after resource change",
@@ -958,7 +993,20 @@ public class BookingServiceImpl implements BookingService {
         try {
             cancellationRefundSupport.processCancellation(booking, wasActive);
         } catch (Exception ex) {
-            log.warn("Failed to settle billing for cancelled booking {}", booking.getBookingNumber(), ex);
+            log.error("Remboursement ou avoir de la reservation annulee {} en echec", booking.getBookingNumber(), ex);
+            // Lot B2 (ecart Bn-5) : une tache a l'equipe et un evenement, au lieu d'un simple journal.
+            eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Remboursement à traiter",
+                    "Échec automatique : " + ex.getMessage(), null);
+            try {
+                taskManagementService.createFromAutomation(new CreateTaskRequest(
+                        "Remboursement à traiter · réservation " + booking.getBookingNumber(),
+                        "L'avoir ou le remboursement automatique de l'annulation a échoué : " + ex.getMessage()
+                                + ". Contrôler la facture de la réservation et rembourser le client.",
+                        null, TaskPriority.HIGH, Instant.now().plus(Duration.ofHours(24)), "BOOKING", booking.getBookingNumber(),
+                        TaskRecurrence.NONE, null));
+            } catch (Exception taskError) {
+                log.warn("Tache de remboursement non creee pour {}", booking.getBookingNumber(), taskError);
+            }
         }
         return booking;
     }
@@ -1184,6 +1232,12 @@ public class BookingServiceImpl implements BookingService {
     // ------------------------------------------------------------------ lot B1 : expiration et reglement
 
     private BookingPaymentDue paymentDue;
+    private BookingPartialCoverage partialCoverage;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPartialCoverage(BookingPartialCoverage partialCoverage) {
+        this.partialCoverage = partialCoverage;
+    }
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     void setPaymentDue(BookingPaymentDue paymentDue) {
@@ -1326,7 +1380,7 @@ public class BookingServiceImpl implements BookingService {
                 .quantity(price.quantity())
                 .unit(price.unit())
                 .unitPrice(price.unitPrice())
-                .amount(price.amount())
+                .amount(booking.getCoveredMinutes() != null ? booking.getTotalAmount() : price.amount())
                 .currency(price.currency())
                 .build());
         if (booking.getPaymentMode().usesEntitlement() && StringUtils.hasText(booking.getEntitlementCode())) {

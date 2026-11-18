@@ -87,43 +87,89 @@ public class BookingCancellationRefundSupport {
             }
             return;
         }
+        long hoursBeforeStart = Duration.between(LocalDateTime.now(), booking.getStartedAt()).toHours();
+        // Lot B2 (ecart Bn-6) : la grille de la politique de la ressource, sinon la grille generale ;
+        // rien d'engage (reservation en attente) : tout le paye est rendu.
+        BigDecimal percent = wasActive ? refundPercent(booking, hoursBeforeStart) : BigDecimal.valueOf(100);
+        settleInvoice(booking, invoice, percent, hoursBeforeStart, "");
+        // Lot B2 (ecart Bn-4) : supplements et complements factures a part suivent la reservation.
+        java.util.List<BillableItem> related = billableItemRepository == null ? java.util.List.of()
+                : billableItemRepository.findAllBySourceId(booking.getBookingNumber());
+        for (BillableItem item : related) {
+            if (item.getBillableNumber() == null || item.getBillableNumber().equals(booking.getBillableNumber())
+                    || "DEPOSIT".equals(item.getSourceType()) || item.getInvoiceId() == null) {
+                continue;
+            }
+            billingDocumentRepository.findById(item.getInvoiceId())
+                    .filter(document -> document.getDocumentType() == BillingDocumentType.INVOICE)
+                    .filter(document -> !document.getDocumentNumber().equals(invoice == null ? null : invoice.getDocumentNumber()))
+                    .ifPresent(document -> settleInvoice(booking, document, percent, hoursBeforeStart, " · supplément"));
+        }
+    }
+
+    /**
+     * Une facture de la reservation annulee : sans encaissement, annulee ; sinon le reste du est
+     * annule par un avoir (ecart Bn-3) et la part payee remboursee selon le pourcentage.
+     */
+    private void settleInvoice(Booking booking, BillingDocument invoice, BigDecimal percent, long hoursBeforeStart, String suffix) {
         if (invoice == null || !ELIGIBLE_INVOICE_STATUSES.contains(invoice.getStatus())) {
             return;
         }
         BigDecimal paidAmount = invoice.getPaidAmount();
         if (paidAmount == null || paidAmount.signum() <= 0) {
             billingDocumentService.cancelAndArchive(invoice.getDocumentNumber(),
-                    "Annulation reservation " + booking.getBookingNumber() + " · aucun reglement encaisse");
+                    "Annulation reservation " + booking.getBookingNumber() + suffix + " · aucun reglement encaisse");
             return;
         }
-        if (!wasActive) {
+        BigDecimal balance = invoice.getBalanceDue();
+        if (balance != null && balance.signum() > 0) {
+            billingDocumentService.createCreditNote(invoice.getDocumentNumber(), new CreateCreditNoteRequest(balance,
+                    "Annulation reservation " + booking.getBookingNumber() + suffix + " · reste du annule", true, true, null));
+        }
+        if (percent == null || percent.signum() <= 0) {
             return;
         }
-
-        long hoursBeforeStart = Duration.between(LocalDateTime.now(), booking.getStartedAt()).toHours();
-        CancellationPolicy policy = cancellationPolicyRepository.findAllByActiveTrueOrderByRuleOrderAsc().stream()
-                .filter(p -> hoursBeforeStart >= p.getHoursBeforeStart())
-                .findFirst()
-                .orElse(null);
-        if (policy == null || policy.getRefundPercentage() == null || policy.getRefundPercentage().signum() <= 0) {
-            return;
-        }
-
-        BigDecimal refundAmount = paidAmount.multiply(policy.getRefundPercentage())
-                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+        BigDecimal refundAmount = paidAmount.multiply(percent).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
         if (refundAmount.signum() <= 0) {
             return;
         }
-
-        String reason = "Annulation reservation " + booking.getBookingNumber()
-                + " · politique d'annulation (" + policy.getRefundPercentage().stripTrailingZeros().toPlainString() + "%)";
-
+        String reason = "Annulation reservation " + booking.getBookingNumber() + suffix
+                + " · remboursement de " + percent.stripTrailingZeros().toPlainString() + " %";
         billingDocumentService.createCreditNote(invoice.getDocumentNumber(),
                 new CreateCreditNoteRequest(refundAmount, reason, true, null, null));
-
         refundPaidTransactions(invoice.getDocumentNumber(), refundAmount, reason);
+        writeHistory(invoice, percent, hoursBeforeStart, refundAmount, booking.getBookingNumber());
+    }
 
-        writeHistory(invoice, policy, hoursBeforeStart, refundAmount, booking.getBookingNumber());
+    /** Pourcentage rendu selon le delai : grille de la politique de la ressource, sinon grille generale. */
+    BigDecimal refundPercent(Booking booking, long hoursBeforeStart) {
+        var policy = booking.getResource() == null ? null : booking.getResource().getEffectivePolicy();
+        if (policy != null && org.springframework.util.StringUtils.hasText(policy.getRefundRules())) {
+            BigDecimal best = null;
+            long bestHours = -1;
+            for (String part : policy.getRefundRules().split(",")) {
+                String[] pair = part.trim().split(":");
+                if (pair.length != 2) {
+                    continue;
+                }
+                try {
+                    long hours = Long.parseLong(pair[0].trim());
+                    BigDecimal pct = new BigDecimal(pair[1].trim());
+                    if (hoursBeforeStart >= hours && hours > bestHours) {
+                        bestHours = hours;
+                        best = pct;
+                    }
+                } catch (NumberFormatException ignored) {
+                    // entree mal ecrite : ignoree (la grille est controlee a l'enregistrement)
+                }
+            }
+            return best == null ? BigDecimal.ZERO : best;
+        }
+        CancellationPolicy general = cancellationPolicyRepository.findAllByActiveTrueOrderByRuleOrderAsc().stream()
+                .filter(p -> hoursBeforeStart >= p.getHoursBeforeStart())
+                .findFirst()
+                .orElse(null);
+        return general == null || general.getRefundPercentage() == null ? BigDecimal.ZERO : general.getRefundPercentage();
     }
 
     /**
@@ -234,7 +280,7 @@ public class BookingCancellationRefundSupport {
         billingDocumentService.createCreditNote(invoice.getDocumentNumber(),
                 new CreateCreditNoteRequest(refundAmount, policyReason, true, null, null));
         refundPaidTransactions(invoice.getDocumentNumber(), refundAmount, policyReason);
-        writeHistory(invoice, policy, hoursBeforeStart, refundAmount, booking.getBookingNumber());
+        writeHistory(invoice, policy.getRefundPercentage(), hoursBeforeStart, refundAmount, booking.getBookingNumber());
     }
 
     /** Une autre reservation de la facture reste-t-elle a facturer · ni annulee, ni refusee. */
@@ -285,13 +331,13 @@ public class BookingCancellationRefundSupport {
         }
     }
 
-    private void writeHistory(BillingDocument invoice, CancellationPolicy policy, long hoursBeforeStart, BigDecimal refundAmount, String bookingNumber) {
+    private void writeHistory(BillingDocument invoice, BigDecimal percent, long hoursBeforeStart, BigDecimal refundAmount, String bookingNumber) {
         try {
             Map<String, Object> snapshot = new LinkedHashMap<>();
             snapshot.put("bookingNumber", bookingNumber);
-            snapshot.put("refundPercentage", policy.getRefundPercentage());
+            snapshot.put("refundPercentage", percent);
             snapshot.put("hoursBeforeStart", hoursBeforeStart);
-            snapshot.put("policyRuleOrder", policy.getRuleOrder());
+            snapshot.put("source", "politique de la ressource ou grille generale (lot B2)");
             snapshot.put("refundAmount", refundAmount);
             editHistoryRepository.save(BillingDocumentEditHistory.builder()
                     .document(invoice)

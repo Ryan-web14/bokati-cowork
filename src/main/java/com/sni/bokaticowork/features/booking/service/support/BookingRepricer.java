@@ -72,28 +72,45 @@ public class BookingRepricer {
 
     public Outcome reprice(Booking booking, String reason) {
         BigDecimal previous = booking.getTotalAmount() == null ? BigDecimal.ZERO : booking.getTotalAmount();
+        // Lot B2 (ecart Bn-1) : les remises (lignes DISCOUNT) restent acquises ; seul le prix de la
+        // ressource est recalcule, et l'unite imposee par l'equipe est gardee.
+        BigDecimal discounts = lineRepository.findByBookingId(booking.getId()).stream()
+                .filter(line -> line.getLineType() == BookingLineType.DISCOUNT && line.getAmount() != null)
+                .map(com.sni.bokaticowork.features.booking.model.BookingLine::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal previousResource = previous.subtract(discounts);
         BookingPricingCalculator.Price price = calculator.calculate(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(),
-                booking.getQuantity() == null ? 1 : booking.getQuantity(), null,
+                booking.getQuantity() == null ? 1 : booking.getQuantity(),
+                Boolean.TRUE.equals(booking.getUnitForced()) ? booking.getBookingUnit() : null,
                 contextResolver == null ? null : contextResolver.forOwner(
                         booking.getOwnerType() == null ? null : booking.getOwnerType().name(), booking.getOwnerCode()));
         booking.setBookingUnit(price.unit());
         booking.setUnitPrice(price.unitPrice());
+        BigDecimal resourceAmount = booking.getCoveredMinutes() != null && booking.getDurationMinutes() != null
+                ? BookingPartialCoverage.uncoveredAmount(price.amount(), booking.getDurationMinutes(), booking.getCoveredMinutes())
+                : price.amount();
         booking.setSubtotalAmount(price.amount());
-        booking.setTotalAmount(price.amount());
+        booking.setTotalAmount(resourceAmount.add(discounts).max(BigDecimal.ZERO));
         booking.setPriceTrace(BookingPricingCalculator.trace(price));
-        lineRepository.findByBookingId(booking.getId()).stream()
-                .filter(line -> line.getLineType() == BookingLineType.RESOURCE)
-                .forEach(line -> {
-                    line.setQuantity(price.quantity());
-                    line.setUnit(price.unit());
-                    line.setUnitPrice(price.unitPrice());
-                    line.setAmount(price.amount());
-                    lineRepository.save(line);
-                });
+        lineRepository.findByBookingId(booking.getId()).forEach(line -> {
+            if (line.getLineType() == BookingLineType.RESOURCE) {
+                line.setQuantity(price.quantity());
+                line.setUnit(price.unit());
+                line.setUnitPrice(price.unitPrice());
+                line.setAmount(resourceAmount);
+                lineRepository.save(line);
+            } else if (line.getLineType() == BookingLineType.ENTITLEMENT && booking.getEntitlementQuantity() != null) {
+                // Le droit retenu a pu changer avec la duree ou la ressource.
+                line.setQuantity(booking.getEntitlementQuantity());
+                line.setEntitlementCode(booking.getEntitlementCode());
+                lineRepository.save(line);
+            }
+        });
 
-        BigDecimal difference = price.amount().subtract(previous).setScale(4, RoundingMode.HALF_UP);
+        BigDecimal difference = resourceAmount.subtract(previousResource).setScale(4, RoundingMode.HALF_UP);
         String document = null;
-        boolean payable = booking.getPaymentMode() == null || booking.getPaymentMode().isPayable();
+        boolean payable = booking.getPaymentMode() == null || booking.getPaymentMode().isPayable()
+                || booking.getCoveredMinutes() != null;
         if (difference.signum() != 0 && payable && StringUtils.hasText(booking.getBillableNumber())) {
             document = adjustBilling(booking, difference, reason);
         }

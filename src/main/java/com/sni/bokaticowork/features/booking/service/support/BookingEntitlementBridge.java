@@ -108,6 +108,8 @@ public class BookingEntitlementBridge {
             throw new BadRequestException("Entitlement code is required for subscription or pass booking");
         }
         BigDecimal quantity = charge(booking).quantity();
+        // Lot B2 (ecart Bn-2) : la quantite retenue est gardee, pour rendre exactement ce qui a ete pris.
+        booking.setEntitlementQuantity(quantity);
         EntitlementOperationRequest request = operation(booking, quantity, "reserve",
                 "Booking confirmed", holdUntil(booking));
         // Sur la place d'un collaborateur, sa part, son plafond et le pot commun passent d'abord.
@@ -227,7 +229,9 @@ public class BookingEntitlementBridge {
         if (!StringUtils.hasText(booking.getEntitlementCode())) {
             return;
         }
-        entitlementService.release(operation(booking, charge(booking).quantity(), "release", "Booking cancelled"));
+        java.math.BigDecimal retained = booking.getEntitlementQuantity() != null ? booking.getEntitlementQuantity() : charge(booking).quantity();
+        entitlementService.release(operation(booking, retained, "release", "Booking cancelled"));
+        booking.setEntitlementQuantity(null);
         if (booking.getSubscriptionSeatId() != null) {
             seatGate.release(booking.getSubscriptionSeatId(), booking.getEntitlementCode(), REFERENCE_TYPE, booking.getBookingNumber());
         }
@@ -261,7 +265,16 @@ public class BookingEntitlementBridge {
     }
 
     private long minutes(Booking booking) {
+        // Lot B2 : en couverture partielle, seules les minutes couvertes sont prises sur le droit.
+        if (booking.getCoveredMinutes() != null) {
+            return booking.getCoveredMinutes();
+        }
         return booking.getDurationMinutes() == null ? 0L : booking.getDurationMinutes();
+    }
+
+    /** Lot B2 : le plan de la reservation autorise-t-il le depassement de ce droit. */
+    public boolean overageAllows(Booking booking) {
+        return overageAllowed(booking);
     }
 
     private ResourceBookingUnit displayUnit(EntitlementUnit unit, Booking booking) {

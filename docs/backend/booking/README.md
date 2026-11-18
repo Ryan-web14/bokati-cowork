@@ -47,13 +47,13 @@
 | N° | Écart | Preuve |
 | --- | --- | --- |
 | **Argent** | | |
-| Bn-1 | Le recalcul refacture la remise d'un code promo (déplacement au même prix : facture complémentaire égale à la remise) et perd l'unité imposée par l'équipe | `BookingRepricer.java:74-98` ; `BookingExtras.java:339` |
-| Bn-2 | Droit d'abonnement faussé après déplacement ou changement de ressource (réservé sur l'ancienne durée, libéré ou consommé sur la nouvelle ; ressource nouvelle peut-être non couverte) | `BookingEntitlementBridge.java:110, 171, 230` ; BSI:716-744 |
-| Bn-3 | Annuler une réservation payée en partie laisse le reste dû | `BookingCancellationRefundSupport.java:93-127` |
-| Bn-4 | Suppléments et compléments orphelins à l'annulation (factures à part jamais annulées ni remboursées) | `BookingExtras.java:385-393` ; `BookingRepricer.java:120-139` |
-| Bn-5 | Échec de remboursement seulement journalisé : réservation annulée sans remboursement ni alerte | BSI:888-892 |
-| Bn-6 | Deux sources de règles d'annulation : préavis de la politique de la ressource, pourcentage de la table globale | BSI:1146-1161 ; `BookingCancellationRefundSupport.java:103-107` |
-| Bn-7 | `totalAmount` de la réponse sans les suppléments | `BookingExtras.java:385-397` |
+| Bn-1 | **Réglé (B2)** Le recalcul refacture la remise d'un code promo (déplacement au même prix : facture complémentaire égale à la remise) et perd l'unité imposée par l'équipe | `BookingRepricer.java:74-98` ; `BookingExtras.java:339` |
+| Bn-2 | **Réglé (B2)** Droit d'abonnement faussé après déplacement ou changement de ressource (réservé sur l'ancienne durée, libéré ou consommé sur la nouvelle ; ressource nouvelle peut-être non couverte) | `BookingEntitlementBridge.java:110, 171, 230` ; BSI:716-744 |
+| Bn-3 | **Réglé (B2)** Annuler une réservation payée en partie laisse le reste dû | `BookingCancellationRefundSupport.java:93-127` |
+| Bn-4 | **Réglé (B2)** Suppléments et compléments orphelins à l'annulation (factures à part jamais annulées ni remboursées) | `BookingExtras.java:385-393` ; `BookingRepricer.java:120-139` |
+| Bn-5 | **Réglé (B2)** Échec de remboursement seulement journalisé : réservation annulée sans remboursement ni alerte | BSI:888-892 |
+| Bn-6 | **Réglé (B2)** Deux sources de règles d'annulation : préavis de la politique de la ressource, pourcentage de la table globale | BSI:1146-1161 ; `BookingCancellationRefundSupport.java:103-107` |
+| Bn-7 | Reporté au lot B7 (réponse complète) : `totalAmount` de la réponse sans les suppléments | `BookingExtras.java:385-397` |
 | Bn-8 | **Réglé (B1)** Retour d'une confirmation : la réservation reste « payée », blocage de portefeuille et tâches non rendus | BSI:837-851 |
 | **Cycle de vie** | | |
 | Bn-9 | **Réglé (B1)** `NO_SHOW` et `REJECTED` annulables (et `COMPLETED` en mode système) | BSI:853-862 |
@@ -93,7 +93,7 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 
 ## Avancement
 
-**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)).
+**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)), **B2 fait** ([lot-b2-argent.md](lot-b2-argent.md)), couverture partielle par les heures incluses comprise.
 
 ## Lots proposés
 

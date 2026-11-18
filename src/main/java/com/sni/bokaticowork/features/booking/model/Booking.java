@@ -192,6 +192,19 @@ public class Booking {
     @Column(name = "confirmed_at")
     private Instant confirmedAt;
 
+    /** Lot B2 (ecart Bn-1) : l'unite a ete imposee par l'equipe ; le recalcul la garde. */
+    @Column(name = "unit_forced", nullable = false)
+    @Builder.Default
+    private Boolean unitForced = Boolean.FALSE;
+
+    /** Lot B2 (ecart Bn-2) : quantite retenue sur le droit a la confirmation (rendue telle quelle). */
+    @Column(name = "entitlement_quantity", precision = 19, scale = 4)
+    private java.math.BigDecimal entitlementQuantity;
+
+    /** Lot B2 : minutes couvertes par le droit quand il ne couvre qu'une partie ; le reste est facture. */
+    @Column(name = "covered_minutes")
+    private Integer coveredMinutes;
+
     /** Lot B1 : le creneau est retenu (des la reservation en attente, plus seulement a la confirmation). */
     @Column(name = "slots_reserved", nullable = false)
     @Builder.Default
