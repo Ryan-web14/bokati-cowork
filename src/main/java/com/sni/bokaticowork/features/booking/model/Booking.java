@@ -192,6 +192,18 @@ public class Booking {
     @Column(name = "confirmed_at")
     private Instant confirmedAt;
 
+    /** Lot B2b : nombre de reports et de changements de ressource deja faits. */
+    @Column(name = "modification_count", nullable = false)
+    @Builder.Default
+    private Integer modificationCount = 0;
+
+    @Column(name = "last_modified_at")
+    private Instant lastModifiedAt;
+
+    /** Lot B2b : derniere modification, lisible (« Report du … au … · +5 000 XAF »). */
+    @Column(name = "last_modification", length = 300)
+    private String lastModification;
+
     /** Lot B2 (ecart Bn-1) : l'unite a ete imposee par l'equipe ; le recalcul la garde. */
     @Column(name = "unit_forced", nullable = false)
     @Builder.Default

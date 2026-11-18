@@ -117,5 +117,13 @@ public interface BookingService {
 
     BookingResponse reschedule(String bookingNumber, BookingRescheduleRequest request);
 
+    /** Lot B2b : ecart de prix d'un report, avant de le valider. */
+    com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse previewReschedule(
+            String bookingNumber, java.time.LocalDateTime newStartedAt, java.time.LocalDateTime newEndedAt);
+
+    /** Lot B2b : ecart de prix d'un changement de ressource, avant de le valider. */
+    com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse previewChangeResource(
+            String bookingNumber, String newResourceCode);
+
     BookingResponse changeResource(String bookingNumber, BookingChangeResourceRequest request);
 }

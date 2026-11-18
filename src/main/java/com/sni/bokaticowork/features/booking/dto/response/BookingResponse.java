@@ -56,6 +56,11 @@ public record BookingResponse(
         /** Ce qui est reserve, pret a afficher · « 2 places réservées sur 4 », « Espace entier · 3 participants (12 places) ». */
         String seatsLabel,
         /** Le lot multi-ressources dont la reservation fait partie · {@code null} pour une reservation seule. */
-        String batchNumber
+        String batchNumber,
+        /** Lot B2b : nombre de reports et de changements de ressource deja faits (0 : jamais modifiee). */
+        Integer modificationCount,
+        Instant lastModifiedAt,
+        /** Lot B2b : derniere modification, lisible (« Report au … · +5000 XAF (pièce …) »). */
+        String lastModification
 ) {
 }

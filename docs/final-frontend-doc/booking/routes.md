@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-72 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+74 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -31,6 +31,7 @@
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/approve` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-approve) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/cancel` | BOOKING:CANCEL | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-cancel) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/change-resource` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-change-resource) |
+| GET | `/sni/api/v1/bookings/{bookingNumber}/change-resource/preview` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-bookingnumber-change-resource-preview) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/check-in` | BOOKING:CHECKIN | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-check-in) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/check-out` | BOOKING:CHECKIN | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-check-out) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/complete` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-complete) |
@@ -44,6 +45,7 @@
 | DELETE | `/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-delete-sni-api-v1-bookings-bookingnumber-participants-participantid) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/reject` | BOOKING:CANCEL | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-reject) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/reschedule` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-reschedule) |
+| GET | `/sni/api/v1/bookings/{bookingNumber}/reschedule/preview` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-bookingnumber-reschedule-preview) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/start` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-start) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/transfer` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-transfer) |
 | POST | `/sni/api/v1/bookings/{number}/amenities` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-amenities) |

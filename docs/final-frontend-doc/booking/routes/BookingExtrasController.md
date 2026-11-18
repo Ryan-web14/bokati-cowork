@@ -218,6 +218,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `wholeResourceBooking` | booléen |  |  |
 | `seatsLabel` | texte |  |  |
 | `batchNumber` | texte |  |  |
+| `modificationCount` | entier |  |  |
+| `lastModifiedAt` | date-heure ISO 8601 UTC |  |  |
+| `lastModification` | texte |  |  |
 
 <a id="m-BookingLineResponse"></a>
 #### BookingLineResponse

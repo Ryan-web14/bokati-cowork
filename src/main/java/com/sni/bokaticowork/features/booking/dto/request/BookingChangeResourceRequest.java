@@ -6,5 +6,11 @@ public record BookingChangeResourceRequest(
         @NotBlank String newResourceCode,
         String actor,
         String note,
-        Boolean sendEmail
-) {}
+        Boolean sendEmail,
+        /** Lot B2b : le nouveau prix est plus eleve ; l'equipe confirme la hausse (complement a encaisser). */
+        Boolean acceptPriceChange
+) {
+    public BookingChangeResourceRequest(String newResourceCode, String actor, String note, Boolean sendEmail) {
+        this(newResourceCode, actor, note, sendEmail, null);
+    }
+}

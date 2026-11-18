@@ -130,7 +130,10 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 seats.resourceCapacity(),
                 seats.wholeResource(),
                 seats.label(),
-                booking.getBatchNumber()
+                booking.getBatchNumber(),
+                booking.getModificationCount() == null ? 0 : booking.getModificationCount(),
+                booking.getLastModifiedAt(),
+                booking.getLastModification()
         );
     }
 

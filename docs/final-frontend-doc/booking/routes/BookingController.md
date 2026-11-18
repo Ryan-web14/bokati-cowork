@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 40 route(s).
+Module [booking](../README.md) · 42 route(s).
 
 ## Routes
 
@@ -276,6 +276,19 @@ Module [booking](../README.md) · 40 route(s).
 | --- | --- | --- | --- | --- |
 | `bookingNumber` | chemin | `String` | oui |  |
 
+<a id="r-get-sni-api-v1-bookings-bookingnumber-change-resource-preview"></a>
+### GET /sni/api/v1/bookings/{bookingNumber}/change-resource/preview
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:READ`
+- Réponse : `BookingChangePreviewResponse`
+- Modèles : [BookingChangePreviewResponse](#m-BookingChangePreviewResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `previewChangeResource`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `bookingNumber` | chemin | `String` | oui |  |
+| `newResourceCode` | requête | `String` | oui |  |
+
 <a id="r-patch-sni-api-v1-bookings-bookingnumber-check-in"></a>
 ### PATCH /sni/api/v1/bookings/{bookingNumber}/check-in
 
@@ -442,6 +455,20 @@ Module [booking](../README.md) · 40 route(s).
 | --- | --- | --- | --- | --- |
 | `bookingNumber` | chemin | `String` | oui |  |
 
+<a id="r-get-sni-api-v1-bookings-bookingnumber-reschedule-preview"></a>
+### GET /sni/api/v1/bookings/{bookingNumber}/reschedule/preview
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:READ`
+- Réponse : `BookingChangePreviewResponse`
+- Modèles : [BookingChangePreviewResponse](#m-BookingChangePreviewResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `previewReschedule`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `bookingNumber` | chemin | `String` | oui |  |
+| `newStartedAt` | requête | `LocalDateTime` | oui |  |
+| `newEndedAt` | requête | `LocalDateTime` | oui |  |
+
 <a id="r-patch-sni-api-v1-bookings-bookingnumber-start"></a>
 ### PATCH /sni/api/v1/bookings/{bookingNumber}/start
 
@@ -518,6 +545,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `wholeResourceBooking` | booléen |  |  |
 | `seatsLabel` | texte |  |  |
 | `batchNumber` | texte |  |  |
+| `modificationCount` | entier |  |  |
+| `lastModifiedAt` | date-heure ISO 8601 UTC |  |  |
+| `lastModification` | texte |  |  |
 
 <a id="m-SubscriberType"></a>
 #### SubscriberType
@@ -557,6 +587,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `bookingUnit` | enum : `HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH` |  |  |
 | `participants` | [BookingParticipantRequest](#m-BookingParticipantRequest)[] |  |  |
 | `billingCompanyCode` | texte |  |  |
+| `channel` | enum : `PORTAL`, `TEAM`, `PHONE`, `DESK`, `EMAIL`, `WHATSAPP` |  |  |
+| `options` | [BookingOptionRequest](#m-BookingOptionRequest)[] |  |  |
 
 <a id="m-BookingBatchResponse-Summary"></a>
 #### BookingBatchResponse.Summary
@@ -853,6 +885,23 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `actor` | texte |  |  |
 | `note` | texte |  |  |
 | `sendEmail` | booléen |  |  |
+| `acceptPriceChange` | booléen |  |  |
+
+<a id="m-BookingChangePreviewResponse"></a>
+#### BookingChangePreviewResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `bookingNumber` | texte |  |  |
+| `currentAmount` | nombre décimal |  |  |
+| `newAmount` | nombre décimal |  |  |
+| `difference` | nombre décimal |  |  |
+| `change` | texte |  |  |
+| `currency` | texte |  |  |
+| `invoiced` | booléen |  |  |
+| `modificationCount` | entier |  |  |
+| `lastModifiedAt` | date-heure ISO 8601 UTC |  |  |
+| `lastModification` | texte |  |  |
 
 <a id="m-BookingEventResponse"></a>
 #### BookingEventResponse
@@ -912,6 +961,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `actor` | texte |  |  |
 | `note` | texte |  |  |
 | `sendEmail` | booléen |  |  |
+| `acceptPriceChange` | booléen |  |  |
 
 <a id="m-BookingTransferRequest"></a>
 #### BookingTransferRequest
@@ -942,6 +992,15 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `currency` | texte |  |  |
 | `entitlementCode` | texte |  |  |
 | `billableNumber` | texte |  |  |
+
+<a id="m-BookingOptionRequest"></a>
+#### BookingOptionRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `kind` | texte |  |  |
+| `code` | texte |  |  |
+| `quantity` | entier |  |  |
 
 <a id="m-BookingBatchResponse-BatchInvoice"></a>
 #### BookingBatchResponse.BatchInvoice

@@ -258,6 +258,11 @@ public class BookingServiceImpl implements BookingService {
         booking.setCheckInToken(generateCheckInToken());
         booking.setPolicyOverrideBy(staffActor);
         booking.setCreatedBy(sessionActor());
+        // Lot B2b : canal precise par l'equipe (telephone, accueil, courriel, WhatsApp).
+        if (request.channel() != null && request.channel() != com.sni.bokaticowork.features.booking.enums.BookingChannel.PORTAL
+                && isCurrentUserStaff()) {
+            booking.setChannel(request.channel());
+        }
         if (booking.getChannel() == null) {
             booking.setChannel(currentChannel());
         }
@@ -307,6 +312,22 @@ public class BookingServiceImpl implements BookingService {
 
         saveLines(booking, price);
         saveParticipants(booking, request);
+        // Lot B2b : options prises avec la reservation, sur la meme facture.
+        if (request.options() != null && !request.options().isEmpty() && bookingExtras != null) {
+            for (var option : request.options()) {
+                if (option == null || !StringUtils.hasText(option.code())) {
+                    continue;
+                }
+                String kind = option.kind() == null ? "SERVICE" : option.kind().trim().toUpperCase(java.util.Locale.ROOT);
+                if ("AMENITY".equals(kind)) {
+                    bookingExtras.addAmenity(booking.getBookingNumber(), option.code(), option.quantity());
+                } else if ("SERVICE".equals(kind)) {
+                    bookingExtras.addService(booking.getBookingNumber(), option.code(), option.quantity());
+                } else {
+                    throw new BadRequestException("Option invalide : SERVICE ou AMENITY");
+                }
+            }
+        }
         writeHistory(booking, null, BookingStatus.DRAFT, booking.getCreatedBy(), "Booking created");
         eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking created", "Booking was created", null);
 
@@ -730,6 +751,7 @@ public class BookingServiceImpl implements BookingService {
         }
         Resource resource = booking.getResource();
         validateForReschedule(resource, newStart, newEnd, bookingNumber, booking);
+        requirePriceDecision(booking, resource, newStart, newEnd, request.acceptPriceChange());
         // Lot B1 (ecart 3) : seuls des creneaux vraiment retenus sont rendus puis repris (la reprise
         // controle la capacite) ; une reservation qui ne retenait rien n'en prend pas.
         if (Boolean.TRUE.equals(booking.getSlotsReserved())) {
@@ -758,7 +780,10 @@ public class BookingServiceImpl implements BookingService {
         }
         // Lot R1 (D1) : nouveau prix ; ecart facture en complement ou rendu par un avoir.
         if (repricer != null) {
-            repricer.reprice(booking, "nouvel horaire " + newStart + " – " + newEnd);
+            markModified(booking, "Report au " + newStart + " – " + newEnd,
+                    repricer.reprice(booking, "nouvel horaire " + newStart + " – " + newEnd));
+        } else {
+            markModified(booking, "Report au " + newStart + " – " + newEnd, null);
         }
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, booking.getStatus(), actor(request.actor()), reason(request.note(), "Booking rescheduled"));
@@ -778,6 +803,7 @@ public class BookingServiceImpl implements BookingService {
         }
         Resource newResource = resourceService.getResourceForService(request.newResourceCode().trim());
         validateForReschedule(newResource, booking.getStartedAt(), booking.getEndedAt(), bookingNumber, booking);
+        requirePriceDecision(booking, newResource, booking.getStartedAt(), booking.getEndedAt(), request.acceptPriceChange());
         Resource oldResource = booking.getResource();
         boolean retained = Boolean.TRUE.equals(booking.getSlotsReserved());
         if (retained) {
@@ -806,9 +832,9 @@ public class BookingServiceImpl implements BookingService {
                     newResource.getCode(), null);
         }
         // Lot R1 (D1) : prix de la nouvelle ressource ; ecart facture en complement ou rendu par un avoir.
-        if (repricer != null) {
-            repricer.reprice(booking, "ressource " + oldResource.getCode() + " → " + newResource.getCode());
-        }
+        String change = "Ressource " + oldResource.getCode() + " → " + newResource.getCode();
+        markModified(booking, change, repricer == null ? null
+                : repricer.reprice(booking, "ressource " + oldResource.getCode() + " → " + newResource.getCode()));
         booking = bookingRepository.save(booking);
         eventWriter.write(booking, BookingEventType.BOOKING_RESOURCE_CHANGED,
                 "Resource changed from " + oldResource.getCode() + " to " + newResource.getCode(),
@@ -1229,6 +1255,117 @@ public class BookingServiceImpl implements BookingService {
         return memberRepositoryB1 == null || memberRepositoryB1.findByMemberIdAndDeletedFalse(code).isPresent();
     }
 
+    // ------------------------------------------------------------------ lot B2b : reports et modifications
+
+    /**
+     * Plus cher : la hausse doit etre confirmee par l'equipe ({@code acceptPriceChange}), car un
+     * complement sera facture et encaisse. Moins cher : un avoir suit, sans confirmation.
+     */
+    private void requirePriceDecision(Booking booking, Resource resource, LocalDateTime start, LocalDateTime end, Boolean accepted) {
+        if (repricer == null) {
+            return;
+        }
+        var preview = repricer.preview(booking, resource, start, end);
+        boolean payable = booking.getPaymentMode() == null || booking.getPaymentMode().isPayable() || booking.getCoveredMinutes() != null;
+        if (payable && preview.difference().signum() > 0 && !Boolean.TRUE.equals(accepted)) {
+            throw com.sni.bokaticowork.core.exception.customs.ConflictException.coded("PRICE_INCREASE_CONFIRMATION_REQUIRED",
+                    "Le nouveau prix est plus élevé : " + plain(preview.current()) + " → " + plain(preview.next()) + " "
+                            + booking.getCurrency() + " (+" + plain(preview.difference()) + "). Confirmez avec acceptPriceChange=true :"
+                            + " le complément sera facturé et à encaisser.");
+        }
+    }
+
+    /** Marque la reservation comme modifiee ; une hausse deja facturee laisse le complement a encaisser. */
+    private void markModified(Booking booking, String description, BookingRepricer.Outcome outcome) {
+        booking.setModificationCount((booking.getModificationCount() == null ? 0 : booking.getModificationCount()) + 1);
+        booking.setLastModifiedAt(Instant.now());
+        String priceNote = "";
+        if (outcome != null && outcome.difference() != null && outcome.difference().signum() != 0) {
+            priceNote = " · " + (outcome.difference().signum() > 0 ? "+" : "") + plain(outcome.difference()) + " " + booking.getCurrency()
+                    + (outcome.adjustmentDocument() == null ? "" : " (pièce " + outcome.adjustmentDocument() + ")");
+            if (outcome.difference().signum() > 0 && outcome.adjustmentDocument() != null) {
+                // Complement emis : la reservation n'est plus entierement reglee.
+                booking.setPaidAt(null);
+            }
+        }
+        String text = description + priceNote;
+        booking.setLastModification(text.length() > 300 ? text.substring(0, 300) : text);
+        informStaff(booking, text, outcome);
+    }
+
+    private com.sni.bokaticowork.features.portal.notification.service.AdminInAppNotifier adminNotifier;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAdminNotifier(@org.springframework.context.annotation.Lazy
+                          com.sni.bokaticowork.features.portal.notification.service.AdminInAppNotifier adminNotifier) {
+        this.adminNotifier = adminNotifier;
+    }
+
+    /**
+     * Lot B2b : l'equipe est informee de chaque report ou changement (alerte en direct dans le
+     * back-office) ; l'agent qui a cree la reservation recoit aussi une notification dans l'appli.
+     * Une hausse facturee est signalee « à encaisser ».
+     */
+    private void informStaff(Booking booking, String text, BookingRepricer.Outcome outcome) {
+        if (adminNotifier == null) {
+            return;
+        }
+        boolean toCollect = outcome != null && outcome.difference() != null && outcome.difference().signum() > 0;
+        String title = "Réservation " + booking.getBookingNumber() + " modifiée" + (toCollect ? " : complément à encaisser" : "");
+        String by = sessionActor();
+        String message = text + (StringUtils.hasText(by) ? " (par " + by + ")" : "");
+        try {
+            String payload = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of(
+                    "bookingNumber", booking.getBookingNumber(),
+                    "modificationCount", booking.getModificationCount(),
+                    "difference", outcome == null || outcome.difference() == null ? "0" : outcome.difference().toPlainString(),
+                    "adjustmentDocument", outcome == null || outcome.adjustmentDocument() == null ? "" : outcome.adjustmentDocument()));
+            adminNotifier.broadcastAlert("BOOKING_MODIFIED", "BOOKING", title, message, toCollect ? "WARNING" : "INFO", payload);
+            String creator = booking.getCreatedBy();
+            if (StringUtils.hasText(creator) && creator.contains("@") && !creator.equalsIgnoreCase(by)) {
+                adminNotifier.notify("BOOKING_MODIFIED", "BOOKING", booking.getBookingNumber(), creator, title,
+                        java.util.Map.of("bookingNumber", booking.getBookingNumber(), "message", message));
+            }
+        } catch (Exception ex) {
+            log.warn("Alerte de modification de {} non envoyee : {}", booking.getBookingNumber(), ex.getMessage());
+        }
+    }
+
+    private static String plain(java.math.BigDecimal value) {
+        return value == null ? "0" : value.stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse previewReschedule(
+            String bookingNumber, LocalDateTime newStart, LocalDateTime newEnd) {
+        Booking booking = getForService(bookingNumber);
+        if (newStart == null || newEnd == null || !newEnd.isAfter(newStart)) {
+            throw new BadRequestException("Le nouveau début et la nouvelle fin sont requis, la fin après le début");
+        }
+        return preview(booking, booking.getResource(), newStart, newEnd);
+    }
+
+    @Override
+    public com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse previewChangeResource(
+            String bookingNumber, String newResourceCode) {
+        Booking booking = getForService(bookingNumber);
+        Resource resource = resourceService.getResourceForService(newResourceCode.trim());
+        return preview(booking, resource, booking.getStartedAt(), booking.getEndedAt());
+    }
+
+    private com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse preview(
+            Booking booking, Resource resource, LocalDateTime start, LocalDateTime end) {
+        var preview = repricer == null ? null : repricer.preview(booking, resource, start, end);
+        java.math.BigDecimal current = preview == null ? booking.getTotalAmount() : preview.current();
+        java.math.BigDecimal next = preview == null ? booking.getTotalAmount() : preview.next();
+        java.math.BigDecimal difference = preview == null ? java.math.BigDecimal.ZERO : preview.difference();
+        return new com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse(booking.getBookingNumber(),
+                current, next, difference, difference.signum() > 0 ? "INCREASE" : difference.signum() < 0 ? "DECREASE" : "SAME",
+                booking.getCurrency(), StringUtils.hasText(booking.getBillableNumber()),
+                booking.getModificationCount() == null ? 0 : booking.getModificationCount(),
+                booking.getLastModifiedAt(), booking.getLastModification());
+    }
+
     // ------------------------------------------------------------------ lot B1 : expiration et reglement
 
     private BookingPaymentDue paymentDue;
@@ -1426,10 +1563,10 @@ public class BookingServiceImpl implements BookingService {
         ResourcePolicy policy = booking.getResource().getEffectivePolicy();
         // Lot B1 (ecart 10) : rien d'engage tant que la reservation attend (paiement ou approbation) ;
         // l'equipe annule hors regle (elle porte la decision, tracee dans l'historique).
+        // Lot B2b : la politique d'annulation de la ressource s'applique a tous, equipe comprise.
         if (policy == null || booking.getStatus() == BookingStatus.DRAFT
                 || booking.getStatus() == BookingStatus.PENDING_PAYMENT
-                || booking.getStatus() == BookingStatus.PENDING_APPROVAL
-                || isCurrentUserStaff()) {
+                || booking.getStatus() == BookingStatus.PENDING_APPROVAL) {
             return;
         }
         if (booking.getPaymentMode().isPrepaid() && walletSettlement.hasPendingHold(booking)) {

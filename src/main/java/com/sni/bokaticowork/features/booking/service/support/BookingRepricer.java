@@ -70,6 +70,30 @@ public class BookingRepricer {
     public record Outcome(BigDecimal previous, BigDecimal current, BigDecimal difference, String adjustmentDocument) {
     }
 
+    /** Lot B2b : montant actuel et nouveau montant de la ressource pour une autre plage ou ressource, sans rien ecrire. */
+    public record Preview(BigDecimal current, BigDecimal next, BigDecimal difference) {
+    }
+
+    public Preview preview(Booking booking, com.sni.bokaticowork.features.ressource.model.Resource resource,
+                           java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        BigDecimal previous = booking.getTotalAmount() == null ? BigDecimal.ZERO : booking.getTotalAmount();
+        BigDecimal discounts = lineRepository.findByBookingId(booking.getId()).stream()
+                .filter(line -> line.getLineType() == BookingLineType.DISCOUNT && line.getAmount() != null)
+                .map(com.sni.bokaticowork.features.booking.model.BookingLine::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal current = previous.subtract(discounts);
+        BookingPricingCalculator.Price price = calculator.calculate(resource, start, end,
+                booking.getQuantity() == null ? 1 : booking.getQuantity(),
+                Boolean.TRUE.equals(booking.getUnitForced()) ? booking.getBookingUnit() : null,
+                contextResolver == null ? null : contextResolver.forOwner(
+                        booking.getOwnerType() == null ? null : booking.getOwnerType().name(), booking.getOwnerCode()));
+        int duration = (int) java.time.Duration.between(start, end).toMinutes();
+        BigDecimal next = booking.getCoveredMinutes() != null
+                ? BookingPartialCoverage.uncoveredAmount(price.amount(), duration, Math.min(booking.getCoveredMinutes(), duration))
+                : price.amount();
+        return new Preview(current, next, next.subtract(current).setScale(4, RoundingMode.HALF_UP));
+    }
+
     public Outcome reprice(Booking booking, String reason) {
         BigDecimal previous = booking.getTotalAmount() == null ? BigDecimal.ZERO : booking.getTotalAmount();
         // Lot B2 (ecart Bn-1) : les remises (lignes DISCOUNT) restent acquises ; seul le prix de la

@@ -203,6 +203,22 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.transfer(bookingNumber, request));
     }
 
+    /** Lot B2b : apercu d'un report (ancien et nouveau prix, ecart, modifications deja faites). */
+    @org.springframework.web.bind.annotation.GetMapping("/{bookingNumber}/reschedule/preview")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse> previewReschedule(
+            @PathVariable String bookingNumber,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime newStartedAt,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime newEndedAt) {
+        return ResponseEntity.ok(bookingService.previewReschedule(bookingNumber, newStartedAt, newEndedAt));
+    }
+
+    /** Lot B2b : apercu d'un changement de ressource. */
+    @org.springframework.web.bind.annotation.GetMapping("/{bookingNumber}/change-resource/preview")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse> previewChangeResource(
+            @PathVariable String bookingNumber, @RequestParam String newResourceCode) {
+        return ResponseEntity.ok(bookingService.previewChangeResource(bookingNumber, newResourceCode));
+    }
+
     @PatchMapping("/{bookingNumber}/reschedule")
     public ResponseEntity<BookingResponse> reschedule(@PathVariable String bookingNumber,
                                                       @Valid @RequestBody BookingRescheduleRequest request) {

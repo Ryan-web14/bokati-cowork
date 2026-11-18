@@ -49,10 +49,28 @@ public record CreateBookingRequest(
          * L'organisation pour le compte de laquelle le membre reserve · le choix « pour
          * l'organisation » du mode au choix. Vide : la facture suit le mode du rattachement.
          */
-        String billingCompanyCode
+        String billingCompanyCode,
+        /** Lot B2b : canal (PHONE, DESK, EMAIL, WHATSAPP pour l'equipe) ; vide : deduit de l'appel. */
+        com.sni.bokaticowork.features.booking.enums.BookingChannel channel,
+        /** Lot B2b : options prises avec la reservation (services du catalogue, equipements optionnels). */
+        @Valid List<BookingOptionRequest> options
 ) {
         @com.fasterxml.jackson.annotation.JsonCreator
         public CreateBookingRequest {
+        }
+
+        /** Sans canal ni options : forme d'avant le lot B2b. */
+        public CreateBookingRequest(String resourceCode, String memberId, String customerId, String businessCode,
+                                    String email, String phone, Boolean walkIn, String contactName, String contactEmail,
+                                    String contactPhone, String idempotencyKey, String holdNumber, LocalDateTime startedAt,
+                                    LocalDateTime endedAt, Integer quantity, BookingPaymentMode paymentMode,
+                                    Boolean confirmImmediately, Boolean sendEmail, String notes, String metadataJson,
+                                    ResourceBookingUnit bookingUnit, List<BookingParticipantRequest> participants,
+                                    String billingCompanyCode) {
+                this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
+                        contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
+                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, billingCompanyCode,
+                        null, null);
         }
 
         /** Sans organisation choisie · la facture suit le mode du rattachement du membre. */
@@ -64,7 +82,7 @@ public record CreateBookingRequest(
                                     ResourceBookingUnit bookingUnit, List<BookingParticipantRequest> participants) {
                 this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
                         contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
-                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, null);
+                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, null, null, null);
         }
 
         public BookingIdentityLookup identityLookup() {

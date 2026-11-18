@@ -284,3 +284,15 @@ Quotas du public : `maxActiveBookings` compte les réservations `CONFIRMED`, `IN
 - Paramètre `sort` ignoré par `GET /bookings` (`BookingServiceImpl.java:303`).
 - Plafond de 3 requêtes par 10 minutes sur tout chemin `/public/bookings/check-in/scanner*`, lecture de la page d'installation comprise (`src/main/java/com/sni/bokaticowork/security/ratelimit/RateLimitRules.java:134-136`).
 - Messages d'erreur majoritairement en anglais.
+
+## Reports, écart de prix, options (lot B2b, 18/11/2026)
+
+- Avant un report ou un changement de ressource, appeler l'aperçu (`GET /bookings/{numéro}/reschedule/preview` ou `/change-resource/preview`) et montrer l'ancien prix, le nouveau et l'écart.
+- Plus cher (`change: INCREASE`) : demander confirmation, puis envoyer `acceptPriceChange: true`. Sans elle, l'API répond 409 `PRICE_INCREASE_CONFIRMATION_REQUIRED`. Si la réservation est facturée, le complément est à encaisser (bouton « Encaisser »).
+- Moins cher : pas de confirmation, un avoir suit.
+- Réponse de la réservation : `modificationCount`, `lastModifiedAt`, `lastModification` ; afficher un badge « Modifiée N fois ».
+- Équipe : écouter l'alerte `BOOKING_MODIFIED` (module `BOOKING`) sur le canal des alertes admin ; l'auteur de la réservation la voit aussi dans ses notifications.
+- L'annulation suit la politique de la ressource pour tous, équipe comprise.
+- Création : `options: [{ kind: "SERVICE" | "AMENITY", code, quantity }]` et `channel` (PHONE, DESK, EMAIL, WHATSAPP) pour l'équipe.
+
+Détail : [lot B2b](../../backend/booking/lot-b2b-reports-options.md).
