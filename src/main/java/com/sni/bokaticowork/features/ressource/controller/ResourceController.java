@@ -109,6 +109,18 @@ public class ResourceController {
         this.ical = ical;
     }
 
+    /** Lot R5c : participants compris, prix d'un participant supplementaire, caution. */
+    public record SalesSettings(Integer includedParticipants, Integer extraParticipantPrice, Integer depositAmount) {
+    }
+
+    /** Lot R5c : reglages de vente de la ressource ; un champ vide efface la valeur. */
+    @PutMapping("/{code}/sales-settings")
+    @Audited(module = "RESOURCE", action = "UPDATE_SALES_SETTINGS", ressource = "resource")
+    public ResponseEntity<ResourceResponse> salesSettings(@PathVariable String code, @RequestBody SalesSettings request) {
+        resourceService.updateSalesSettings(code, request.includedParticipants(), request.extraParticipantPrice(), request.depositAmount());
+        return ResponseEntity.ok(resourceService.getResource(code));
+    }
+
     /** Lot R5b : « Trouver une salle » par besoin, avec alternatives. */
     @PostMapping("/find")
     public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceLocationResponses.FindResult> find(

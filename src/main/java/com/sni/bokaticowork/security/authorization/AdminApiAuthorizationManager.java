@@ -446,6 +446,10 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("/approve")) return permission("INVENTORY", "APPROVE");
             return permission("INVENTORY", actionFor("INVENTORY", method));
         }
+        // Lot R5c : reserver un lot de ressources est une creation de reservation.
+        if (path.startsWith("/resource-bundles/") && path.endsWith("/book")) {
+            return permission("BOOKING", "CREATE");
+        }
         if (path.startsWith("/resources") || path.startsWith("/resource-")) {
             if (path.contains("price") || path.contains("pricing")) return permission("RESOURCE", "PRICE");
             // Lot R0 : voir la galerie est une lecture ; seule sa modification demande RESOURCE:GALLERY.

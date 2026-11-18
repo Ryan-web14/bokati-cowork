@@ -97,6 +97,18 @@ public class Resource {
     @Column(name = "plan_y", precision = 5, scale = 2)
     private java.math.BigDecimal planY;
 
+    /** Lot R5c : participants compris dans le prix ; au-dela, le prix par participant. */
+    @Column(name = "included_participants")
+    private Integer includedParticipants;
+
+    /** Lot R5c : prix d'un participant supplementaire (vide : offert). */
+    @Column(name = "extra_participant_price")
+    private Integer extraParticipantPrice;
+
+    /** Lot R5c : caution demandee a chaque reservation (vide : aucune). */
+    @Column(name = "deposit_amount")
+    private Integer depositAmount;
+
     /** Lot R5b : jeton du flux d'abonnement iCalendar (coupe par defaut). */
     @Column(name = "ical_token", length = 60)
     private String icalToken;

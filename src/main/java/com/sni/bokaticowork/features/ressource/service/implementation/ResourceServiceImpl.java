@@ -225,6 +225,20 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public void updateSalesSettings(String code, Integer includedParticipants, Integer extraParticipantPrice, Integer depositAmount) {
+        for (Integer value : new Integer[]{includedParticipants, extraParticipantPrice, depositAmount}) {
+            if (value != null && value < 0) {
+                throw new BadRequestException("Les réglages de vente sont positifs ou nuls");
+            }
+        }
+        Resource resource = getResourceForService(code);
+        resource.setIncludedParticipants(includedParticipants);
+        resource.setExtraParticipantPrice(extraParticipantPrice);
+        resource.setDepositAmount(depositAmount);
+        resourceRepository.save(resource);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public PaginatedResponse<ResourceResponse> listDetailed(ResourceSearchCriteria criteria, Pageable pageable) {
         Page<ResourceResponse> page = resourceRepository.findAll(ResourceSpecification.search(criteria), pageable)

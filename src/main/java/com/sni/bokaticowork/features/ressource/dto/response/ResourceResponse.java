@@ -27,6 +27,10 @@ public class ResourceResponse {
     private String floorCode;
     private java.math.BigDecimal planX;
     private java.math.BigDecimal planY;
+    /** Lot R5c : vente. */
+    private Integer includedParticipants;
+    private Integer extraParticipantPrice;
+    private Integer depositAmount;
     private String status;
     private Boolean bookingEnabled;
     private Boolean portalVisible;

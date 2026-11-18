@@ -26,5 +26,11 @@ public class UpdateResourcePolicyRequest {
 
     /** Lot R5a : reservation au plus tant de jours a l'avance (vide : l'horizon des creneaux). */
     private Integer maxAdvanceDays;
+
+    /** Lot R5c : tolerance de depassement au depart, en minutes ; au-dela, le depassement est facture (vide : jamais). */
+    private Integer overrunGraceMinutes;
+
+    /** Lot R5c : frais de non-presentation (vide : aucun). */
+    private Integer noShowFee;
     private Boolean active;
 }

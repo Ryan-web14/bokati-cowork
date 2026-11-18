@@ -60,6 +60,10 @@ public class BookingLine {
     @Column(name = "billable_number", length = 80)
     private String billableNumber;
 
+    /** Lot R5c : code du service, de l'equipement ou du code promo. */
+    @Column(name = "item_code", length = 80)
+    private String itemCode;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

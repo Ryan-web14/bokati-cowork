@@ -44,6 +44,9 @@ public interface ResourceService {
     PaginatedResponse<ResourceSummaryResponse> listSummaryByPolicy(String policyCode, Pageable pageable);
     List<ResourceSummaryResponse> basicSearch(String query);
 
+    /** Lot R5c : reglages de vente (participants compris, prix d'un participant en plus, caution). */
+    void updateSalesSettings(String code, Integer includedParticipants, Integer extraParticipantPrice, Integer depositAmount);
+
     /** Lot R4 : recherche simple paginee. */
     PaginatedResponse<ResourceSummaryResponse> basicSearch(String query, org.springframework.data.domain.Pageable pageable);
 

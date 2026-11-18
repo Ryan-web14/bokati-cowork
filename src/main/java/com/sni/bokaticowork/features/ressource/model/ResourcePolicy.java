@@ -67,6 +67,14 @@ public class ResourcePolicy {
     @Column(name = "max_advance_days")
     private Integer maxAdvanceDays;
 
+    /** Lot R5c : tolerance de depassement au depart, en minutes ; au-dela, facture (vide : jamais). */
+    @Column(name = "overrun_grace_minutes")
+    private Integer overrunGraceMinutes;
+
+    /** Lot R5c : frais de non-presentation (vide : aucun). */
+    @Column(name = "no_show_fee")
+    private Integer noShowFee;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

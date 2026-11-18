@@ -626,6 +626,10 @@ public class BookingServiceImpl implements BookingService {
         }
         booking.setCheckedOutAt(Instant.now());
         booking = bookingRepository.save(booking);
+        // Lot R5c : depassement mesure au depart, selon la politique.
+        if (bookingExtras != null) {
+            bookingExtras.onCheckOut(booking);
+        }
         eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_OUT, "Booking checked out", request == null ? null : request.note(), null,
                 emailRequested(request == null ? null : request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_OUT, new BookingStatusChangeRequest(request == null ? null : request.actor(), request == null ? null : request.note(), request == null ? null : request.sendEmail()));
@@ -885,6 +889,13 @@ public class BookingServiceImpl implements BookingService {
         return booking;
     }
 
+    private com.sni.bokaticowork.features.booking.service.support.BookingExtras bookingExtras;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setBookingExtras(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingExtras bookingExtras) {
+        this.bookingExtras = bookingExtras;
+    }
+
     private Booking markNoShowInternal(Booking booking, BookingStatusChangeRequest request) {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be marked as no-show");
@@ -896,6 +907,10 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.NO_SHOW);
         booking.setCompletedAt(Instant.now());
         booking = bookingRepository.save(booking);
+        // Lot R5c : frais de non-presentation de la politique.
+        if (bookingExtras != null) {
+            bookingExtras.onNoShow(booking);
+        }
         writeHistory(booking, from, BookingStatus.NO_SHOW, changedBy(request), reason(request, "No-show"));
         eventWriter.write(booking, BookingEventType.BOOKING_NO_SHOW, "Booking no-show", "Booking was marked as no-show", null,
                 emailRequested(request));
