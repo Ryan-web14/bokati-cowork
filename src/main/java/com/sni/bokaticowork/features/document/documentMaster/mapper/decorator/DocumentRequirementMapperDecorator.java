@@ -29,5 +29,15 @@ public abstract class DocumentRequirementMapperDecorator implements DocumentRequ
     private void applyDefaults(DocumentRequirement entity) {
         if (entity.getRequired() == null) entity.setRequired(Boolean.TRUE);
         if (entity.getActive() == null) entity.setActive(Boolean.TRUE);
+        if (entity.getAlternativeGroup() != null) {
+            String group = entity.getAlternativeGroup().trim().toUpperCase(java.util.Locale.ROOT);
+            entity.setAlternativeGroup(group.isEmpty() ? null : group);
+            if (group.isEmpty()) {
+                entity.setAlternativeGroupLabel(null);
+            }
+        }
+        if (entity.getAlternativeGroupLabel() != null && entity.getAlternativeGroupLabel().isBlank()) {
+            entity.setAlternativeGroupLabel(null);
+        }
     }
 }

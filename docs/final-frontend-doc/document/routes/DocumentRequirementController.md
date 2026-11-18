@@ -111,6 +111,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `required` | booléen |  |  |
 | `active` | booléen |  |  |
 | `kycLevel` | entier |  |  |
+| `alternativeGroup` | texte |  |  |
+| `alternativeGroupLabel` | texte |  |  |
 
 <a id="m-DocumentOwnerType"></a>
 #### DocumentOwnerType
@@ -130,3 +132,5 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `required` | booléen |  |  |
 | `active` | booléen |  |  |
 | `kycLevel` | entier |  | min `1`, max `4` |
+| `alternativeGroup` | texte |  |  |
+| `alternativeGroupLabel` | texte |  |  |

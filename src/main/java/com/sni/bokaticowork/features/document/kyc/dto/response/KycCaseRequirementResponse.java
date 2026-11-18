@@ -13,4 +13,7 @@ public class KycCaseRequirementResponse {
     private Boolean required;
     private Boolean requiresBackSide;
     private Boolean active;
+    /** Groupe d'alternatives (OU) et son libelle ; nuls pour une exigence seule. */
+    private String alternativeGroup;
+    private String alternativeGroupLabel;
 }

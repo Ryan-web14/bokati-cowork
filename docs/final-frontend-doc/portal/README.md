@@ -206,3 +206,7 @@ Règles propres à chaque domaine : dans les fichiers de parcours.
 20. **Niveau KYC du plan masqué** : la souscription applique le niveau KYC exigé par le plan (`SubscriptionCreationOperator`, `SubscriberKycLevelGuard`) alors que le détail de plan du portail le rend toujours `null` (écart 14) : l'écran ne peut pas prévenir le refus.
 
 - Devis, proformas et réclamations (lot C16 de la facturation) : [devis-et-reclamations.md](devis-et-reclamations.md).
+
+## Pièces KYC au choix (17/11/2026)
+
+Chaque pièce demandée au membre (`requirements` du statut et de l'avancement KYC) porte `alternativeGroup` et `alternativeGroupLabel` : les pièces d'un même groupe sont **au choix** (par exemple « Pièce d'identité » : carte nationale ou passeport). Les présenter regroupées sous le libellé, avec « une au choix ». Dès qu'une pièce du groupe est déposée, les autres passent `required = false` et `satisfiedByAlternative = true` : ne plus les demander. L'avancement (`completionPercent`) compte un groupe une seule fois. `missingDocumentTypeCodes` donne un groupe vide sous la forme `CODE_A|CODE_B`.

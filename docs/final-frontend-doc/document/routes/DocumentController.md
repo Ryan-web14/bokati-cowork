@@ -625,6 +625,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `status` | enum : `PENDING`, `VERIFIED`, `REJECTED`, `EXPIRED` |  |  |
 | `documentCode` | texte |  |  |
 | `backDocumentCode` | texte |  |  |
+| `alternativeGroup` | texte |  |  |
+| `alternativeGroupLabel` | texte |  |  |
+| `satisfiedByAlternative` | booléen |  |  |
 
 <a id="m-ZipImportResponse-ZipImportItem"></a>
 #### ZipImportResponse.ZipImportItem
