@@ -405,39 +405,23 @@ public class KycAutomationServiceImpl implements KycAutomationService {
                 : filteredRequirements(kycCase.getOwnerType(), null, resolveBusinessLegalForm(kycCase.getOwnerType(), kycCase.getOwnerId()));
         List<KycDocument> documents = kycDocumentRepository.findAllByKycCaseOrderByIdAsc(kycCase);
 
-        boolean hasRequiredRequirements = requirements.stream().anyMatch(item -> Boolean.TRUE.equals(item.getRequired()));
-        boolean allRequiredPresent = requirements.stream()
-                .filter(item -> Boolean.TRUE.equals(item.getRequired()))
-                .allMatch(req -> documents.stream().anyMatch(doc -> req.getDocumentTypeCode().equalsIgnoreCase(doc.getDocumentType())));
-        boolean anyRejected = documents.stream().anyMatch(doc -> doc.getStatus() == KycDocumentVerificationStatus.REJECTED);
-        boolean allVerified = !documents.isEmpty()
-                && requirements.stream()
-                .filter(item -> Boolean.TRUE.equals(item.getRequired()))
-                .allMatch(req -> documents.stream().anyMatch(doc ->
-                        req.getDocumentTypeCode().equalsIgnoreCase(doc.getDocumentType())
-                                && doc.getStatus() == KycDocumentVerificationStatus.VERIFIED
-                                && backSideVerified(doc)));
+        // Exigences en ET / OU (17/11/2026) : calcul commun avec la fiche et le portail.
+        com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementSlots.Evaluation evaluation =
+                com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementSlots.evaluate(requirements, documents,
+                        type -> documents.stream().filter(doc -> type.equalsIgnoreCase(doc.getDocumentType()))
+                                .map(KycDocument::getDocument).filter(java.util.Objects::nonNull).findFirst()
+                                .map(doc -> doc.getDocumentType() != null && Boolean.TRUE.equals(doc.getDocumentType().getRequiresBackSide()))
+                                .orElse(false),
+                        KycAutomationServiceImpl::backSideVerified);
 
         KycCaseStatus targetStatus;
-        if (!hasRequiredRequirements) {
-            // Pieces toutes facultatives (« carte ou passeport ») : au moins une verifiee, aucune
-            // refusee. Avant : APPROVED d'office, meme sans aucune piece.
-            if (requirements.isEmpty()) {
-                targetStatus = KycCaseStatus.APPROVED;
-            } else if (anyRejected) {
-                targetStatus = KycCaseStatus.PENDING_CORRECTION;
-            } else if (documents.stream().anyMatch(doc -> doc.getStatus() == KycDocumentVerificationStatus.VERIFIED && backSideVerified(doc))) {
-                targetStatus = KycCaseStatus.APPROVED;
-            } else if (!documents.isEmpty()) {
-                targetStatus = KycCaseStatus.UNDER_REVIEW;
-            } else {
-                targetStatus = KycCaseStatus.IN_PROGRESS;
-            }
-        } else if (anyRejected) {
-            targetStatus = KycCaseStatus.PENDING_CORRECTION;
-        } else if (allVerified) {
+        if (requirements.isEmpty()) {
             targetStatus = KycCaseStatus.APPROVED;
-        } else if (allRequiredPresent) {
+        } else if (evaluation.blockingRejection()) {
+            targetStatus = KycCaseStatus.PENDING_CORRECTION;
+        } else if (evaluation.allVerified()) {
+            targetStatus = KycCaseStatus.APPROVED;
+        } else if (evaluation.complete()) {
             targetStatus = KycCaseStatus.UNDER_REVIEW;
         } else {
             targetStatus = KycCaseStatus.IN_PROGRESS;

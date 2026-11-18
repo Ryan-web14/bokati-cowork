@@ -80,6 +80,9 @@ public class ClientKycService {
         // Once the case is approved the dossier is complete: nothing is required or missing anymore.
         boolean approved = kycCase.getStatus() == KycCaseStatus.APPROVED;
         List<KycDocument> pieces = kycDocumentRepository.findAllByKycCaseOrderByIdAsc(kycCase);
+        // Exigences en ET / OU : une piece deja deposee dans le groupe rend les autres facultatives.
+        com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementSlots.Evaluation evaluation =
+                com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementSlots.evaluate(reqs, pieces, type -> false, doc -> true);
         return reqs.stream().map(r -> {
             KycDocument match = pieces.stream()
                     .filter(piece -> r.getDocumentTypeCode().equalsIgnoreCase(piece.getDocumentType()))
@@ -89,7 +92,11 @@ public class ClientKycService {
             return ClientKycRequirementResponse.builder()
                     .documentTypeCode(r.getDocumentTypeCode())
                     .documentTypeName(r.getDocumentTypeName())
-                    .required(!approved && Boolean.TRUE.equals(r.getRequired()))
+                    .required(!approved && Boolean.TRUE.equals(r.getRequired())
+                            && !(match == null && evaluation.satisfiedByAlternative(r.getDocumentTypeCode(), pieces)))
+                    .alternativeGroup(r.getAlternativeGroup())
+                    .alternativeGroupLabel(r.getAlternativeGroupLabel())
+                    .satisfiedByAlternative(match == null && evaluation.satisfiedByAlternative(r.getDocumentTypeCode(), pieces))
                     .requiresBackSide(docType != null ? docType.getRequiresBackSide() : Boolean.FALSE)
                     .status(match != null && match.getStatus() != null ? match.getStatus().name() : null)
                     .documentCode(match != null && match.getDocument() != null ? match.getDocument().getCode() : null)
@@ -335,7 +342,10 @@ public class ClientKycService {
                 .map(r -> ClientKycRequirementResponse.builder()
                         .documentTypeCode(r.getDocumentTypeCode())
                         .documentTypeName(r.getDocumentTypeName())
-                        .required(!approved && r.isRequired())
+                        .required(!approved && r.isRequired() && !r.isSatisfiedByAlternative())
+                        .alternativeGroup(r.getAlternativeGroup())
+                        .alternativeGroupLabel(r.getAlternativeGroupLabel())
+                        .satisfiedByAlternative(r.isSatisfiedByAlternative())
                         .requiresBackSide(r.getRequiresBackSide())
                         .status(r.getStatus() != null ? r.getStatus().name() : null)
                         .documentCode(r.getDocumentCode())
@@ -362,11 +372,26 @@ public class ClientKycService {
                 .build();
     }
 
+    /** Avancement par place : un groupe d'alternatives compte une fois, rempli par l'une de ses pieces. */
     private int computeCompletionPercent(List<ClientKycRequirementResponse> requirements) {
-        long totalRequired = requirements.stream().filter(ClientKycRequirementResponse::isRequired).count();
-        if (totalRequired == 0) return 100;
-        long verified = requirements.stream()
-                .filter(r -> r.isRequired() && "VERIFIED".equals(r.getStatus())).count();
-        return (int) (verified * 100 / totalRequired);
+        java.util.Map<String, List<ClientKycRequirementResponse>> slots = slotsOf(requirements);
+        long total = slots.size();
+        if (total == 0) return 100;
+        long verified = slots.values().stream()
+                .filter(members -> members.stream().anyMatch(r -> "VERIFIED".equals(r.getStatus()))).count();
+        return (int) (verified * 100 / total);
+    }
+
+    /** Places obligatoires : une exigence seule, ou un groupe dont au moins une piece est attendue ou deja deposee. */
+    private static java.util.Map<String, List<ClientKycRequirementResponse>> slotsOf(List<ClientKycRequirementResponse> requirements) {
+        java.util.Map<String, List<ClientKycRequirementResponse>> slots = new java.util.LinkedHashMap<>();
+        for (ClientKycRequirementResponse r : requirements) {
+            if (!r.isRequired() && !r.isSatisfiedByAlternative() && !(r.getAlternativeGroup() != null && r.getStatus() != null)) {
+                continue;
+            }
+            String key = r.getAlternativeGroup() != null ? "G:" + r.getAlternativeGroup() : "T:" + r.getDocumentTypeCode();
+            slots.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(r);
+        }
+        return slots;
     }
 }

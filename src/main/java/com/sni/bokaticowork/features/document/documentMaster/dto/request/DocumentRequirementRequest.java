@@ -28,4 +28,10 @@ public class DocumentRequirementRequest {
     @jakarta.validation.constraints.Min(1)
     @jakarta.validation.constraints.Max(4)
     private Integer kycLevel;
+
+    /** Groupe d'alternatives : meme groupe = OU (une piece suffit) ; vide = exigence seule. Chaine vide pour le retirer. */
+    private String alternativeGroup;
+    /** Libelle du groupe pour le titulaire. */
+    private String alternativeGroupLabel;
+
 }

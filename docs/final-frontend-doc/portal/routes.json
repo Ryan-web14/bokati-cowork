@@ -8192,6 +8192,15 @@
     },
     "backDocumentCode": {
      "type": "string"
+    },
+    "alternativeGroup": {
+     "type": "string"
+    },
+    "alternativeGroupLabel": {
+     "type": "string"
+    },
+    "satisfiedByAlternative": {
+     "type": "boolean"
     }
    }
   },

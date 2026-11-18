@@ -569,6 +569,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `status` | enum : `PENDING`, `VERIFIED`, `REJECTED`, `EXPIRED` |  |  |
 | `documentCode` | texte |  |  |
 | `backDocumentCode` | texte |  |  |
+| `alternativeGroup` | texte |  |  |
+| `alternativeGroupLabel` | texte |  |  |
+| `satisfiedByAlternative` | booléen |  |  |
 
 <a id="m-KycCaseNoteResponse"></a>
 #### KycCaseNoteResponse
@@ -611,6 +614,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `required` | booléen |  |  |
 | `requiresBackSide` | booléen |  |  |
 | `active` | booléen |  |  |
+| `alternativeGroup` | texte |  |  |
+| `alternativeGroupLabel` | texte |  |  |
 
 <a id="m-KycCaseRequirementRequest"></a>
 #### KycCaseRequirementRequest
@@ -620,6 +625,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `documentTypeCode` | texte | oui | longueur min `1` |
 | `documentTypeName` | texte |  |  |
 | `required` | booléen |  |  |
+| `alternativeGroup` | texte |  |  |
+| `alternativeGroupLabel` | texte |  |  |
 
 <a id="m-KycRiskLevelRequest"></a>
 #### KycRiskLevelRequest

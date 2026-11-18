@@ -7082,6 +7082,12 @@
     "kycLevel": {
      "type": "integer",
      "format": "int32"
+    },
+    "alternativeGroup": {
+     "type": "string"
+    },
+    "alternativeGroupLabel": {
+     "type": "string"
     }
    }
   },
@@ -7130,6 +7136,12 @@
      "minimum": 1,
      "type": "integer",
      "format": "int32"
+    },
+    "alternativeGroup": {
+     "type": "string"
+    },
+    "alternativeGroupLabel": {
+     "type": "string"
     }
    }
   },
@@ -9664,6 +9676,15 @@
     },
     "backDocumentCode": {
      "type": "string"
+    },
+    "alternativeGroup": {
+     "type": "string"
+    },
+    "alternativeGroupLabel": {
+     "type": "string"
+    },
+    "satisfiedByAlternative": {
+     "type": "boolean"
     }
    }
   },
@@ -9747,6 +9768,12 @@
     },
     "active": {
      "type": "boolean"
+    },
+    "alternativeGroup": {
+     "type": "string"
+    },
+    "alternativeGroupLabel": {
+     "type": "string"
     }
    }
   },
@@ -9765,6 +9792,12 @@
     },
     "required": {
      "type": "boolean"
+    },
+    "alternativeGroup": {
+     "type": "string"
+    },
+    "alternativeGroupLabel": {
+     "type": "string"
     }
    }
   },
