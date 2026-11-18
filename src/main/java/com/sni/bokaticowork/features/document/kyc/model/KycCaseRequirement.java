@@ -41,4 +41,15 @@ public class KycCaseRequirement {
     @Builder.Default
     @Column(name = "active", nullable = false)
     private Boolean active = Boolean.TRUE;
+
+    /**
+     * Groupe d'alternatives (17/11/2026) : les exigences de meme groupe valent OU (une piece du
+     * groupe suffit, par exemple carte d'identite OU passeport) ; groupes et exigences seules valent ET.
+     */
+    @Column(name = "alternative_group", length = 60)
+    private String alternativeGroup;
+
+    /** Libelle du groupe pour le titulaire (par exemple « Piece d'identite »). */
+    @Column(name = "alternative_group_label", length = 150)
+    private String alternativeGroupLabel;
 }

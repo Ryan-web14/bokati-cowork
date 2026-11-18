@@ -16,4 +16,6 @@ public class DocumentRequirementResponse {
     private Boolean required;
     private Boolean active;
     private Integer kycLevel;
+    private String alternativeGroup;
+    private String alternativeGroupLabel;
 }

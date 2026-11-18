@@ -15,4 +15,9 @@ public class ClientKycRequirementResponse {
     private String status;
     private String documentCode;
     private String backDocumentCode;
+    /** Groupe d'alternatives de la piece (OU) et son libelle ; nuls pour une exigence seule. */
+    private String alternativeGroup;
+    private String alternativeGroupLabel;
+    /** Une autre piece du meme groupe remplit deja l'exigence : celle-ci n'est plus attendue. */
+    private boolean satisfiedByAlternative;
 }

@@ -409,3 +409,6 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `status` | texte |  |  |
 | `documentCode` | texte |  |  |
 | `backDocumentCode` | texte |  |  |
+| `alternativeGroup` | texte |  |  |
+| `alternativeGroupLabel` | texte |  |  |
+| `satisfiedByAlternative` | booléen |  |  |

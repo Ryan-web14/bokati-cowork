@@ -63,6 +63,12 @@ public class KycRequirementResolver {
                         : Optional.ofNullable(byType.get(type)).map(DocumentRequirement::getDocumentTypeName).orElse(type));
                 merged.setRequired(own.getRequired() == null || own.getRequired());
                 merged.setActive(true);
+                // Groupe d'alternatives (ET / OU) : celui de l'exigence du dossier, sinon celui de l'exigence globale.
+                DocumentRequirement global = byType.get(type);
+                merged.setAlternativeGroup(StringUtils.hasText(own.getAlternativeGroup()) ? own.getAlternativeGroup()
+                        : global == null ? null : global.getAlternativeGroup());
+                merged.setAlternativeGroupLabel(StringUtils.hasText(own.getAlternativeGroupLabel()) ? own.getAlternativeGroupLabel()
+                        : global == null ? null : global.getAlternativeGroupLabel());
                 byType.put(type, merged);
             }
         }

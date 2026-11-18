@@ -50,6 +50,18 @@ public class DocumentRequirement {
     @Column(name = "kyc_level", nullable = false)
     private Integer kycLevel = 1;
 
+    /**
+     * Groupe d'alternatives (17/11/2026) : les exigences de meme groupe valent OU (une piece du
+     * groupe suffit, par exemple carte d'identite OU passeport) ; groupes et exigences seules valent ET.
+     */
+    @Column(name = "alternative_group", length = 60)
+    private String alternativeGroup;
+
+    /** Libelle du groupe pour le titulaire (par exemple « Piece d'identite »). */
+    @Column(name = "alternative_group_label", length = 150)
+    private String alternativeGroupLabel;
+
+
     @jakarta.persistence.PrePersist
     @jakarta.persistence.PreUpdate
     void normalizeKycLevel() {

@@ -1015,6 +1015,10 @@ public class KycServiceImpl implements KycService {
                             .status(match != null ? match.getStatus() : null)
                             .documentCode(match != null && match.getDocument() != null ? match.getDocument().getCode() : null)
                             .backDocumentCode(match != null && match.getBackDocument() != null ? match.getBackDocument().getCode() : null)
+                            .alternativeGroup(req.getAlternativeGroup())
+                            .alternativeGroupLabel(req.getAlternativeGroupLabel())
+                            .satisfiedByAlternative(match == null && assessment.evaluation() != null
+                                    && assessment.evaluation().satisfiedByAlternative(req.getDocumentTypeCode(), uploadedDocuments))
                             .build();
                 })
                 .toList();
@@ -1048,52 +1052,13 @@ public class KycServiceImpl implements KycService {
         );
     }
 
+    /** Exigences en ET / OU (17/11/2026) : calcul commun avec le recalcul et le portail. */
     private CaseAssessment buildAssessment(List<DocumentRequirement> requirements, List<KycDocument> documents) {
-        List<String> missing = new ArrayList<>();
-
-        for (DocumentRequirement req : requirements) {
-            if (!Boolean.TRUE.equals(req.getRequired())) continue;
-
-            KycDocument match = documents.stream()
-                    .filter(doc -> doc.getDocumentType().equalsIgnoreCase(req.getDocumentTypeCode()))
-                    .findFirst()
-                    .orElse(null);
-
-            if (match == null) {
-                missing.add(req.getDocumentTypeCode());
-                continue;
-            }
-
-            DocumentType docType = documentTypeRepository.findByCode(req.getDocumentTypeCode()).orElse(null);
-            if (docType != null && Boolean.TRUE.equals(docType.getRequiresBackSide()) && match.getBackDocument() == null) {
-                missing.add(req.getDocumentTypeCode() + "_BACK");
-            }
-        }
-
-        boolean allVerified = requirements.stream()
-                .filter(req -> Boolean.TRUE.equals(req.getRequired()))
-                .allMatch(req -> documents.stream().anyMatch(doc ->
-                        doc.getDocumentType().equalsIgnoreCase(req.getDocumentTypeCode())
-                                && doc.getStatus() == KycDocumentVerificationStatus.VERIFIED
-                                && backSideVerified(doc)
-                ));
-
-        // Pieces toutes facultatives (« carte ou passeport », 17/11/2026) : complet avec au moins une
-        // des pieces demandees, approuvable avec au moins une verifiee. Avant : complet et approuve
-        // d'office, sans aucune piece.
-        boolean anyRequired = requirements.stream().anyMatch(req -> Boolean.TRUE.equals(req.getRequired()));
-        if (!anyRequired && !requirements.isEmpty()) {
-            java.util.Set<String> asked = requirements.stream().map(req -> req.getDocumentTypeCode().toUpperCase(java.util.Locale.ROOT))
-                    .collect(java.util.stream.Collectors.toSet());
-            List<KycDocument> relevant = documents.stream()
-                    .filter(doc -> asked.contains(doc.getDocumentType().toUpperCase(java.util.Locale.ROOT))).toList();
-            boolean onePresent = !relevant.isEmpty();
-            boolean oneVerified = relevant.stream().anyMatch(doc -> doc.getStatus() == KycDocumentVerificationStatus.VERIFIED && backSideVerified(doc));
-            List<String> oneOf = onePresent ? List.of() : requirements.stream().map(DocumentRequirement::getDocumentTypeCode).toList();
-            return new CaseAssessment(onePresent, oneVerified, oneOf);
-        }
-
-        return new CaseAssessment(missing.isEmpty(), allVerified, missing);
+        com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementSlots.Evaluation evaluation =
+                com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementSlots.evaluate(requirements, documents,
+                        type -> documentTypeRepository.findByCode(type).map(DocumentType::getRequiresBackSide).map(Boolean.TRUE::equals).orElse(false),
+                        KycServiceImpl::backSideVerified);
+        return new CaseAssessment(evaluation.complete(), evaluation.allVerified(), evaluation.missing(), evaluation);
     }
 
     /** Lot KG1 : le verso doit etre approuve quand le type en a un. */
@@ -1192,6 +1157,7 @@ public class KycServiceImpl implements KycService {
             if (request.getDocumentTypeName() != null && !request.getDocumentTypeName().isBlank()) {
                 again.setDocumentTypeName(request.getDocumentTypeName().trim());
             }
+            applyGroup(again, request);
             caseRequirementRepository.save(again);
             publishRequirementAdded(kycCase, again);
             kycAutomationService.recompute(kycCase);
@@ -1211,6 +1177,7 @@ public class KycServiceImpl implements KycService {
                 .documentTypeName(typeName)
                 .required(request.getRequired() != null ? request.getRequired() : Boolean.TRUE)
                 .build();
+        applyGroup(entity, request);
         caseRequirementRepository.save(entity);
         publishRequirementAdded(kycCase, entity);
         // Lot KG1 : la piece est aussitot demandee et comptee (un dossier approuve se rouvre si elle est obligatoire).
@@ -1325,13 +1292,30 @@ public class KycServiceImpl implements KycService {
                 .required(requirement.getRequired())
                 .requiresBackSide(docType != null ? docType.getRequiresBackSide() : Boolean.FALSE)
                 .active(requirement.getActive())
+                .alternativeGroup(requirement.getAlternativeGroup())
+                .alternativeGroupLabel(requirement.getAlternativeGroupLabel())
                 .build();
+    }
+
+    /** Groupe d'alternatives (ET / OU) d'une exigence du dossier : chaine vide pour le retirer. */
+    private static void applyGroup(KycCaseRequirement requirement, com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseRequirementRequest request) {
+        if (request.getAlternativeGroup() != null) {
+            String group = request.getAlternativeGroup().trim().toUpperCase(java.util.Locale.ROOT);
+            requirement.setAlternativeGroup(group.isEmpty() ? null : group);
+            if (group.isEmpty()) {
+                requirement.setAlternativeGroupLabel(null);
+            }
+        }
+        if (request.getAlternativeGroupLabel() != null) {
+            requirement.setAlternativeGroupLabel(request.getAlternativeGroupLabel().isBlank() ? null : request.getAlternativeGroupLabel().trim());
+        }
     }
 
     private record OwnerResolution(DocumentOwnerType ownerType, Long ownerId, String ownerCode) {
     }
 
-    private record CaseAssessment(boolean complete, boolean allVerified, List<String> missingDocumentTypeCodes) {
+    private record CaseAssessment(boolean complete, boolean allVerified, List<String> missingDocumentTypeCodes,
+                                  com.sni.bokaticowork.features.document.kyc.service.support.KycRequirementSlots.Evaluation evaluation) {
     }
 
     private List<DocumentRequirement> filteredRequirementsForCase(KycCase kycCase) {
