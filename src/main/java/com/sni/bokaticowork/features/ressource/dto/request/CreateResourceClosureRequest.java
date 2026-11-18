@@ -26,4 +26,7 @@ public class CreateResourceClosureRequest {
 
     private String reason;
     private Boolean active;
+
+    /** Lot R2 (D4) : vrai pour annuler les reservations de la plage et prevenir les clients ; sinon refus s'il y en a. */
+    private Boolean cancelBookings;
 }

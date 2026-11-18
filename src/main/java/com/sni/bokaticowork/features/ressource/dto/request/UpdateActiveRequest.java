@@ -14,4 +14,7 @@ public class UpdateActiveRequest {
 
     @NotNull
     private Boolean active;
+
+    /** Lot R2 : activation d'une fermeture, vrai pour annuler les reservations de la plage et prevenir les clients. */
+    private Boolean cancelBookings;
 }

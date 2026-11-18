@@ -20,6 +20,11 @@ public interface ResourceService {
     void createResource(ResourceRequest request);
     void updateResource(String code, UpdateResourceRequest request);
     void deleteResource(String code);
+
+    void deleteResource(String code, boolean cancelBookings);
+
+    java.util.List<com.sni.bokaticowork.features.ressource.service.support.ResourceBookingImpact.ImpactedBooking> impactedBookings(
+            String code, java.time.LocalDateTime from, java.time.LocalDateTime to);
     void deleteAllResources();
 
     ResourceResponse getResource(String code);
@@ -42,6 +47,8 @@ public interface ResourceService {
 
     void changeClassification(String code, ChangeTypeRequest request);
     void updateStatus(String code, ResourceStatus status);
+
+    void updateStatus(String code, ResourceStatus status, boolean cancelBookings);
     void updateBookingEnabled(String code, Boolean bookingEnabled);
     void updatePortalVisible(String code, Boolean portalVisible);
     void updateActive(String code, Boolean active);

@@ -17,5 +17,7 @@ public interface ResourceClosureService {
 
     void updateActive(Long id, Boolean active);
 
+    void updateActive(Long id, Boolean active, boolean cancelBookings);
+
     void deleteClosure(Long id);
 }

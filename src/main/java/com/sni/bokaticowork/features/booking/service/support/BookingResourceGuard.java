@@ -60,7 +60,7 @@ public class BookingResourceGuard {
         } else if (quantity > resource.resolveBookableSlots()) {
             throw new ConflictException("booking", "requested quantity exceeds resource bookable slots");
         }
-        validatePolicy(resource.getResourcePolicy(), startedAt, endedAt, staffOverride);
+        validatePolicy(resource.getEffectivePolicy(), startedAt, endedAt, staffOverride);
     }
 
     public void validateNoSingleCapacityConflict(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt, String excludedBookingNumber) {

@@ -40,6 +40,16 @@ public interface ResourceRepository extends JpaRepository<Resource, Long>, JpaSp
     Page<Resource> findAllByResourceType(ResourceType resourceType, Pageable pageable);
 
     List<Resource> findAllByResourceGroup(ResourceGroup resourceGroup);
+
+    /** Lot R2 : ressources rattachees, supprimees en douce comprises (elles retiennent la cle etrangere). */
+    @org.springframework.data.jpa.repository.Query(nativeQuery = true, value = "SELECT count(*) FROM resource WHERE group_id = :id")
+    long countAttachedToGroup(@org.springframework.data.repository.query.Param("id") Long id);
+
+    @org.springframework.data.jpa.repository.Query(nativeQuery = true, value = "SELECT count(*) FROM resource WHERE type_id = :id")
+    long countAttachedToType(@org.springframework.data.repository.query.Param("id") Long id);
+
+    @org.springframework.data.jpa.repository.Query(nativeQuery = true, value = "SELECT count(*) FROM resource WHERE policy_id = :id")
+    long countAttachedToPolicy(@org.springframework.data.repository.query.Param("id") Long id);
     Page<Resource> findAllByResourceGroup(ResourceGroup resourceGroup, Pageable pageable);
 
     List<Resource> findAllByResourcePolicy(ResourcePolicy resourcePolicy);

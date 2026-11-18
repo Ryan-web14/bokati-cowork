@@ -59,7 +59,7 @@ public class ResourceClosureController {
     @Audited(module = "RESOURCE", action = "UPDATE_CLOSURE_ACTIVE", ressource = "resource_closure")
     @Idempotent(operation = "RESOURCE_CLOSURE_UPDATE_ACTIVE", requestBodyArgIndex = 1)
     public ResponseEntity<Void> updateActive(@PathVariable Long id, @Valid @RequestBody UpdateActiveRequest request) {
-        resourceClosureService.updateActive(id, request.getActive());
+        resourceClosureService.updateActive(id, request.getActive(), Boolean.TRUE.equals(request.getCancelBookings()));
         return ResponseEntity.noContent().build();
     }
 

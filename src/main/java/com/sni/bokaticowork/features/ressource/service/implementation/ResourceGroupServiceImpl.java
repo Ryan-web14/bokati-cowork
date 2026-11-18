@@ -35,6 +35,12 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     private final ResourceGroupRepository groupRepo;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final ResourceGroupMapper groupMapper;
+    private com.sni.bokaticowork.features.ressource.repository.repo.ResourceRepository resourceRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setResourceRepository(com.sni.bokaticowork.features.ressource.repository.repo.ResourceRepository resourceRepository) {
+        this.resourceRepository = resourceRepository;
+    }
 
     @Override
     public void createResourceGroup(CreateResourceGroupRequest request) {
@@ -82,6 +88,12 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
         }
 
         ResourceGroup group = getResourceGroupForService(code.trim());
+        // Lot R2 : refus s'il reste des ressources (avant : 500 sur la cle etrangere).
+        long attached = resourceRepository.countAttachedToGroup(group.getId());
+        if (attached > 0) {
+            throw new com.sni.bokaticowork.core.exception.customs.ConflictException("Le groupe " + group.getCode() + " a encore "
+                    + attached + " ressource(s) rattachée(s), archivées comprises : rattachez-les à un autre groupe d'abord");
+        }
         groupRepo.delete(group);
     }
 

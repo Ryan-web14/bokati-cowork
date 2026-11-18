@@ -68,6 +68,21 @@ public class ResourceServiceImpl implements ResourceService {
     private final RetryPolicy defaultRetryPolicy;
     private final ValidationEngine validationEngine;
 
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceImpactGuard impactGuard;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setImpactGuard(com.sni.bokaticowork.features.ressource.service.support.ResourceImpactGuard impactGuard) {
+        this.impactGuard = impactGuard;
+    }
+
+    /** Lot R2 : reservations a venir touchees (apercu avant une suppression, une fermeture ou une maintenance). */
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<com.sni.bokaticowork.features.ressource.service.support.ResourceBookingImpact.ImpactedBooking> impactedBookings(
+            String code, java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        return impactGuard == null ? java.util.List.of() : impactGuard.impacted(getResourceForService(code), from, to);
+    }
+
     @Override
     public void createResource(ResourceRequest request) {
         validateForCreate(request);
@@ -106,7 +121,14 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void deleteResource(String code) {
+        deleteResource(code, false);
+    }
+
+    /** Lot R2 (D4) : refus s'il reste des reservations a venir, sauf annulation explicite. */
+    @Override
+    public void deleteResource(String code, boolean cancelBookings) {
         Resource resource = getResourceForService(code);
+        if (impactGuard != null) impactGuard.check(resource, null, null, cancelBookings, "supprimer la ressource", "Ressource " + resource.getCode() + " retirée");
         resource.setDeleted(Boolean.TRUE);
         resource.setActive(Boolean.FALSE);
         resource.setStatus(ResourceStatus.ARCHIVED);
@@ -233,10 +255,20 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void updateStatus(String code, ResourceStatus status) {
+        updateStatus(code, status, false);
+    }
+
+    /** Lot R2 (D4) : maintenance, hors service, inactive ou archivee avec des reservations a venir : refus, sauf annulation explicite. */
+    @Override
+    public void updateStatus(String code, ResourceStatus status, boolean cancelBookings) {
         if (status == null) {
-            throw new BadRequestException("Resource status is required");
+            throw new BadRequestException("Le statut de la ressource est requis");
         }
         Resource resource = getResourceForService(code);
+        if (status != ResourceStatus.ACTIVE && resource.getStatus() == ResourceStatus.ACTIVE) {
+            if (impactGuard != null) impactGuard.check(resource, null, null, cancelBookings, "passer en " + status,
+                    "Ressource " + resource.getCode() + " indisponible (" + status + ")");
+        }
         resource.setStatus(status);
         retryExecutor.execute("update resource status", defaultRetryPolicy, () -> resourceRepository.save(resource));
     }
@@ -490,7 +522,12 @@ public class ResourceServiceImpl implements ResourceService {
         if (!StringUtils.hasText(policyCode)) {
             return null;
         }
-        return resourcePolicyService.getPolicyForService(policyCode.trim());
+        ResourcePolicy policy = resourcePolicyService.getPolicyForService(policyCode.trim());
+        // Lot R2 : une politique desactivee ne se rattache pas a une ressource.
+        if (Boolean.FALSE.equals(policy.getActive())) {
+            throw new BadRequestException("La politique " + policy.getCode() + " est désactivée : réactivez-la avant de la rattacher");
+        }
+        return policy;
     }
 
     private String normalizeCode(String value, String message) {

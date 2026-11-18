@@ -206,7 +206,7 @@ public class BookingServiceImpl implements BookingService {
         // Saisie par l'equipe (administration, gerance, operations) hors du portail : le preavis de
         // la ressource ne s'applique pas, sauf si sa politique l'interdit (stricte, evenementielle).
         String staffActor = staffOverride == null ? null
-                : staffOverride.actorFor(resource.getResourcePolicy()).orElse(null);
+                : staffOverride.actorFor(resource.getEffectivePolicy()).orElse(null);
         resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity, staffActor != null);
         BookingIdentityResolver.ResolvedBookingIdentity identity = suppliedIdentity == null
                 ? identityResolver.resolve(request.identityLookup())
@@ -488,6 +488,18 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.toResponse(cancelInternal(
                 getForService(bookingNumber),
                 new BookingStatusChangeRequest("SYSTEM", reason, Boolean.FALSE),
+                true
+        ));
+    }
+
+    @Override
+    public BookingResponse cancelForResourceUnavailability(String bookingNumber, String reason) {
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String actor = auth == null ? "SYSTEM" : auth.getName();
+        return bookingMapper.toResponse(cancelInternal(
+                getForService(bookingNumber),
+                new BookingStatusChangeRequest(actor, reason, Boolean.TRUE),
                 true
         ));
     }
@@ -793,7 +805,7 @@ public class BookingServiceImpl implements BookingService {
         resourceGuard.validateBookable(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity(),
                 StringUtils.hasText(booking.getPolicyOverrideBy())
                         && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(
-                        booking.getResource().getResourcePolicy()));
+                        booking.getResource().getEffectivePolicy()));
         resourceGuard.validateNoSingleCapacityConflict(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getBookingNumber());
         boolean confirmedFromHold = confirmHoldIfPresent(booking);
         if (!confirmedFromHold) {
@@ -1098,7 +1110,7 @@ public class BookingServiceImpl implements BookingService {
      * une minute apres la reservation, alors meme que l'argent n'a pas bouge.</p>
      */
     private void assertCancellationAllowed(Booking booking) {
-        ResourcePolicy policy = booking.getResource().getResourcePolicy();
+        ResourcePolicy policy = booking.getResource().getEffectivePolicy();
         if (policy == null || booking.getStatus() == BookingStatus.DRAFT
                 || booking.getStatus() == BookingStatus.PENDING_PAYMENT) {
             return;

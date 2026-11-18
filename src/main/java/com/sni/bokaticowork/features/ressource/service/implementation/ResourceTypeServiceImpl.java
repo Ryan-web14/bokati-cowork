@@ -102,8 +102,11 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
     public void deleteType(String code) {
         ResourceType type = getTypeForService(code);
 
-        if (!resourceRepository.findAllByResourceType(type).isEmpty()) {
-            throw new ConflictException("resource type", "it is currently assigned to one or more resources");
+        // Lot R2 : ressources archivees comprises (elles retiennent la cle etrangere ; avant : 500).
+        long attached = resourceRepository.countAttachedToType(type.getId());
+        if (attached > 0) {
+            throw new ConflictException("Le type " + type.getCode() + " a encore " + attached
+                    + " ressource(s) rattachée(s), archivées comprises : changez-leur de type d'abord");
         }
 
         retryExecutor.run("delete resource type", defaultRetryPolicy, () -> typeRepository.delete(type));

@@ -59,6 +59,7 @@ public abstract class ResourceMapperDecorator implements ResourceMapper {
                 .capacity(resource.getCapacity())
                 .zone(resource.getZone())
                 .locationLabel(resource.getLocationLabel())
+                .floorLabel(resource.getFloorLabel())
                 .status(resource.getStatus() == null ? null : resource.getStatus().name())
                 .bookingEnabled(resource.getBookingEnabled())
                 .portalVisible(resource.getPortalVisible())

@@ -33,6 +33,13 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
     private final ResourceAvailabilityRepository availabilityRepository;
     private final ResourceService resourceService;
 
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceImpactGuard impactGuard;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setImpactGuard(com.sni.bokaticowork.features.ressource.service.support.ResourceImpactGuard impactGuard) {
+        this.impactGuard = impactGuard;
+    }
+
     @Override
     public void createClosure(CreateResourceClosureRequest request) {
         List<String> errors = validateRequest(request);
@@ -41,6 +48,12 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
+        // Lot R2 (D4) : reservations de la plage, refus ou annulation explicite.
+        if (request.getActive() == null || Boolean.TRUE.equals(request.getActive())) {
+            if (impactGuard != null) impactGuard.check(resource, request.getStartedAt(), request.getEndedAt(), Boolean.TRUE.equals(request.getCancelBookings()),
+                    "fermer la ressource", "Fermeture de " + resource.getCode()
+                            + (StringUtils.hasText(request.getReason()) ? " : " + request.getReason().trim() : ""));
+        }
         ResourceClosure closure = ResourceClosure.builder()
                 .resource(resource)
                 .startedAt(request.getStartedAt())
@@ -78,11 +91,21 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
 
     @Override
     public void updateActive(Long id, Boolean active) {
+        updateActive(id, active, false);
+    }
+
+    @Override
+    public void updateActive(Long id, Boolean active, boolean cancelBookings) {
         if (active == null) {
-            throw new BadRequestException("Closure active flag is required");
+            throw new BadRequestException("L'état actif de la fermeture est requis");
         }
         ResourceClosure closure = getClosureForService(id);
         boolean wasActive = Boolean.TRUE.equals(closure.getActive());
+        if (!wasActive && Boolean.TRUE.equals(active)) {
+            if (impactGuard != null) impactGuard.check(closure.getResource(), closure.getStartedAt(), closure.getEndedAt(), cancelBookings,
+                    "fermer la ressource", "Fermeture de " + closure.getResource().getCode()
+                            + (StringUtils.hasText(closure.getReason()) ? " : " + closure.getReason() : ""));
+        }
         closure.setActive(active);
         ResourceClosure savedClosure = closureRepository.save(closure);
 
@@ -172,6 +195,7 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
                 .startedAt(closure.getStartedAt())
                 .endedAt(closure.getEndedAt())
                 .active(closure.getActive())
+                .reason(closure.getReason())
                 .build();
     }
 

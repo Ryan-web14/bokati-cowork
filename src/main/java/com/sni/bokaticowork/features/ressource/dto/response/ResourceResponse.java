@@ -20,6 +20,8 @@ public class ResourceResponse {
     private Integer capacity;
     private String zone;
     private String locationLabel;
+    /** Lot R2 : etage. */
+    private String floorLabel;
     private String status;
     private Boolean bookingEnabled;
     private Boolean portalVisible;

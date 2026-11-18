@@ -18,4 +18,6 @@ public class ResourceClosureResponse {
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
     private Boolean active;
+    /** Lot R2 : motif de la fermeture (avant : jamais rendu). */
+    private String reason;
 }

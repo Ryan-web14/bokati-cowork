@@ -218,7 +218,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         if (durationViolation(resource, normalizedDuration) != null) {
             return List.of();
         }
-        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getResourcePolicy()).isPresent();
+        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getEffectivePolicy()).isPresent();
         LocalDateTime earliestStaffStart = staff ? staffOverride.earliestStart(LocalDateTime.now()) : LocalDateTime.now();
 
         // Sans le droit aux soirees, un creneau d'abonnes n'existe pas · une fenetre qui le
@@ -275,7 +275,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         slotPolicy.assertAligned(resource, request.getStartedAt(), request.getEndedAt());
         assertResourceBookable(resource);
         boolean staff = request.isStaffOverride()
-                && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(resource.getResourcePolicy());
+                && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(resource.getEffectivePolicy());
         if (staff) {
             String violation = durationViolation(resource,
                     Math.toIntExact(Duration.between(request.getStartedAt(), request.getEndedAt()).toMinutes()));
@@ -360,7 +360,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
      * @return le motif du refus, ou {@code null} si la plage est acceptable
      */
     private String policyViolation(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
-        ResourcePolicy policy = resource.getResourcePolicy();
+        ResourcePolicy policy = resource.getEffectivePolicy();
         if (policy == null) {
             return null;
         }
@@ -380,7 +380,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     /** La duree seule, au regard de la politique · le motif du refus, ou {@code null}. */
     private String durationViolation(Resource resource, int requestedMinutes) {
-        ResourcePolicy policy = resource.getResourcePolicy();
+        ResourcePolicy policy = resource.getEffectivePolicy();
         if (policy == null) {
             return null;
         }
@@ -418,7 +418,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     }
 
     private boolean respectsBookingNotice(Resource resource, LocalDateTime startedAt) {
-        ResourcePolicy policy = resource.getResourcePolicy();
+        ResourcePolicy policy = resource.getEffectivePolicy();
         if (policy == null) {
             return true;
         }

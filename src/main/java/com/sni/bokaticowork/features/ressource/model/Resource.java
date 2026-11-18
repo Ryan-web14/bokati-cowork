@@ -76,6 +76,10 @@ public class Resource {
     @Column(name = "location_label", length = 150)
     private String locationLabel;
 
+    /** Lot R2 : etage (avant : accepte a la modification puis perdu). */
+    @Column(name = "floor_label", length = 50)
+    private String floorLabel;
+
     @Column(name = "status", length = 60)
     @Enumerated(EnumType.STRING)
     private ResourceStatus status;
@@ -113,6 +117,14 @@ public class Resource {
     /**
      * La location occupe-t-elle toute la ressource. Voir {@code ResourceType.wholeResourceBooking}.
      */
+    /**
+     * Lot R2 : politique en vigueur. Une politique desactivee ne s'applique plus (reservation,
+     * creneaux, annulation, devis) : la ressource est alors traitee comme sans politique.
+     */
+    public ResourcePolicy getEffectivePolicy() {
+        return resourcePolicy != null && !Boolean.FALSE.equals(resourcePolicy.getActive()) ? resourcePolicy : null;
+    }
+
     public boolean isWholeResourceBooking() {
         return resourceType != null && Boolean.TRUE.equals(resourceType.getWholeResourceBooking());
     }

@@ -440,7 +440,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     }
 
     private void validateAgainstPolicy(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
-        ResourcePolicy policy = resource.getResourcePolicy();
+        ResourcePolicy policy = resource.getEffectivePolicy();
         if (policy == null) {
             return;
         }

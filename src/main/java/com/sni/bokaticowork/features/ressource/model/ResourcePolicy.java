@@ -45,7 +45,7 @@ public class ResourcePolicy {
 
     @Column(name = "allow_cancellation", nullable = false)
     @Builder.Default
-    private Boolean allowCancellation = Boolean.FALSE;
+    private Boolean allowCancellation = Boolean.TRUE; // Lot R2 (D3) : annulation permise par defaut
 
     @Column(name = "active")
     @Builder.Default

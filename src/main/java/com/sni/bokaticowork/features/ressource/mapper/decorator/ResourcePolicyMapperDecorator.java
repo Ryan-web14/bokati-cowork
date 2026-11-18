@@ -25,7 +25,8 @@ public abstract class ResourcePolicyMapperDecorator implements ResourcePolicyMap
             entity.setCancellationNoticeMinutes(1);
         }
         if (entity.getAllowCancellation() == null) {
-            entity.setAllowCancellation(Boolean.FALSE);
+            // Lot R2 (D3) : annulation permise par defaut (avant : interdite, toute reservation devenait non annulable).
+            entity.setAllowCancellation(Boolean.TRUE);
         }
         if (entity.getActive() == null) {
             entity.setActive(Boolean.TRUE);

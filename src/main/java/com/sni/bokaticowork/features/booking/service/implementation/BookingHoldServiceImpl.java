@@ -57,7 +57,7 @@ public class BookingHoldServiceImpl implements BookingHoldService {
         // L'option suit la reservation : l'equipe (hors portail) pose une option hors preavis ou sur
         // un debut deja passe, sauf si la politique de la ressource l'interdit. Sans cela, l'option
         // refusait ce que la reservation accepte (« the requested start time is in the past »).
-        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getResourcePolicy()).isPresent();
+        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getEffectivePolicy()).isPresent();
         resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity, staff);
         resourceGuard.validateNoSingleCapacityConflict(resource, request.startedAt(), request.endedAt(), null);
         if (holdRepository.existsActiveOverlap(resource.getId(), request.startedAt(), request.endedAt(), null)) {

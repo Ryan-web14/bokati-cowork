@@ -97,7 +97,7 @@ public class ClientResourceService {
                 .stream()
                 .filter(r -> Boolean.TRUE.equals(r.getActive()))
                 .toList();
-        ResourcePolicy policy = resource.getResourcePolicy();
+        ResourcePolicy policy = resource.getEffectivePolicy();
         ResourceType type = resource.getResourceType();
         return ClientResourceDetailResponse.builder()
                 .code(resource.getCode())

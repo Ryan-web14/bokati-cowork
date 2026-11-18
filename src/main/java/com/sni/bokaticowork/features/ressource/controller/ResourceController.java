@@ -118,8 +118,9 @@ public class ResourceController {
     @Idempotent(operation = "RESOURCE_UPDATE_STATUS", requestBodyArgIndex = -1)
     public ResponseEntity<Void> updateStatus(
             @PathVariable String code,
-            @RequestParam ResourceStatus status) {
-        resourceService.updateStatus(code, status);
+            @RequestParam ResourceStatus status,
+            @RequestParam(defaultValue = "false") boolean cancelBookings) {
+        resourceService.updateStatus(code, status, cancelBookings);
         return ResponseEntity.noContent().build();
     }
 
@@ -187,8 +188,21 @@ public class ResourceController {
 
     @DeleteMapping("/{code}")
     @Audited(module = "RESOURCE", action = "DELETE", ressource = "resource")
-    public ResponseEntity<Void> delete(@PathVariable String code) {
-        resourceService.deleteResource(code);
+    public ResponseEntity<Void> delete(@PathVariable String code,
+                                       @RequestParam(defaultValue = "false") boolean cancelBookings) {
+        resourceService.deleteResource(code, cancelBookings);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Lot R2 : reservations a venir touchees (toutes, ou sur une plage), a montrer avant une
+     * suppression, une fermeture ou une maintenance.
+     */
+    @GetMapping("/{code}/impacted-bookings")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.ressource.service.support.ResourceBookingImpact.ImpactedBooking>> impactedBookings(
+            @PathVariable String code,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime to) {
+        return ResponseEntity.ok(resourceService.impactedBookings(code, from, to));
     }
 }

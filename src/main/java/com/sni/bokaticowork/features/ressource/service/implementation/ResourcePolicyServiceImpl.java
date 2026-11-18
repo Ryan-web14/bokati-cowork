@@ -116,8 +116,11 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
     public void deletePolicy(String code) {
         ResourcePolicy policy = getPolicyForService(code);
 
-        if (!resourceRepository.findAllByResourcePolicy(policy).isEmpty()) {
-            throw new ConflictException("resource policy", "it is currently assigned to one or more resources");
+        // Lot R2 : ressources archivees comprises (elles retiennent la cle etrangere ; avant : 500).
+        long attached = resourceRepository.countAttachedToPolicy(policy.getId());
+        if (attached > 0) {
+            throw new ConflictException("La politique " + policy.getCode() + " a encore " + attached
+                    + " ressource(s) rattachée(s), archivées comprises : changez-leur de politique d'abord, ou désactivez-la");
         }
 
         retryExecutor.run("delete resource policy", defaultRetryPolicy, () -> policyRepository.delete(policy));
