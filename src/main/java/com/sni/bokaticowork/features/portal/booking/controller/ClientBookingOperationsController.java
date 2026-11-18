@@ -44,6 +44,7 @@ public class ClientBookingOperationsController {
     public ResponseEntity<BookingOperations.EndReportResponse> endReport(@PathVariable String number,
                                                                          @RequestBody BookingOperations.EndReportRequest request) {
         Member member = clientContextService.getAuthenticatedMember();
+        operations.checkPhotos(request == null ? null : request.photoDocumentCodes(), member.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(operations.endReport(owned(number), request, "MEMBER",
                 member.getMemberId(), name(member), member.getEmail(), member.getPhone()));
     }
@@ -53,6 +54,7 @@ public class ClientBookingOperationsController {
     public ResponseEntity<ResourceOperations.IncidentResponse> report(@RequestBody ResourceOperations.IncidentRequest request) {
         Member member = clientContextService.getAuthenticatedMember();
         Booking booking = owned(request == null ? null : request.bookingNumber());
+        operations.checkPhotos(request.photoDocumentCodes(), member.getId());
         ResourceOperations.IncidentRequest safe = new ResourceOperations.IncidentRequest(booking.getResource().getCode(),
                 booking.getBookingNumber(), request.title(), request.description(), request.severity(), false, false,
                 request.photoDocumentCodes());

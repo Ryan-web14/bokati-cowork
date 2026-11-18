@@ -23,23 +23,23 @@
 
 | N° | Écart | État | Preuve |
 | --- | --- | --- | --- |
-| 1 | Pointage hors fenêtre refusé à tout rôle sauf ADMIN, message remplacé par « Access to this resource is forbidden » | confirmé | BSI:1173-1209 ; `GlobalExceptionHandler.java:79-83` ; contredit `StaffBookingOverride.java:33` (MANAGER, OPERATIONS_AGENT) |
+| 1 | Pointage hors fenêtre refusé à tout rôle sauf ADMIN, message remplacé par « Access to this resource is forbidden » | **Réglé (B0)** | BSI:1173-1209 ; `GlobalExceptionHandler.java:79-83` ; contredit `StaffBookingOverride.java:33` (MANAGER, OPERATIONS_AGENT) |
 | 2 | `PATCH /confirm` confirme un `PENDING_PAYMENT` sans paiement, statut de paiement « PAID » | confirmé | BSI:398-401, 803-806 ; `BookingPaymentStatus.java:61` |
 | 3 | Déplacement : créneaux jamais réservés libérés, conflit sans capacité, ni politique ni alignement ni date passée | en partie (prix recalculé) | BSI:682, 692-697, 1084-1094 ; `BookingRepository.java:71-86` |
 | 4 | Réservations en attente sans créneau retenu ; paiement reçu puis confirmation échouée sans bruit | confirmé | `BookingRepository.java:77` ; BSI:814-818 ; `PaymentTransactionWorkflowProcessor.java:310-320` |
 | 5 | Aucune tâche d'expiration des blocages ni d'envoi des rappels ; un blocage expiré casse la confirmation après paiement | confirmé | `BookingHoldServiceImpl.java:99-108` ; `BookingNotificationServiceImpl.java:63-85` ; BSI:1039-1041 |
 | 6 | Liste d'attente : aucune notification à l'offre, `BOOKED` jamais posé, capacité ignorée, `BUSINESS` au lieu de `BUSINESS_ENTITY` | confirmé | `BookingWaitlistServiceImpl.java:98-131` |
 | 7 | `POST /bookings/repair` ne répare rien, requête contradictoire | confirmé | `BookingRepairServiceImpl.java:21-25` ; `BookingRepository.java:224-227` |
-| 8 | Satisfaction publique sans jeton (GET qui écrit) | confirmé | `PublicBookingController.java:233-244` |
+| 8 | Satisfaction publique sans jeton (GET qui écrit) | **Réglé (B0)** | `PublicBookingController.java:233-244` |
 | 9 | Statut `EXPIRED` jamais atteint | confirmé | `BookingStatus.java:13` |
 | 10 | Règle d'annulation appliquée à l'équipe, y compris `PENDING_APPROVAL` et `NO_SHOW` | en partie (défaut réglé) | BSI:1146-1161 |
 | 11 | Transfert sans contrôle du nouveau titulaire ni report du droit, de la facture, du portefeuille ; permis depuis `REJECTED` et `NO_SHOW` | confirmé | BSI:659-677 |
 | 12 | Politiques d'audience et dérogations de quota : création et liste seulement | confirmé | `BookingController.java:240-258` ; `BookingPolicyServiceImpl.java:33-86` |
 | 13 | Réponse sans `checkedInAt`, `checkedOutAt`, motifs, numéro de facture (ni `approvedBy`, `holdNumber`, série, trace du prix…) | confirmé | `BookingResponse.java:14-60` |
 | 14 | Ajout et retrait de participant journalisés « BOOKING_CREATED » | confirmé | BSI:752, 763 |
-| 15 | `changedBy` et `reason` inversés après paiement | confirmé | `PaymentTransactionWorkflowProcessor.java:311-315` |
+| 15 | `changedBy` et `reason` inversés après paiement | **Réglé (B0)** | `PaymentTransactionWorkflowProcessor.java:311-315` |
 | 16 | `sort` ignoré par `GET /bookings` (et au portail) | confirmé | BSI:366 ; `BookingRepository.java:118-127` |
-| 17 | 3 requêtes par 10 minutes sur tout `/public/bookings/check-in/scanner*`, page d'installation comprise | confirmé | `RateLimitRules.java:158-160` |
+| 17 | 3 requêtes par 10 minutes sur tout `/public/bookings/check-in/scanner*`, page d'installation comprise | **Réglé (B0)** | `RateLimitRules.java:158-160` |
 | 18 | Messages en anglais (environ 65 sur 112), préfixe « Could not process booking » | en partie | `ConflictException.java:15-17` |
 
 ## Écarts nouveaux (Bn)
@@ -58,7 +58,7 @@
 | **Cycle de vie** | | |
 | Bn-9 | `NO_SHOW` et `REJECTED` annulables (et `COMPLETED` en mode système) | BSI:853-862 |
 | Bn-10 | Absence et clôture sans garde horaire : une réservation future marquée absente (frais facturés) ou close avant de commencer (droit consommé) | BSI:909-949 |
-| Bn-11 | `early-check-in` contourne la fenêtre et le droit de pointage (règle d'URL) | BSI:639-657 ; `AdminApiAuthorizationManager.java:388` |
+| Bn-11 | **Réglé (B0)** `early-check-in` contourne la fenêtre et le droit de pointage (règle d'URL) | BSI:639-657 ; `AdminApiAuthorizationManager.java:388` |
 | Bn-12 | Ajout de participant sans contrôle de statut ni de capacité, même sur une réservation annulée | BSI:746-754 |
 | **Blocages, créneaux, tâches** | | |
 | Bn-13 | Blocage d'un non-membre jamais confirmable (nouveau code invité à chaque appel) ; coordonnées du blocage perdues | `BookingIdentityResolver.java:139-147` ; BSI:1042 |
@@ -67,10 +67,10 @@
 | Bn-16 | Rappels envoyés aussi pour des réservations annulées, en anglais ; `200` avec 0 sans courriel | `BookingNotificationServiceImpl.java:47-85` |
 | Bn-17 | Aucun courriel à la création en attente de paiement ou d'approbation : pas d'instructions de paiement | BSI:284-297 ; `BookingEventWriter.java:21-23` |
 | **Sécurité et traçabilité** | | |
-| Bn-18 | « Qui a fait » lu dans le corps de la requête (`changedBy`, `actor`, `approvedBy`, `rejectedBy`) ; pas de `createdBy` | BSI:407, 440, 1291-1293 |
-| Bn-19 | Codes de photos (état des lieux, incidents) non contrôlés | `ClientBookingOperationsController.java:52-59` ; `BookingOperations.java:230-238` |
-| Bn-20 | Position du pointage autonome fournie par le client | `PublicBookingController.java:188-206` |
-| Bn-21 | Lire `/bookings/cancellation-policy` exige `BOOKING:CANCEL` (règle d'URL) | `AdminApiAuthorizationManager.java:389` |
+| Bn-18 | **Réglé (B0)** « Qui a fait » lu dans le corps de la requête (`changedBy`, `actor`, `approvedBy`, `rejectedBy`) ; pas de `createdBy` | BSI:407, 440, 1291-1293 |
+| Bn-19 | **Réglé (B0)** Codes de photos (état des lieux, incidents) non contrôlés | `ClientBookingOperationsController.java:52-59` ; `BookingOperations.java:230-238` |
+| Bn-20 | Accepté (B0, risque faible) : Position du pointage autonome fournie par le client | `PublicBookingController.java:188-206` |
+| Bn-21 | **Réglé (B0)** Lire `/bookings/cancellation-policy` exige `BOOKING:CANCEL` (règle d'URL) | `AdminApiAuthorizationManager.java:389` |
 | **Contrôles et quotas** | | |
 | Bn-22 | Quota d'absences atteint : un ticket au support à chaque tentative | `BookingPolicyEnforcer.java:90-95` |
 | Bn-23 | Les réservations en attente de paiement échappent au quota : un membre empile des réservations impayées | `BookingRepository.java:186` |
@@ -90,6 +90,10 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 - **Prix** : seule l'unité s'impose ; segment, plan et canal viennent du titulaire ; code promo, participants offerts et remise de lot existent. Aucun ajustement manuel, aucun motif, aucune approbation (le moteur d'approbation existe).
 - **Téléphone** : ni canal ni origine ; `metadataJson` et les coordonnées du contact existent. Un non-membre devient un invité de passage (sans fiche client). Le prospect du CRM (`Lead`, avec `source`) n'est pas relié.
 - **Rappels** : file de rappels par courriel (manuelle). WhatsApp seulement pour la confirmation, le déplacement, le changement de ressource et le transfert.
+
+## Avancement
+
+**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)).
 
 ## Lots proposés
 

@@ -91,7 +91,7 @@ class BookingServiceImplTest {
     void shouldRefuseSelfCheckInTooEarly() {
         BookingServiceImpl guarded = withCheckInWindow(15, 15);
 
-        ForbiddenException ex = assertThrows(ForbiddenException.class,
+        com.sni.bokaticowork.core.exception.customs.ConflictException ex = assertThrows(com.sni.bokaticowork.core.exception.customs.ConflictException.class,
                 () -> activation(guarded, LocalDateTime.now().plusMinutes(20)));
         assertEquals(true, ex.getMessage().contains("accueil"));
     }
@@ -101,7 +101,7 @@ class BookingServiceImplTest {
         // Le point du changement : autrefois accepte jusqu'a l'heure de fin.
         BookingServiceImpl guarded = withCheckInWindow(15, 15);
 
-        assertThrows(ForbiddenException.class,
+        assertThrows(com.sni.bokaticowork.core.exception.customs.ConflictException.class,
                 () -> activation(guarded, LocalDateTime.now().minusMinutes(20)));
     }
 

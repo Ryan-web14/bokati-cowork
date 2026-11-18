@@ -257,6 +257,10 @@ public class BookingServiceImpl implements BookingService {
         }
         booking.setCheckInToken(generateCheckInToken());
         booking.setPolicyOverrideBy(staffActor);
+        booking.setCreatedBy(sessionActor());
+        if (booking.getChannel() == null) {
+            booking.setChannel(currentChannel());
+        }
 
         // Lot R1 : prix du moteur unique, avec le contexte du titulaire (segment, plan, canal), comme le devis.
         BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity,
@@ -280,7 +284,7 @@ public class BookingServiceImpl implements BookingService {
 
         saveLines(booking, price);
         saveParticipants(booking, request);
-        writeHistory(booking, null, BookingStatus.DRAFT, null, "Booking created");
+        writeHistory(booking, null, BookingStatus.DRAFT, booking.getCreatedBy(), "Booking created");
         eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking created", "Booking was created", null);
 
         if (staffActor != null && !request.startedAt().isAfter(LocalDateTime.now())) {
@@ -404,7 +408,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse approve(String bookingNumber, BookingApprovalRequest request) {
         Booking booking = getForService(bookingNumber);
         requireStatus(booking, BookingStatus.PENDING_APPROVAL);
-        booking.setApprovedBy(request == null ? null : trim(request.actor()));
+        booking.setApprovedBy(request == null ? null : trim(actor(request.actor())));
         booking.setApprovedAt(Instant.now());
         boolean awaitsPayment = booking.getPaymentMode().awaitsPayment();
         if (awaitsPayment) {
@@ -437,7 +441,7 @@ public class BookingServiceImpl implements BookingService {
         requireStatus(booking, BookingStatus.PENDING_APPROVAL);
         BookingStatus from = booking.getStatus();
         booking.setStatus(BookingStatus.REJECTED);
-        booking.setRejectedBy(request == null ? null : trim(request.actor()));
+        booking.setRejectedBy(request == null ? null : trim(actor(request.actor())));
         booking.setRejectedAt(Instant.now());
         booking.setRejectionReason(request == null ? "Rejected" : reason(request.reason(), "Rejected"));
         booking = bookingRepository.save(booking);
@@ -614,7 +618,7 @@ public class BookingServiceImpl implements BookingService {
         booking = bookingRepository.save(booking);
         eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_IN, "Booking checked in", request == null ? null : request.note(), null,
                 emailRequested(request == null ? null : request.sendEmail()));
-        notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_IN, new BookingStatusChangeRequest(request == null ? null : request.actor(), request == null ? null : request.note(), request == null ? null : request.sendEmail()));
+        notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_IN, new BookingStatusChangeRequest(actor(request == null ? null : request.actor()), request == null ? null : request.note(), request == null ? null : request.sendEmail()));
         return bookingMapper.toResponse(booking);
     }
 
@@ -632,7 +636,7 @@ public class BookingServiceImpl implements BookingService {
         }
         eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_OUT, "Booking checked out", request == null ? null : request.note(), null,
                 emailRequested(request == null ? null : request.sendEmail()));
-        notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_OUT, new BookingStatusChangeRequest(request == null ? null : request.actor(), request == null ? null : request.note(), request == null ? null : request.sendEmail()));
+        notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_OUT, new BookingStatusChangeRequest(actor(request == null ? null : request.actor()), request == null ? null : request.note(), request == null ? null : request.sendEmail()));
         return bookingMapper.toResponse(booking);
     }
 
@@ -650,7 +654,7 @@ public class BookingServiceImpl implements BookingService {
                 emailRequested(request == null ? null : request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_IN,
                 new BookingStatusChangeRequest(
-                        request == null ? null : request.actor(),
+                        actor(request == null ? null : request.actor()),
                         request == null ? null : request.note(),
                         request == null ? null : request.sendEmail()));
         return bookingMapper.toResponse(booking);
@@ -672,7 +676,7 @@ public class BookingServiceImpl implements BookingService {
                 "Booking transferred to " + request.newOwnerCode(), request.note(), null,
                 emailRequested(request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_TRANSFERRED,
-                new BookingStatusChangeRequest(request.actor(), request.note(), request.sendEmail()));
+                new BookingStatusChangeRequest(actor(request.actor()), request.note(), request.sendEmail()));
         return bookingMapper.toResponse(booking);
     }
 
@@ -704,12 +708,12 @@ public class BookingServiceImpl implements BookingService {
             repricer.reprice(booking, "nouvel horaire " + newStart + " – " + newEnd);
         }
         booking = bookingRepository.save(booking);
-        writeHistory(booking, from, booking.getStatus(), request.actor(), reason(request.note(), "Booking rescheduled"));
+        writeHistory(booking, from, booking.getStatus(), actor(request.actor()), reason(request.note(), "Booking rescheduled"));
         eventWriter.write(booking, BookingEventType.BOOKING_RESCHEDULED, "Booking rescheduled",
                 "New slot: " + newStart + " – " + newEnd, null,
                 emailRequested(request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_RESCHEDULED,
-                new BookingStatusChangeRequest(request.actor(), request.note(), request.sendEmail()));
+                new BookingStatusChangeRequest(actor(request.actor()), request.note(), request.sendEmail()));
         return bookingMapper.toResponse(booking);
     }
 
@@ -739,7 +743,7 @@ public class BookingServiceImpl implements BookingService {
                 request.note(), null,
                 emailRequested(request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_RESOURCE_CHANGED,
-                new BookingStatusChangeRequest(request.actor(), request.note(), request.sendEmail()));
+                new BookingStatusChangeRequest(actor(request.actor()), request.note(), request.sendEmail()));
         return bookingMapper.toResponse(booking);
     }
 
@@ -1171,14 +1175,15 @@ public class BookingServiceImpl implements BookingService {
      * un client arrive en retard ou un incident d'acces.
      */
     private void assertActivationAllowed(Booking booking, @SuppressWarnings("unused") String action) {
-        if (isCurrentUserAdmin()) {
+        // Lot B0 (ecart 1) : toute l'equipe d'accueil passe, pas seulement l'administration.
+        if (isCurrentUserStaff()) {
             return;
         }
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime earliest = booking.getStartedAt().minusMinutes(checkInProperties.getEarlyWindowMinutes());
         LocalDateTime latest = booking.getStartedAt().plusMinutes(checkInProperties.getLateWindowMinutes());
         if (now.isBefore(earliest) || now.isAfter(latest)) {
-            throw new ForbiddenException("Le check-in est possible de "
+            throw com.sni.bokaticowork.core.exception.customs.ConflictException.coded("CHECKIN_OUTSIDE_WINDOW", "Le pointage est possible de "
                     + checkInProperties.getEarlyWindowMinutes() + " minutes avant a "
                     + checkInProperties.getLateWindowMinutes()
                     + " minutes après le début de la réservation. Passé ce délai, adressez-vous à l'accueil.");
@@ -1196,6 +1201,16 @@ public class BookingServiceImpl implements BookingService {
                 && !LocalDateTime.now().isBefore(booking.getStartedAt())) {
             booking.setStatus(BookingStatus.IN_PROGRESS);
         }
+    }
+
+    private boolean isCurrentUserStaff() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.ROLES
+                        .contains(authority.getAuthority()));
     }
 
     private boolean isCurrentUserAdmin() {
@@ -1289,7 +1304,43 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private String changedBy(BookingStatusChangeRequest request) {
-        return request == null ? null : trim(request.changedBy());
+        return actor(request == null ? null : request.changedBy());
+    }
+
+    /**
+     * Lot B0 (ecart Bn-18) : « qui a fait » vient de la session ; la valeur de la requete ne sert
+     * que sans session (taches du systeme, paiement recu).
+     */
+    private String actor(String requested) {
+        String session = sessionActor();
+        return session != null ? session : trim(requested);
+    }
+
+    private static String sessionActor() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
+            return null;
+        }
+        String name = authentication.getName();
+        return name == null || name.isBlank() || "anonymousUser".equals(name) ? null : name;
+    }
+
+    /** Lot B0 : canal deduit de l'appel (portail ou equipe) ; le telephone et l'accueil viennent au lot B5. */
+    private static com.sni.bokaticowork.features.booking.enums.BookingChannel currentChannel() {
+        try {
+            var attributes = org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attributes instanceof org.springframework.web.context.request.ServletRequestAttributes servlet) {
+                String uri = servlet.getRequest().getRequestURI();
+                if (uri != null && (uri.contains("/client/") || uri.contains("/portal/"))) {
+                    return com.sni.bokaticowork.features.booking.enums.BookingChannel.PORTAL;
+                }
+                return com.sni.bokaticowork.features.booking.enums.BookingChannel.TEAM;
+            }
+        } catch (RuntimeException ignored) {
+            // hors requete : tache du systeme
+        }
+        return null;
     }
 
     private String reason(BookingStatusChangeRequest request, String fallback) {

@@ -308,9 +308,10 @@ public class PaymentTransactionWorkflowProcessor {
             return;
         }
         try {
+            // Lot B0 (ecart 15) : (acteur, motif), dans cet ordre.
             bookingService.confirm(bookingNumber, new BookingStatusChangeRequest(
-                    "Confirmation automatique suite au paiement " + transaction.getTransactionNumber(),
                     SYSTEM_ACTOR,
+                    "Confirmation automatique suite au paiement " + transaction.getTransactionNumber(),
                     Boolean.TRUE
             ));
             log.info("Booking {} auto-confirmed after payment {}", bookingNumber, transaction.getTransactionNumber());

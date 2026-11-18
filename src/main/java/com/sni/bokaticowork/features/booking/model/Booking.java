@@ -156,6 +156,15 @@ public class Booking {
     @Column(name = "policy_override_by", length = 150)
     private String policyOverrideBy;
 
+    /** Lot B0 : qui a cree la reservation (utilisateur de la session ; vide pour le systeme). */
+    @Column(name = "created_by", length = 150)
+    private String createdBy;
+
+    /** Lot B0 : canal de la reservation (portail, equipe, telephone, accueil, courriel, WhatsApp). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "channel", length = 20)
+    private com.sni.bokaticowork.features.booking.enums.BookingChannel channel;
+
     /**
      * Titulaire du droit consomme quand ce n'est pas le titulaire de la reservation · l'organisation
      * dont le collaborateur occupe une place. Vide = le droit est celui de la reservation.

@@ -232,8 +232,11 @@ public class PublicBookingController {
      */
     @GetMapping("/csat/{bookingNumber}")
     public ModelAndView recordCsat(@PathVariable String bookingNumber,
-                                   @RequestParam(defaultValue = "0") int score) {
+                                   @RequestParam(defaultValue = "0") int score,
+                                   @RequestParam(required = false) String token) {
+        // Lot B0 (ecart 8) : le jeton du courriel est exige ; sans lui, la note n'est pas enregistree.
         try {
+            confirmationDocumentService.publicBooking(bookingNumber, token);
             bookingService.recordCsat(bookingNumber, score);
         } catch (Exception ignored) {
         }

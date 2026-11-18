@@ -155,7 +155,8 @@ public class RateLimitRules {
             return new Rule("verify:" + clientIp, max("verify", verifyMax), window("verify", verifyWindow));
         }
         // La cle d'un poste de pointage est un secret partage · on la traite comme un code.
-        if (path.startsWith(CHECKIN_PREFIX + "/scanner")) {
+        // Lot B0 (ecart 17) : seuls les envois (POST) consomment le compteur des codes.
+        if (path.startsWith(CHECKIN_PREFIX + "/scanner") && !"GET".equalsIgnoreCase(verb)) {
             return new Rule("otp:" + clientIp + ":" + path, max("otp", otpMax), window("otp", otpWindow));
         }
         if (path.startsWith(CHECKIN_PREFIX)) {

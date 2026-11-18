@@ -215,7 +215,8 @@ public class BookingEmailNotifier {
         // ── CSAT pour booking-completed ─────────────────────────────
         if (eventType == BookingEventType.BOOKING_COMPLETED) {
             ctx.setVariable("csatUrl", apiBaseUrl().stripTrailing()
-                    + ApiPath.V1 + "/public/bookings/csat/" + booking.getBookingNumber() + "?score=");
+                    + ApiPath.V1 + "/public/bookings/csat/" + booking.getBookingNumber()
+                    + "?token=" + encode(booking.getCheckInToken()) + "&score=");
         }
 
         return templateEngine.process(template(eventType), ctx);

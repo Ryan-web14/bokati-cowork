@@ -385,7 +385,9 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return cashPermission(path, method);
         }
         if (path.startsWith("/bookings")) {
-            if (path.contains("/check-in") || path.contains("/check-out")) return permission("BOOKING", "CHECKIN");
+            // Lot B0 : le pointage anticipe est un pointage (ecart Bn-11) ; lire la grille d'annulation est une lecture (Bn-21).
+            if (path.endsWith("/cancellation-policy") && HttpMethod.GET.matches(method)) return permission("BOOKING", "READ");
+            if (path.contains("/check-in") || path.contains("/check-out") || path.contains("/early-check-in")) return permission("BOOKING", "CHECKIN");
             if (path.contains("/cancel") || path.contains("/reject") || path.contains("/no-show")) return permission("BOOKING", "CANCEL");
             return permission("BOOKING", actionFor("BOOKING", method));
         }

@@ -27,6 +27,7 @@ public class ResourceOperationsController {
     private static final String INCIDENTS = ApiPath.V1 + "/resource-incidents";
 
     private final ResourceOperations operations;
+    private final com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository documents;
 
     public record ResolveRequest(String resolution, Boolean reopen) {
     }
@@ -74,6 +75,14 @@ public class ResourceOperationsController {
     public ResponseEntity<ResourceOperations.IncidentResponse> report(@RequestBody ResourceOperations.IncidentRequest request,
                                                                       Authentication authentication) {
         String actor = authentication == null ? null : authentication.getName();
+        // Lot B0 (ecart Bn-19) : les photos sont des documents existants.
+        if (request != null && request.photoDocumentCodes() != null) {
+            for (String code : request.photoDocumentCodes()) {
+                if (code != null && !code.isBlank() && documents.findByCode(code.trim()).isEmpty()) {
+                    throw new com.sni.bokaticowork.core.exception.customs.BadRequestException("Document introuvable : " + code.trim());
+                }
+            }
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(operations.report(request, new ResourceOperations.Reporter("TEAM", actor, actor, null, null)));
     }

@@ -82,6 +82,35 @@ public class BookingOperations {
         this.eventWriter = eventWriter;
     }
 
+    private com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository documents;
+
+    @Autowired(required = false)
+    void setDocuments(com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository documents) {
+        this.documents = documents;
+    }
+
+    /**
+     * Lot B0 (ecart Bn-19) : chaque photo est un document existant de la GED ; pour un membre, un
+     * document a lui ({@code memberId} vide : l'equipe).
+     */
+    public void checkPhotos(List<String> codes, Long memberId) {
+        if (codes == null || codes.isEmpty() || documents == null) {
+            return;
+        }
+        for (String code : codes) {
+            if (!StringUtils.hasText(code)) {
+                continue;
+            }
+            var document = documents.findByCode(code.trim())
+                    .orElseThrow(() -> new BadRequestException("Document introuvable : " + code.trim()));
+            if (memberId != null && (document.getOwnerType()
+                    != com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType.MEMBER
+                    || !memberId.equals(document.getOwnerId()))) {
+                throw new BadRequestException("Le document " + code.trim() + " n'est pas l'un de vos documents");
+            }
+        }
+    }
+
     @Autowired(required = false)
     void setOptional(@Lazy TaskManagementService tasks, TaskItemRepository taskItems, @Lazy ResourceOperations operations) {
         this.tasks = tasks;
@@ -229,6 +258,9 @@ public class BookingOperations {
                 .filter(answer -> answer != null && StringUtils.hasText(answer.label())).toList();
         List<String> photos = request.photoDocumentCodes() == null ? List.of()
                 : request.photoDocumentCodes().stream().filter(StringUtils::hasText).map(String::trim).toList();
+        if ("TEAM".equals(reporterType)) {
+            checkPhotos(photos, null);
+        }
         BookingEndReport report = BookingEndReport.builder()
                 .booking(booking)
                 .condition(condition)
