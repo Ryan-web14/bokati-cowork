@@ -42,6 +42,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 class ResourceAvailabilityServiceImplTest {
 
     private static final String RESOURCE_CODE = "RES-000001";
@@ -105,6 +106,16 @@ class ResourceAvailabilityServiceImplTest {
         LocalDateTime endedAt = LocalDate.now().plusDays(1).atTime(9, 0);
 
         when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(resource);
+        // Lot R3 : les horaires d'ouverture de la ressource (ici 08:00-18:00) remplacent la borne fixe 08:00-22:00.
+        var hours = org.mockito.Mockito.mock(com.sni.bokaticowork.features.ressource.service.support.OpeningHoursResolver.class);
+        java.util.Map<java.time.DayOfWeek, List<com.sni.bokaticowork.features.ressource.service.support.MonthlyAvailabilityGenerator.OpeningHours>> week =
+                new java.util.EnumMap<>(java.time.DayOfWeek.class);
+        for (java.time.DayOfWeek day : java.time.DayOfWeek.values()) {
+            week.put(day, List.of(new com.sni.bokaticowork.features.ressource.service.support.MonthlyAvailabilityGenerator.OpeningHours(
+                    java.time.LocalTime.of(8, 0), java.time.LocalTime.of(18, 0))));
+        }
+        when(hours.forResource(any())).thenReturn(week);
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "openingHours", hours);
 
         ConflictException exception = assertThrows(ConflictException.class, () -> service.createAvailability(
                 CreateResourceAvailabilityRequest.builder()
@@ -116,7 +127,7 @@ class ResourceAvailabilityServiceImplTest {
                         .build()
         ));
 
-        assertEquals("Could not process resource availability: availability must be created within working hours from 08:00 to 22:00", exception.getMessage());
+        assertTrue(exception.getMessage().contains("hors des horaires d'ouverture"), exception.getMessage());
         verify(availabilityRepository, never()).saveAll(any());
     }
 
@@ -143,7 +154,8 @@ class ResourceAvailabilityServiceImplTest {
     @Test
     void shouldRejectAvailabilityCreatedMoreThanOneMonthInAdvance() {
         Resource resource = bookableResourceWithPolicy(60);
-        LocalDateTime startedAt = LocalDate.now().plusMonths(1).plusDays(1).atTime(8, 0);
+        // Lot R3 : horizon de 90 jours (avant : un mois).
+        LocalDateTime startedAt = LocalDate.now().plusDays(92).atTime(8, 0);
         LocalDateTime endedAt = startedAt.plusHours(2);
 
         when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(resource);
@@ -158,7 +170,7 @@ class ResourceAvailabilityServiceImplTest {
                         .build()
         ));
 
-        assertEquals("Could not process resource availability: availability can only be created up to one month in advance", exception.getMessage());
+        assertTrue(exception.getMessage().contains("90 jours"), exception.getMessage());
         verify(availabilityRepository, never()).saveAll(any());
     }
 
@@ -303,7 +315,10 @@ class ResourceAvailabilityServiceImplTest {
         when(availabilityRepository.findAllByEndedAtAfter(any(LocalDateTime.class), eq(PageRequest.of(0, 20))))
                 .thenReturn(new PageImpl<>(List.of(futureSlot)));
 
+        // Lot R3 : la liste ne fait plus qu'exclure les creneaux passes ; la tache horaire les clot.
         var page = service.list(PageRequest.of(0, 20));
+        verify(availabilityRepository, never()).saveAll(any());
+        service.expirePastSlots();
 
         verify(availabilityRepository).saveAll(List.of(expiredSlot));
         assertEquals(false, expiredSlot.getAvailable());

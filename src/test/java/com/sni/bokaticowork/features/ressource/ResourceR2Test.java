@@ -57,7 +57,7 @@ class ResourceR2Test {
         ResourceBookingImpact impact = mock(ResourceBookingImpact.class);
         when(impact.activeBookings(eq(1L), any(), any())).thenReturn(List.of(
                 new ResourceBookingImpact.ImpactedBooking("BKG-1", "CONFIRMED", LocalDateTime.now().plusDays(2),
-                        LocalDateTime.now().plusDays(2).plusHours(2), "MEMBER", "MBR-1", "Awa")));
+                        LocalDateTime.now().plusDays(2).plusHours(2), "MEMBER", "MBR-1", "Awa", 1)));
 
         assertThatThrownBy(() -> guard(impact).check(resource, null, null, false, "supprimer la ressource", null))
                 .isInstanceOf(ConflictException.class).hasMessageContaining("BKG-1").hasMessageContaining("cancelBookings=true");

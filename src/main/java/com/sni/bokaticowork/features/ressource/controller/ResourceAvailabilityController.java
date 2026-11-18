@@ -88,11 +88,41 @@ public class ResourceAvailabilityController {
         );
     }
 
+    /** Lot R3 : desactiver (sans reservation) ou reactiver un creneau a venir. */
+    @PatchMapping("/{id}/active")
+    @Audited(module = "RESOURCE", action = "UPDATE_AVAILABILITY_ACTIVE", ressource = "resource_availability")
+    public ResponseEntity<Void> updateSlotActive(@org.springframework.web.bind.annotation.PathVariable Long id,
+                                                 @org.springframework.web.bind.annotation.RequestParam boolean active) {
+        resourceAvailabilityService.updateSlotActive(id, active);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Lot R3 : supprimer un creneau a venir sans reservation. */
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    @Audited(module = "RESOURCE", action = "DELETE_AVAILABILITY", ressource = "resource_availability")
+    public ResponseEntity<Void> deleteSlot(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        resourceAvailabilityService.deleteSlot(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Lot R3 : supprimer les creneaux a venir sans reservation d'une ressource (plage facultative) ;
+     * les creneaux reserves restent. Rend {deleted, kept}.
+     */
+    @org.springframework.web.bind.annotation.DeleteMapping
+    @Audited(module = "RESOURCE", action = "DELETE_FUTURE_AVAILABILITIES", ressource = "resource_availability")
+    public ResponseEntity<java.util.Map<String, Integer>> deleteFutureSlots(
+            @org.springframework.web.bind.annotation.RequestParam String resourceCode,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime from,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime to) {
+        return ResponseEntity.ok(resourceAvailabilityService.deleteFutureSlots(resourceCode, from, to));
+    }
+
     @PostMapping("/reserve")
     @Audited(module = "RESOURCE", action = "RESERVE_AVAILABILITY", ressource = "resource_availability")
     @Idempotent(operation = "RESOURCE_AVAILABILITY_RESERVE")
     public ResponseEntity<Void> reserve(@Valid @RequestBody ReserveResourceAvailabilityRequest request) {
-        resourceAvailabilityService.reserve(request);
+        resourceAvailabilityService.reserveManually(request);
         return ResponseEntity.noContent().build();
     }
 
@@ -100,7 +130,7 @@ public class ResourceAvailabilityController {
     @Audited(module = "RESOURCE", action = "RELEASE_AVAILABILITY", ressource = "resource_availability")
     @Idempotent(operation = "RESOURCE_AVAILABILITY_RELEASE")
     public ResponseEntity<Void> release(@Valid @RequestBody ReleaseResourceAvailabilityRequest request) {
-        resourceAvailabilityService.release(request);
+        resourceAvailabilityService.releaseManually(request);
         return ResponseEntity.noContent().build();
     }
 }

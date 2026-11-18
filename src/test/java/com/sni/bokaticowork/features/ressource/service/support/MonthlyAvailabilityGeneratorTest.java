@@ -55,6 +55,11 @@ class MonthlyAvailabilityGeneratorTest {
         generator = new MonthlyAvailabilityGenerator(resourceRepository, availabilityRepository,
                 availabilityService, new ResourceSlotPolicy(),
                 new OpeningHoursResolver(null, null, "08:00-18:00", "18:00-22:00", "08:00-12:00", ""));
+        // Lot R3 : horizon glissant ; trois jours ici (du 28 au 31 octobre), comme le reste du mois d'avant.
+        com.sni.bokaticowork.core.settings.platform.PlatformSettings settings =
+                org.mockito.Mockito.mock(com.sni.bokaticowork.core.settings.platform.PlatformSettings.class);
+        when(settings.integer(eq("app.resources.booking-horizon-days"), org.mockito.ArgumentMatchers.anyInt())).thenReturn(3);
+        org.springframework.test.util.ReflectionTestUtils.setField(generator, "settings", settings);
     }
 
     private static Resource resource(String code) {

@@ -246,6 +246,7 @@ app.phone.default-dial-code	LOCALE	TEXT	LIVE	+242	Indicatif par défaut
 app.phone.keep-trunk-zero	LOCALE	TEXT	LIVE	CG,GA,CI,IT	Pays qui gardent le zéro initial
 app.portal.kyc-grace-period-days	PORTAL	INTEGER	LIVE	7	Grâce KYC du portail (jours)
 app.referral.share-url-template	ENVIRONMENT	TEXT	LIVE	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
+app.resources.booking-horizon-days	RESOURCES	INTEGER	LIVE	90	Ressources : horizon de réservation, en jours (créneaux ouverts jusque-là)
 app.resources.pricing.day-hours	RESOURCES	INTEGER	LIVE	10	Ressources : durée d'une journée facturée, en heures (décision D2 : 10)
 app.resources.pricing.half-day-hours	RESOURCES	INTEGER	LIVE	5	Ressources : durée d'une demi-journée facturée, en heures (décision D2 : 5)
 app.security.bootstrap.secret	SECURITY	SECRET	RESTART		Secret d'initialisation
@@ -426,7 +427,7 @@ bokati.resource.availability.generation.weekday-hours	RESOURCES	TIME_RANGE	LIVE	
 bokati.resource.availability.generation.weekday-subscriber-hours	RESOURCES	TIME_RANGE	LIVE	18:00-22:00	Horaires de semaine réservés aux abonnés
 bokati.resource.availability.subscriber-hours-from	RESOURCES	TIME	LIVE	18:00	Début de la plage réservée aux abonnés
 bokati.resource.bulk-max-resources	RESOURCES	INTEGER	LIVE	20	Ressources par action groupée
-bokati.resource.workers.monthly-availability-cron	RESOURCES	CRON	LIVE	0 0 3 1 * *	Planification de l'ouverture du mois
+bokati.resource.workers.monthly-availability-cron	RESOURCES	CRON	LIVE	0 0 3 * * *	Planification de l'ouverture des créneaux jusqu'à l'horizon (chaque jour)
 bokati.resource.workers.monthly-availability-enabled	RESOURCES	BOOLEAN	LIVE	true	Ouverture automatique du mois active
 bokati.resource.workers.monthly-availability-initial-delay-ms	RESOURCES	INTEGER	RESTART	120000	Attente avant l'ouverture du mois (ms)
 bokati.resource.workers.slot-capacity-delay-ms	RESOURCES	INTEGER	LIVE	3600000	Cadence de recalcul des capacités (ms)

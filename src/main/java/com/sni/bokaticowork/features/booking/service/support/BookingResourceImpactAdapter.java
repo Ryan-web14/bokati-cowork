@@ -26,7 +26,8 @@ public class BookingResourceImpactAdapter implements ResourceBookingImpact {
         return bookingRepository.findActiveOnResource(resourceId, from, to).stream()
                 .map(booking -> new ImpactedBooking(booking.getBookingNumber(), booking.getStatus() == null ? null : booking.getStatus().name(),
                         booking.getStartedAt(), booking.getEndedAt(),
-                        booking.getOwnerType() == null ? null : booking.getOwnerType().name(), booking.getOwnerCode(), booking.getContactName()))
+                        booking.getOwnerType() == null ? null : booking.getOwnerType().name(), booking.getOwnerCode(), booking.getContactName(),
+                        booking.getQuantity() == null ? 1 : booking.getQuantity()))
                 .toList();
     }
 

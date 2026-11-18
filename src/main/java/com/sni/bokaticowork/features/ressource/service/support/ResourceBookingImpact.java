@@ -11,7 +11,7 @@ public interface ResourceBookingImpact {
 
     /** Une reservation touchee. */
     record ImpactedBooking(String bookingNumber, String status, LocalDateTime startedAt, LocalDateTime endedAt,
-                           String ownerType, String ownerCode, String contactName) {
+                           String ownerType, String ownerCode, String contactName, int quantity) {
     }
 
     /** Reservations actives (confirmees, en cours, en attente d'approbation ou de paiement) qui chevauchent la plage. */

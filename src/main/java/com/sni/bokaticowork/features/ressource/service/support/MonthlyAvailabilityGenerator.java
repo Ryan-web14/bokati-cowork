@@ -63,9 +63,13 @@ public class MonthlyAvailabilityGenerator {
     public record Report(int resourcesFilled, int resourcesSkipped, int rangesCreated, int rangesRefused) {
     }
 
+    /**
+     * Lot R3 : horizon glissant (90 jours par defaut, {@code app.resources.booking-horizon-days}) ;
+     * un jour qui a deja des creneaux est saute (ceux de l'equipe restent), les autres sont ouverts.
+     * Avant : le mois courant seulement, et toute ressource ayant un creneau dans le mois sautee.
+     */
     public Report generate(LocalDateTime now) {
-        LocalDate lastDay = now.toLocalDate().with(TemporalAdjusters.lastDayOfMonth());
-        LocalDateTime monthEnd = lastDay.plusDays(1).atStartOfDay();
+        LocalDate lastDay = now.toLocalDate().plusDays(horizonDays());
 
         int filled = 0;
         int skipped = 0;
@@ -75,12 +79,10 @@ public class MonthlyAvailabilityGenerator {
             if (!isBookable(resource)) {
                 continue;
             }
-            if (availabilityRepository.countByResourceAndStartedAtGreaterThanEqualAndEndedAtLessThanEqual(
-                    resource, now, monthEnd) > 0) {
-                skipped++;
-                continue;
-            }
             int[] outcome = fillMonth(resource, now, lastDay);
+            if (outcome[0] == 0) {
+                skipped++;
+            }
             created += outcome[0];
             refused += outcome[1];
             if (outcome[0] > 0) {
@@ -97,6 +99,11 @@ public class MonthlyAvailabilityGenerator {
         int created = 0;
         int refused = 0;
         for (LocalDate day = now.toLocalDate(); !day.isAfter(lastDay); day = day.plusDays(1)) {
+            // Jour deja ouvert (par la tache ou par l'equipe) : laisse tel quel.
+            if (availabilityRepository.countByResourceAndStartedAtGreaterThanEqualAndEndedAtLessThanEqual(
+                    resource, day.atStartOfDay(), day.plusDays(1).atStartOfDay()) > 0) {
+                continue;
+            }
             for (OpeningHours hours : hoursByDay.getOrDefault(day.getDayOfWeek(), List.of())) {
                 LocalDateTime start = day.atTime(hours.open());
                 LocalDateTime end = day.atTime(hours.close());
@@ -124,6 +131,17 @@ public class MonthlyAvailabilityGenerator {
         return new int[]{created, refused};
     }
 
+    private com.sni.bokaticowork.core.settings.platform.PlatformSettings settings;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSettings(com.sni.bokaticowork.core.settings.platform.PlatformSettings settings) {
+        this.settings = settings;
+    }
+
+    int horizonDays() {
+        return settings == null ? 90 : Math.max(1, settings.integer("app.resources.booking-horizon-days", 90));
+    }
+
     private static boolean isBookable(Resource resource) {
         return Boolean.TRUE.equals(resource.getBookingEnabled())
                 && Boolean.TRUE.equals(resource.getActive())
@@ -144,7 +162,7 @@ public class MonthlyAvailabilityGenerator {
     }
 
     /** Une plage d'ouverture « HH:mm-HH:mm » · vide ou absente, le jour est ferme. */
-    record OpeningHours(LocalTime open, LocalTime close) {
+    public record OpeningHours(LocalTime open, LocalTime close) {
 
         static OpeningHours parse(String value) {
             if (!StringUtils.hasText(value)) {

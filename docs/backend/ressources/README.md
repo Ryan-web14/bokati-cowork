@@ -2,7 +2,7 @@
 
 Branche `feature/ressources`, partie de new-main f33d6089 le 17/11/2026. Plan à valider : les décisions de l'exploitant sont plus bas, à trancher avant le lot concerné.
 
-État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 fait** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md)), **R2 fait** ([lot-r2-politiques-cycle-de-vie.md](lot-r2-politiques-cycle-de-vie.md)).
+État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 fait** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md)), **R2 fait** ([lot-r2-politiques-cycle-de-vie.md](lot-r2-politiques-cycle-de-vie.md)), **R3 fait** ([lot-r3-creneaux-horizon.md](lot-r3-creneaux-horizon.md)).
 
 ## Constat (vérifié dans le code le 17/11/2026)
 
@@ -108,17 +108,17 @@ Absentes aujourd'hui (approbation, quotas, liste d'attente, pointage et non-pré
 | 6 | Suppression d'un groupe sans contrôle (500 sur clé étrangère) | Réglé (R2) |
 | 7 | Suppression d'une ressource sans contrôle des réservations | Réglé (R2) |
 | 8 | Photos : appartenance, document, couverture | Réglé (R0) |
-| 9 | `/reserve` et `/release` manuels sans réservation | confirmé |
-| 10 | Pas de suppression ni réactivation de créneau | confirmé |
-| 11 | `capacity` de création de créneaux ignoré | confirmé (voulu, mais validé) |
+| 9 | `/reserve` et `/release` manuels sans réservation | Réglé (R3) |
+| 10 | Pas de suppression ni réactivation de créneau | Réglé (R3) |
+| 11 | `capacity` de création de créneaux ignoré | Réglé (R3) |
 | 12 | Fermeture sans `reason` dans la réponse | Réglé (R2) |
 | 13 | Calendrier public sans contrôle ni borne, jour vide `FULL` | Réglé (R0) |
-| 14 | Lectures de créneaux qui écrivent | confirmé |
+| 14 | Lectures de créneaux qui écrivent | Réglé (R3) |
 | 15 | `floorLabel` perdu | Réglé (R2) |
 | 16 | Messages en anglais | confirmé (environ 165) |
 | Rn-1 | Prix non recalculé au changement d'horaire ou de ressource | Réglé (R1) |
-| Rn-2 | Horizon limité à la fin du mois courant | nouveau, haute |
-| Rn-3 | Création manuelle de créneaux en 08:00-22:00 fixe | nouveau |
+| Rn-2 | Horizon limité à la fin du mois courant | Réglé (R3) |
+| Rn-3 | Création manuelle de créneaux en 08:00-22:00 fixe | Réglé (R3) |
 | Rn-4 | Fermeture sans contrôle des réservations ni avis | Réglé (R2) |
 | Rn-5 | Devis : base prise sur une règle de week-end ; pourcentage en division entière | Réglé (R1) |
 | Rn-6 | Modification de règle non revalidée, champ impossible à vider | en partie réglé (R1 : champs texte vidables, doublons refusés) |

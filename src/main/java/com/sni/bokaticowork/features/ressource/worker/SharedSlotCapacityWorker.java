@@ -59,6 +59,12 @@ public class SharedSlotCapacityWorker implements SchedulingConfigurer {
     }
 
     private final SharedSlotCapacityAligner aligner;
+    private com.sni.bokaticowork.features.ressource.service.interfaces.ResourceAvailabilityService availabilityService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAvailabilityService(com.sni.bokaticowork.features.ressource.service.interfaces.ResourceAvailabilityService availabilityService) {
+        this.availabilityService = availabilityService;
+    }
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     @Value("${bokati.resource.workers.slot-capacity-enabled:true}")
@@ -70,6 +76,13 @@ public class SharedSlotCapacityWorker implements SchedulingConfigurer {
             return;
         }
         try {
+            // Lot R3 : les creneaux passes se ferment ici, plus dans les lectures.
+            if (availabilityService != null) {
+                int expired = availabilityService.expirePastSlots();
+                if (expired > 0) {
+                    log.info("Creneaux passes clos : {}", expired);
+                }
+            }
             int aligned = aligner.alignAll();
             if (aligned > 0) {
                 log.info("Capacite des creneaux · {} creneaux remis a la capacite reelle de leur ressource",
