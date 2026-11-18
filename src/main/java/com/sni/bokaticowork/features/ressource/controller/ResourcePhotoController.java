@@ -22,6 +22,7 @@ public class ResourcePhotoController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('RESOURCE:GALLERY','RESOURCE_GALLERY')")
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "RESOURCE", action = "ADD_PHOTO", ressource = "resource")
     public ResponseEntity<ResourcePhotoResponse> add(@PathVariable String resourceCode,
                                                      @Valid @RequestBody ResourcePhotoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.add(resourceCode, request));
@@ -34,15 +35,17 @@ public class ResourcePhotoController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('RESOURCE:GALLERY','RESOURCE_GALLERY')")
-    public ResponseEntity<ResourcePhotoResponse> update(@PathVariable Long id,
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "RESOURCE", action = "UPDATE_PHOTO", ressource = "resource")
+    public ResponseEntity<ResourcePhotoResponse> update(@PathVariable String resourceCode, @PathVariable Long id,
                                                         @Valid @RequestBody ResourcePhotoRequest request) {
-        return ResponseEntity.ok(service.update(id, request));
+        return ResponseEntity.ok(service.update(resourceCode, id, request));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('RESOURCE:GALLERY','RESOURCE_GALLERY')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "RESOURCE", action = "DELETE_PHOTO", ressource = "resource")
+    public ResponseEntity<Void> delete(@PathVariable String resourceCode, @PathVariable Long id) {
+        service.delete(resourceCode, id);
         return ResponseEntity.noContent().build();
     }
 }

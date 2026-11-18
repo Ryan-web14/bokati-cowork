@@ -181,9 +181,23 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .lastMinuteMinutes(request.getLastMinuteMinutes())
                 .priority(request.getPriority() == null ? 0 : request.getPriority())
                 .active(request.getActive() == null ? Boolean.TRUE : request.getActive())
+                .daysOfWeek(normalizeDays(request.getDaysOfWeek()))
+                .customerSegment(upper(request.getCustomerSegment()))
+                .planCode(blankToNull(request.getPlanCode()))
+                .minParticipants(request.getMinParticipants())
+                .maxParticipants(request.getMaxParticipants())
+                .minDurationMinutes(request.getMinDurationMinutes())
+                .maxDurationMinutes(request.getMaxDurationMinutes())
+                .minLeadMinutes(request.getMinLeadMinutes())
+                .channel(upper(request.getChannel()))
+                .stackable(Boolean.TRUE.equals(request.getStackable()))
+                .perParticipant(Boolean.TRUE.equals(request.getPerParticipant()))
                 .build();
 
-        pricingRuleRepository.save(rule);
+        // Lot R1 : doublon strict refuse ; version 1 gardee (numero court relu apres l'insertion).
+        governance.rejectDuplicate(rule);
+        pricingRuleRepository.saveAndFlush(rule);
+        governance.record(rule, "CREATE");
     }
 
     @Override
@@ -195,7 +209,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponse<ResourcePricingRuleResponse> list(Pageable pageable) {
-        Page<ResourcePricingRuleResponse> page = pricingRuleRepository.findAll(pageable).map(this::toResponse);
+        Page<ResourcePricingRuleResponse> page = pricingRuleRepository.findAllByDeletedFalse(pageable).map(this::toResponse);
         return new PaginatedResponse<>(page);
     }
 
@@ -203,54 +217,101 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     @Transactional(readOnly = true)
     public PaginatedResponse<ResourcePricingRuleResponse> listByResource(String resourceCode, Pageable pageable) {
         Resource resource = resourceService.getResourceForService(resourceCode);
-        Page<ResourcePricingRuleResponse> page = pricingRuleRepository.findAllByResource(resource, pageable).map(this::toResponse);
+        Page<ResourcePricingRuleResponse> page = pricingRuleRepository.findAllByResourceAndDeletedFalse(resource, pageable).map(this::toResponse);
         return new PaginatedResponse<>(page);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResourcePriceQuoteResponse quote(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt) {
-        if (!StringUtils.hasText(resourceCode) || !StringUtils.hasText(bookingUnit) || startedAt == null || endedAt == null) {
-            throw new BadRequestException("Resource code, booking unit, start and end dates are required");
+        return quote(resourceCode, bookingUnit, startedAt, endedAt, 1, null, null, null);
+    }
+
+    /**
+     * Lot R1 : devis par le moteur unique, avec le contexte du titulaire (le meme que la reservation).
+     * {@code bookingUnit} impose l'unite (equipe) ; vide, l'unite la moins chere est retenue.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public ResourcePriceQuoteResponse quote(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt,
+                                            Integer quantity, String ownerType, String ownerCode, String channel) {
+        if (!StringUtils.hasText(resourceCode) || startedAt == null || endedAt == null) {
+            throw new BadRequestException("La ressource, le début et la fin sont requis");
         }
         if (!endedAt.isAfter(startedAt)) {
-            throw new BadRequestException("End date must be after start date");
+            throw new BadRequestException("La fin doit suivre le début");
         }
         Resource resource = resourceService.getResourceForService(resourceCode);
         validateAgainstPolicy(resource, startedAt, endedAt);
-        ResourceBookingUnit unit = parseUnit(bookingUnit);
-        ResourcePricingRule baseRule = pricingRuleRepository.findAllActiveByResourceId(resource.getId()).stream()
-                .filter(rule -> unit.equals(rule.getResourceBookingUnit()))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("No active pricing rule found for resource " + resourceCode));
-
-        List<ResourcePricingRule> candidates = pricingRuleRepository.findApplicableRules(
-                resource,
-                unit,
-                startedAt.toLocalDate(),
-                startedAt.getDayOfWeek().getValue(),
-                startedAt.toLocalTime()
-        );
-        ResourcePricingRule applied = candidates.stream()
-                .filter(rule -> appliesLastMinute(rule, startedAt))
-                .findFirst()
-                .orElse(baseRule);
-
-        Integer unitPrice = applyAdjustment(baseRule.getPrice(), applied);
-        long quantity = quantityFor(unit, startedAt, endedAt);
-
+        com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit unit = StringUtils.hasText(bookingUnit) ? parseUnit(bookingUnit) : null;
+        com.sni.bokaticowork.features.ressource.service.pricing.PriceContext context = priceContextResolver == null
+                ? com.sni.bokaticowork.features.ressource.service.pricing.PriceContext.anonymous()
+                : priceContextResolver.forOwner(ownerType, ownerCode);
+        if (StringUtils.hasText(channel)) {
+            context = new com.sni.bokaticowork.features.ressource.service.pricing.PriceContext(context.segments(), context.planCode(),
+                    channel.trim().toUpperCase(java.util.Locale.ROOT), context.now());
+        }
+        com.sni.bokaticowork.features.ressource.service.pricing.PriceResult result =
+                priceEngine.price(resource, startedAt, endedAt, quantity == null ? 1 : quantity, unit, context);
+        if (result.lines().isEmpty()) {
+            throw new ResourceNotFoundException("Aucun prix de base actif pour la ressource " + resourceCode);
+        }
+        com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Line first = result.lines().get(0);
+        com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Adjustment adjustment =
+                first.adjustments().isEmpty() ? null : first.adjustments().get(0);
+        Integer basePrice = first.baseRuleId() == null ? null
+                : pricingRuleRepository.findByShortId(first.baseRuleId()).map(ResourcePricingRule::getPrice).orElse(null);
         return ResourcePriceQuoteResponse.builder()
                 .resourceCode(resource.getCode())
-                .bookingUnit(unit.name())
+                .bookingUnit(result.unit().name())
                 .startedAt(startedAt)
                 .endedAt(endedAt)
-                .basePrice(baseRule.getPrice())
-                .finalPrice(unitPrice * (int) quantity)
-                .appliedRuleId(applied.getShortId())
-                .appliedRuleLabel(applied.getLabel())
-                .adjustmentType(applied.getAdjustmentType() == null ? null : applied.getAdjustmentType().name())
-                .adjustmentValue(applied.getAdjustmentValue())
+                .basePrice(basePrice)
+                .finalPrice(result.amount().setScale(0, java.math.RoundingMode.HALF_UP).intValue())
+                .appliedRuleId(adjustment != null ? adjustment.ruleId() : first.baseRuleId())
+                .appliedRuleLabel(adjustment != null ? adjustment.label() : first.baseRuleLabel())
+                .adjustmentType(adjustment == null ? null : adjustment.type())
+                .adjustmentValue(adjustment == null ? null : adjustment.value())
+                .units(result.units())
+                .quantity(result.multiplier())
+                .amount(result.amount())
+                .currency(result.currency())
+                .lines(result.lines())
+                .alternatives(result.alternatives())
                 .build();
+    }
+
+    private com.sni.bokaticowork.features.ressource.service.pricing.ResourcePriceEngine priceEngine;
+    private com.sni.bokaticowork.features.ressource.service.pricing.PricingRuleGovernance governance;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setGovernance(com.sni.bokaticowork.features.ressource.service.pricing.PricingRuleGovernance governance) {
+        this.governance = governance;
+    }
+
+    /** Lot R1 : versions d'une regle, de la plus recente a la plus ancienne. */
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<com.sni.bokaticowork.features.ressource.model.ResourcePricingRuleVersion> history(Long id) {
+        Long shortId = pricingRuleRepository.findByShortId(id).or(() -> pricingRuleRepository.findById(id))
+                .map(ResourcePricingRule::getShortId)
+                .orElseThrow(() -> new ResourceNotFoundException("Règle tarifaire introuvable : " + id));
+        return governance.history(shortId);
+    }
+
+    /** Lot R1 : regles ambigues d'une ressource. */
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<com.sni.bokaticowork.features.ressource.service.pricing.PricingRuleGovernance.Conflict> conflicts(String resourceCode) {
+        return governance.conflicts(resourceService.getResourceForService(resourceCode).getId());
+    }
+    private com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setPricing(com.sni.bokaticowork.features.ressource.service.pricing.ResourcePriceEngine priceEngine,
+                    com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver) {
+        this.priceEngine = priceEngine;
+        this.priceContextResolver = priceContextResolver;
     }
 
     @Override
@@ -274,7 +335,22 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         if (request.getLastMinuteMinutes() != null) rule.setLastMinuteMinutes(request.getLastMinuteMinutes());
         if (request.getPriority() != null)         rule.setPriority(request.getPriority());
         if (request.getActive() != null)           rule.setActive(request.getActive());
-        return toResponse(pricingRuleRepository.save(rule));
+        // Lot R1 : conditions nouvelles (chaine vide pour vider un champ texte).
+        if (request.getDaysOfWeek() != null)        rule.setDaysOfWeek(normalizeDays(request.getDaysOfWeek()));
+        if (request.getCustomerSegment() != null)   rule.setCustomerSegment(upper(request.getCustomerSegment()));
+        if (request.getPlanCode() != null)          rule.setPlanCode(blankToNull(request.getPlanCode()));
+        if (request.getMinParticipants() != null)   rule.setMinParticipants(request.getMinParticipants());
+        if (request.getMaxParticipants() != null)   rule.setMaxParticipants(request.getMaxParticipants());
+        if (request.getMinDurationMinutes() != null) rule.setMinDurationMinutes(request.getMinDurationMinutes());
+        if (request.getMaxDurationMinutes() != null) rule.setMaxDurationMinutes(request.getMaxDurationMinutes());
+        if (request.getMinLeadMinutes() != null)    rule.setMinLeadMinutes(request.getMinLeadMinutes());
+        if (request.getChannel() != null)           rule.setChannel(upper(request.getChannel()));
+        if (request.getStackable() != null)        rule.setStackable(request.getStackable());
+        if (request.getPerParticipant() != null)   rule.setPerParticipant(request.getPerParticipant());
+        governance.rejectDuplicate(rule);
+        ResourcePricingRule saved = pricingRuleRepository.save(rule);
+        governance.record(saved, "UPDATE");
+        return toResponse(saved);
     }
 
     @Override
@@ -285,11 +361,50 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         ResourcePricingRule rule = getPricingRuleForService(id);
         rule.setActive(active);
         pricingRuleRepository.save(rule);
+        governance.record(rule, active ? "ACTIVATE" : "DEACTIVATE");
     }
 
     @Override
     public void deletePricingRule(Long id) {
-        pricingRuleRepository.delete(getPricingRuleForService(id));
+        // Lot R1 : suppression douce ; la regle et son historique restent pour expliquer les prix passes.
+        ResourcePricingRule rule = getPricingRuleForService(id);
+        rule.setDeleted(Boolean.TRUE);
+        rule.setActive(Boolean.FALSE);
+        pricingRuleRepository.save(rule);
+        governance.record(rule, "DELETE");
+    }
+
+    private static final java.util.Set<String> SEGMENTS = java.util.Set.of("PUBLIC", "MEMBER", "SUBSCRIBER", "COMPANY", "PARTNER");
+    private static final java.util.Set<String> CHANNELS = java.util.Set.of("PORTAL", "TEAM");
+
+    private static String blankToNull(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private static String upper(String value) {
+        return StringUtils.hasText(value) ? value.trim().toUpperCase(java.util.Locale.ROOT) : null;
+    }
+
+    /** « 6, 7 » devient « 6,7 » ; chaque jour entre 1 (lundi) et 7 (dimanche). */
+    private static String normalizeDays(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        java.util.TreeSet<Integer> days = new java.util.TreeSet<>();
+        for (String part : value.split("[,; ]+")) {
+            if (!StringUtils.hasText(part)) continue;
+            int day;
+            try {
+                day = Integer.parseInt(part.trim());
+            } catch (NumberFormatException ex) {
+                throw new BadRequestException("Jour invalide : " + part + " (1 = lundi ... 7 = dimanche)");
+            }
+            if (day < 1 || day > 7) {
+                throw new BadRequestException("Jour invalide : " + day + " (1 = lundi ... 7 = dimanche)");
+            }
+            days.add(day);
+        }
+        return days.isEmpty() ? null : days.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
     }
 
     private ResourcePricingRule getPricingRuleForService(Long id) {
@@ -300,7 +415,8 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         // clients qui l'avaient garde, et ne peut pas se confondre avec un numero court.
         return pricingRuleRepository.findByShortId(id)
                 .or(() -> pricingRuleRepository.findById(id))
-                .orElseThrow(() -> new ResourceNotFoundException("Resource pricing rule with id " + id + " not found"));
+                .filter(rule -> !Boolean.TRUE.equals(rule.getDeleted()))
+                .orElseThrow(() -> new ResourceNotFoundException("Règle tarifaire introuvable : " + id));
     }
 
     private ResourcePricingRuleResponse toResponse(ResourcePricingRule rule) {
@@ -413,6 +529,19 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         }
         if (request.getValidFrom() != null && request.getValidUntil() != null && request.getValidUntil().isBefore(request.getValidFrom())) {
             errors.add("Invalid resource pricing rule request, validUntil must be after validFrom");
+        }
+        if (StringUtils.hasText(request.getCustomerSegment()) && !SEGMENTS.contains(request.getCustomerSegment().trim().toUpperCase(java.util.Locale.ROOT))) {
+            errors.add("customerSegment : PUBLIC, MEMBER, SUBSCRIBER, COMPANY ou PARTNER");
+        }
+        if (StringUtils.hasText(request.getChannel()) && !CHANNELS.contains(request.getChannel().trim().toUpperCase(java.util.Locale.ROOT))) {
+            errors.add("channel : PORTAL ou TEAM");
+        }
+        if (request.getMinParticipants() != null && request.getMaxParticipants() != null && request.getMinParticipants() > request.getMaxParticipants()) {
+            errors.add("minParticipants doit être inférieur ou égal à maxParticipants");
+        }
+        if (request.getMinDurationMinutes() != null && request.getMaxDurationMinutes() != null
+                && request.getMinDurationMinutes() > request.getMaxDurationMinutes()) {
+            errors.add("minDurationMinutes doit être inférieur ou égal à maxDurationMinutes");
         }
         return errors;
     }

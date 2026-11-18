@@ -25,6 +25,8 @@ public enum BookingEventType {
     REPAIR_APPLIED,
     QUOTA_OVERRIDE_APPLIED,
     BOOKING_RESCHEDULED,
+    /** Lot R1 : prix recalcule apres un changement d'horaire, de duree ou de ressource (D1). */
+    BOOKING_PRICE_ADJUSTED,
     BOOKING_TRANSFERRED,
     BOOKING_RESOURCE_CHANGED
 }

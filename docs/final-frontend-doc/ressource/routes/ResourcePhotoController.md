@@ -9,7 +9,7 @@ Module [ressource](../README.md) · 4 route(s).
 <a id="r-get-sni-api-v1-resources-resourcecode-photos"></a>
 ### GET /sni/api/v1/resources/{resourceCode}/photos
 
-- Accès : back-office : rôle d'administration et droit `RESOURCE:GALLERY`
+- Accès : back-office : rôle d'administration et droit `RESOURCE:READ`
 - Réponse : `List<ResourcePhotoResponse>`
 - Modèles : [ResourcePhotoResponse](#m-ResourcePhotoResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePhotoController.java`, méthode `list`
@@ -40,6 +40,7 @@ Module [ressource](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
+| `resourceCode` | chemin | `String` | oui |  |
 | `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 <a id="r-patch-sni-api-v1-resources-resourcecode-photos-id"></a>
@@ -53,6 +54,7 @@ Module [ressource](../README.md) · 4 route(s).
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
+| `resourceCode` | chemin | `String` | oui |  |
 | `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
 ## Modèles

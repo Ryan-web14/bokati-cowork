@@ -137,10 +137,12 @@ public class ClientResourceService {
     }
 
     @Transactional(readOnly = true)
-    public ResourcePriceQuoteResponse getQuote(String code, String bookingUnit,
-                                                LocalDateTime startedAt, LocalDateTime endedAt) {
+    public ResourcePriceQuoteResponse getQuote(String code, LocalDateTime startedAt, LocalDateTime endedAt,
+                                                Integer quantity, String memberId) {
         assertPortalVisible(code);
-        return resourcePricingRuleService.quote(code, bookingUnit, startedAt, endedAt);
+        // Aucune unite imposee cote client : le meme calcul que la reservation du portail.
+        return resourcePricingRuleService.quote(code, null, startedAt, endedAt, quantity,
+                memberId == null ? null : "MEMBER", memberId, "PORTAL");
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

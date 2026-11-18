@@ -8,6 +8,6 @@ import java.util.List;
 public interface ResourcePhotoService {
     ResourcePhotoResponse add(String resourceCode, ResourcePhotoRequest request);
     List<ResourcePhotoResponse> list(String resourceCode);
-    ResourcePhotoResponse update(Long id, ResourcePhotoRequest request);
-    void delete(Long id);
+    ResourcePhotoResponse update(String resourceCode, Long id, ResourcePhotoRequest request);
+    void delete(String resourceCode, Long id);
 }

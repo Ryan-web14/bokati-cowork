@@ -34,7 +34,8 @@ class PublicResourceCalendarEveningTest {
     @Mock private ResourceAvailabilityRepository availabilityRepository;
     @InjectMocks private PublicResourceCalendarServiceImpl service;
 
-    private final Resource resource = Resource.builder().code("RES-1").name("Open space").capacity(10).build();
+    private final Resource resource = Resource.builder().code("RES-1").name("Open space").capacity(10)
+            .status(com.sni.bokaticowork.features.ressource.enums.ResourceStatus.ACTIVE).build();
 
     @BeforeEach
     void setUp() {

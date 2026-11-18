@@ -59,9 +59,10 @@ Module [portal](../README.md) · 5 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `code` | chemin | `String` | oui |  |
-| `bookingUnit` | requête | `String` | oui |  |
+| `bookingUnit` | requête | `String` |  |  |
 | `startedAt` | requête | `LocalDateTime` | oui |  |
 | `endedAt` | requête | `LocalDateTime` | oui |  |
+| `quantity` | requête | `Integer` |  | 1 |
 
 <a id="r-get-sni-api-v1-client-resources-code-slots"></a>
 ### GET /sni/api/v1/client/resources/{code}/slots
@@ -146,6 +147,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `appliedRuleLabel` | texte |  |  |
 | `adjustmentType` | texte |  |  |
 | `adjustmentValue` | entier |  |  |
+| `units` | nombre décimal |  |  |
+| `quantity` | entier |  |  |
+| `amount` | nombre décimal |  |  |
+| `currency` | texte |  |  |
+| `lines` | [PriceResult.Line](#m-PriceResult-Line)[] |  |  |
+| `alternatives` | [PriceResult.Alternative](#m-PriceResult-Alternative)[] |  |  |
 
 <a id="m-ResourceAvailabilityWindowResponse"></a>
 #### ResourceAvailabilityWindowResponse
@@ -191,6 +198,17 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validUntil` | date AAAA-MM-JJ |  |  |
 | `lastMinuteMinutes` | entier |  |  |
 | `priority` | entier |  |  |
+| `daysOfWeek` | texte |  |  |
+| `customerSegment` | texte |  |  |
+| `planCode` | texte |  |  |
+| `minParticipants` | entier |  |  |
+| `maxParticipants` | entier |  |  |
+| `minDurationMinutes` | entier |  |  |
+| `maxDurationMinutes` | entier |  |  |
+| `minLeadMinutes` | entier |  |  |
+| `channel` | texte |  |  |
+| `stackable` | booléen |  |  |
+| `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-PublicResourceCalendarResponse-Day"></a>
@@ -205,6 +223,29 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `remainingCapacity` | entier |  |  |
 | `status` | texte |  |  |
 | `windows` | [PublicResourceCalendarResponse.Window](#m-PublicResourceCalendarResponse-Window)[] |  |  |
+
+<a id="m-PriceResult-Line"></a>
+#### PriceResult.Line
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `from` | texte |  |  |
+| `to` | texte |  |  |
+| `units` | nombre décimal |  |  |
+| `unitPrice` | nombre décimal |  |  |
+| `baseRuleId` | code identifiant (texte) |  |  |
+| `baseRuleLabel` | texte |  |  |
+| `adjustments` | [PriceResult.Adjustment](#m-PriceResult-Adjustment)[] |  |  |
+| `amount` | nombre décimal |  |  |
+
+<a id="m-PriceResult-Alternative"></a>
+#### PriceResult.Alternative
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `unit` | enum : `HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH` |  |  |
+| `amount` | nombre décimal |  |  |
+| `chosen` | booléen |  |  |
 
 <a id="m-LocalTime"></a>
 #### LocalTime
@@ -229,3 +270,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `available` | booléen |  |  |
 | `active` | booléen |  |  |
 | `subscribersOnly` | booléen |  |  |
+
+<a id="m-PriceResult-Adjustment"></a>
+#### PriceResult.Adjustment
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `ruleId` | code identifiant (texte) |  |  |
+| `label` | texte |  |  |
+| `type` | texte |  |  |
+| `value` | entier |  |  |

@@ -28,8 +28,11 @@ public class AdminResourceCalendarServiceImpl implements AdminResourceCalendarSe
     @Override
     public AdminResourceCalendarResponse calendar(String resourceCode, LocalDate fromDate, LocalDate toDate) {
         Resource resource = resourceService.getResourceForService(resourceCode);
-        LocalDate start = fromDate == null ? LocalDate.now() : fromDate;
-        LocalDate end = toDate == null ? start.plusMonths(1) : toDate;
+        // Lot R0 : plage bornee, comme le calendrier public.
+        com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarRange range =
+                com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarRange.of(fromDate, toDate);
+        LocalDate start = range.start();
+        LocalDate end = range.end();
 
         List<ResourceAvailability> slots = availabilityRepository.findAllSlotsInRange(
                 resource,
@@ -57,8 +60,11 @@ public class AdminResourceCalendarServiceImpl implements AdminResourceCalendarSe
     @Override
     public List<ResourceOccupiedSlotResponse> occupiedSlots(String resourceCode, LocalDate fromDate, LocalDate toDate) {
         Resource resource = resourceService.getResourceForService(resourceCode);
-        LocalDate start = fromDate == null ? LocalDate.now() : fromDate;
-        LocalDate end = toDate == null ? start.plusMonths(1) : toDate;
+        // Lot R0 : plage bornee, comme le calendrier public.
+        com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarRange range =
+                com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarRange.of(fromDate, toDate);
+        LocalDate start = range.start();
+        LocalDate end = range.end();
 
         List<ResourceAvailability> slots = availabilityRepository.findAllSlotsInRange(
                 resource,

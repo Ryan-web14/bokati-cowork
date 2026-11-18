@@ -55,6 +55,7 @@ public class ResourceAvailabilityController {
      * l'ensemble obligerait a les retirer une par une puis a relancer.
      */
     @PostMapping("/bulk")
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "RESOURCE", action = "BULK_CREATE_AVAILABILITY", ressource = "resource")
     public ResponseEntity<BulkResourceOperationResponse> createBulk(
             @Valid @RequestBody BulkCreateResourceAvailabilityRequest request) {
         return ResponseEntity.ok(resourceAvailabilityService.createAvailabilityBulk(request));

@@ -97,6 +97,18 @@ public class BookingServiceImpl implements BookingService {
     private final BookingIdentityResolver identityResolver;
     private final BookingPaymentContextResolver paymentContextResolver;
     private final BookingPricingCalculator pricingCalculator;
+    private com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver;
+    private com.sni.bokaticowork.features.booking.service.support.BookingRepricer repricer;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setRepricer(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingRepricer repricer) {
+        this.repricer = repricer;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPriceContextResolver(com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver) {
+        this.priceContextResolver = priceContextResolver;
+    }
     private final BookingResourceGuard resourceGuard;
     private final BookingEntitlementBridge entitlementBridge;
     private final com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver billingCompanyResolver;
@@ -246,7 +258,11 @@ public class BookingServiceImpl implements BookingService {
         booking.setCheckInToken(generateCheckInToken());
         booking.setPolicyOverrideBy(staffActor);
 
-        BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity, request.bookingUnit());
+        // Lot R1 : prix du moteur unique, avec le contexte du titulaire (segment, plan, canal), comme le devis.
+        BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity,
+                request.bookingUnit(), priceContextResolver == null ? null
+                        : priceContextResolver.forOwner(booking.getOwnerType() == null ? null : booking.getOwnerType().name(), booking.getOwnerCode()));
+        booking.setPriceTrace(BookingPricingCalculator.trace(price));
         booking.setBookingUnit(price.unit());
         booking.setUnitPrice(price.unitPrice());
         booking.setSubtotalAmount(price.amount());
@@ -667,6 +683,10 @@ public class BookingServiceImpl implements BookingService {
         booking.setStartedAt(newStart);
         booking.setEndedAt(newEnd);
         booking.setDurationMinutes((int) Duration.between(newStart, newEnd).toMinutes());
+        // Lot R1 (D1) : nouveau prix ; ecart facture en complement ou rendu par un avoir.
+        if (repricer != null) {
+            repricer.reprice(booking, "nouvel horaire " + newStart + " – " + newEnd);
+        }
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, booking.getStatus(), request.actor(), reason(request.note(), "Booking rescheduled"));
         eventWriter.write(booking, BookingEventType.BOOKING_RESCHEDULED, "Booking rescheduled",
@@ -693,6 +713,10 @@ public class BookingServiceImpl implements BookingService {
         reserveResourceSlot(newResource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
         eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after resource change",
                 newResource.getCode(), null);
+        // Lot R1 (D1) : prix de la nouvelle ressource ; ecart facture en complement ou rendu par un avoir.
+        if (repricer != null) {
+            repricer.reprice(booking, "ressource " + oldResource.getCode() + " → " + newResource.getCode());
+        }
         booking = bookingRepository.save(booking);
         eventWriter.write(booking, BookingEventType.BOOKING_RESOURCE_CHANGED,
                 "Resource changed from " + oldResource.getCode() + " to " + newResource.getCode(),

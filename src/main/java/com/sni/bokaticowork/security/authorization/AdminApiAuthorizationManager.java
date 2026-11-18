@@ -448,7 +448,16 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         }
         if (path.startsWith("/resources") || path.startsWith("/resource-")) {
             if (path.contains("price") || path.contains("pricing")) return permission("RESOURCE", "PRICE");
-            if (path.contains("/gallery") || path.contains("/photos")) return permission("RESOURCE", "GALLERY");
+            // Lot R0 : voir la galerie est une lecture ; seule sa modification demande RESOURCE:GALLERY.
+            if (path.contains("/gallery") || path.contains("/photos")) {
+                return HttpMethod.GET.matches(method) ? permission("RESOURCE", "READ") : permission("RESOURCE", "GALLERY");
+            }
+            // Lot R0 : la recherche passe en POST (criteres dans le corps) mais reste une lecture.
+            if (path.equals("/resources/search") || path.endsWith("/search")) return permission("RESOURCE", "READ");
+            // Lot R0 : horaires d'ouverture, une modification de la ressource (avant : role ADMIN seul).
+            if (path.contains("/opening-hours")) {
+                return HttpMethod.GET.matches(method) ? permission("RESOURCE", "READ") : permission("RESOURCE", "UPDATE");
+            }
             return permission("RESOURCE", actionFor("RESOURCE", method));
         }
         if (path.startsWith("/analytics") || path.startsWith("/reports") || path.startsWith("/reporting")) {

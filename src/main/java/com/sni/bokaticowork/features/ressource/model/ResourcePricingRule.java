@@ -80,6 +80,49 @@ public class ResourcePricingRule {
     @Column(name = "last_minute_minutes")
     private Integer lastMinuteMinutes;
 
+
+    /** Lot R1 : jours d'application (1 = lundi ... 7 = dimanche), plusieurs separes par des virgules ; remplace dayOfWeek. */
+    @Column(name = "days_of_week", length = 20)
+    private String daysOfWeek;
+
+    /** Lot R1 : segment de client vise : PUBLIC, MEMBER, SUBSCRIBER, COMPANY, PARTNER ; vide = tous. */
+    @Column(name = "customer_segment", length = 30)
+    private String customerSegment;
+
+    /** Lot R1 : plan d'abonnement vise (code) ; vide = tous. */
+    @Column(name = "plan_code", length = 60)
+    private String planCode;
+
+    @Column(name = "min_participants")
+    private Integer minParticipants;
+
+    @Column(name = "max_participants")
+    private Integer maxParticipants;
+
+    @Column(name = "min_duration_minutes")
+    private Integer minDurationMinutes;
+
+    @Column(name = "max_duration_minutes")
+    private Integer maxDurationMinutes;
+
+    /** Lot R1 : delai minimal avant le debut (reservation anticipee), en minutes. */
+    @Column(name = "min_lead_minutes")
+    private Integer minLeadMinutes;
+
+    /** Lot R1 : canal vise : PORTAL ou TEAM ; vide = tous. */
+    @Column(name = "channel", length = 20)
+    private String channel;
+
+    /** Lot R1 : ajustement cumulable avec les autres (sinon, seul le meilleur s'applique). */
+    @Builder.Default
+    @Column(name = "stackable", nullable = false)
+    private Boolean stackable = Boolean.FALSE;
+
+    /** Lot R1 : prix par participant, meme pour une ressource louee entiere. */
+    @Builder.Default
+    @Column(name = "per_participant", nullable = false)
+    private Boolean perParticipant = Boolean.FALSE;
+
     @Column(name = "priority", nullable = false)
     @Builder.Default
     private Integer priority = 0;

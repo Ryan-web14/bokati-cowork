@@ -246,6 +246,8 @@ app.phone.default-dial-code	LOCALE	TEXT	LIVE	+242	Indicatif par défaut
 app.phone.keep-trunk-zero	LOCALE	TEXT	LIVE	CG,GA,CI,IT	Pays qui gardent le zéro initial
 app.portal.kyc-grace-period-days	PORTAL	INTEGER	LIVE	7	Grâce KYC du portail (jours)
 app.referral.share-url-template	ENVIRONMENT	TEXT	LIVE	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
+app.resources.pricing.day-hours	RESOURCES	INTEGER	LIVE	10	Ressources : durée d'une journée facturée, en heures (décision D2 : 10)
+app.resources.pricing.half-day-hours	RESOURCES	INTEGER	LIVE	5	Ressources : durée d'une demi-journée facturée, en heures (décision D2 : 5)
 app.security.bootstrap.secret	SECURITY	SECRET	RESTART		Secret d'initialisation
 app.security.cors.allowed-origins	SECURITY	TEXT	RESTART	*	Origines autorisées
 app.security.failed-login.lock-minutes	SECURITY	INTEGER	LIVE	30	Durée du verrouillage après trop d'échecs de connexion (minutes, 0 : jusqu'au déverrouillage manuel)

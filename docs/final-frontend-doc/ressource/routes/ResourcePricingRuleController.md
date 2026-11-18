@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [ressource](../README.md) · 9 route(s).
+Module [ressource](../README.md) · 12 route(s).
 
 ## Routes
 
@@ -47,6 +47,18 @@ Module [ressource](../README.md) · 9 route(s).
 - Modèles : [PricingRuleConflictPreviewResponse](#m-PricingRuleConflictPreviewResponse), [BulkCreateResourcePricingRuleRequest](#m-BulkCreateResourcePricingRuleRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java`, méthode `previewBulk`
 
+<a id="r-get-sni-api-v1-resource-pricing-rules-conflicts"></a>
+### GET /sni/api/v1/resource-pricing-rules/conflicts
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:PRICE`
+- Réponse : `List<PricingRuleGovernance.Conflict>`
+- Modèles : [PricingRuleGovernance.Conflict](#m-PricingRuleGovernance-Conflict)
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java`, méthode `conflicts`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `resourceCode` | requête | `String` | oui |  |
+
 <a id="r-get-sni-api-v1-resource-pricing-rules-quote"></a>
 ### GET /sni/api/v1/resource-pricing-rules/quote
 
@@ -58,9 +70,21 @@ Module [ressource](../README.md) · 9 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `resourceCode` | requête | `String` | oui |  |
-| `bookingUnit` | requête | `String` | oui |  |
+| `bookingUnit` | requête | `String` |  |  |
 | `startedAt` | requête | `LocalDateTime` | oui |  |
 | `endedAt` | requête | `LocalDateTime` | oui |  |
+| `quantity` | requête | `Integer` |  |  |
+| `ownerType` | requête | `String` |  |  |
+| `ownerCode` | requête | `String` |  |  |
+
+<a id="r-post-sni-api-v1-resource-pricing-rules-simulate"></a>
+### POST /sni/api/v1/resource-pricing-rules/simulate
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:PRICE`
+- Corps JSON (obligatoire) : `ResourcePricingRuleController.SimulateRequest`
+- Réponse : `ResourcePriceQuoteResponse`
+- Modèles : [ResourcePriceQuoteResponse](#m-ResourcePriceQuoteResponse), [ResourcePricingRuleController.SimulateRequest](#m-ResourcePricingRuleController-SimulateRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java`, méthode `simulate`
 
 <a id="r-delete-sni-api-v1-resource-pricing-rules-id"></a>
 ### DELETE /sni/api/v1/resource-pricing-rules/{id}
@@ -111,6 +135,18 @@ Module [ressource](../README.md) · 9 route(s).
 | `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 | `active` | requête | `Boolean` | oui |  |
 
+<a id="r-get-sni-api-v1-resource-pricing-rules-id-history"></a>
+### GET /sni/api/v1/resource-pricing-rules/{id}/history
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:PRICE`
+- Réponse : `List<ResourcePricingRuleVersion>`
+- Modèles : [ResourcePricingRuleVersion](#m-ResourcePricingRuleVersion)
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java`, méthode `history`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+
 ## Modèles
 
 Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
@@ -134,6 +170,17 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validUntil` | date AAAA-MM-JJ |  |  |
 | `lastMinuteMinutes` | entier |  |  |
 | `priority` | entier |  |  |
+| `daysOfWeek` | texte |  |  |
+| `customerSegment` | texte |  |  |
+| `planCode` | texte |  |  |
+| `minParticipants` | entier |  |  |
+| `maxParticipants` | entier |  |  |
+| `minDurationMinutes` | entier |  |  |
+| `maxDurationMinutes` | entier |  |  |
+| `minLeadMinutes` | entier |  |  |
+| `channel` | texte |  |  |
+| `stackable` | booléen |  |  |
+| `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-CreateResourcePricingRuleRequest"></a>
@@ -154,6 +201,17 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validUntil` | date AAAA-MM-JJ |  |  |
 | `lastMinuteMinutes` | entier |  |  |
 | `priority` | entier |  |  |
+| `daysOfWeek` | texte |  |  |
+| `customerSegment` | texte |  |  |
+| `planCode` | texte |  |  |
+| `minParticipants` | entier |  |  |
+| `maxParticipants` | entier |  |  |
+| `minDurationMinutes` | entier |  |  |
+| `maxDurationMinutes` | entier |  |  |
+| `minLeadMinutes` | entier |  |  |
+| `channel` | texte |  |  |
+| `stackable` | booléen |  |  |
+| `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-BulkResourceOperationResponse"></a>
@@ -195,6 +253,18 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `strictDuplicates` | entier |  |  |
 | `results` | [PricingRuleConflictPreviewResponse.ResourcePreview](#m-PricingRuleConflictPreviewResponse-ResourcePreview)[] |  |  |
 
+<a id="m-PricingRuleGovernance-Conflict"></a>
+#### PricingRuleGovernance.Conflict
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `firstRuleId` | code identifiant (texte) |  |  |
+| `firstLabel` | texte |  |  |
+| `secondRuleId` | code identifiant (texte) |  |  |
+| `secondLabel` | texte |  |  |
+| `unit` | texte |  |  |
+| `reason` | texte |  |  |
+
 <a id="m-ResourcePriceQuoteResponse"></a>
 #### ResourcePriceQuoteResponse
 
@@ -210,6 +280,26 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `appliedRuleLabel` | texte |  |  |
 | `adjustmentType` | texte |  |  |
 | `adjustmentValue` | entier |  |  |
+| `units` | nombre décimal |  |  |
+| `quantity` | entier |  |  |
+| `amount` | nombre décimal |  |  |
+| `currency` | texte |  |  |
+| `lines` | [PriceResult.Line](#m-PriceResult-Line)[] |  |  |
+| `alternatives` | [PriceResult.Alternative](#m-PriceResult-Alternative)[] |  |  |
+
+<a id="m-ResourcePricingRuleController-SimulateRequest"></a>
+#### ResourcePricingRuleController.SimulateRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `resourceCode` | texte |  |  |
+| `bookingUnit` | texte |  |  |
+| `startedAt` | date-heure locale sans fuseau |  |  |
+| `endedAt` | date-heure locale sans fuseau |  |  |
+| `quantity` | entier |  |  |
+| `ownerType` | texte |  |  |
+| `ownerCode` | texte |  |  |
+| `channel` | texte |  |  |
 
 <a id="m-UpdateResourcePricingRuleRequest"></a>
 #### UpdateResourcePricingRuleRequest
@@ -228,7 +318,32 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validUntil` | date AAAA-MM-JJ |  |  |
 | `lastMinuteMinutes` | entier |  |  |
 | `priority` | entier |  |  |
+| `daysOfWeek` | texte |  |  |
+| `customerSegment` | texte |  |  |
+| `planCode` | texte |  |  |
+| `minParticipants` | entier |  |  |
+| `maxParticipants` | entier |  |  |
+| `minDurationMinutes` | entier |  |  |
+| `maxDurationMinutes` | entier |  |  |
+| `minLeadMinutes` | entier |  |  |
+| `channel` | texte |  |  |
+| `stackable` | booléen |  |  |
+| `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
+
+<a id="m-ResourcePricingRuleVersion"></a>
+#### ResourcePricingRuleVersion
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `id` | code identifiant (texte) |  |  |
+| `ruleShortId` | code identifiant (texte) |  |  |
+| `resourceCode` | texte |  |  |
+| `version` | entier |  |  |
+| `changeType` | texte |  |  |
+| `snapshot` | texte |  |  |
+| `changedBy` | texte |  |  |
+| `changedAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-LocalTime"></a>
 #### LocalTime
@@ -259,6 +374,29 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `duplicate` | booléen |  |  |
 | `overlapping` | [PricingRuleConflictPreviewResponse.CompetingRule](#m-PricingRuleConflictPreviewResponse-CompetingRule)[] |  |  |
 
+<a id="m-PriceResult-Line"></a>
+#### PriceResult.Line
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `from` | texte |  |  |
+| `to` | texte |  |  |
+| `units` | nombre décimal |  |  |
+| `unitPrice` | nombre décimal |  |  |
+| `baseRuleId` | code identifiant (texte) |  |  |
+| `baseRuleLabel` | texte |  |  |
+| `adjustments` | [PriceResult.Adjustment](#m-PriceResult-Adjustment)[] |  |  |
+| `amount` | nombre décimal |  |  |
+
+<a id="m-PriceResult-Alternative"></a>
+#### PriceResult.Alternative
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `unit` | enum : `HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH` |  |  |
+| `amount` | nombre décimal |  |  |
+| `chosen` | booléen |  |  |
+
 <a id="m-PricingRuleConflictPreviewResponse-CompetingRule"></a>
 #### PricingRuleConflictPreviewResponse.CompetingRule
 
@@ -272,3 +410,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `startsAt` | texte |  |  |
 | `endsAt` | texte |  |  |
 | `wins` | booléen |  |  |
+
+<a id="m-PriceResult-Adjustment"></a>
+#### PriceResult.Adjustment
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `ruleId` | code identifiant (texte) |  |  |
+| `label` | texte |  |  |
+| `type` | texte |  |  |
+| `value` | entier |  |  |

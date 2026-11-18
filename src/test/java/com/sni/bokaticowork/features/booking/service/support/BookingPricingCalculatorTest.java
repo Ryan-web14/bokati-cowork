@@ -21,7 +21,7 @@ class BookingPricingCalculatorTest {
     @Test
     void shouldUseHourlyPricingForShortBooking() {
         Resource resource = Resource.builder().id(1L).build();
-        BookingPricingCalculator calculator = new BookingPricingCalculator(repository(List.of(
+        BookingPricingCalculator calculator = BookingPricingCalculator.forRules(repository(List.of(
                 rule(resource, ResourceBookingUnit.HOUR, 5000),
                 rule(resource, ResourceBookingUnit.HALF_DAY, 18000),
                 rule(resource, ResourceBookingUnit.DAY, 30000)
@@ -43,7 +43,7 @@ class BookingPricingCalculatorTest {
     @Test
     void shouldUseHalfDayPricingForFiveHourBooking() {
         Resource resource = Resource.builder().id(2L).build();
-        BookingPricingCalculator calculator = new BookingPricingCalculator(repository(List.of(
+        BookingPricingCalculator calculator = BookingPricingCalculator.forRules(repository(List.of(
                 rule(resource, ResourceBookingUnit.HOUR, 5000),
                 rule(resource, ResourceBookingUnit.HALF_DAY, 18000),
                 rule(resource, ResourceBookingUnit.DAY, 30000)
@@ -71,11 +71,11 @@ class BookingPricingCalculatorTest {
 
     @Test
     void shouldBillHourlyBetweenHalfDayAndDay() {
-        // Le forfait demi-journee ne vaut qu'a sa duree exacte · au-dela, le tarif horaire reprend.
-        // Sans cela, six heures seraient facturees cinq, et le systeme rendrait une heure sans
-        // que personne ne l'ait decide.
+        // Lot R1 : l'unite la moins chere pour le client. Six heures : 30000 a l'heure comme a la
+        // journee, l'heure (unite de la duree) l'emporte a egalite. Huit heures : 40000 a l'heure,
+        // 30000 a la journee, la journee est retenue.
         assertUnit(hours(8, 14), ResourceBookingUnit.HOUR, "5000", "6.0000", "30000.0000");
-        assertUnit(hours(8, 16), ResourceBookingUnit.HOUR, "5000", "8.0000", "40000.0000");
+        assertUnit(hours(8, 16), ResourceBookingUnit.DAY, "30000", "1.0000", "30000.0000");
     }
 
     @Test
@@ -88,7 +88,10 @@ class BookingPricingCalculatorTest {
 
     @Test
     void shouldBillHourlyBelowFiveHours() {
-        assertUnit(hours(8, 12), ResourceBookingUnit.HOUR, "5000", "4.0000", "20000.0000");
+        // Lot R1 : l'unite la moins chere pour le client. Quatre heures a 5000 (20000) coutent plus
+        // qu'une demi-journee a 18000 : la demi-journee est retenue. Trois heures (15000) restent a l'heure.
+        assertUnit(hours(8, 12), ResourceBookingUnit.HALF_DAY, "18000", "1.0000", "18000.0000");
+        assertUnit(hours(8, 11), ResourceBookingUnit.HOUR, "5000", "3.0000", "15000.0000");
     }
 
     @Test
@@ -129,7 +132,7 @@ class BookingPricingCalculatorTest {
         // Le forfait unique ne vaut que sur override · le calcul automatique garde son arrondi.
         // Dix heures sans regle journaliere ni horaire ne laissent que la demi-journee : deux.
         Resource resource = Resource.builder().id(16L).build();
-        BookingPricingCalculator calculator = new BookingPricingCalculator(repository(List.of(
+        BookingPricingCalculator calculator = BookingPricingCalculator.forRules(repository(List.of(
                 rule(resource, ResourceBookingUnit.HALF_DAY, 18000))));
 
         BookingPricingCalculator.Price price = calculator.calculate(
@@ -168,7 +171,7 @@ class BookingPricingCalculatorTest {
     void shouldRefuseAnImposedUnitWithoutAPricingRule() {
         // Retomber en silence sur une autre unite facturerait autre chose que ce qui a ete demande.
         Resource resource = Resource.builder().id(11L).code("RES-TEST").build();
-        BookingPricingCalculator calculator = new BookingPricingCalculator(repository(List.of(
+        BookingPricingCalculator calculator = BookingPricingCalculator.forRules(repository(List.of(
                 rule(resource, ResourceBookingUnit.HOUR, 5000))));
 
         BadRequestException ex = assertThrows(BadRequestException.class, () -> calculator.calculate(
@@ -183,7 +186,7 @@ class BookingPricingCalculatorTest {
         // Dix heures appellent la journee · sans grille journaliere, l'heure prend le relais,
         // seule unite dont le montant suit la duree reelle.
         Resource resource = Resource.builder().id(12L).build();
-        BookingPricingCalculator calculator = new BookingPricingCalculator(repository(List.of(
+        BookingPricingCalculator calculator = BookingPricingCalculator.forRules(repository(List.of(
                 rule(resource, ResourceBookingUnit.HOUR, 5000))));
 
         BookingPricingCalculator.Price price = calculator.calculate(
@@ -193,13 +196,17 @@ class BookingPricingCalculatorTest {
         assertEquals(new BigDecimal("50000.0000"), price.amount());
     }
 
+    BookingPricingCalculator debugCalculator(Resource resource) {
+        return calculator(resource);
+    }
+
     private void assertUnit(LocalDateTime[] window, ResourceBookingUnit unit,
                             String unitPrice, String quantity, String amount) {
         Resource resource = Resource.builder().id(99L).build();
         BookingPricingCalculator.Price price =
                 calculator(resource).calculate(resource, window[0], window[1], 1);
 
-        assertEquals(unit, price.unit());
+        assertEquals(unit, price.unit(), () -> String.valueOf(price.result().alternatives()));
         assertEquals(new BigDecimal(unitPrice), price.unitPrice());
         assertEquals(new BigDecimal(quantity), price.quantity());
         assertEquals(new BigDecimal(amount), price.amount());
@@ -211,7 +218,7 @@ class BookingPricingCalculatorTest {
     }
 
     private BookingPricingCalculator calculator(Resource resource) {
-        return new BookingPricingCalculator(repository(List.of(
+        return BookingPricingCalculator.forRules(repository(List.of(
                 rule(resource, ResourceBookingUnit.HOUR, 5000),
                 rule(resource, ResourceBookingUnit.HALF_DAY, 18000),
                 rule(resource, ResourceBookingUnit.DAY, 30000))));

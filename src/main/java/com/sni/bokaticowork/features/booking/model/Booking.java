@@ -121,6 +121,10 @@ public class Booking {
     @Column(name = "total_amount", precision = 19, scale = 4)
     private BigDecimal totalAmount;
 
+    /** Lot R1 : detail du calcul du prix (unite, tranches, regles et ajustements appliques), en JSON. */
+    @Column(name = "price_trace", columnDefinition = "TEXT")
+    private String priceTrace;
+
     @Column(name = "currency", length = 10)
     private String currency;
 

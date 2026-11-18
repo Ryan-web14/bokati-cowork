@@ -460,8 +460,18 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
         );
     }
 
+    private com.sni.bokaticowork.features.ressource.service.pricing.ResourcePriceEngine priceEngine;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPriceEngine(com.sni.bokaticowork.features.ressource.service.pricing.ResourcePriceEngine priceEngine) {
+        this.priceEngine = priceEngine;
+    }
+
     private CatalogLookupItemResponse fromResource(Resource resource) {
-        Optional<ResourcePricingRule> rule = pricingRuleRepository.findLatestActiveByResourceId(resource.getId());
+        // Lot R1 : prix de base du moteur unique (plus petite unite, client public, regles valides et non supprimees).
+        Optional<ResourcePricingRule> rule = priceEngine == null
+                ? pricingRuleRepository.findLatestActiveByResourceId(resource.getId())
+                : priceEngine.listPriceRule(resource);
 
         Map<String, Object> meta = new HashMap<>();
         meta.put("capacity", resource.getCapacity());

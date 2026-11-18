@@ -64,8 +64,8 @@ class StaffAvailabilityCheckTest {
         when(availabilities.findRemainingWindows(eq("RES-SAL-1"), any(), any(), anyInt(), anyInt())).thenReturn(List.of(
                 ResourceAvailabilityWindowResponse.builder().resourceCode("RES-SAL-1").startedAt(start)
                         .endedAt(start.plusHours(1)).durationMinutes(60).remainingCapacity(1).slotCount(2).build()));
-        when(pricing.calculate(any(), any(), any(), anyInt(), any())).thenReturn(new BookingPricingCalculator.Price(
-                ResourceBookingUnit.HOUR, new BigDecimal("10000"), BigDecimal.ONE, new BigDecimal("10000"), "XAF"));
+        when(pricing.calculate(any(), any(), any(), anyInt(), any(), any())).thenReturn(new BookingPricingCalculator.Price(
+                ResourceBookingUnit.HOUR, new BigDecimal("10000"), BigDecimal.ONE, new BigDecimal("10000"), "XAF", null));
         request = new BookingAvailabilityRequest("RES-SAL-1", "MBR-1", null, null, null, null, false, null, null, null,
                 BookingPaymentMode.DIRECT, start, start.plusHours(1), 1, null);
     }

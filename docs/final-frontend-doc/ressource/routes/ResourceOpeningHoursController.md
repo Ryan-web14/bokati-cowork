@@ -9,7 +9,7 @@ Module [ressource](../README.md) · 3 route(s).
 <a id="r-delete-sni-api-v1-resources-resourcecode-opening-hours"></a>
 ### DELETE /sni/api/v1/resources/{resourceCode}/opening-hours
 
-- Accès : back-office : rôle d'administration et droit `RESOURCE:DELETE` ; contrôle supplémentaire sur la méthode : `hasRole('SUPER_ADMIN') or hasRole('ADMIN')`
+- Accès : back-office : rôle d'administration et droit `RESOURCE:UPDATE`
 - Réponse : `ResourceOpeningHoursService.View`
 - Modèles : [ResourceOpeningHoursService.View](#m-ResourceOpeningHoursService-View)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceOpeningHoursController.java`, méthode `clear`
@@ -21,7 +21,7 @@ Module [ressource](../README.md) · 3 route(s).
 <a id="r-get-sni-api-v1-resources-resourcecode-opening-hours"></a>
 ### GET /sni/api/v1/resources/{resourceCode}/opening-hours
 
-- Accès : back-office : rôle d'administration et droit `RESOURCE:READ` ; contrôle supplémentaire sur la méthode : `hasRole('SUPER_ADMIN') or hasRole('ADMIN')`
+- Accès : back-office : rôle d'administration et droit `RESOURCE:READ`
 - Réponse : `ResourceOpeningHoursService.View`
 - Modèles : [ResourceOpeningHoursService.View](#m-ResourceOpeningHoursService-View)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceOpeningHoursController.java`, méthode `get`
@@ -33,7 +33,7 @@ Module [ressource](../README.md) · 3 route(s).
 <a id="r-put-sni-api-v1-resources-resourcecode-opening-hours"></a>
 ### PUT /sni/api/v1/resources/{resourceCode}/opening-hours
 
-- Accès : back-office : rôle d'administration et droit `RESOURCE:UPDATE` ; contrôle supplémentaire sur la méthode : `hasRole('SUPER_ADMIN') or hasRole('ADMIN')`
+- Accès : back-office : rôle d'administration et droit `RESOURCE:UPDATE`
 - Corps JSON (obligatoire) : `List<ResourceOpeningHoursService.Range>`
 - Réponse : `ResourceOpeningHoursService.View`
 - Modèles : [ResourceOpeningHoursService.View](#m-ResourceOpeningHoursService-View), [ResourceOpeningHoursService.Range](#m-ResourceOpeningHoursService-Range)

@@ -49,6 +49,7 @@ public class ResourcePricingRuleController {
 
     /** Pose la meme regle sur plusieurs ressources · compte rendu par ressource. */
     @PostMapping("/bulk")
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "RESOURCE", action = "BULK_CREATE_PRICING_RULE", ressource = "resource")
     public ResponseEntity<BulkResourceOperationResponse> createBulk(
             @Valid @RequestBody BulkCreateResourcePricingRuleRequest request) {
         return ResponseEntity.ok(resourcePricingRuleService.createPricingRuleBulk(request));
@@ -85,10 +86,42 @@ public class ResourcePricingRuleController {
     @GetMapping("/quote")
     public ResponseEntity<ResourcePriceQuoteResponse> quote(
             @RequestParam String resourceCode,
-            @RequestParam String bookingUnit,
+            @RequestParam(required = false) String bookingUnit,
             @RequestParam LocalDateTime startedAt,
-            @RequestParam LocalDateTime endedAt) {
-        return ResponseEntity.ok(resourcePricingRuleService.quote(resourceCode, bookingUnit, startedAt, endedAt));
+            @RequestParam LocalDateTime endedAt,
+            @RequestParam(required = false) Integer quantity,
+            @RequestParam(required = false) String ownerType,
+            @RequestParam(required = false) String ownerCode) {
+        return ResponseEntity.ok(resourcePricingRuleService.quote(resourceCode, bookingUnit, startedAt, endedAt, quantity,
+                ownerType, ownerCode, null));
+    }
+
+    /** Lot R1 : versions d'une regle (photo complete a chaque changement), la plus recente d'abord. */
+    @GetMapping("/{id}/history")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.ressource.model.ResourcePricingRuleVersion>> history(@PathVariable Long id) {
+        return ResponseEntity.ok(resourcePricingRuleService.history(id));
+    }
+
+    /** Lot R1 : regles ambigues d'une ressource (meme unite, role, priorite et precision sur les memes creneaux). */
+    @GetMapping("/conflicts")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.ressource.service.pricing.PricingRuleGovernance.Conflict>> conflicts(
+            @RequestParam String resourceCode) {
+        return ResponseEntity.ok(resourcePricingRuleService.conflicts(resourceCode));
+    }
+
+    /** Lot R1 : corps du simulateur de prix. */
+    public record SimulateRequest(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt,
+                                  Integer quantity, String ownerType, String ownerCode, String channel) {
+    }
+
+    /**
+     * Lot R1 : simulateur. Prix d'une ressource pour un creneau, un titulaire, une quantite et un canal,
+     * avec le detail du calcul : sert a verifier une grille avant de la publier.
+     */
+    @PostMapping("/simulate")
+    public ResponseEntity<ResourcePriceQuoteResponse> simulate(@RequestBody SimulateRequest request) {
+        return ResponseEntity.ok(resourcePricingRuleService.quote(request.resourceCode(), request.bookingUnit(), request.startedAt(),
+                request.endedAt(), request.quantity(), request.ownerType(), request.ownerCode(), request.channel()));
     }
 
     @RequestMapping(value = "/{id}", method = {RequestMethod.PATCH, RequestMethod.PUT})
