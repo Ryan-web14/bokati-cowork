@@ -5,7 +5,7 @@
 ## En bref
 
 - Gestion documentaire (GED) du back-office : dépôt de fichiers rattachés à un propriétaire (membre, client, entreprise, contrat, facture…), versions, revue (approuver, refuser, demander une correction), classement (dossiers, étiquettes, métadonnées), partages, signatures, circuits d'approbation, rétention et tableaux de bord.
-- KYC (vérification d'identité) : dossiers KYC par propriétaire, pièces recto et verso, revue pièce par pièce, décision sur le dossier, notes, OCR, règles de contrôle croisé, relances et expirations automatiques.
+- KYC (vérification d'identité) : dossiers KYC par propriétaire, ouverts automatiquement à la création d'un membre, d'un client ou d'une entreprise ; exigences en ET / OU (pièces au choix) et par niveau ; pièces recto et verso, qualité d'image et analyse « pièce d'identité » au dépôt ; revue pièce par pièce ; décision sur le dossier (correction ou refus définitif motivé, réouverture) ; notes, OCR, contrôles croisés ; tableau de bord du centre, renouvellements, doublons ; relances, expirations et WhatsApp automatiques.
 - Public visé : back-office uniquement. Le portail membre dépose ses pièces KYC par ses propres routes (`/sni/api/v1/client/documents/kyc/**` et l'alias `/sni/api/v1/portal/kyc/**`, voir [portal/routes.md](../portal/routes.md)), qui réutilisent les services de ce module : les pièces déposées par un membre arrivent dans les files de revue décrites ici.
 - Modules liés : `client` (statut du membre et du client changé par le KYC), `company` (entreprises propriétaires), `contract` (un refus de pièce annule le contrat lié, ses abonnements et pass), `payment` (portefeuille créé à l'approbation KYC), `socle` (file d'événements et courriels).
 
@@ -15,8 +15,8 @@
 | --- | --- |
 | [parcours-televersement-et-apercus.md](parcours-televersement-et-apercus.md) | Téléverser (simple, par espace, par lot, ZIP), formats et tailles, remplacer, versions, afficher un aperçu dans le navigateur, télécharger, verrouiller |
 | [parcours-revue.md](parcours-revue.md) | Files de revue, approbation, refus et correction (unitaire et en masse), droits par espace, signatures, circuits d'approbation |
-| [parcours-kyc.md](parcours-kyc.md) | Dossiers KYC : création, dépôt recto et verso par l'administration, revue des pièces, soumission, approbation, refus, affectation, notes, chronologie, OCR, contrôles croisés, export PDF |
-| [parcours-classement-et-partage.md](parcours-classement-et-partage.md) | Recherche, tableaux de bord, vue par propriétaire, statistiques, export CSV, dossiers (arborescence), étiquettes, métadonnées, permissions, liens de partage, journal d'accès |
+| [parcours-kyc.md](parcours-kyc.md) | Dossiers KYC : création automatique et rattrapage, exigences en ET / OU, dépôt recto et verso par l'administration, revue des pièces, soumission, approbation, correction, refus définitif et réouverture, motifs, affectation, notes, chronologie, OCR, qualité et analyse des pièces, contrôles croisés, tableau de bord du centre, renouvellements, doublons, WhatsApp, export PDF |
+| [parcours-classement-et-partage.md](parcours-classement-et-partage.md) | Recherche, tableaux de bord, vue par propriétaire, statistiques, export CSV, dossiers (arborescence), étiquettes, métadonnées, droits par dossier, liens de partage internes, journal d'accès |
 | [parcours-configuration.md](parcours-configuration.md) | Types de documents et configuration de téléversement, exigences documentaires, politiques de rétention |
 | [explorateur/README.md](explorateur/README.md) | Explorateur de fichiers de la GED : contenu d'un dossier, arborescence, dépôt de fichiers et de dossiers, renommer, déplacer, copier, corbeille, classement automatique |
 
@@ -85,14 +85,14 @@ Chaque décision crée une ligne d'historique `APPROVED`, `REJECTED` ou `NEEDS_C
 | Statut | Signification | On y arrive par | On en sort vers |
 | --- | --- | --- | --- |
 | `NOT_STARTED` | Valeur par défaut technique, jamais conservée : tout dossier est créé en `IN_PROGRESS`. | | |
-| `IN_PROGRESS` | Pièces exigées encore manquantes. | création (`POST /kyc/cases` ou automatique au premier dépôt KYC) ; recalcul automatique | `UNDER_REVIEW`, `SUBMITTED`, `APPROVED`, `PENDING_CORRECTION` |
+| `IN_PROGRESS` | Pièces exigées encore manquantes. | création (automatique à la création du membre, du client hors membre ou de l'entreprise dès qu'une exigence s'applique ; `POST /kyc/cases` ; rattrapage `POST /kyc/cases/backfill`) ; recalcul automatique ; réouverture d'un dossier refusé | `UNDER_REVIEW`, `SUBMITTED`, `APPROVED`, `PENDING_CORRECTION`, `REJECTED` |
 | `SUBMITTED` | Soumis par l'administration, en attente d'un réviseur. Membres et entreprises seulement (un client passe directement à `UNDER_REVIEW`). | `POST /kyc/cases/{code}/submit` | `UNDER_REVIEW` (affectation ou recalcul), `APPROVED`, `PENDING_CORRECTION` |
 | `UNDER_REVIEW` | Toutes les pièces exigées sont présentes, revue en cours. | recalcul automatique ; affectation d'un dossier `SUBMITTED` ; soumission d'un client | `APPROVED`, `PENDING_CORRECTION` |
-| `APPROVED` | Dossier validé. Le membre ou client passe `ACTIVE`. | `POST /kyc/cases/{code}/approve` ; **recalcul automatique quand toutes les pièces exigées sont `VERIFIED`** ; aucune exigence active pour ce type de propriétaire | `RENEWAL_REQUIRED` (pièce expirée), `PENDING_CORRECTION`, `IN_PROGRESS`/`UNDER_REVIEW` (recalcul après un nouveau dépôt) |
-| `PENDING_CORRECTION` | Des pièces sont refusées ou à refaire. | `POST /kyc/cases/{code}/reject` ; recalcul automatique dès qu'une pièce est `REJECTED` ; expiration d'une pièce d'un dossier non approuvé | `UNDER_REVIEW`, `APPROVED`, `IN_PROGRESS` |
+| `APPROVED` | Dossier validé. Le membre ou client passe `ACTIVE`. | `POST /kyc/cases/{code}/approve` ; **recalcul automatique quand chaque place exigée a une pièce `VERIFIED`** (une pièce suffit pour un groupe d'alternatives ; exigences toutes facultatives : au moins une pièce vérifiée) ; aucune exigence active pour ce type de propriétaire | `RENEWAL_REQUIRED` (pièce expirée), `PENDING_CORRECTION`, `IN_PROGRESS`/`UNDER_REVIEW` (recalcul après un nouveau dépôt ou une exigence ajoutée) |
+| `PENDING_CORRECTION` | Des pièces sont refusées ou à refaire. | `POST /kyc/cases/{code}/reject` (demande de correction, motif de la liste ou texte) ; recalcul automatique dès qu'une pièce refusée laisse sa place non vérifiée (une alternative vérifiée du même groupe suffit) ; expiration d'une pièce d'un dossier non approuvé | `UNDER_REVIEW`, `APPROVED`, `IN_PROGRESS`, `REJECTED` |
 | `RENEWAL_REQUIRED` | Dossier approuvé dont une pièce a expiré. Courriel « Votre dossier KYC est à renouveler ». | tâche KYC quotidienne | recalcul au prochain dépôt |
 | `EXPIRED` | Dossier clos (membre ou client archivé). Un nouveau dépôt ouvre un nouveau dossier. | synchronisation depuis le statut du propriétaire `ARCHIVED` | aucun |
-| `REJECTED` | Jamais attribué : « refuser » un dossier le met en `PENDING_CORRECTION`. | aucun chemin | |
+| `REJECTED` | **Refus définitif** (lot KG7) : motif de la liste obligatoire, courriel « Votre dossier KYC n'a pas été retenu », dossier fermé aux dépôts, recalcul sans effet. Un membre non actif passe `REJECTED`. | `POST /kyc/cases/{code}/reject-final` | `IN_PROGRESS` par `POST /kyc/cases/{code}/reopen` (administrateur) |
 
 Le recalcul automatique (`KycAutomationServiceImpl.recomputeCaseState`) tourne en tâche asynchrone après chaque dépôt, remplacement, revue, expiration ou approbation automatique d'un document de catégorie `KYC`. Il ne tient compte que des exigences **globales** (pas de celles propres au dossier) et répercute le statut sur le membre (`PENDING`, `UNDER_REVIEW`, `PENDING_CORRECTION`, `ACTIVE`) ou le client (`PENDING`, `ACTIVE`).
 
@@ -138,17 +138,19 @@ Les parcours détaillés sont dans les fichiers listés en [table des matières]
 
 ### KYC
 
-- Soumettre un dossier incomplet : `400` « KYC case is incomplete. Missing required documents: CNI, CNI_BACK » (le suffixe `_BACK` signale un verso manquant).
-- Approuver : `400` « KYC case cannot be approved while mandatory documents are missing », « … while documents are not verified », ou « KYC cross-validation failed for field X ».
-- Refuser un dossier : `comment` obligatoire, sinon `400` « A rejection reason is required ».
+- Soumettre un dossier incomplet : `400` qui nomme les pièces manquantes (suffixe `_BACK` pour un verso, `CODE_A|CODE_B` pour un groupe d'alternatives vide : une pièce au choix).
+- Approuver : `400` tant qu'une place exigée n'a pas de pièce vérifiée, ou qu'une règle de contrôle croisé bloquante échoue (« Contrôles croisés non satisfaits : … »).
+- Demander une correction (`/reject`) : `reasonCode` de `GET /kyc/reasons?kind=CORRECTION` ou `comment` ; « Autre, préciser » exige `comment`. Refus définitif (`/reject-final`) : `reasonCode` obligatoire, de `GET /kyc/reasons?kind=REJECTION`.
+- Dossier refusé définitivement : tout dépôt (portail ou équipe) et toute demande de correction répondent `400` ; le rouvrir d'abord (`/reopen`, administrateur).
 - Verso avant recto : `400` « Le recto doit être déposé avant le verso pour la pièce : <nom> » (toutes les voies de dépôt).
-- Dépôt par l'administration sans dossier KYC : `400` « Aucun dossier KYC actif pour ce propriétaire · créez-en un d'abord ».
-- Filtre `status` inconnu sur `/kyc/cases` : `400` « Unsupported KYC case status: X ».
+- Pièce non demandée pour ce dossier : `400` « Cette pièce n'est pas demandée pour ce dossier » (ajouter d'abord l'exigence au dossier).
+- Dépôt par l'administration sans dossier KYC : `400` « Aucun dossier KYC actif pour ce propriétaire · créez-en un d'abord » (ou lancer le rattrapage).
+- Statut ou énumération inconnue : `400 TYPE_MISMATCH` qui nomme le paramètre et les valeurs admises (lot KG6).
 
 ### Autres
 
-- Énumération invalide dans un chemin ou un paramètre (ex. `/review/kyc_space` en minuscules) : aucune conversion tolérante, l'erreur de conversion n'a pas de traitement dédié (probablement `500`, non vérifié). Envoyer les valeurs exactes en majuscules.
-- Messages : la plupart sont en anglais (`Document not found`, `Folder not found: X`…). Prévoir une traduction côté écran par `errorCode` et statut plutôt que d'afficher `message` tel quel.
+- Énumération invalide dans un chemin ou un paramètre (ex. `/review/kyc_space` en minuscules) : `400 TYPE_MISMATCH` avec le paramètre et les valeurs admises (lot KG6). Envoyer les valeurs exactes en majuscules.
+- Messages : en français (GED et KYC, lot KG6) ; s'appuyer sur `errorCode` et le statut pour la logique, afficher `message` tel quel.
 
 ## À prévoir côté frontend
 
@@ -157,9 +159,9 @@ Les parcours détaillés sont dans les fichiers listés en [table des matières]
 1. GED : liste et recherche, fiche document (versions, étiquettes, métadonnées, partages, signatures, circuit, journal d'accès), dépôt, dépôt en lot ou ZIP.
 2. Espaces : un onglet par espace (`contracts`, `financial`, `assets`, `administrative`, `general`) avec son tableau de bord, sa liste et son dépôt. Il n'y a pas de route d'espace pour le KYC : utiliser les écrans KYC.
 3. Revue : file globale et files par espace, actions unitaires et en masse.
-4. Arborescence de dossiers, étiquettes, permissions.
-5. KYC : tableau de bord, liste des dossiers, « ma file », fiche dossier (exigences, pièces recto/verso avec aperçu, notes, chronologie, échéances, OCR), file de revue des pièces, règles de contrôle croisé.
-6. Paramétrage : types de documents, exigences, politiques de rétention, circuits d'approbation.
+4. Arborescence de dossiers (droits par dossier restreint), étiquettes.
+5. KYC : tableau de bord et tableau de bord du centre (files par ancienneté, délais, retards, charge par agent, dossiers bloqués), liste des dossiers, « ma file », fiche dossier (exigences regroupées par groupe d'alternatives, pièces recto/verso avec aperçu, qualité et verdict « pièce d'identité », doublons, notes, chronologie, historique du centre d'audit, échéances, OCR, contrôles croisés), boutons « Demander une correction », « Refuser définitivement » et « Rouvrir », file de revue des pièces, calendrier des renouvellements avec relance groupée, liste des doublons.
+6. Paramétrage : types de documents, exigences (niveau KYC et groupe d'alternatives « une pièce au choix »), motifs de refus et de correction, règles de contrôle croisé, politiques de rétention, circuits d'approbation.
 
 ### Droits pour masquer les boutons
 
@@ -178,11 +180,15 @@ Les parcours détaillés sont dans les fichiers listés en [table des matières]
 | Agir dans un circuit (`/documents/{code}/workflow/approve`, `/reject`) | `DOCUMENT:READ`, et seulement l'approbateur de l'étape courante |
 | Liens de partage (`/shares/{token}`, `/shares/{token}/file`) | connecté, `DOCUMENT:READ` et droits sur le document ou le dossier ; révocation `DOCUMENT:WRITE` par l'auteur ou un administrateur |
 | Types, exigences | `SYSTEM:SETTINGS` |
-| Politiques de rétention | `SYSTEM:SETTINGS` **et** `DOCUMENT:REVIEW` (ou `DOCUMENT_REVIEW`) |
+| Politiques de rétention | `SYSTEM:SETTINGS` (lot KG6 : le contrôle `DOCUMENT:REVIEW` en plus est retiré) |
 | KYC : toute lecture (listes `/approved`, `/rejected`, `/disapproved`, `/desapproved` comprises) | `KYC:READ` |
 | KYC : créer, soumettre, assigner un dossier, niveau de risque, notes, exigences, dépôt par l'équipe, détails d'une pièce, règles de contrôle croisé | `KYC:MANAGE` (nouveau droit, donné aux rôles qui ont `KYC:APPROVE` et aux administrateurs) |
 | KYC : approuver un dossier, approuver des pièces en masse | `KYC:APPROVE` |
 | KYC : refuser un dossier, refuser des pièces en masse, demander une correction | `KYC:REJECT` |
+| KYC : refus définitif (`/reject-final`) | `KYC:REJECT` |
+| KYC : rouvrir un dossier refusé (`/reopen`) | `KYC:MANAGE` et rôle administrateur |
+| KYC : tableau de bord du centre, renouvellements, doublons, motifs (lecture) | `KYC:READ` |
+| KYC : relance groupée des renouvellements, motifs (écriture), rattrapage des dossiers (`/kyc/cases/backfill`) | `KYC:MANAGE` |
 | Configuration de téléversement d'un type | tout compte connecté |
 
 Le droit se compare à la liste `roles` reçue à la connexion ([README racine](../README.md#qui-peut-appeler-quoi)). `ROLE_SUPER_ADMIN` passe la règle d'URL et décide sur tout document (y compris les pièces KYC) ; il ne passe pas les `@PreAuthorize` restants (statistiques, export, journaux, rétention) sans `DOCUMENT:REVIEW`.
@@ -194,15 +200,17 @@ Le droit se compare à la liste `roles` reçue à la connexion ([README racine](
 - Dossiers racines : `GET /sni/api/v1/document-folders/roots?space=…`.
 - Énumérations (statuts, espaces, catégories, propriétaires, niveaux de risque) : valeurs dans les fichiers `routes/*.md`.
 - Propriétaires : codes membre, client, entreprise depuis les modules `client` et `company`.
+- Motifs KYC : `GET /sni/api/v1/kyc/reasons?kind=REJECTION` (refus définitif) ou `kind=CORRECTION` (demande de correction).
+- Groupes d'alternatives déjà employés : champ `alternativeGroup` de `GET /sni/api/v1/document-requirements` (proposer la liste dans l'écran des exigences).
 
 ### Identifiants numériques à manipuler sans perte
 
-Les routes de ce module exigent plusieurs entiers int64 (voir [README racine](../README.md#identifiants--codes-en-texte)) :
+Les identifiants techniques arrivent en **codes texte** (par exemple `KR-6B4TZB9ZPRKZV`) et se renvoient tels quels, sans conversion en nombre (voir [README racine](../README.md#identifiants--codes-en-texte)). Sont concernés dans ce module :
 
 - `assignedTo`, `userId` (journal par utilisateur), `granteeId`, `signerId` : l'identifiant numérique d'un compte. `reviewedBy` et `authorId` ne sont plus à envoyer (l'auteur est le compte connecté) ; « ma file » est toujours celle du compte connecté. `GET /sni/api/v1/auth/me` ne le fournit pas (il renvoie `userId` texte) ; il figure dans `AdminUserResponse.id` des routes d'administration des comptes (module `securite`, route exacte non vérifiée). Le garder en texte.
 - Chemins `{id}` : exigences documentaires, règles de contrôle croisé, `{signatureId}`.
 - `ownerCode` des propriétaires `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`.
-- `KycDocumentResponse.id` : voir le piège ci-dessous.
+- `KycDocumentResponse.id` (identifiant court de la pièce), `kycDocumentIds` de la relance des renouvellements.
 
 ### Pièges propres au module
 
@@ -229,7 +237,7 @@ Les routes de ce module exigent plusieurs entiers int64 (voir [README racine](..
 
 Courriels (via la file d'événements, traitée toutes les 2 s par défaut) :
 
-- Dossier KYC, au propriétaire : `KYC_CASE_CREATED` (création manuelle), `KYC_CASE_APPROVED` (approbation manuelle seulement), `KYC_CASE_CORRECTION_REQUESTED` (refus du dossier), `KYC_INCOMPLETE_REMINDER` (`KycOutboxEventProcessor.java`).
+- Dossier KYC, au propriétaire : `KYC_CASE_CREATED` (création manuelle), `KYC_CASE_APPROVED` (approbation manuelle ou par recalcul), `KYC_CASE_CORRECTION_REQUESTED` (demande de correction, avec le motif), `KYC_CASE_REJECTED` (refus définitif, avec le motif), `KYC_CASE_LEVEL_CHANGED`, `KYC_CASE_REQUIREMENT_ADDED`, `KYC_DOCUMENT_CORRECTION_REQUESTED`, `KYC_INCOMPLETE_REMINDER`, `KYC_RENEWAL_REQUIRED` (`KycOutboxEventProcessor.java`). Pièces demandées ou à corriger : aussi par WhatsApp (modèle `kyc_pieces_demandees`, une fois approuvé par Meta ; le membre peut le couper).
 - Pièce KYC, au propriétaire : `KYC_DOCUMENT_EXPIRY_REMINDER`, `KYC_DOCUMENT_EXPIRED`.
 - Signature, au signataire (si `signerEmail`) : `DOCUMENT_SIGNATURE_REQUESTED`, `DOCUMENT_SIGNED` ; `DOCUMENT_FULLY_SIGNED` à la dernière signature (document `SIGNED`).
 - Événements `DOCUMENT_*` : un courriel seulement si le propriétaire n'est **pas** un membre, client ou entreprise, et jamais pour le type `CONTRACT_DRAFT`.
