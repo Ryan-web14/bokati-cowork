@@ -3540,7 +3540,7 @@
     {
      "in": "query",
      "name": "bookingUnit",
-     "required": true,
+     "required": false,
      "type": "String"
     },
     {
@@ -3554,6 +3554,13 @@
      "name": "endedAt",
      "required": true,
      "type": "LocalDateTime"
+    },
+    {
+     "in": "query",
+     "name": "quantity",
+     "required": false,
+     "default": "1",
+     "type": "Integer"
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourcePriceQuoteResponse>"
@@ -8686,6 +8693,31 @@
     "adjustmentValue": {
      "type": "integer",
      "format": "int32"
+    },
+    "units": {
+     "type": "number"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Line"
+     }
+    },
+    "alternatives": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Alternative"
+     }
     }
    }
   },
@@ -10964,6 +10996,44 @@
      "type": "integer",
      "format": "int32"
     },
+    "daysOfWeek": {
+     "type": "string"
+    },
+    "customerSegment": {
+     "type": "string"
+    },
+    "planCode": {
+     "type": "string"
+    },
+    "minParticipants": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxParticipants": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minLeadMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "channel": {
+     "type": "string"
+    },
+    "stackable": {
+     "type": "boolean"
+    },
+    "perParticipant": {
+     "type": "boolean"
+    },
     "active": {
      "type": "boolean"
     }
@@ -11000,6 +11070,60 @@
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Window"
      }
+    }
+   }
+  },
+  "PriceResult.Line": {
+   "type": "object",
+   "properties": {
+    "from": {
+     "type": "string"
+    },
+    "to": {
+     "type": "string"
+    },
+    "units": {
+     "type": "number"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "baseRuleId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "baseRuleLabel": {
+     "type": "string"
+    },
+    "adjustments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Adjustment"
+     }
+    },
+    "amount": {
+     "type": "number"
+    }
+   }
+  },
+  "PriceResult.Alternative": {
+   "type": "object",
+   "properties": {
+    "unit": {
+     "type": "string",
+     "enum": [
+      "HOUR",
+      "HALF_DAY",
+      "DAY",
+      "WEEK",
+      "MONTH"
+     ]
+    },
+    "amount": {
+     "type": "number"
+    },
+    "chosen": {
+     "type": "boolean"
     }
    }
   },
@@ -11619,6 +11743,25 @@
     }
    }
   },
+  "PriceResult.Adjustment": {
+   "type": "object",
+   "properties": {
+    "ruleId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "label": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string"
+    },
+    "value": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
   "BillingDocumentDiscountResponse": {
    "type": "object",
    "properties": {
@@ -12101,6 +12244,8 @@
   "AmenityResponse": "com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse",
   "ResourcePricingRuleResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse",
   "PublicResourceCalendarResponse.Day": "com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Day",
+  "PriceResult.Line": "com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Line",
+  "PriceResult.Alternative": "com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Alternative",
   "BillingPreferencesResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.BillingPreferencesResponse",
   "WalletPreferencesResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.WalletPreferencesResponse",
   "BillingPreferences": "com.sni.bokaticowork.core.settings.userSettings.dto.request.BillingPreferences",
@@ -12114,6 +12259,7 @@
   "SharingDtos.SeatEntitlement": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SeatEntitlement",
   "LocalTime": "java.time.LocalTime",
   "PublicResourceCalendarResponse.Window": "com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Window",
+  "PriceResult.Adjustment": "com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Adjustment",
   "BillingDocumentDiscountResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentDiscountResponse",
   "BillingDocumentTaxResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentTaxResponse",
   "BillingDocumentClauseResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentClauseResponse",

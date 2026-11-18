@@ -29,5 +29,20 @@ public class ResourcePricingRuleResponse {
     private LocalDate validUntil;
     private Integer lastMinuteMinutes;
     private Integer priority;
+    /** Lot R1 : jours d'application (1 = lundi ... 7 = dimanche), par exemple « 6,7 » ; remplace dayOfWeek. */
+    private String daysOfWeek;
+    /** PUBLIC, MEMBER, SUBSCRIBER, COMPANY, PARTNER ; vide = tous. */
+    private String customerSegment;
+    private String planCode;
+    private Integer minParticipants;
+    private Integer maxParticipants;
+    private Integer minDurationMinutes;
+    private Integer maxDurationMinutes;
+    private Integer minLeadMinutes;
+    /** PORTAL ou TEAM ; vide = tous. */
+    private String channel;
+    private Boolean stackable;
+    private Boolean perParticipant;
+
     private Boolean active;
 }

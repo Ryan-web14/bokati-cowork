@@ -117,10 +117,26 @@ Les créneaux du mois en cours sont normalement créés par le serveur (voir [Ef
 
 ### Tarifer une ressource
 
-1. `POST /sni/api/v1/resource-pricing-rules` avec `resourceCode`, `bookingUnit` (`HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH`, en texte), `price` (entier ≥ 0, en XAF), `label`, et facultativement `dayOfWeek` (1 = lundi à 7), `startsAt`/`endsAt` (`HH:mm`), `validFrom`/`validUntil` (`AAAA-MM-JJ`), `adjustmentType` (`FIXED_PRICE`, `AMOUNT_DELTA`, `PERCENT_DELTA`) et `adjustmentValue`, `lastMinuteMinutes`, `priority` (défaut 0), `active`. Réponse `201` vide.
-2. Liste : `GET /resource-pricing-rules?resourceCode=...`. L'`id` renvoyé est un petit numéro sûr pour JavaScript ; c'est lui qu'on passe dans `GET`, `PUT`/`PATCH`, `DELETE /resource-pricing-rules/{id}` et `PATCH /{id}/active?active=...`. `PUT` et `PATCH` sur `/{id}` font la même chose : mise à jour partielle (un champ `null` ou absent n'est pas modifié ; on ne peut donc pas effacer une condition, seulement la changer). La mise à jour rend la règle ; la suppression est définitive.
-3. Plusieurs ressources : appeler d'abord `POST /resource-pricing-rules/bulk/preview` (aucune écriture ; par ressource : règles concurrentes de même unité, doublon strict), afficher l'aperçu, puis `POST /resource-pricing-rules/bulk` (compte rendu par ressource comme pour les créneaux).
-4. Devis indicatif : `GET /resource-pricing-rules/quote?resourceCode=...&bookingUnit=HOUR&startedAt=...&endedAt=...`. **Ne pas l'utiliser comme prix de réservation** : le montant réellement facturé vient du calcul de `booking` (`POST /sni/api/v1/bookings/check-availability`, champ `estimatedAmount`), qui suit d'autres règles (voir ci-dessous).
+Un seul moteur de prix (lot R1, 18/11/2026) sert la réservation, la vérification de disponibilité, le devis, le portail et le catalogue : **le devis annonce ce qui sera facturé**.
+
+1. Créer : `POST /sni/api/v1/resource-pricing-rules` avec `resourceCode`, `bookingUnit` (`HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH`), `label`, et selon le rôle de la règle :
+   - **prix de base** : `price` (entier ≥ 0, en XAF), sans `adjustmentType` ;
+   - **ajustement** : `adjustmentType` (`FIXED_PRICE` remplace la base, `AMOUNT_DELTA` ajoute un montant, éventuellement négatif, `PERCENT_DELTA` un pourcentage) et `adjustmentValue` ; `stackable = true` pour qu'il se cumule avec les autres (sinon seul le meilleur ajustement non cumulable s'applique).
+   - **Conditions**, toutes facultatives et combinables : `daysOfWeek` (« 1,2,3,4,5 », 1 = lundi … 7 = dimanche ; remplace `dayOfWeek`), `startsAt`/`endsAt` (`HH:mm`, une plage qui passe minuit est admise), `validFrom`/`validUntil` (`AAAA-MM-JJ`), `customerSegment` (`PUBLIC` client hors membre, `MEMBER`, `SUBSCRIBER` abonnement en cours, `COMPANY`, `PARTNER`), `planCode` (plan d'abonnement), `minParticipants`/`maxParticipants`, `minDurationMinutes`/`maxDurationMinutes`, `minLeadMinutes` (réservation anticipée : au moins ce délai avant le début), `lastMinuteMinutes` (dernier moment : au plus ce délai), `channel` (`PORTAL` ou `TEAM`).
+   - `perParticipant = true` : prix par participant, même pour une salle louée entière. `priority` (défaut 0) départage, puis la règle la plus précise (le plus de conditions), puis la plus récente.
+2. Liste : `GET /resource-pricing-rules?resourceCode=...`, mêmes champs en réponse. L'`id` (petit numéro) sert dans `GET`, `PUT`/`PATCH`, `DELETE /resource-pricing-rules/{id}` et `PATCH /{id}/active?active=...`. Mise à jour partielle ; une chaîne vide efface une condition texte (`daysOfWeek`, `customerSegment`, `planCode`, `channel`).
+3. Plusieurs ressources : `POST /resource-pricing-rules/bulk/preview` (aucune écriture), puis `POST /resource-pricing-rules/bulk`.
+4. Devis : `GET /resource-pricing-rules/quote?resourceCode=...&startedAt=...&endedAt=...` avec, facultatifs, `quantity` (postes ou participants), `ownerType` (`MEMBER`, `CUSTOMER`, `BUSINESS_ENTITY`) et `ownerCode` pour le prix de ce client, `bookingUnit` pour imposer une unité (équipe). Réponse : `bookingUnit` retenue, `units`, `quantity`, `amount` (montant exact), `finalPrice` (arrondi), `currency`, `lines` (tranches : début, fin, unités, prix d'une unité, règle de base, ajustements, montant), `alternatives` (coût de chaque unité possible, `chosen` sur la retenue) ; `basePrice`, `appliedRuleId`, `appliedRuleLabel`, `adjustmentType`, `adjustmentValue` restent pour la première tranche.
+5. Simulateur : `POST /sni/api/v1/resource-pricing-rules/simulate` avec `{ resourceCode, startedAt, endedAt, quantity, bookingUnit, ownerType, ownerCode, channel }` : même réponse, pour vérifier une grille avant de la publier (droit `RESOURCE:PRICE`).
+
+Règles de calcul :
+
+- **Unité** : imposée par l'équipe (`bookingUnit`, un forfait imposé vaut un forfait), sinon **la moins chère pour le client** parmi les unités qui ont un prix de base applicable ; à égalité, celle de la durée. Exemple : 8 heures à 5000 l'heure (40000) coûtent plus qu'une journée à 30000 : la journée est retenue.
+- **Durées** : demi-journée 5 h, journée 10 h (paramètres `app.resources.pricing.half-day-hours`, `app.resources.pricing.day-hours`) ; sur plusieurs jours, un forfait journée par jour touché (deux demi-journées par jour) ; semaine par tranche de 7 jours ; mois calendaire.
+- **À l'heure**, la réservation est découpée aux bornes horaires des règles et à minuit : heures creuses et heures pleines au prorata (`lines`). Un forfait est tarifé à l'heure de début.
+- **Quantité** : une salle louée entière se facture une fois ; un poste partagé, par place ; une règle `perParticipant`, par participant.
+- **Client** : le portail et la réservation appliquent le segment du titulaire (membre, abonné et son plan, entreprise, client hors membre) et le canal (`PORTAL` pour l'espace client, `TEAM` pour le back-office).
+- Le détail du calcul est enregistré avec la réservation (`priceTrace`, même forme que le devis) : une facture reste explicable après un changement de grille.
 
 ### Galerie photo
 
@@ -168,12 +184,10 @@ Autres erreurs fréquentes :
 | Horaires incohérents | `400` | message en français (`Deux plages se chevauchent le MONDAY.`...) |
 | Lot de plus de 20 ressources | `400` | `Lot de <n> ressources · maximum autorise : 20. Decoupez l'appel.` |
 | `durationMinutes` non multiple ou trop court | `400` | `Duration must be a multiple of <n> minutes` |
-| Devis sans règle de l'unité demandée | `404` | `No active pricing rule found for resource <code>` |
+| Devis sans aucun prix de base applicable | `404` | `Aucun prix de base actif pour la ressource <code>` |
+| Unité imposée sans prix de base applicable | `400` | `La ressource <code> n'a aucun prix de base en <unité> applicable à ce créneau…` |
 
-Prix : deux calculs coexistent et ne donnent pas le même résultat.
-
-- **Réservation** (`booking`, celui qui est facturé) : l'unité se déduit de la durée (≥ 30 jours `MONTH`, ≥ 7 jours `WEEK`, ≥ 10 h `DAY`, exactement 5 h `HALF_DAY`, sinon `HOUR`), puis le prix est celui de la règle active **la plus récemment créée** pour cette unité, sans tenir compte du jour, des heures, de la validité, de l'ajustement ni de la priorité. À défaut de règle pour l'unité : repli sur l'heure, puis la demi-journée, etc. Sans aucune règle : prix 0. L'heure se facture au prorata ; demi-journée = 5 h, journée = 10 h, arrondies au supérieur.
-- **Devis** (`GET /resource-pricing-rules/quote`) : applique jour, heures, validité, ajustement et priorité, mais compte une demi-journée sur 12 h et une journée sur 24 h, et vérifie la politique (erreurs `400`).
+Prix : un seul calcul (lot R1), voir « Tarifer une ressource ».
 
 ## À prévoir côté frontend
 
@@ -197,7 +211,7 @@ Prix : deux calculs coexistent et ne donnent pas le même résultat.
 
 ## Écarts relevés
 
-- Deux moteurs de prix divergents : la réservation prend la règle active la plus récente de l'unité et ignore jour, heures, validité, ajustement et priorité (`src/main/java/com/sni/bokaticowork/features/booking/service/support/BookingPricingCalculator.java:56-68` et `src/main/java/com/sni/bokaticowork/features/ressource/repository/repo/ResourcePricingRuleRepository.java:36-43`), alors que le devis et l'aperçu groupé les appliquent et comptent demi-journée = 12 h, journée = 24 h (`src/main/java/com/sni/bokaticowork/features/ressource/service/implementation/ResourcePricingRuleServiceImpl.java:197-239` et `:366-376`). Le devis peut donc annoncer un autre montant que celui facturé.
+- **Réglé (lot R1, 18/11/2026)** : un seul moteur (`ResourcePriceEngine`) pour la réservation, la disponibilité, le devis, le portail et le catalogue ; durées 5 h et 10 h partout ; conditions, ajustements et priorité appliqués partout ; trace enregistrée avec la réservation. Reste au lot R1 : recalcul quand une réservation change (D1). Constat d'origine : Deux moteurs de prix divergents : la réservation prend la règle active la plus récente de l'unité et ignore jour, heures, validité, ajustement et priorité (`src/main/java/com/sni/bokaticowork/features/booking/service/support/BookingPricingCalculator.java:56-68` et `src/main/java/com/sni/bokaticowork/features/ressource/repository/repo/ResourcePricingRuleRepository.java:36-43`), alors que le devis et l'aperçu groupé les appliquent et comptent demi-journée = 12 h, journée = 24 h (`src/main/java/com/sni/bokaticowork/features/ressource/service/implementation/ResourcePricingRuleServiceImpl.java:197-239` et `:366-376`). Le devis peut donc annoncer un autre montant que celui facturé.
 - **En partie réglé (lot R0, 18/11/2026)** : la recherche demande `RESOURCE:READ` ; les filtres par codes viennent au lot R4. Constat d'origine : `POST /resources/search` exige `RESOURCE:CREATE` (règle d'URL sur le verbe POST) et filtre par `typeId`, `groupId`, `policyId` numériques que l'API n'expose jamais (`src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java:89` ; `src/main/java/com/sni/bokaticowork/features/ressource/repository/specification/criteria/ResourceSearchCriteria.java`).
 - `GET /resources` ignore `typeCode`, `groupCode`, `policyCode` quand `summary=false` (`ResourceController.java:61-84`).
 - Une politique désactivée (`active = false`) continue de s'appliquer aux réservations . `staffOverrideAllowed` n'était ni lisible ni modifiable par l'API : **Réglé** le 14/11/2026, il est dans la création, la modification et la réponse des politiques.

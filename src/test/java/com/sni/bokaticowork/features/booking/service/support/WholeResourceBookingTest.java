@@ -117,7 +117,7 @@ class WholeResourceBookingTest {
                         .price(hourlyPrice)
                         .priority(0)
                         .build()));
-        return new BookingPricingCalculator(pricingRuleRepository);
+        return BookingPricingCalculator.forRules(pricingRuleRepository);
     }
 
     // -------------------------------------------------------------------------------------

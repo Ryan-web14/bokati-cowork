@@ -77,9 +77,13 @@ public class ClientResourceController {
     @GetMapping("/{code}/quote")
     public ResponseEntity<ResourcePriceQuoteResponse> getQuote(
             @PathVariable String code,
-            @RequestParam String bookingUnit,
+            @RequestParam(required = false) String bookingUnit,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startedAt,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endedAt) {
-        return ResponseEntity.ok(clientResourceService.getQuote(code, bookingUnit, startedAt, endedAt));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endedAt,
+            @RequestParam(required = false, defaultValue = "1") Integer quantity) {
+        // Lot R1 : le prix du membre connecte, au calcul de la reservation (l'unite se deduit de la duree).
+        var member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientResourceService.getQuote(code, startedAt, endedAt, quantity,
+                member == null ? null : member.getMemberId()));
     }
 }

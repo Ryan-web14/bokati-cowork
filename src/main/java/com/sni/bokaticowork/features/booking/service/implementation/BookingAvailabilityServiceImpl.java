@@ -31,6 +31,12 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
     private final ResourceAvailabilityService resourceAvailabilityService;
     private final BookingResourceGuard resourceGuard;
     private final BookingPricingCalculator pricingCalculator;
+    private com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPriceContextResolver(com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver) {
+        this.priceContextResolver = priceContextResolver;
+    }
     private final BookingIdentityResolver identityResolver;
     private final BookingPaymentContextResolver paymentContextResolver;
     private final com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride staffOverride;
@@ -93,7 +99,14 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
 
         // Step 4: pricing and success response
         try {
-            BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity, request.bookingUnit());
+            // Lot R1 : meme contexte que la reservation (membre, client ou entreprise), donc meme prix.
+            String ownerType = org.springframework.util.StringUtils.hasText(request.memberId()) ? "MEMBER"
+                    : org.springframework.util.StringUtils.hasText(request.businessCode()) ? "BUSINESS_ENTITY"
+                    : org.springframework.util.StringUtils.hasText(request.customerId()) ? "CUSTOMER" : null;
+            String ownerCode = org.springframework.util.StringUtils.hasText(request.memberId()) ? request.memberId()
+                    : org.springframework.util.StringUtils.hasText(request.businessCode()) ? request.businessCode() : request.customerId();
+            BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity,
+                    request.bookingUnit(), priceContextResolver == null ? null : priceContextResolver.forOwner(ownerType, ownerCode));
             String message = staff && request.startedAt().isBefore(java.time.LocalDateTime.now().plusMinutes(noticeMinutes(resource)))
                     ? "Disponible · réservation de l'équipe hors préavis"
                     : "Disponible";

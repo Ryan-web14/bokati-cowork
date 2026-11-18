@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-77 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+78 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -72,6 +72,7 @@
 | POST | `/sni/api/v1/resource-pricing-rules/bulk` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-post-sni-api-v1-resource-pricing-rules-bulk) |
 | POST | `/sni/api/v1/resource-pricing-rules/bulk/preview` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-post-sni-api-v1-resource-pricing-rules-bulk-preview) |
 | GET | `/sni/api/v1/resource-pricing-rules/quote` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-get-sni-api-v1-resource-pricing-rules-quote) |
+| POST | `/sni/api/v1/resource-pricing-rules/simulate` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-post-sni-api-v1-resource-pricing-rules-simulate) |
 | DELETE | `/sni/api/v1/resource-pricing-rules/{id}` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-delete-sni-api-v1-resource-pricing-rules-id) |
 | GET | `/sni/api/v1/resource-pricing-rules/{id}` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-get-sni-api-v1-resource-pricing-rules-id) |
 | PATCH PUT | `/sni/api/v1/resource-pricing-rules/{id}` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-patch-put-sni-api-v1-resource-pricing-rules-id) |

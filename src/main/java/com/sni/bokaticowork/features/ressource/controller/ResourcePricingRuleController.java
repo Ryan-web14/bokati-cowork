@@ -86,10 +86,29 @@ public class ResourcePricingRuleController {
     @GetMapping("/quote")
     public ResponseEntity<ResourcePriceQuoteResponse> quote(
             @RequestParam String resourceCode,
-            @RequestParam String bookingUnit,
+            @RequestParam(required = false) String bookingUnit,
             @RequestParam LocalDateTime startedAt,
-            @RequestParam LocalDateTime endedAt) {
-        return ResponseEntity.ok(resourcePricingRuleService.quote(resourceCode, bookingUnit, startedAt, endedAt));
+            @RequestParam LocalDateTime endedAt,
+            @RequestParam(required = false) Integer quantity,
+            @RequestParam(required = false) String ownerType,
+            @RequestParam(required = false) String ownerCode) {
+        return ResponseEntity.ok(resourcePricingRuleService.quote(resourceCode, bookingUnit, startedAt, endedAt, quantity,
+                ownerType, ownerCode, null));
+    }
+
+    /** Lot R1 : corps du simulateur de prix. */
+    public record SimulateRequest(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt,
+                                  Integer quantity, String ownerType, String ownerCode, String channel) {
+    }
+
+    /**
+     * Lot R1 : simulateur. Prix d'une ressource pour un creneau, un titulaire, une quantite et un canal,
+     * avec le detail du calcul : sert a verifier une grille avant de la publier.
+     */
+    @PostMapping("/simulate")
+    public ResponseEntity<ResourcePriceQuoteResponse> simulate(@RequestBody SimulateRequest request) {
+        return ResponseEntity.ok(resourcePricingRuleService.quote(request.resourceCode(), request.bookingUnit(), request.startedAt(),
+                request.endedAt(), request.quantity(), request.ownerType(), request.ownerCode(), request.channel()));
     }
 
     @RequestMapping(value = "/{id}", method = {RequestMethod.PATCH, RequestMethod.PUT})

@@ -37,6 +37,10 @@ public interface ResourcePricingRuleService {
 
     ResourcePriceQuoteResponse quote(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt);
 
+    /** Lot R1 : devis et simulateur par le moteur unique, avec le contexte du titulaire. */
+    ResourcePriceQuoteResponse quote(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt,
+                                     Integer quantity, String ownerType, String ownerCode, String channel);
+
     ResourcePricingRuleResponse updatePricingRule(Long id, UpdateResourcePricingRuleRequest request);
 
     void updateActive(Long id, Boolean active);

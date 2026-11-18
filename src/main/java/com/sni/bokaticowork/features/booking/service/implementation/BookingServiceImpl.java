@@ -97,6 +97,12 @@ public class BookingServiceImpl implements BookingService {
     private final BookingIdentityResolver identityResolver;
     private final BookingPaymentContextResolver paymentContextResolver;
     private final BookingPricingCalculator pricingCalculator;
+    private com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPriceContextResolver(com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver) {
+        this.priceContextResolver = priceContextResolver;
+    }
     private final BookingResourceGuard resourceGuard;
     private final BookingEntitlementBridge entitlementBridge;
     private final com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver billingCompanyResolver;
@@ -246,7 +252,11 @@ public class BookingServiceImpl implements BookingService {
         booking.setCheckInToken(generateCheckInToken());
         booking.setPolicyOverrideBy(staffActor);
 
-        BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity, request.bookingUnit());
+        // Lot R1 : prix du moteur unique, avec le contexte du titulaire (segment, plan, canal), comme le devis.
+        BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity,
+                request.bookingUnit(), priceContextResolver == null ? null
+                        : priceContextResolver.forOwner(booking.getOwnerType() == null ? null : booking.getOwnerType().name(), booking.getOwnerCode()));
+        booking.setPriceTrace(BookingPricingCalculator.trace(price));
         booking.setBookingUnit(price.unit());
         booking.setUnitPrice(price.unitPrice());
         booking.setSubtotalAmount(price.amount());
