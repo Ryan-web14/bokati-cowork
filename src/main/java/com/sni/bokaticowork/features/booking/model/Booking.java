@@ -192,6 +192,19 @@ public class Booking {
     @Column(name = "confirmed_at")
     private Instant confirmedAt;
 
+    /** Lot B1 : le creneau est retenu (des la reservation en attente, plus seulement a la confirmation). */
+    @Column(name = "slots_reserved", nullable = false)
+    @Builder.Default
+    private Boolean slotsReserved = Boolean.FALSE;
+
+    /** Lot B1 (D1) : echeance de paiement d'une reservation en attente de paiement. */
+    @Column(name = "payment_due_at")
+    private LocalDateTime paymentDueAt;
+
+    /** Lot B1 (ecart 2) : reglement constate (paiement recu, portefeuille) ; vide si rien n'est encaisse. */
+    @Column(name = "paid_at")
+    private Instant paidAt;
+
     @Column(name = "started_event_at")
     private Instant startedEventAt;
 

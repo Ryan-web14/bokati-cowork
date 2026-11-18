@@ -50,7 +50,7 @@ public enum BookingPaymentStatus {
      * une fois l'intention integralement soldee.</p>
      */
     public static BookingPaymentStatus of(BookingPaymentMode mode, BookingStatus status, Instant confirmedAt) {
-        if (status == BookingStatus.CANCELLED || status == BookingStatus.REJECTED) {
+        if (status == BookingStatus.CANCELLED || status == BookingStatus.REJECTED || status == BookingStatus.EXPIRED) {
             return CANCELLED;
         }
         // Un mode absent n'est pas un mode couvert : dans le doute, on annonce un reglement

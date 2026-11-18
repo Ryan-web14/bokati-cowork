@@ -24,16 +24,16 @@
 | N° | Écart | État | Preuve |
 | --- | --- | --- | --- |
 | 1 | Pointage hors fenêtre refusé à tout rôle sauf ADMIN, message remplacé par « Access to this resource is forbidden » | **Réglé (B0)** | BSI:1173-1209 ; `GlobalExceptionHandler.java:79-83` ; contredit `StaffBookingOverride.java:33` (MANAGER, OPERATIONS_AGENT) |
-| 2 | `PATCH /confirm` confirme un `PENDING_PAYMENT` sans paiement, statut de paiement « PAID » | confirmé | BSI:398-401, 803-806 ; `BookingPaymentStatus.java:61` |
-| 3 | Déplacement : créneaux jamais réservés libérés, conflit sans capacité, ni politique ni alignement ni date passée | en partie (prix recalculé) | BSI:682, 692-697, 1084-1094 ; `BookingRepository.java:71-86` |
-| 4 | Réservations en attente sans créneau retenu ; paiement reçu puis confirmation échouée sans bruit | confirmé | `BookingRepository.java:77` ; BSI:814-818 ; `PaymentTransactionWorkflowProcessor.java:310-320` |
-| 5 | Aucune tâche d'expiration des blocages ni d'envoi des rappels ; un blocage expiré casse la confirmation après paiement | confirmé | `BookingHoldServiceImpl.java:99-108` ; `BookingNotificationServiceImpl.java:63-85` ; BSI:1039-1041 |
+| 2 | `PATCH /confirm` confirme un `PENDING_PAYMENT` sans paiement, statut de paiement « PAID » | **Réglé (B1)** | BSI:398-401, 803-806 ; `BookingPaymentStatus.java:61` |
+| 3 | Déplacement : créneaux jamais réservés libérés, conflit sans capacité, ni politique ni alignement ni date passée | **Réglé (B1)** | BSI:682, 692-697, 1084-1094 ; `BookingRepository.java:71-86` |
+| 4 | Réservations en attente sans créneau retenu ; paiement reçu puis confirmation échouée sans bruit | **Réglé (B1)** | `BookingRepository.java:77` ; BSI:814-818 ; `PaymentTransactionWorkflowProcessor.java:310-320` |
+| 5 | Aucune tâche d'expiration des blocages ni d'envoi des rappels ; un blocage expiré casse la confirmation après paiement | **Réglé (B1)** pour les options et l'expiration ; rappels au lot B6 | `BookingHoldServiceImpl.java:99-108` ; `BookingNotificationServiceImpl.java:63-85` ; BSI:1039-1041 |
 | 6 | Liste d'attente : aucune notification à l'offre, `BOOKED` jamais posé, capacité ignorée, `BUSINESS` au lieu de `BUSINESS_ENTITY` | confirmé | `BookingWaitlistServiceImpl.java:98-131` |
 | 7 | `POST /bookings/repair` ne répare rien, requête contradictoire | confirmé | `BookingRepairServiceImpl.java:21-25` ; `BookingRepository.java:224-227` |
 | 8 | Satisfaction publique sans jeton (GET qui écrit) | **Réglé (B0)** | `PublicBookingController.java:233-244` |
-| 9 | Statut `EXPIRED` jamais atteint | confirmé | `BookingStatus.java:13` |
-| 10 | Règle d'annulation appliquée à l'équipe, y compris `PENDING_APPROVAL` et `NO_SHOW` | en partie (défaut réglé) | BSI:1146-1161 |
-| 11 | Transfert sans contrôle du nouveau titulaire ni report du droit, de la facture, du portefeuille ; permis depuis `REJECTED` et `NO_SHOW` | confirmé | BSI:659-677 |
+| 9 | Statut `EXPIRED` jamais atteint | **Réglé (B1)** | `BookingStatus.java:13` |
+| 10 | Règle d'annulation appliquée à l'équipe, y compris `PENDING_APPROVAL` et `NO_SHOW` | **Réglé (B1)** | BSI:1146-1161 |
+| 11 | Transfert sans contrôle du nouveau titulaire ni report du droit, de la facture, du portefeuille ; permis depuis `REJECTED` et `NO_SHOW` | **Réglé (B1)** | BSI:659-677 |
 | 12 | Politiques d'audience et dérogations de quota : création et liste seulement | confirmé | `BookingController.java:240-258` ; `BookingPolicyServiceImpl.java:33-86` |
 | 13 | Réponse sans `checkedInAt`, `checkedOutAt`, motifs, numéro de facture (ni `approvedBy`, `holdNumber`, série, trace du prix…) | confirmé | `BookingResponse.java:14-60` |
 | 14 | Ajout et retrait de participant journalisés « BOOKING_CREATED » | confirmé | BSI:752, 763 |
@@ -54,15 +54,15 @@
 | Bn-5 | Échec de remboursement seulement journalisé : réservation annulée sans remboursement ni alerte | BSI:888-892 |
 | Bn-6 | Deux sources de règles d'annulation : préavis de la politique de la ressource, pourcentage de la table globale | BSI:1146-1161 ; `BookingCancellationRefundSupport.java:103-107` |
 | Bn-7 | `totalAmount` de la réponse sans les suppléments | `BookingExtras.java:385-397` |
-| Bn-8 | Retour d'une confirmation : la réservation reste « payée », blocage de portefeuille et tâches non rendus | BSI:837-851 |
+| Bn-8 | **Réglé (B1)** Retour d'une confirmation : la réservation reste « payée », blocage de portefeuille et tâches non rendus | BSI:837-851 |
 | **Cycle de vie** | | |
-| Bn-9 | `NO_SHOW` et `REJECTED` annulables (et `COMPLETED` en mode système) | BSI:853-862 |
-| Bn-10 | Absence et clôture sans garde horaire : une réservation future marquée absente (frais facturés) ou close avant de commencer (droit consommé) | BSI:909-949 |
+| Bn-9 | **Réglé (B1)** `NO_SHOW` et `REJECTED` annulables (et `COMPLETED` en mode système) | BSI:853-862 |
+| Bn-10 | **Réglé (B1)** Absence et clôture sans garde horaire : une réservation future marquée absente (frais facturés) ou close avant de commencer (droit consommé) | BSI:909-949 |
 | Bn-11 | **Réglé (B0)** `early-check-in` contourne la fenêtre et le droit de pointage (règle d'URL) | BSI:639-657 ; `AdminApiAuthorizationManager.java:388` |
-| Bn-12 | Ajout de participant sans contrôle de statut ni de capacité, même sur une réservation annulée | BSI:746-754 |
+| Bn-12 | **Réglé (B1)** Ajout de participant sans contrôle de statut ni de capacité, même sur une réservation annulée | BSI:746-754 |
 | **Blocages, créneaux, tâches** | | |
-| Bn-13 | Blocage d'un non-membre jamais confirmable (nouveau code invité à chaque appel) ; coordonnées du blocage perdues | `BookingIdentityResolver.java:139-147` ; BSI:1042 |
-| Bn-14 | Blocage : durée sans borne (même négative), rejeu d'idempotence qui rend le blocage d'un autre, un seul blocage par plage quelle que soit la capacité, blocages expirés qui retiennent la capacité | `BookingHoldServiceImpl.java:47-85` |
+| Bn-13 | **Réglé (B1)** Blocage d'un non-membre jamais confirmable (nouveau code invité à chaque appel) ; coordonnées du blocage perdues | `BookingIdentityResolver.java:139-147` ; BSI:1042 |
+| Bn-14 | **Réglé (B1)** Blocage : durée sans borne (même négative), rejeu d'idempotence qui rend le blocage d'un autre, un seul blocage par plage quelle que soit la capacité, blocages expirés qui retiennent la capacité | `BookingHoldServiceImpl.java:47-85` |
 | Bn-15 | Liste d'attente : 100 premières entrées sans filtre de date, entrées passées offertes, toutes les entrées d'un créneau offertes ensemble | `BookingWaitlistEntryRepository` |
 | Bn-16 | Rappels envoyés aussi pour des réservations annulées, en anglais ; `200` avec 0 sans courriel | `BookingNotificationServiceImpl.java:47-85` |
 | Bn-17 | Aucun courriel à la création en attente de paiement ou d'approbation : pas d'instructions de paiement | BSI:284-297 ; `BookingEventWriter.java:21-23` |
@@ -73,7 +73,7 @@
 | Bn-21 | **Réglé (B0)** Lire `/bookings/cancellation-policy` exige `BOOKING:CANCEL` (règle d'URL) | `AdminApiAuthorizationManager.java:389` |
 | **Contrôles et quotas** | | |
 | Bn-22 | Quota d'absences atteint : un ticket au support à chaque tentative | `BookingPolicyEnforcer.java:90-95` |
-| Bn-23 | Les réservations en attente de paiement échappent au quota : un membre empile des réservations impayées | `BookingRepository.java:186` |
+| Bn-23 | **Réglé (B1)** Les réservations en attente de paiement échappent au quota : un membre empile des réservations impayées | `BookingRepository.java:186` |
 | **Performances** | | |
 | Bn-24 | Par ligne de liste : deux requêtes, chargements paresseux et rendu d'un QR en PNG | `BookingMapperDecorator.java:81-134` |
 | Bn-25 | Listes non paginées (attente, historique, événements, politiques, dérogations), moteur de suggestion par entrée d'attente | `BookingWaitlistServiceImpl.java:82-87` |
@@ -93,7 +93,7 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 
 ## Avancement
 
-**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients.
+**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)).
 
 ## Lots proposés
 

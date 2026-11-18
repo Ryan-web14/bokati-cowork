@@ -50,6 +50,12 @@ public interface BookingService {
      */
     BookingResponse revertConfirmation(String bookingNumber, String reason);
 
+    /** Lot B1 : reservations non reglees a l'echeance passees en EXPIRED ; rend leur nombre. */
+    int expireUnpaid(int limit);
+
+    /** Lot B1 (ecart 2) : reglement recu pour une reservation (paiement solde). */
+    void markPaid(String bookingNumber);
+
     BookingResponse approve(String bookingNumber, BookingApprovalRequest request);
 
     BookingResponse reject(String bookingNumber, BookingApprovalRequest request);

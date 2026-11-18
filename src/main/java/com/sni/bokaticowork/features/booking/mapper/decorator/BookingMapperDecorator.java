@@ -86,7 +86,7 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 ? List.of()
                 : participantRepository.findByBookingId(booking.getId()).stream().map(this::toResponse).toList();
         BookingPaymentStatus paymentStatus = BookingPaymentStatus.of(
-                booking.getPaymentMode(), booking.getStatus(), booking.getConfirmedAt());
+                booking.getPaymentMode(), booking.getStatus(), booking.getPaidAt());
         com.sni.bokaticowork.features.booking.service.support.BookingSeats seats =
                 com.sni.bokaticowork.features.booking.service.support.BookingSeats.of(booking);
         return new BookingResponse(

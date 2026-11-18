@@ -45,22 +45,36 @@ public class BookingHoldServiceImpl implements BookingHoldService {
 
     @Override
     public BookingHoldResponse create(CreateBookingHoldRequest request) {
-        if (StringUtils.hasText(request.idempotencyKey())) {
-            BookingHold existing = holdRepository.findByIdempotencyKey(request.idempotencyKey().trim()).orElse(null);
-            if (existing != null) {
-                return toResponse(existing);
-            }
+        // Lot B1 (ecart Bn-14) : duree bornee.
+        int ttl = request.ttlMinutes() == null ? 10 : request.ttlMinutes();
+        if (ttl < 1 || ttl > 1440) {
+            throw new com.sni.bokaticowork.core.exception.customs.BadRequestException("Durée d'une option : de 1 à 1 440 minutes");
         }
         Resource resource = resourceService.getResourceForService(request.resourceCode().trim());
         int quantity = request.quantity() == null ? 1 : request.quantity();
         BookingIdentityResolver.ResolvedBookingIdentity identity = identityResolver.resolve(request.identityLookup());
+        if (StringUtils.hasText(request.idempotencyKey())) {
+            BookingHold existing = holdRepository.findByIdempotencyKey(request.idempotencyKey().trim()).orElse(null);
+            if (existing != null) {
+                // Lot B1 (ecart Bn-14) : un rejeu ne rend jamais l'option d'un autre.
+                boolean same = existing.getResource().getId().equals(resource.getId())
+                        && existing.getStartedAt().equals(request.startedAt()) && existing.getEndedAt().equals(request.endedAt());
+                if (!same) {
+                    throw new ConflictException("Clé d'idempotence déjà utilisée pour une autre option");
+                }
+                return toResponse(existing);
+            }
+        }
         // L'option suit la reservation : l'equipe (hors portail) pose une option hors preavis ou sur
         // un debut deja passe, sauf si la politique de la ressource l'interdit. Sans cela, l'option
         // refusait ce que la reservation accepte (« the requested start time is in the past »).
         boolean staff = staffOverride != null && staffOverride.actorFor(resource.getEffectivePolicy()).isPresent();
         resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity, staff);
         resourceGuard.validateNoSingleCapacityConflict(resource, request.startedAt(), request.endedAt(), null);
-        if (holdRepository.existsActiveOverlap(resource.getId(), request.startedAt(), request.endedAt(), null)) {
+        // Lot B1 (ecart Bn-14) : plusieurs options sur un espace partage (la capacite des creneaux
+        // tranche) ; une seule sur une piece entiere.
+        if (resource.isWholeResourceBooking()
+                && holdRepository.existsActiveOverlap(resource.getId(), request.startedAt(), request.endedAt(), null)) {
             throw new ConflictException("booking hold", "resource already has an active hold for the requested range");
         }
         availabilityService.reserve(ReserveResourceAvailabilityRequest.builder()
@@ -80,7 +94,9 @@ public class BookingHoldServiceImpl implements BookingHoldService {
                 .quantity(quantity)
                 .idempotencyKey(StringUtils.hasText(request.idempotencyKey()) ? request.idempotencyKey().trim() : null)
                 .status(BookingHoldStatus.ACTIVE)
-                .expiresAt(Instant.now().plusSeconds((long) (request.ttlMinutes() == null ? 10 : request.ttlMinutes()) * 60))
+                .contactEmail(identity.contactEmail())
+                .contactPhone(identity.contactPhone())
+                .expiresAt(Instant.now().plusSeconds((long) ttl * 60))
                 .build());
         return toResponse(hold);
     }

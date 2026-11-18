@@ -305,6 +305,12 @@ public class PaymentTransactionWorkflowProcessor {
         if (status != BookingStatus.DRAFT && status != BookingStatus.PENDING_PAYMENT) {
             log.debug("Booking {} already past confirmation ({}) · payment {} recorded without status change",
                     bookingNumber, status, transaction.getTransactionNumber());
+            // Lot B1 (ecart 2) : confirmee a la main, elle est maintenant reglee.
+            try {
+                bookingService.markPaid(bookingNumber);
+            } catch (Exception ex) {
+                log.warn("Reglement de la reservation {} non note : {}", bookingNumber, ex.getMessage());
+            }
             return;
         }
         try {
@@ -316,8 +322,14 @@ public class PaymentTransactionWorkflowProcessor {
             ));
             log.info("Booking {} auto-confirmed after payment {}", bookingNumber, transaction.getTransactionNumber());
         } catch (Exception ex) {
-            log.warn("Auto-confirmation of booking {} after payment {} skipped · {}",
-                    bookingNumber, transaction.getTransactionNumber(), ex.getMessage());
+            // Lot B1 (ecart 4) : un paiement recu sans confirmation possible est une anomalie, pas un detail.
+            log.error("Paiement {} recu mais reservation {} non confirmee : {}",
+                    transaction.getTransactionNumber(), bookingNumber, ex.getMessage());
+            try {
+                bookingService.markPaid(bookingNumber);
+            } catch (Exception ignored) {
+                // la reservation est introuvable : l'erreur ci-dessus suffit
+            }
         }
     }
 

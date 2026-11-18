@@ -287,6 +287,14 @@ public class BookingServiceImpl implements BookingService {
             booking.setStatus(BookingStatus.PENDING_PAYMENT);
         }
         booking = bookingRepository.save(booking);
+        // Lot B1 (ecart 4, D2) : une reservation en attente retient son creneau des maintenant.
+        if (booking.getStatus() == BookingStatus.PENDING_PAYMENT || booking.getStatus() == BookingStatus.PENDING_APPROVAL) {
+            retainSlots(booking);
+            if (booking.getStatus() == BookingStatus.PENDING_PAYMENT && paymentDue != null) {
+                booking.setPaymentDueAt(paymentDue.dueAt(LocalDateTime.now(), booking.getStartedAt()));
+            }
+            booking = bookingRepository.save(booking);
+        }
 
         saveLines(booking, price);
         saveParticipants(booking, request);
@@ -445,6 +453,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse reject(String bookingNumber, BookingApprovalRequest request) {
         Booking booking = getForService(bookingNumber);
         requireStatus(booking, BookingStatus.PENDING_APPROVAL);
+        releaseSlotsIfRetained(booking, false);
         BookingStatus from = booking.getStatus();
         booking.setStatus(BookingStatus.REJECTED);
         booking.setRejectedBy(request == null ? null : trim(actor(request.actor())));
@@ -669,8 +678,20 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse transfer(String bookingNumber, BookingTransferRequest request) {
         Booking booking = getForService(bookingNumber);
-        if (booking.getStatus() == BookingStatus.COMPLETED || booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new ConflictException("booking", "cannot transfer a completed or cancelled booking");
+        // Lot B1 (ecart 11) : seulement une reservation vivante, payee directement ; nouveau titulaire verifie.
+        if (booking.getStatus() != BookingStatus.DRAFT && booking.getStatus() != BookingStatus.PENDING_PAYMENT
+                && booking.getStatus() != BookingStatus.PENDING_APPROVAL && booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new ConflictException("Une réservation " + statusLabel(booking.getStatus()) + " ne se transfère pas");
+        }
+        if (booking.getPaymentMode() != null && (booking.getPaymentMode().usesEntitlement()
+                || booking.getPaymentMode() == com.sni.bokaticowork.features.booking.enums.BookingPaymentMode.WALLET)) {
+            throw new ConflictException("Réservation couverte par un droit ou réglée par portefeuille : annulez-la et réservez pour le nouveau titulaire");
+        }
+        if (request.newOwnerType() == null || !StringUtils.hasText(request.newOwnerCode())) {
+            throw new BadRequestException("Le nouveau titulaire (type et code) est requis");
+        }
+        if (!ownerExists(request.newOwnerType(), request.newOwnerCode().trim())) {
+            throw new BadRequestException("Nouveau titulaire introuvable : " + request.newOwnerType() + " " + request.newOwnerCode().trim());
         }
         booking.setOwnerType(request.newOwnerType());
         booking.setOwnerCode(request.newOwnerCode().trim());
@@ -689,8 +710,9 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse reschedule(String bookingNumber, BookingRescheduleRequest request) {
         Booking booking = getForService(bookingNumber);
-        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.PENDING_APPROVAL) {
-            throw new ConflictException("booking", "only CONFIRMED or PENDING_APPROVAL bookings can be rescheduled");
+        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.PENDING_APPROVAL
+                && booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
+            throw new ConflictException("Seule une réservation confirmée ou en attente se déplace");
         }
         LocalDateTime newStart = request.newStartedAt();
         LocalDateTime newEnd = request.newEndedAt();
@@ -698,13 +720,17 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("New end time must be after start time");
         }
         Resource resource = booking.getResource();
-        validateForReschedule(resource, newStart, newEnd, bookingNumber);
-        releaseResourceSlot(resource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
-        eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released for reschedule",
-                booking.getStartedAt() + " – " + booking.getEndedAt(), null);
-        reserveResourceSlot(resource, newStart, newEnd, booking.getQuantity());
-        eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after reschedule",
-                newStart + " – " + newEnd, null);
+        validateForReschedule(resource, newStart, newEnd, bookingNumber, booking);
+        // Lot B1 (ecart 3) : seuls des creneaux vraiment retenus sont rendus puis repris (la reprise
+        // controle la capacite) ; une reservation qui ne retenait rien n'en prend pas.
+        if (Boolean.TRUE.equals(booking.getSlotsReserved())) {
+            releaseResourceSlot(resource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
+            eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released for reschedule",
+                    booking.getStartedAt() + " – " + booking.getEndedAt(), null);
+            reserveResourceSlot(resource, newStart, newEnd, booking.getQuantity());
+            eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after reschedule",
+                    newStart + " – " + newEnd, null);
+        }
         BookingStatus from = booking.getStatus();
         booking.setStartedAt(newStart);
         booking.setEndedAt(newEnd);
@@ -730,15 +756,20 @@ public class BookingServiceImpl implements BookingService {
             throw new ConflictException("booking", "only CONFIRMED bookings can have their resource changed");
         }
         Resource newResource = resourceService.getResourceForService(request.newResourceCode().trim());
-        validateForReschedule(newResource, booking.getStartedAt(), booking.getEndedAt(), bookingNumber);
+        validateForReschedule(newResource, booking.getStartedAt(), booking.getEndedAt(), bookingNumber, booking);
         Resource oldResource = booking.getResource();
-        releaseResourceSlot(oldResource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
-        eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released for resource change",
-                oldResource.getCode(), null);
+        boolean retained = Boolean.TRUE.equals(booking.getSlotsReserved());
+        if (retained) {
+            releaseResourceSlot(oldResource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
+            eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released for resource change",
+                    oldResource.getCode(), null);
+        }
         booking.setResource(newResource);
-        reserveResourceSlot(newResource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
-        eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after resource change",
-                newResource.getCode(), null);
+        if (retained) {
+            reserveResourceSlot(newResource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
+            eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after resource change",
+                    newResource.getCode(), null);
+        }
         // Lot R1 (D1) : prix de la nouvelle ressource ; ecart facture en complement ou rendu par un avoir.
         if (repricer != null) {
             repricer.reprice(booking, "ressource " + oldResource.getCode() + " → " + newResource.getCode());
@@ -756,6 +787,20 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingParticipantResponse addParticipant(String bookingNumber, BookingParticipantRequest request) {
         Booking booking = getForService(bookingNumber);
+        // Lot B1 (ecart Bn-12) : seulement sur une reservation vivante, et dans la capacite.
+        if (booking.getStatus() != BookingStatus.DRAFT && booking.getStatus() != BookingStatus.PENDING_PAYMENT
+                && booking.getStatus() != BookingStatus.PENDING_APPROVAL && booking.getStatus() != BookingStatus.CONFIRMED
+                && booking.getStatus() != BookingStatus.IN_PROGRESS) {
+            throw new ConflictException("Une réservation " + statusLabel(booking.getStatus()) + " ne reçoit plus de participant");
+        }
+        Integer capacity = booking.getResource() == null ? null : booking.getResource().getCapacity();
+        if (capacity != null) {
+            long present = participantRepository.findByBookingId(booking.getId()).stream()
+                    .filter(p -> p.getStatus() == null || !"REMOVED".equals(p.getStatus().toString())).count();
+            if (present + 1 > capacity) {
+                throw new ConflictException("Capacité de " + booking.getResource().getCode() + " atteinte : " + capacity + " personnes au plus");
+            }
+        }
         BookingParticipant participant = bookingMapper.toEntity(request);
         participant.setBooking(booking);
         participant = participantRepository.save(participant);
@@ -816,15 +861,15 @@ public class BookingServiceImpl implements BookingService {
         }
         // Une reservation saisie par l'equipe hors preavis le reste a sa confirmation, meme quand
         // celle-ci vient du paiement, sans personne de l'equipe derriere.
-        resourceGuard.validateBookable(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity(),
-                StringUtils.hasText(booking.getPolicyOverrideBy())
-                        && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(
-                        booking.getResource().getEffectivePolicy()));
-        resourceGuard.validateNoSingleCapacityConflict(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getBookingNumber());
-        boolean confirmedFromHold = confirmHoldIfPresent(booking);
-        if (!confirmedFromHold) {
-            reserveResource(booking);
-            eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved", "Booking resource availability was reserved", null);
+        // Lot B1 (ecart 4) : un creneau deja retenu a la creation n'est ni recontrole (le preavis
+        // pouvait faire echouer la confirmation apres un paiement arrive tard) ni repris.
+        if (!Boolean.TRUE.equals(booking.getSlotsReserved())) {
+            resourceGuard.validateBookable(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity(),
+                    StringUtils.hasText(booking.getPolicyOverrideBy())
+                            && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(
+                            booking.getResource().getEffectivePolicy()));
+            resourceGuard.validateNoSingleCapacityConflict(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getBookingNumber());
+            retainSlots(booking);
         }
         if (booking.getPaymentMode().usesEntitlement()) {
             entitlementBridge.reserve(booking);
@@ -835,6 +880,14 @@ public class BookingServiceImpl implements BookingService {
         BookingStatus from = booking.getStatus();
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setConfirmedAt(Instant.now());
+        booking.setPaymentDueAt(null);
+        // Lot B1 (ecart 2) : le portefeuille bloque les fonds a la confirmation (acquis) ; un
+        // reglement exterieur est constate par la chaine de paiement (markPaid). Une confirmation
+        // manuelle sans paiement laisse la reservation « à régler ».
+        if (booking.getPaymentMode() == com.sni.bokaticowork.features.booking.enums.BookingPaymentMode.WALLET
+                || "SYSTEM".equals(changedBy(request))) {
+            booking.setPaidAt(Instant.now());
+        }
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, BookingStatus.CONFIRMED, changedBy(request), reason(request, "Booking confirmed"));
         eventWriter.write(booking, BookingEventType.BOOKING_CONFIRMED, "Booking confirmed", "Booking was confirmed", null,
@@ -848,11 +901,17 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse revertConfirmation(String bookingNumber, String reason) {
         Booking booking = getForService(bookingNumber);
         requireStatus(booking, BookingStatus.CONFIRMED);
-        releaseResource(booking);
-        eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
+        // Lot B1 (ecart Bn-8) : le creneau reste retenu, avec une nouvelle echeance ; le reglement
+        // n'est plus constate, le blocage du portefeuille est rendu.
         if (booking.getPaymentMode().usesEntitlement()) {
             entitlementBridge.release(booking);
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_RELEASED, "Entitlement released", "Booking entitlement reservation was released", null);
+        }
+        walletSettlement.release(booking, "confirmation annulee");
+        booking.setPaidAt(null);
+        booking.setConfirmedAt(null);
+        if (paymentDue != null) {
+            booking.setPaymentDueAt(paymentDue.dueAt(LocalDateTime.now(), booking.getStartedAt()));
         }
         booking.setStatus(BookingStatus.PENDING_PAYMENT);
         booking = bookingRepository.save(booking);
@@ -864,16 +923,17 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             return booking;
         }
-        if (!systemOverride && booking.getStatus() == BookingStatus.COMPLETED) {
-            throw new ConflictException("booking", "booking cannot be cancelled from status " + booking.getStatus());
+        // Lot B1 (ecart Bn-9) : une reservation terminee, absente, refusee ou expiree ne s'annule plus.
+        if (!systemOverride && (booking.getStatus() == BookingStatus.COMPLETED || booking.getStatus() == BookingStatus.NO_SHOW
+                || booking.getStatus() == BookingStatus.REJECTED || booking.getStatus() == BookingStatus.EXPIRED)) {
+            throw new ConflictException("Une réservation " + statusLabel(booking.getStatus()) + " ne s'annule pas");
         }
         if (!systemOverride) {
             assertCancellationAllowed(booking);
         }
         boolean wasActive = booking.getStatus() == BookingStatus.CONFIRMED || booking.getStatus() == BookingStatus.IN_PROGRESS;
+        releaseSlotsIfRetained(booking, wasActive);
         if (wasActive) {
-            releaseResource(booking);
-            eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
             if (booking.getPaymentMode().usesEntitlement()) {
                 entitlementBridge.release(booking);
                 eventWriter.write(booking, BookingEventType.ENTITLEMENT_RELEASED, "Entitlement released", "Booking entitlement reservation was released", null);
@@ -926,6 +986,11 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be marked as no-show");
         }
+        // Lot B1 (ecart Bn-10) : absent seulement une fois la fenetre d'arrivee passee.
+        LocalDateTime noShowFrom = booking.getStartedAt().plusMinutes(checkInProperties.getLateWindowMinutes());
+        if (LocalDateTime.now().isBefore(noShowFrom)) {
+            throw new ConflictException("Trop tôt pour constater une absence : possible à partir de " + noShowFrom);
+        }
         if (booking.getPaymentMode().usesEntitlement() && entitlementBridge.consume(booking)) {
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "No-show entitlement was consumed", null);
         }
@@ -947,6 +1012,10 @@ public class BookingServiceImpl implements BookingService {
     private Booking completeInternal(Booking booking, BookingStatusChangeRequest request) {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be completed");
+        }
+        // Lot B1 (ecart Bn-10) : on ne clot pas une reservation qui n'a pas commence.
+        if (LocalDateTime.now().isBefore(booking.getStartedAt())) {
+            throw new ConflictException("La réservation n'a pas commencé : elle ne se clôt pas avant " + booking.getStartedAt());
         }
         if (booking.getPaymentMode().usesEntitlement() && entitlementBridge.consume(booking)) {
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "Booking entitlement was consumed", null);
@@ -1036,6 +1105,138 @@ public class BookingServiceImpl implements BookingService {
         return StringUtils.hasText(value) ? value.trim() : "N/A";
     }
 
+    /**
+     * Lot B1 : retient les creneaux de la reservation (blocage d'option repris s'il y en a un,
+     * meme expire : la capacite est alors reprise directement).
+     */
+    private void retainSlots(Booking booking) {
+        if (Boolean.TRUE.equals(booking.getSlotsReserved())) {
+            return;
+        }
+        boolean fromHold = false;
+        try {
+            fromHold = confirmHoldIfPresent(booking);
+        } catch (ConflictException ex) {
+            if (!holdExpired(booking)) {
+                throw ex;
+            }
+            // Option expiree : sa capacite a ete (ou sera) rendue, la reservation la reprend.
+        }
+        if (!fromHold) {
+            reserveResource(booking);
+            eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved", "Booking resource availability was reserved", null);
+        }
+        booking.setSlotsReserved(Boolean.TRUE);
+    }
+
+    private boolean holdExpired(Booking booking) {
+        if (!StringUtils.hasText(booking.getHoldNumber())) {
+            return false;
+        }
+        return holdRepository.findByHoldNumber(booking.getHoldNumber())
+                .map(hold -> hold.getStatus() != BookingHoldStatus.ACTIVE || hold.getExpiresAt().isBefore(Instant.now()))
+                .orElse(false);
+    }
+
+    /** Lot B1 : rend les creneaux s'ils etaient retenus (ou, pour les anciennes reservations, si actives). */
+    private void releaseSlotsIfRetained(Booking booking, boolean active) {
+        if (Boolean.TRUE.equals(booking.getSlotsReserved()) || active) {
+            releaseResource(booking);
+            eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
+            booking.setSlotsReserved(Boolean.FALSE);
+        }
+    }
+
+    private static String statusLabel(BookingStatus status) {
+        return switch (status) {
+            case COMPLETED -> "terminée";
+            case NO_SHOW -> "marquée absente";
+            case REJECTED -> "refusée";
+            case EXPIRED -> "expirée";
+            case CANCELLED -> "annulée";
+            case IN_PROGRESS -> "en cours";
+            default -> String.valueOf(status);
+        };
+    }
+
+    private boolean ownerExists(com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType type, String code) {
+        try {
+            return switch (type) {
+                case MEMBER -> memberOwnerExists(code);
+                default -> true;
+            };
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
+    private com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository memberRepositoryB1;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setMemberRepositoryB1(com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository memberRepositoryB1) {
+        this.memberRepositoryB1 = memberRepositoryB1;
+    }
+
+    private boolean memberOwnerExists(String code) {
+        return memberRepositoryB1 == null || memberRepositoryB1.findByMemberIdAndDeletedFalse(code).isPresent();
+    }
+
+    // ------------------------------------------------------------------ lot B1 : expiration et reglement
+
+    private BookingPaymentDue paymentDue;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPaymentDue(BookingPaymentDue paymentDue) {
+        this.paymentDue = paymentDue;
+    }
+
+    @Override
+    public int expireUnpaid(int limit) {
+        int expired = 0;
+        for (Booking booking : bookingRepository.findUnpaidPastDue(LocalDateTime.now(), Math.max(1, limit))) {
+            try {
+                expireInternal(booking);
+                expired++;
+            } catch (RuntimeException ex) {
+                log.warn("Reservation {} non expiree : {}", booking.getBookingNumber(), ex.getMessage());
+            }
+        }
+        return expired;
+    }
+
+    /** Echeance passee sans reglement : creneau rendu, facture annulee, statut EXPIRED, client et equipe prevenus. */
+    private void expireInternal(Booking booking) {
+        if (booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
+            return;
+        }
+        releaseSlotsIfRetained(booking, false);
+        walletSettlement.release(booking, "reservation expiree");
+        booking.setStatus(BookingStatus.EXPIRED);
+        booking.setCancellationReason("Échéance de paiement passée");
+        booking.setCancelledAt(Instant.now());
+        booking = bookingRepository.save(booking);
+        if (bookingOperations != null) {
+            bookingOperations.cancelTasks(booking);
+        }
+        writeHistory(booking, BookingStatus.PENDING_PAYMENT, BookingStatus.EXPIRED, "SYSTEM", "Échéance de paiement passée");
+        eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Réservation expirée",
+                "Non réglée à l'échéance : créneau rendu", null, true);
+        try {
+            cancellationRefundSupport.processCancellation(booking, false);
+        } catch (Exception ex) {
+            log.warn("Facture de la reservation expiree {} non annulee : {}", booking.getBookingNumber(), ex.getMessage());
+        }
+    }
+
+    @Override
+    public void markPaid(String bookingNumber) {
+        Booking booking = getForService(bookingNumber);
+        if (booking.getPaidAt() == null) {
+            booking.setPaidAt(Instant.now());
+            bookingRepository.save(booking);
+        }
+    }
+
     private void reserveResource(Booking booking) {
         resourceAvailabilityService.reserve(ReserveResourceAvailabilityRequest.builder()
                 .staffOverride(StringUtils.hasText(booking.getPolicyOverrideBy()))
@@ -1055,7 +1256,12 @@ public class BookingServiceImpl implements BookingService {
         if (hold.getStatus() != BookingHoldStatus.ACTIVE || hold.getExpiresAt().isBefore(Instant.now())) {
             throw new ConflictException("booking hold", "hold is not active");
         }
-        if (hold.getOwnerType() != booking.getOwnerType() || !hold.getOwnerCode().equals(booking.getOwnerCode())) {
+        // Lot B1 (ecart Bn-13) : un invite recoit un nouveau code a chaque appel ; on le reconnait a
+        // ses coordonnees.
+        boolean sameGuest = hold.getOwnerType() == booking.getOwnerType()
+                && ((StringUtils.hasText(hold.getContactEmail()) && hold.getContactEmail().equalsIgnoreCase(booking.getContactEmail()))
+                || (StringUtils.hasText(hold.getContactPhone()) && hold.getContactPhone().equals(booking.getContactPhone())));
+        if (!sameGuest && (hold.getOwnerType() != booking.getOwnerType() || !hold.getOwnerCode().equals(booking.getOwnerCode()))) {
             throw new ConflictException("booking hold", "hold owner does not match booking owner");
         }
         if (!hold.getResource().getId().equals(booking.getResource().getId())
@@ -1097,15 +1303,18 @@ public class BookingServiceImpl implements BookingService {
                 .build());
     }
 
-    private void validateForReschedule(Resource resource, LocalDateTime start, LocalDateTime end, String excludedBookingNumber) {
-        if (!Boolean.TRUE.equals(resource.getBookingEnabled()) || !Boolean.TRUE.equals(resource.getActive())) {
-            throw new ConflictException("booking", "resource is not active or not booking-enabled");
-        }
-        if (resource.getStatus() != ResourceStatus.ACTIVE) {
-            throw new ConflictException("booking", "resource status does not allow booking");
-        }
-        if (bookingRepository.existsActiveConflict(resource.getId(), start, end, excludedBookingNumber)) {
-            throw new ConflictException("booking", "resource is already booked for this time slot");
+    private void validateForReschedule(Resource resource, LocalDateTime start, LocalDateTime end, String excludedBookingNumber,
+                                       Booking booking) {
+        // Lot B1 (ecart 3) : memes controles qu'a la reservation (ressource, alignement, politique,
+        // date passee), l'equipe passant outre comme a la creation.
+        boolean staff = isCurrentUserStaff() && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride
+                .allowedBy(resource.getEffectivePolicy());
+        resourceGuard.validateBookable(resource, start, end, booking.getQuantity(), staff);
+        // La capacite se controle a la reprise des creneaux ; sans creneau retenu, une piece entiere
+        // reste protegee par le conflit de reservations.
+        if (!Boolean.TRUE.equals(booking.getSlotsReserved()) && resource.isWholeResourceBooking()
+                && bookingRepository.existsActiveConflict(resource.getId(), start, end, excludedBookingNumber)) {
+            throw new ConflictException("La ressource est déjà réservée sur ce créneau");
         }
     }
 
@@ -1161,8 +1370,12 @@ public class BookingServiceImpl implements BookingService {
      */
     private void assertCancellationAllowed(Booking booking) {
         ResourcePolicy policy = booking.getResource().getEffectivePolicy();
+        // Lot B1 (ecart 10) : rien d'engage tant que la reservation attend (paiement ou approbation) ;
+        // l'equipe annule hors regle (elle porte la decision, tracee dans l'historique).
         if (policy == null || booking.getStatus() == BookingStatus.DRAFT
-                || booking.getStatus() == BookingStatus.PENDING_PAYMENT) {
+                || booking.getStatus() == BookingStatus.PENDING_PAYMENT
+                || booking.getStatus() == BookingStatus.PENDING_APPROVAL
+                || isCurrentUserStaff()) {
             return;
         }
         if (booking.getPaymentMode().isPrepaid() && walletSettlement.hasPendingHold(booking)) {

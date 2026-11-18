@@ -47,6 +47,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             """)
     List<Booking> findAllByBatchNumber(@Param("batchNumber") String batchNumber);
 
+    /** Lot B1 : reservations en attente de paiement dont l'echeance est passee. */
+    @Query(nativeQuery = true, value = """
+            SELECT * FROM booking
+            WHERE deleted = false AND status = 'PENDING_PAYMENT'
+              AND payment_due_at IS NOT NULL AND payment_due_at < :now
+            ORDER BY payment_due_at
+            LIMIT :limit
+            """)
+    List<Booking> findUnpaidPastDue(@Param("now") LocalDateTime now, @Param("limit") int limit);
+
     @Query(nativeQuery = true, value = "SELECT * FROM booking WHERE idempotency_key = :idempotencyKey AND deleted = false")
     Optional<Booking> findByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
 
@@ -74,7 +84,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
                 FROM booking b
                 WHERE b.resource_id = :resourceId
                   AND b.deleted = false
-                  AND b.status IN ('CONFIRMED', 'IN_PROGRESS')
+                  AND (b.status IN ('CONFIRMED', 'IN_PROGRESS')
+                       OR (b.status IN ('PENDING_PAYMENT', 'PENDING_APPROVAL') AND b.slots_reserved = true))
                   AND b.started_at < :endedAt
                   AND b.ended_at > :startedAt
                   AND (:excludedBookingNumber IS NULL OR b.booking_number <> :excludedBookingNumber)
@@ -183,7 +194,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             WHERE deleted = false
               AND owner_type = :ownerType
               AND owner_code = :ownerCode
-              AND status IN ('CONFIRMED', 'IN_PROGRESS', 'PENDING_APPROVAL')
+              AND status IN ('CONFIRMED', 'IN_PROGRESS', 'PENDING_APPROVAL', 'PENDING_PAYMENT')
             """)
     long countActiveForOwner(@Param("ownerType") String ownerType, @Param("ownerCode") String ownerCode);
 

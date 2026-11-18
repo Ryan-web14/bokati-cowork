@@ -179,7 +179,7 @@ public class BookingEmailNotifier {
         // Ou en est la reservation · le meme e-mail part a la creation (paiement ou validation
         // encore attendus) et a la confirmation, il ne peut pas titrer « confirmée » dans tous les cas.
         BookingPaymentStatus paymentStatus = BookingPaymentStatus.of(
-                booking.getPaymentMode(), booking.getStatus(), booking.getConfirmedAt());
+                booking.getPaymentMode(), booking.getStatus(), booking.getPaidAt());
         boolean awaitingApproval = booking.getStatus() == BookingStatus.PENDING_APPROVAL;
         boolean awaitingPayment = !awaitingApproval && paymentStatus == BookingPaymentStatus.PENDING;
         ctx.setVariable("awaitingApproval",   awaitingApproval);
@@ -238,7 +238,7 @@ public class BookingEmailNotifier {
             return "Demande de réservation reçue " + booking.getBookingNumber();
         }
         BookingPaymentStatus payment = BookingPaymentStatus.of(
-                booking.getPaymentMode(), booking.getStatus(), booking.getConfirmedAt());
+                booking.getPaymentMode(), booking.getStatus(), booking.getPaidAt());
         return payment == BookingPaymentStatus.PENDING
                 ? "Réservation enregistrée, paiement attendu " + booking.getBookingNumber()
                 : "Réservation confirmée " + booking.getBookingNumber();

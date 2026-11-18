@@ -40,6 +40,13 @@ public class BookingHold {
     @Column(name = "owner_code", nullable = false, length = 120)
     private String ownerCode;
 
+    /** Lot B1 (ecart Bn-13) : coordonnees d'un invite, pour retrouver l'option a la reservation. */
+    @Column(name = "contact_email", length = 180)
+    private String contactEmail;
+
+    @Column(name = "contact_phone", length = 40)
+    private String contactPhone;
+
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
