@@ -1037,6 +1037,270 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{number}/amenities",
+   "package": "features.booking.controller",
+   "controller": "BookingExtrasController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingExtrasController.java",
+   "handler": "addAmenity",
+   "declaredIn": "BookingExtrasController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.ItemRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingExtras.LineView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{number}/extra-participants",
+   "package": "features.booking.controller",
+   "controller": "BookingExtrasController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingExtrasController.java",
+   "handler": "addParticipants",
+   "declaredIn": "BookingExtrasController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.ParticipantsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingExtras.LineView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/{number}/lines",
+   "package": "features.booking.controller",
+   "controller": "BookingExtrasController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingExtrasController.java",
+   "handler": "lines",
+   "declaredIn": "BookingExtrasController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.BookingExtras.LineView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{number}/promo-code",
+   "package": "features.booking.controller",
+   "controller": "BookingExtrasController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingExtrasController.java",
+   "handler": "promo",
+   "declaredIn": "BookingExtrasController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.PromoRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingExtras.LineView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{number}/services",
+   "package": "features.booking.controller",
+   "controller": "BookingExtrasController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingExtrasController.java",
+   "handler": "addService",
+   "declaredIn": "BookingExtrasController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.ItemRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingExtras.LineView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-bundles/{code}/book",
+   "package": "features.booking.controller",
+   "controller": "BookingExtrasController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingExtrasController.java",
+   "handler": "book",
+   "declaredIn": "BookingExtrasController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.BundleBookingRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/{number}/end-report",
+   "package": "features.booking.controller",
+   "controller": "BookingOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingOperationsController.java",
+   "handler": "endReports",
+   "declaredIn": "BookingOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{number}/end-report",
+   "package": "features.booking.controller",
+   "controller": "BookingOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingOperationsController.java",
+   "handler": "endReport",
+   "declaredIn": "BookingOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/{number}/usage-rules",
+   "package": "features.booking.controller",
+   "controller": "BookingOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingOperationsController.java",
+   "handler": "usageRules",
+   "declaredIn": "BookingOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{number}/usage-rules/accept",
+   "package": "features.booking.controller",
+   "controller": "BookingOperationsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingOperationsController.java",
+   "handler": "accept",
+   "declaredIn": "BookingOperationsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/bookings/waitlist",
@@ -1393,6 +1657,249 @@
     }
    ],
    "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/bookings/{bookingNumber}/invitation.ics",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "invitation",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-analytics/bookings/{number}/margin",
+   "package": "features.booking.controller",
+   "controller": "ResourceAnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/ResourceAnalyticsController.java",
+   "handler": "bookingMargin",
+   "declaredIn": "ResourceAnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "number",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.BookingMargin>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-analytics/margins",
+   "package": "features.booking.controller",
+   "controller": "ResourceAnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/ResourceAnalyticsController.java",
+   "handler": "margins",
+   "declaredIn": "ResourceAnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.MarginReport>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-analytics/occupancy",
+   "package": "features.booking.controller",
+   "controller": "ResourceAnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/ResourceAnalyticsController.java",
+   "handler": "occupancy",
+   "declaredIn": "ResourceAnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "groupBy",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "siteCode",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.OccupancyReport>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resource-costs/{id}",
+   "package": "features.booking.controller",
+   "controller": "ResourceAnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/ResourceAnalyticsController.java",
+   "handler": "deleteCost",
+   "declaredIn": "ResourceAnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources/{code}/costs",
+   "package": "features.booking.controller",
+   "controller": "ResourceAnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/ResourceAnalyticsController.java",
+   "handler": "costs",
+   "declaredIn": "ResourceAnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.CostResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resources/{code}/costs",
+   "package": "features.booking.controller",
+   "controller": "ResourceAnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/ResourceAnalyticsController.java",
+   "handler": "addCost",
+   "declaredIn": "ResourceAnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.CostRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.CostResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources/{code}/price-history",
+   "package": "features.booking.controller",
+   "controller": "ResourceAnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/ResourceAnalyticsController.java",
+   "handler": "priceHistory",
+   "declaredIn": "ResourceAnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.AppliedPrice>>"
   }
  ],
  "schemas": {
@@ -2543,7 +3050,9 @@
       "BOOKING_RESCHEDULED",
       "BOOKING_PRICE_ADJUSTED",
       "BOOKING_TRANSFERRED",
-      "BOOKING_RESOURCE_CHANGED"
+      "BOOKING_RESOURCE_CHANGED",
+      "USAGE_RULES_ACCEPTED",
+      "END_REPORT_RECORDED"
      ]
     },
     "title": {
@@ -2736,6 +3245,200 @@
     }
    }
   },
+  "BookingExtras.LineView": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "quantity": {
+     "type": "number"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "billableNumber": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingExtrasController.ItemRequest": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "BookingExtrasController.ParticipantsRequest": {
+   "type": "object",
+   "properties": {
+    "count": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "waive": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingExtrasController.PromoRequest": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingExtrasController.BundleBookingRequest": {
+   "type": "object",
+   "properties": {
+    "memberIds": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    },
+    "billingCompanyCode": {
+     "type": "string"
+    },
+    "confirmImmediately": {
+     "type": "boolean"
+    },
+    "sendEmail": {
+     "type": "boolean"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "idempotencyKey": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingOperations.EndReportResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "bookingNumber": {
+     "type": "string"
+    },
+    "condition": {
+     "type": "string"
+    },
+    "checklist": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.service.support.BookingOperations.ChecklistAnswer"
+     }
+    },
+    "photoDocumentCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "notes": {
+     "type": "string"
+    },
+    "reportedByType": {
+     "type": "string"
+    },
+    "reportedBy": {
+     "type": "string"
+    },
+    "incidentCode": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "BookingOperations.EndReportRequest": {
+   "type": "object",
+   "properties": {
+    "condition": {
+     "type": "string"
+    },
+    "checklist": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.service.support.BookingOperations.ChecklistAnswer"
+     }
+    },
+    "photoDocumentCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "notes": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingOperations.UsageRulesView": {
+   "type": "object",
+   "properties": {
+    "rules": {
+     "type": "string"
+    },
+    "version": {
+     "type": "string"
+    },
+    "acceptedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "upToDate": {
+     "type": "boolean"
+    },
+    "endChecklist": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
   "BookingWaitlistEntryResponse": {
    "type": "object",
    "properties": {
@@ -2859,6 +3562,182 @@
     }
    }
   },
+  "ResourceAnalytics.BookingMargin": {
+   "type": "object",
+   "properties": {
+    "bookingNumber": {
+     "type": "string"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "revenue": {
+     "type": "number"
+    },
+    "costs": {
+     "type": "number"
+    },
+    "margin": {
+     "type": "number"
+    },
+    "costsByKind": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "number"
+     }
+    }
+   }
+  },
+  "ResourceAnalytics.MarginReport": {
+   "type": "object",
+   "properties": {
+    "from": {
+     "type": "string",
+     "format": "date"
+    },
+    "to": {
+     "type": "string",
+     "format": "date"
+    },
+    "rows": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.MarginRow"
+     }
+    },
+    "revenue": {
+     "type": "number"
+    },
+    "costs": {
+     "type": "number"
+    },
+    "margin": {
+     "type": "number"
+    }
+   }
+  },
+  "ResourceAnalytics.OccupancyReport": {
+   "type": "object",
+   "properties": {
+    "from": {
+     "type": "string",
+     "format": "date"
+    },
+    "to": {
+     "type": "string",
+     "format": "date"
+    },
+    "groupBy": {
+     "type": "string"
+    },
+    "peakHours": {
+     "type": "string"
+    },
+    "rows": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.OccupancyRow"
+     }
+    }
+   }
+  },
+  "ResourceAnalytics.CostResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string"
+    },
+    "basis": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "label": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "ResourceAnalytics.CostRequest": {
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string"
+    },
+    "basis": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "label": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "ResourceAnalytics.AppliedPrice": {
+   "type": "object",
+   "properties": {
+    "bookingNumber": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "status": {
+     "type": "string"
+    },
+    "unit": {
+     "type": "string"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "subtotal": {
+     "type": "number"
+    },
+    "total": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "rules": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
   "BookingLineResponse": {
    "type": "object",
    "properties": {
@@ -2871,7 +3750,14 @@
      "enum": [
       "RESOURCE",
       "ENTITLEMENT",
-      "BILLABLE"
+      "BILLABLE",
+      "SERVICE",
+      "AMENITY",
+      "PARTICIPANT",
+      "DEPOSIT",
+      "OVERRUN",
+      "NO_SHOW",
+      "DISCOUNT"
      ]
     },
     "description": {
@@ -3040,6 +3926,17 @@
     }
    }
   },
+  "BookingOperations.ChecklistAnswer": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "type": "string"
+    },
+    "done": {
+     "type": "boolean"
+    }
+   }
+  },
   "BookingIdentityLookup": {
    "type": "object",
    "properties": {
@@ -3069,6 +3966,98 @@
     },
     "contactPhone": {
      "type": "string"
+    }
+   }
+  },
+  "ResourceAnalytics.MarginRow": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "bookings": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "bookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "revenue": {
+     "type": "number"
+    },
+    "costs": {
+     "type": "number"
+    },
+    "margin": {
+     "type": "number"
+    },
+    "marginRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "costsByKind": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "number"
+     }
+    }
+   }
+  },
+  "ResourceAnalytics.OccupancyRow": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "openMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "bookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "occupancyRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "peakOpenMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "peakBookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "peakOccupancyRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "offPeakOpenMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "offPeakBookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "offPeakOccupancyRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "bookings": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "revenue": {
+     "type": "number"
     }
    }
   }
@@ -3130,13 +4119,30 @@
   "BookingParticipantRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest",
   "BookingRescheduleRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingRescheduleRequest",
   "BookingTransferRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingTransferRequest",
+  "BookingExtras.LineView": "com.sni.bokaticowork.features.booking.service.support.BookingExtras.LineView",
+  "BookingExtrasController.ItemRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.ItemRequest",
+  "BookingExtrasController.ParticipantsRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.ParticipantsRequest",
+  "BookingExtrasController.PromoRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.PromoRequest",
+  "BookingExtrasController.BundleBookingRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.BundleBookingRequest",
+  "BookingOperations.EndReportResponse": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse",
+  "BookingOperations.EndReportRequest": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportRequest",
+  "BookingOperations.UsageRulesView": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView",
   "BookingWaitlistEntryResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse",
   "BookingWaitlistStatus": "com.sni.bokaticowork.features.booking.enums.BookingWaitlistStatus",
   "JoinBookingWaitlistRequest": "com.sni.bokaticowork.features.booking.dto.request.JoinBookingWaitlistRequest",
+  "ResourceAnalytics.BookingMargin": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.BookingMargin",
+  "ResourceAnalytics.MarginReport": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.MarginReport",
+  "ResourceAnalytics.OccupancyReport": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.OccupancyReport",
+  "ResourceAnalytics.CostResponse": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.CostResponse",
+  "ResourceAnalytics.CostRequest": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.CostRequest",
+  "ResourceAnalytics.AppliedPrice": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.AppliedPrice",
   "BookingLineResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingLineResponse",
   "BookingBatchResponse.BatchInvoice": "com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse.BatchInvoice",
   "CreateBookingBatchRequest.Line": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchRequest.Line",
   "BookingAvailabilityResponse.OccupiedRange": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange",
-  "BookingIdentityLookup": "com.sni.bokaticowork.features.booking.dto.request.BookingIdentityLookup"
+  "BookingOperations.ChecklistAnswer": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.ChecklistAnswer",
+  "BookingIdentityLookup": "com.sni.bokaticowork.features.booking.dto.request.BookingIdentityLookup",
+  "ResourceAnalytics.MarginRow": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.MarginRow",
+  "ResourceAnalytics.OccupancyRow": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.OccupancyRow"
  }
 }

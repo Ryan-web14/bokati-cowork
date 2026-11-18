@@ -45,7 +45,7 @@ public class ResourcePolicy {
 
     @Column(name = "allow_cancellation", nullable = false)
     @Builder.Default
-    private Boolean allowCancellation = Boolean.FALSE;
+    private Boolean allowCancellation = Boolean.TRUE; // Lot R2 (D3) : annulation permise par defaut
 
     @Column(name = "active")
     @Builder.Default
@@ -58,6 +58,22 @@ public class ResourcePolicy {
     @Column(name = "staff_override_allowed", nullable = false)
     @Builder.Default
     private Boolean staffOverrideAllowed = Boolean.TRUE;
+
+    /** Lot R5a : battement entre deux reservations d'une ressource louee entiere, en minutes. */
+    @Column(name = "buffer_minutes")
+    private Integer bufferMinutes;
+
+    /** Lot R5a : reservation au plus tant de jours a l'avance (vide : l'horizon des creneaux). */
+    @Column(name = "max_advance_days")
+    private Integer maxAdvanceDays;
+
+    /** Lot R5c : tolerance de depassement au depart, en minutes ; au-dela, facture (vide : jamais). */
+    @Column(name = "overrun_grace_minutes")
+    private Integer overrunGraceMinutes;
+
+    /** Lot R5c : frais de non-presentation (vide : aucun). */
+    @Column(name = "no_show_fee")
+    private Integer noShowFee;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;

@@ -137,4 +137,9 @@ public interface TaskItemRepository extends JpaRepository<TaskItem, Long> {
                                         @Param("priority") String priority,
                                         @Param("sourceType") String sourceType,
                                         @Param("searchText") String searchText);
+
+    /** Lot R5d : taches d'une reservation (source et code). */
+    List<TaskItem> findAllBySourceTypeAndSourceCode(String sourceType, String sourceCode);
+
+    boolean existsBySourceTypeAndSourceCodeAndTitle(String sourceType, String sourceCode, String title);
 }

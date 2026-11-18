@@ -20,6 +20,20 @@ public class ResourceResponse {
     private Integer capacity;
     private String zone;
     private String locationLabel;
+    /** Lot R2 : etage. */
+    private String floorLabel;
+    /** Lot R5b : site, etage et position sur le plan. */
+    private String siteCode;
+    private String floorCode;
+    private java.math.BigDecimal planX;
+    private java.math.BigDecimal planY;
+    /** Lot R5c : vente. */
+    private Integer includedParticipants;
+    private Integer extraParticipantPrice;
+    private Integer depositAmount;
+    /** Lot R5d : reglement d'usage et points de l'etat des lieux de fin. */
+    private String usageRules;
+    private java.util.List<String> endChecklist;
     private String status;
     private Boolean bookingEnabled;
     private Boolean portalVisible;

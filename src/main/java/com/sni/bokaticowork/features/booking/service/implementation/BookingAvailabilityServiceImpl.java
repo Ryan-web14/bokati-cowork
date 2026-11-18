@@ -56,7 +56,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
         // L'equipe verifie comme elle reservera : hors preavis, creneaux passes compris, sauf si la
         // politique de la ressource l'interdit. Sans cela, la verification refusait ce que la
         // reservation de l'equipe accepte ensuite.
-        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getResourcePolicy()).isPresent();
+        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getEffectivePolicy()).isPresent();
 
         // Step 1: check physical slot availability · if this fails the slot is truly occupied
         try {
@@ -166,7 +166,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
     }
 
     private static long noticeMinutes(Resource resource) {
-        return resource.getResourcePolicy() == null || resource.getResourcePolicy().getMinBookingNoticeMinutes() == null
-                ? 0 : resource.getResourcePolicy().getMinBookingNoticeMinutes();
+        return resource.getEffectivePolicy() == null || resource.getEffectivePolicy().getMinBookingNoticeMinutes() == null
+                ? 0 : resource.getEffectivePolicy().getMinBookingNoticeMinutes();
     }
 }

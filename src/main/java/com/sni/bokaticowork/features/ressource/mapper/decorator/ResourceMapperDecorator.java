@@ -59,6 +59,17 @@ public abstract class ResourceMapperDecorator implements ResourceMapper {
                 .capacity(resource.getCapacity())
                 .zone(resource.getZone())
                 .locationLabel(resource.getLocationLabel())
+                .floorLabel(resource.getFloorLabel())
+                .siteCode(resource.getSite() == null ? null : resource.getSite().getCode())
+                .floorCode(resource.getFloor() == null ? null : resource.getFloor().getCode())
+                .planX(resource.getPlanX())
+                .planY(resource.getPlanY())
+                .includedParticipants(resource.getIncludedParticipants())
+                .extraParticipantPrice(resource.getExtraParticipantPrice())
+                .depositAmount(resource.getDepositAmount())
+                .usageRules(resource.getUsageRules())
+                .endChecklist(resource.getEndChecklist() == null ? java.util.List.of()
+                        : java.util.List.of(resource.getEndChecklist().split("\n")))
                 .status(resource.getStatus() == null ? null : resource.getStatus().name())
                 .bookingEnabled(resource.getBookingEnabled())
                 .portalVisible(resource.getPortalVisible())
@@ -92,7 +103,7 @@ public abstract class ResourceMapperDecorator implements ResourceMapper {
         try {
             return ResourceStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("Invalid resource status: " + value, ex);
+            throw new BadRequestException("Statut de ressource invalide : " + value, ex);
         }
     }
 }

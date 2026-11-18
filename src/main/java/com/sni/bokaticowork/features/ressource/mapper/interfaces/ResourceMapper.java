@@ -32,6 +32,8 @@ public interface ResourceMapper {
     @Mapping(target = "deleted", ignore = true)
     Resource toEntity(ResourceRequest request);
 
+    // Lot R5d : la liste de verification est decoupee par le decorateur.
+    @Mapping(target = "endChecklist", ignore = true)
     ResourceResponse toResponse(Resource resource);
 
     ResourceSummaryResponse toSummary(Resource resource);

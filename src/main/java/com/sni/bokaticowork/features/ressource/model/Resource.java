@@ -76,6 +76,51 @@ public class Resource {
     @Column(name = "location_label", length = 150)
     private String locationLabel;
 
+    /** Lot R2 : etage (avant : accepte a la modification puis perdu). */
+    @Column(name = "floor_label", length = 50)
+    private String floorLabel;
+
+    /** Lot R5b : site de la ressource. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "site_id")
+    private ResourceSite site;
+
+    /** Lot R5b : etage (plan) de la ressource. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "floor_id")
+    private ResourceFloor floor;
+
+    /** Lot R5b : position sur le plan de l'etage, en pourcentage depuis le coin haut gauche. */
+    @Column(name = "plan_x", precision = 5, scale = 2)
+    private java.math.BigDecimal planX;
+
+    @Column(name = "plan_y", precision = 5, scale = 2)
+    private java.math.BigDecimal planY;
+
+    /** Lot R5c : participants compris dans le prix ; au-dela, le prix par participant. */
+    @Column(name = "included_participants")
+    private Integer includedParticipants;
+
+    /** Lot R5c : prix d'un participant supplementaire (vide : offert). */
+    @Column(name = "extra_participant_price")
+    private Integer extraParticipantPrice;
+
+    /** Lot R5c : caution demandee a chaque reservation (vide : aucune). */
+    @Column(name = "deposit_amount")
+    private Integer depositAmount;
+
+    /** Lot R5d : reglement d'usage accepte a la reservation (texte). */
+    @Column(name = "usage_rules", columnDefinition = "TEXT")
+    private String usageRules;
+
+    /** Lot R5d : points de l'etat des lieux de fin, un par ligne. */
+    @Column(name = "end_checklist", length = 2000)
+    private String endChecklist;
+
+    /** Lot R5b : jeton du flux d'abonnement iCalendar (coupe par defaut). */
+    @Column(name = "ical_token", length = 60)
+    private String icalToken;
+
     @Column(name = "status", length = 60)
     @Enumerated(EnumType.STRING)
     private ResourceStatus status;
@@ -113,6 +158,14 @@ public class Resource {
     /**
      * La location occupe-t-elle toute la ressource. Voir {@code ResourceType.wholeResourceBooking}.
      */
+    /**
+     * Lot R2 : politique en vigueur. Une politique desactivee ne s'applique plus (reservation,
+     * creneaux, annulation, devis) : la ressource est alors traitee comme sans politique.
+     */
+    public ResourcePolicy getEffectivePolicy() {
+        return resourcePolicy != null && !Boolean.FALSE.equals(resourcePolicy.getActive()) ? resourcePolicy : null;
+    }
+
     public boolean isWholeResourceBooking() {
         return resourceType != null && Boolean.TRUE.equals(resourceType.getWholeResourceBooking());
     }

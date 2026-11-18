@@ -446,6 +446,17 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("/approve")) return permission("INVENTORY", "APPROVE");
             return permission("INVENTORY", actionFor("INVENTORY", method));
         }
+        // Lot R5e : pilotage (occupation, marges, couts) : lecture des rapports ; couts saisis par la gestion des ressources.
+        if (path.startsWith("/resource-analytics")) {
+            return permission("REPORT", "VIEW");
+        }
+        if (path.startsWith("/resource-costs") || (path.startsWith("/resources/") && path.endsWith("/costs"))) {
+            return HttpMethod.GET.matches(method) ? permission("REPORT", "VIEW") : permission("RESOURCE", "UPDATE");
+        }
+        // Lot R5c : reserver un lot de ressources est une creation de reservation.
+        if (path.startsWith("/resource-bundles/") && path.endsWith("/book")) {
+            return permission("BOOKING", "CREATE");
+        }
         if (path.startsWith("/resources") || path.startsWith("/resource-")) {
             if (path.contains("price") || path.contains("pricing")) return permission("RESOURCE", "PRICE");
             // Lot R0 : voir la galerie est une lecture ; seule sa modification demande RESOURCE:GALLERY.
@@ -454,6 +465,8 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             }
             // Lot R0 : la recherche passe en POST (criteres dans le corps) mais reste une lecture.
             if (path.equals("/resources/search") || path.endsWith("/search")) return permission("RESOURCE", "READ");
+            // Lot R5b : « Trouver une salle » est une lecture, comme le calendrier iCalendar.
+            if (path.equals("/resources/find") || path.endsWith("/calendar.ics")) return permission("RESOURCE", "READ");
             // Lot R0 : horaires d'ouverture, une modification de la ressource (avant : role ADMIN seul).
             if (path.contains("/opening-hours")) {
                 return HttpMethod.GET.matches(method) ? permission("RESOURCE", "READ") : permission("RESOURCE", "UPDATE");

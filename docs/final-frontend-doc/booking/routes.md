@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-54 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+72 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -46,6 +46,16 @@
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/reschedule` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-reschedule) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/start` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-start) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/transfer` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-transfer) |
+| POST | `/sni/api/v1/bookings/{number}/amenities` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-amenities) |
+| POST | `/sni/api/v1/bookings/{number}/extra-participants` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-extra-participants) |
+| GET | `/sni/api/v1/bookings/{number}/lines` | BOOKING:READ | [BookingExtrasController](routes/BookingExtrasController.md#r-get-sni-api-v1-bookings-number-lines) |
+| POST | `/sni/api/v1/bookings/{number}/promo-code` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-promo-code) |
+| POST | `/sni/api/v1/bookings/{number}/services` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-services) |
+| POST | `/sni/api/v1/resource-bundles/{code}/book` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-resource-bundles-code-book) |
+| GET | `/sni/api/v1/bookings/{number}/end-report` | BOOKING:READ | [BookingOperationsController](routes/BookingOperationsController.md#r-get-sni-api-v1-bookings-number-end-report) |
+| POST | `/sni/api/v1/bookings/{number}/end-report` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-end-report) |
+| GET | `/sni/api/v1/bookings/{number}/usage-rules` | BOOKING:READ | [BookingOperationsController](routes/BookingOperationsController.md#r-get-sni-api-v1-bookings-number-usage-rules) |
+| POST | `/sni/api/v1/bookings/{number}/usage-rules/accept` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-usage-rules-accept) |
 | GET | `/sni/api/v1/bookings/waitlist` | BOOKING:READ | [BookingWaitlistController](routes/BookingWaitlistController.md#r-get-sni-api-v1-bookings-waitlist) |
 | POST | `/sni/api/v1/bookings/waitlist` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist) |
 | POST | `/sni/api/v1/bookings/waitlist/expire-offers` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist-expire-offers) |
@@ -60,3 +70,11 @@
 | GET | `/sni/api/v1/public/bookings/csat/{bookingNumber}` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-csat-bookingnumber) |
 | GET | `/sni/api/v1/public/bookings/{bookingNumber}` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-bookingnumber) |
 | GET | `/sni/api/v1/public/bookings/{bookingNumber}/confirmation.pdf` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-bookingnumber-confirmation-pdf) |
+| GET | `/sni/api/v1/public/bookings/{bookingNumber}/invitation.ics` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-bookingnumber-invitation-ics) |
+| GET | `/sni/api/v1/resource-analytics/bookings/{number}/margin` | REPORT:VIEW | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-get-sni-api-v1-resource-analytics-bookings-number-margin) |
+| GET | `/sni/api/v1/resource-analytics/margins` | REPORT:VIEW | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-get-sni-api-v1-resource-analytics-margins) |
+| GET | `/sni/api/v1/resource-analytics/occupancy` | REPORT:VIEW | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-get-sni-api-v1-resource-analytics-occupancy) |
+| DELETE | `/sni/api/v1/resource-costs/{id}` | RESOURCE:UPDATE | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-delete-sni-api-v1-resource-costs-id) |
+| GET | `/sni/api/v1/resources/{code}/costs` | REPORT:VIEW | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-get-sni-api-v1-resources-code-costs) |
+| POST | `/sni/api/v1/resources/{code}/costs` | RESOURCE:UPDATE | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-post-sni-api-v1-resources-code-costs) |
+| GET | `/sni/api/v1/resources/{code}/price-history` | RESOURCE:PRICE | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-get-sni-api-v1-resources-code-price-history) |

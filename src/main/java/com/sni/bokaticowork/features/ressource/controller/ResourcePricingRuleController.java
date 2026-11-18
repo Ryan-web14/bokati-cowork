@@ -42,9 +42,8 @@ public class ResourcePricingRuleController {
     @PostMapping
     @Audited(module = "RESOURCE", action = "CREATE_PRICING_RULE", ressource = "resource_pricing_rule")
     @Idempotent(operation = "RESOURCE_PRICING_RULE_CREATE")
-    public ResponseEntity<Void> create(@Valid @RequestBody CreateResourcePricingRuleRequest request) {
-        resourcePricingRuleService.createPricingRule(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse> create(@Valid @RequestBody CreateResourcePricingRuleRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(resourcePricingRuleService.createPricingRule(request));
     }
 
     /** Pose la meme regle sur plusieurs ressources · compte rendu par ressource. */

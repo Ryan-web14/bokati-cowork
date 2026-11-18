@@ -138,9 +138,9 @@ Réservation par l'équipe : un compte `ROLE_SUPER_ADMIN`, `ROLE_ADMIN`, `ROLE_M
 3. Fenêtre de pointage : de 15 minutes avant à 15 minutes après le début (`CHECKIN_EARLY_WINDOW_MINUTES`, `CHECKIN_LATE_WINDOW_MINUTES`). Seuls `ROLE_ADMIN` et `ROLE_SUPER_ADMIN` y échappent ; tout autre rôle reçoit `403` avec le message générique `Access to this resource is forbidden.` Afficher alors « hors de la fenêtre de pointage » et proposer l'arrivée anticipée.
 4. Arrivée anticipée (sans fenêtre) : `PATCH /sni/api/v1/bookings/{bookingNumber}/early-check-in`, droit `BOOKING:UPDATE`.
 5. Démarrer sans pointage : `PATCH .../start` (`CONFIRMED` uniquement, même fenêtre que le pointage).
-6. Départ : `PATCH .../check-out`, seulement en `IN_PROGRESS` (`409` sinon). Le statut ne change pas.
+6. Départ : `PATCH .../check-out`, seulement en `IN_PROGRESS` (`409` sinon). Le statut ne change pas. Lot R5c : un départ au-delà de la tolérance de la politique (`overrunGraceMinutes`) facture le dépassement, arrondi aux créneaux ([vente](../ressource/fonctions/vente.md)). Lot R5d : proposer ensuite l'état des lieux de fin (`POST .../end-report`).
 7. Clôturer : `PATCH .../complete` (`CONFIRMED` ou `IN_PROGRESS`), consomme le droit d'abonnement ou de pass, crée une tâche de remise en état. Sinon le worker clôt à l'heure de fin.
-8. Absence : `PATCH .../no-show` (`CONFIRMED` ou `IN_PROGRESS`, droit `BOOKING:CANCEL`). Le droit est consommé ; aucun remboursement. Sinon le worker la marque à l'heure de fin si personne n'a pointé ni démarré.
+8. Absence : `PATCH .../no-show` (`CONFIRMED` ou `IN_PROGRESS`, droit `BOOKING:CANCEL`). Le droit est consommé ; aucun remboursement ; frais de non-présentation de la politique (`noShowFee`, lot R5c). Sinon le worker la marque à l'heure de fin si personne n'a pointé ni démarré.
 
 ### Annuler
 
@@ -152,11 +152,29 @@ Réservation par l'équipe : un compte `ROLE_SUPER_ADMIN`, `ROLE_ADMIN`, `ROLE_M
 ### Modifier une réservation
 
 1. Déplacer : `PATCH .../reschedule` avec `newStartedAt`, `newEndedAt`, `actor`, `note`, `sendEmail`. Accepté en `CONFIRMED` et `PENDING_APPROVAL`. Refusé si une autre réservation active chevauche la nouvelle plage sur la ressource (même partagée) ; ni la politique ni l'alignement ni le prix ne sont recalculés.
-2. Changer de ressource : `PATCH .../change-resource` avec `newResourceCode`, `actor`, `note`, `sendEmail`. `CONFIRMED` uniquement, même contrôle de chevauchement, prix inchangé.
+2. Changer de ressource : `PATCH .../change-resource` avec `newResourceCode`, `actor`, `note`, `sendEmail`. `CONFIRMED` uniquement, même contrôle de chevauchement, prix recalculé (point suivant).
 3. Prix (lot R1, décision D1, 18/11/2026) : après un déplacement ou un changement de ressource, le prix est **recalculé** par le moteur unique. Rien encore facturé : le montant suit. Déjà facturé : une hausse est facturée en complément (nouvelle facture), une baisse est rendue par un avoir sur la facture d'origine (validé et imputé sur le solde s'il en reste, sinon laissé en brouillon pour l'équipe). L'historique porte l'événement `BOOKING_PRICE_ADJUSTED` (ancien et nouveau montant, pièce émise). Recharger la réservation et ses pièces après l'opération.
-3. Transférer à un autre titulaire : `PATCH .../transfer` avec `newOwnerType`, `newOwnerCode` (non vérifié en base), coordonnées facultatives. Tout statut sauf `COMPLETED` et `CANCELLED`. Le droit consommé, la facture et le portefeuille restent ceux du titulaire d'origine.
-4. Participants : `POST .../participants` avec `memberCode`, `name`, `email`, `phone`, `role` (défaut `GUEST`, valeurs insensibles à la casse) ; retrait : `DELETE .../participants/{participantId}` (statut `REMOVED`, la ligne reste).
-5. Historique : `GET .../history` (statuts, auteurs, motifs) et `GET .../events` (journal détaillé).
+4. Transférer à un autre titulaire : `PATCH .../transfer` avec `newOwnerType`, `newOwnerCode` (non vérifié en base), coordonnées facultatives. Tout statut sauf `COMPLETED` et `CANCELLED`. Le droit consommé, la facture et le portefeuille restent ceux du titulaire d'origine.
+5. Participants : `POST .../participants` avec `memberCode`, `name`, `email`, `phone`, `role` (défaut `GUEST`, valeurs insensibles à la casse) ; retrait : `DELETE .../participants/{participantId}` (statut `REMOVED`, la ligne reste).
+6. Historique : `GET .../history` (statuts, auteurs, motifs) et `GET .../events` (journal détaillé).
+
+### Suppléments, remises, lots (chantier ressources, lot R5c)
+
+Détail : [ressource/fonctions/vente.md](../ressource/fonctions/vente.md).
+
+1. Lignes de la réservation : `GET /bookings/{bookingNumber}/lines` (ressource, droit d'abonnement, services, options, participants, caution, dépassement, non-présentation, remise). Chaque ligne porte son élément à facturer (`billableNumber`).
+2. Services du catalogue : `POST .../services` `{ code, quantity }` ; équipements optionnels : `POST .../amenities` `{ code, quantity }` ; participants supplémentaires : `POST .../extra-participants` `{ count, waive }` (`waive` : offerts par l'équipe).
+3. Avant la facture, un supplément part avec elle ; après, sur une facture à lui. La caution de la ressource s'ajoute d'elle-même à la première facture.
+4. Code promo : `POST .../promo-code` `{ code }` (une remise par réservation ; avant facture, le montant baisse ; après, un avoir).
+5. Lot de ressources : `POST /resource-bundles/{code}/book` (droit `BOOKING:CREATE`) réserve toutes les ressources du lot sur le même créneau, une facture par membre, remise du lot appliquée.
+
+### Exploitation (chantier ressources, lot R5d)
+
+Détail : [ressource/fonctions/exploitation.md](../ressource/fonctions/exploitation.md).
+
+1. Tâches de l'équipe : à la confirmation, une tâche par modèle de la ressource (préparer, remettre en état), datée, avec sa liste de vérification ; sans modèle, les deux tâches par défaut. Annulées avec la réservation. Liste : module [task](../task/README.md), filtre `sourceCode` = numéro de réservation.
+2. Règlement d'usage : `GET /bookings/{bookingNumber}/usage-rules` (texte, version, acceptation à jour ou non) ; `POST .../usage-rules/accept` à l'accueil. Un règlement modifié se ré-accepte. L'acceptation ne bloque pas l'arrivée : l'écran la demande.
+3. État des lieux de fin : `POST .../end-report` `{ condition: GOOD|DAMAGED, checklist, photoDocumentCodes, notes }`, lecture `GET .../end-report`. `DAMAGED` ouvre un incident sur la ressource.
 
 ### Liste d'attente
 
@@ -257,7 +275,7 @@ Quotas du public : `maxActiveBookings` compte les réservations `CONFIRMED`, `IN
 - `POST /bookings/repair` ne répare rien : il écrit un événement « inspecté » et rend toujours 0 réparation (`src/main/java/com/sni/bokaticowork/features/booking/service/implementation/BookingRepairServiceImpl.java`).
 - Satisfaction publique sans jeton : n'importe qui peut noter n'importe quelle réservation par son numéro (`src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java:203-214`).
 - Statut `EXPIRED` jamais atteint (`src/main/java/com/sni/bokaticowork/features/booking/enums/BookingStatus.java:13`).
-- La règle d'annulation s'applique au back-office comme au client, y compris à `PENDING_APPROVAL` et `NO_SHOW` ; une politique de ressource créée sans `allowCancellation` rend les réservations confirmées non annulables (`BookingServiceImpl.java:999-1014`).
+- La règle d'annulation s'applique au back-office comme au client, y compris à `PENDING_APPROVAL` et `NO_SHOW` ; une politique de ressource créée sans `allowCancellation` rend les réservations confirmées non annulables (`BookingServiceImpl.java:999-1014`). **En partie réglé (lot R2 des ressources, 18/11/2026)** : `allowCancellation` vaut vrai par défaut ; une politique désactivée ne s'applique plus.
 - Transfert sans vérification du nouveau titulaire et sans report du droit, de la facture ni du portefeuille (`BookingServiceImpl.java:567-584`).
 - Politiques d'audience et dérogations de quota : création et liste seulement, aucune désactivation possible (`src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java:217-235`).
 - La réponse n'expose pas `checkedInAt`, `checkedOutAt`, `rejectionReason`, `cancellationReason` ni le numéro de facture (`src/main/java/com/sni/bokaticowork/features/booking/dto/response/BookingResponse.java`).

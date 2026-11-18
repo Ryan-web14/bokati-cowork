@@ -55,6 +55,14 @@ Les transitions et délais (expiration d'une réservation non payée, libératio
 2. Détail : `GET /sni/api/v1/client/bookings/{bookingNumber}`.
 3. Annuler : `DELETE /sni/api/v1/client/bookings/{bookingNumber}` avec `{ "reason" }` facultatif (500 caractères au plus). Accepté seulement pour `CONFIRMED`, `PENDING_APPROVAL` ou `PENDING_PAYMENT` ; les règles de délai (`allowCancellation`, `cancellationNoticeMinutes`) et de remboursement ou de libération du droit sont appliquées par le module `booking`. Réponse : la réservation `CANCELLED`.
 
+### Avant et après l'utilisation (chantier ressources, 18/11/2026)
+
+1. Règlement d'usage de la ressource : `GET /sni/api/v1/client/bookings/{bookingNumber}/usage-rules` (texte, version, `upToDate`) ; l'accepter : `POST .../usage-rules/accept`. Un règlement modifié se ré-accepte. À demander à la réservation ou avant l'arrivée ; l'arrivée n'est pas bloquée.
+2. Ajouter à son agenda : le courriel de confirmation porte un bouton « Ajouter à mon agenda » vers `GET /sni/api/v1/public/bookings/{bookingNumber}/invitation.ics?token=...` (même jeton que le PDF de confirmation).
+3. État des lieux de fin : `POST /sni/api/v1/client/bookings/{bookingNumber}/end-report` `{ condition: GOOD|DAMAGED, checklist: [{ label, done }], photoDocumentCodes, notes }` ; les points à vérifier sont dans `endChecklist` de la réponse du règlement ; les photos sont déposées avant dans les documents du membre. `DAMAGED` ouvre un incident.
+4. Signaler un incident : `POST /sni/api/v1/client/resource-incidents` `{ bookingNumber, title, description, severity, photoDocumentCodes }` sur une de ses réservations (sinon `404`). Un ticket au support suit l'incident ; le membre ne bloque jamais la ressource.
+5. Prix : le portail affiche le prix du moteur unique (le même que la facture), avec le segment du membre, son plan et le canal `PORTAL`.
+
 ## Règles et erreurs à refléter dans l'écran
 
 | Cas | Statut | Message |

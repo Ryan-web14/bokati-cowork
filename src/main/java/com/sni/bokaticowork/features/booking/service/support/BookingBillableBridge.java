@@ -90,6 +90,13 @@ public class BookingBillableBridge {
                 .orElse(false);
     }
 
+    private BookingExtras extras;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setExtras(@org.springframework.context.annotation.Lazy BookingExtras extras) {
+        this.extras = extras;
+    }
+
     public String ensureBillableItem(Booking booking) {
         if (StringUtils.hasText(booking.getBillableNumber())) {
             return booking.getBillableNumber();
@@ -121,9 +128,17 @@ public class BookingBillableBridge {
                 .status(BillableItemStatus.PENDING)
                 .build());
 
+        // Lot R5c : caution et supplements en attente partent sur la meme facture.
+        List<BillableItem> extraItems = List.of();
+        if (extras != null) {
+            extras.addDepositIfAny(booking);
+            extraItems = extras.pendingItems(booking);
+        }
+
         List<BillableItem> deferred = DEFERRED.get();
         if (deferred != null) {
             deferred.add(item);
+            deferred.addAll(extraItems);
             lineRepository.findByBookingId(booking.getId()).forEach(line -> {
                 if (line.getBillableNumber() == null) {
                     line.setBillableNumber(item.getBillableNumber());
@@ -133,7 +148,15 @@ public class BookingBillableBridge {
             return item.getBillableNumber();
         }
 
-        BillingDocumentResponse issued = billableItemInvoiceSupport.ensureInvoiced(item, buildInvoiceTitle(booking), description);
+        BillingDocumentResponse issued;
+        if (extraItems.isEmpty()) {
+            issued = billableItemInvoiceSupport.ensureInvoiced(item, buildInvoiceTitle(booking), description);
+        } else {
+            List<BillableItem> all = new java.util.ArrayList<>();
+            all.add(item);
+            all.addAll(extraItems);
+            issued = billableItemInvoiceSupport.ensureInvoicedGroup(all, buildInvoiceTitle(booking), description);
+        }
 
         lineRepository.findByBookingId(booking.getId()).forEach(line -> {
             if (line.getBillableNumber() == null) {

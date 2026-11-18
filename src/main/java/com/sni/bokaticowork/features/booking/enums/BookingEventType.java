@@ -28,5 +28,9 @@ public enum BookingEventType {
     /** Lot R1 : prix recalcule apres un changement d'horaire, de duree ou de ressource (D1). */
     BOOKING_PRICE_ADJUSTED,
     BOOKING_TRANSFERRED,
-    BOOKING_RESOURCE_CHANGED
+    BOOKING_RESOURCE_CHANGED,
+    /** Lot R5d : reglement d'usage accepte. */
+    USAGE_RULES_ACCEPTED,
+    /** Lot R5d : etat des lieux de fin enregistre. */
+    END_REPORT_RECORDED
 }

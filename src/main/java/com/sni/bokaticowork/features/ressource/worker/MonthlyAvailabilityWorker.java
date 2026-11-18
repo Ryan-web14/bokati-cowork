@@ -77,7 +77,8 @@ public class MonthlyAvailabilityWorker implements SchedulingConfigurer {
                 : platformSettings.number(INITIAL_DELAY_MS_KEY, DEFAULT_INITIAL_DELAY_MS);
         registrar.addOneTimeTask(() -> self.getObject().onStartup(), Duration.ofMillis(Math.max(0, initialDelay)));
         registrar.addTriggerTask(() -> self.getObject().monthly(),
-                triggers.cron(CRON_KEY, "0 0 3 1 * *", ZoneId.of(timeZone)));
+                // Lot R3 : chaque jour (horizon glissant), plus le premier du mois seulement.
+                triggers.cron(CRON_KEY, "0 0 3 * * *", ZoneId.of(timeZone)));
     }
 
     /** Au deploiement · une seule fois, apres que le reste de l'application a demarre. */

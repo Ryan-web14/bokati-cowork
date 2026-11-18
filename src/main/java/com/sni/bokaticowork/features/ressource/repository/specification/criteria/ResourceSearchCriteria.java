@@ -19,11 +19,23 @@ public class ResourceSearchCriteria {
 
     private Long policyId;
 
+    /** Lot R4 : filtres par code (les identifiants restent acceptes). */
+    private String typeCode;
+
+    private String groupCode;
+
+    private String policyCode;
+
     private String name;
 
     private String zone;
 
     private String locationLabel;
+
+    /** Lot R5b : filtre par site et par etage. */
+    private String siteCode;
+
+    private String floorCode;
 
     private ResourceStatus status;
 

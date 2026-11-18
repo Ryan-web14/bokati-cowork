@@ -48,9 +48,8 @@ public class ResourceController {
     @PostMapping
     @Audited(module = "RESOURCE", action = "CREATE", ressource = "resource")
     @Idempotent(operation = "RESOURCE_CREATE", required = false)
-    public ResponseEntity<Void> create(@Valid @RequestBody ResourceRequest request) {
-        resourceService.createResource(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceResponse> create(@Valid @RequestBody ResourceRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(resourceService.createResource(request));
     }
 
     @GetMapping("/{code}")
@@ -64,7 +63,15 @@ public class ResourceController {
             @RequestParam(required = false) String typeCode,
             @RequestParam(required = false) String groupCode,
             @RequestParam(required = false) String policyCode,
+            @RequestParam(required = false) String siteCode,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        // Lot R5b : filtre par site (resume comme detail), combinable avec type, groupe et politique.
+        if (siteCode != null) {
+            var criteria = com.sni.bokaticowork.features.ressource.repository.specification.criteria.ResourceSearchCriteria.builder()
+                    .typeCode(typeCode).groupCode(groupCode).policyCode(policyCode).siteCode(siteCode).build();
+            return summary ? ResponseEntity.ok(resourceService.search(criteria, pageable))
+                    : ResponseEntity.ok(resourceService.listDetailed(criteria, pageable));
+        }
         if (summary) {
             if (typeCode != null) {
                 return ResponseEntity.ok(resourceService.listSummaryByType(typeCode, pageable));
@@ -78,12 +85,100 @@ public class ResourceController {
             return ResponseEntity.ok(resourceService.listSummary(pageable));
         }
 
+        // Lot R4 : les filtres valent aussi pour la liste detaillee (avant : ignores hors resume).
+        if (typeCode != null || groupCode != null || policyCode != null) {
+            return ResponseEntity.ok(resourceService.listDetailed(
+                    com.sni.bokaticowork.features.ressource.repository.specification.criteria.ResourceSearchCriteria.builder()
+                            .typeCode(typeCode).groupCode(groupCode).policyCode(policyCode).build(), pageable));
+        }
         return ResponseEntity.ok(resourceService.list(pageable));
     }
 
+    // ------------------------------------------------------------------ lot R5b
+
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceFinder finder;
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceSites sites;
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceIcal ical;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setR5b(com.sni.bokaticowork.features.ressource.service.support.ResourceFinder finder,
+                com.sni.bokaticowork.features.ressource.service.support.ResourceSites sites,
+                com.sni.bokaticowork.features.ressource.service.support.ResourceIcal ical) {
+        this.finder = finder;
+        this.sites = sites;
+        this.ical = ical;
+    }
+
+    /** Lot R5c : participants compris, prix d'un participant supplementaire, caution. */
+    public record SalesSettings(Integer includedParticipants, Integer extraParticipantPrice, Integer depositAmount) {
+    }
+
+    /** Lot R5c : reglages de vente de la ressource ; un champ vide efface la valeur. */
+    @PutMapping("/{code}/sales-settings")
+    @Audited(module = "RESOURCE", action = "UPDATE_SALES_SETTINGS", ressource = "resource")
+    public ResponseEntity<ResourceResponse> salesSettings(@PathVariable String code, @RequestBody SalesSettings request) {
+        resourceService.updateSalesSettings(code, request.includedParticipants(), request.extraParticipantPrice(), request.depositAmount());
+        return ResponseEntity.ok(resourceService.getResource(code));
+    }
+
+    /** Lot R5d : reglement d'usage et points de l'etat des lieux de fin. */
+    public record UsageSettings(String usageRules, java.util.List<String> endChecklist) {
+    }
+
+    /** Lot R5d : un reglement modifie doit etre re-accepte (sa version change). */
+    @PutMapping("/{code}/usage-settings")
+    @Audited(module = "RESOURCE", action = "UPDATE_USAGE_SETTINGS", ressource = "resource")
+    public ResponseEntity<ResourceResponse> usageSettings(@PathVariable String code, @RequestBody UsageSettings request) {
+        resourceService.updateUsageSettings(code, request.usageRules(), request.endChecklist());
+        return ResponseEntity.ok(resourceService.getResource(code));
+    }
+
+    /** Lot R5b : « Trouver une salle » par besoin, avec alternatives. */
+    @PostMapping("/find")
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceLocationResponses.FindResult> find(
+            @RequestBody com.sni.bokaticowork.features.ressource.dto.request.ResourceLocationRequests.Find request) {
+        return ResponseEntity.ok(finder.find(request));
+    }
+
+    /** Lot R5b : site, etage et position sur le plan. */
+    @PutMapping("/{code}/placement")
+    @Audited(module = "RESOURCE", action = "PLACE_RESOURCE", ressource = "resource")
+    public ResponseEntity<ResourceResponse> place(@PathVariable String code,
+            @RequestBody com.sni.bokaticowork.features.ressource.dto.request.ResourceLocationRequests.Placement request) {
+        sites.place(code, request);
+        return ResponseEntity.ok(resourceService.getResource(code));
+    }
+
+    /** Lot R5b : calendrier iCalendar de la ressource pour l'equipe (reservations et fermetures). */
+    @GetMapping("/{code}/calendar.ics")
+    public ResponseEntity<String> calendar(@PathVariable String code) {
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType("text/calendar; charset=UTF-8"))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + code + ".ics\"")
+                .body(ical.export(code));
+    }
+
+    /**
+     * Lot R5b : nouveau lien d'abonnement (l'ancien cesse) ; utilisable seulement si le flux public est
+     * active ({@code app.resources.ical.public-feed-enabled}).
+     */
+    @PostMapping("/{code}/ical-token")
+    @Audited(module = "RESOURCE", action = "ROTATE_ICAL_TOKEN", ressource = "resource")
+    public ResponseEntity<java.util.Map<String, Object>> icalToken(@PathVariable String code) {
+        String token = ical.rotateToken(code);
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("token", token);
+        body.put("path", com.sni.bokaticowork.core.utils.path.ApiPath.V1 + "/public/resource-calendars/" + token + ".ics");
+        body.put("enabled", ical.publicFeedEnabled());
+        return ResponseEntity.ok(body);
+    }
+
     @GetMapping("/search/basic")
-    public ResponseEntity<List<ResourceSummaryResponse>> basicSearch(@RequestParam("query") String query) {
-        return ResponseEntity.ok(resourceService.basicSearch(query));
+    public ResponseEntity<PaginatedResponse<ResourceSummaryResponse>> basicSearch(
+            @RequestParam("query") String query,
+            @PageableDefault(size = 20) Pageable pageable) {
+        // Lot R4 : paginee, comme les autres recherches du module.
+        return ResponseEntity.ok(resourceService.basicSearch(query, pageable));
     }
 
     @PostMapping("/search")
@@ -118,8 +213,9 @@ public class ResourceController {
     @Idempotent(operation = "RESOURCE_UPDATE_STATUS", requestBodyArgIndex = -1)
     public ResponseEntity<Void> updateStatus(
             @PathVariable String code,
-            @RequestParam ResourceStatus status) {
-        resourceService.updateStatus(code, status);
+            @RequestParam ResourceStatus status,
+            @RequestParam(defaultValue = "false") boolean cancelBookings) {
+        resourceService.updateStatus(code, status, cancelBookings);
         return ResponseEntity.noContent().build();
     }
 
@@ -187,8 +283,21 @@ public class ResourceController {
 
     @DeleteMapping("/{code}")
     @Audited(module = "RESOURCE", action = "DELETE", ressource = "resource")
-    public ResponseEntity<Void> delete(@PathVariable String code) {
-        resourceService.deleteResource(code);
+    public ResponseEntity<Void> delete(@PathVariable String code,
+                                       @RequestParam(defaultValue = "false") boolean cancelBookings) {
+        resourceService.deleteResource(code, cancelBookings);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Lot R2 : reservations a venir touchees (toutes, ou sur une plage), a montrer avant une
+     * suppression, une fermeture ou une maintenance.
+     */
+    @GetMapping("/{code}/impacted-bookings")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.ressource.service.support.ResourceBookingImpact.ImpactedBooking>> impactedBookings(
+            @PathVariable String code,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime to) {
+        return ResponseEntity.ok(resourceService.impactedBookings(code, from, to));
     }
 }

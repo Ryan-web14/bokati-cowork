@@ -24,8 +24,8 @@ Module [ressource](../README.md) · 9 route(s).
 - Accès : back-office : rôle d'administration et droit `RESOURCE:CREATE`
 - En-tête `Idempotency-Key` : conseillé (opération `RESOURCE_POLICY_CREATE`, voir le README racine)
 - Corps JSON (obligatoire) : `CreateResourcePolicyRequest`
-- Réponse : `vide`
-- Modèles : [CreateResourcePolicyRequest](#m-CreateResourcePolicyRequest)
+- Réponse : `ResourcePolicyResponse`
+- Modèles : [ResourcePolicyResponse](#m-ResourcePolicyResponse), [CreateResourcePolicyRequest](#m-CreateResourcePolicyRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java`, méthode `create`
 
 <a id="r-get-sni-api-v1-resource-policies-search"></a>
@@ -133,6 +133,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `cancellationNoticeMinutes` | entier |  |  |
 | `allowCancellation` | booléen |  |  |
 | `staffOverrideAllowed` | booléen |  |  |
+| `bufferMinutes` | entier |  |  |
+| `maxAdvanceDays` | entier |  |  |
+| `overrunGraceMinutes` | entier |  |  |
+| `noShowFee` | entier |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-CreateResourcePolicyRequest"></a>
@@ -148,6 +152,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `cancellationNoticeMinutes` | entier |  |  |
 | `allowCancellation` | booléen |  |  |
 | `staffOverrideAllowed` | booléen |  |  |
+| `bufferMinutes` | entier |  |  |
+| `maxAdvanceDays` | entier |  |  |
+| `overrunGraceMinutes` | entier |  |  |
+| `noShowFee` | entier |  |  |
 | `active` | booléen |  |  |
 
 <a id="m-UpdateResourcePolicyRequest"></a>
@@ -163,4 +171,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `cancellationNoticeMinutes` | entier |  |  |
 | `allowCancellation` | booléen |  |  |
 | `staffOverrideAllowed` | booléen |  |  |
+| `bufferMinutes` | entier |  |  |
+| `maxAdvanceDays` | entier |  |  |
+| `overrunGraceMinutes` | entier |  |  |
+| `noShowFee` | entier |  |  |
 | `active` | booléen |  |  |

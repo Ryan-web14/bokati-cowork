@@ -207,6 +207,9 @@ public class BookingEmailNotifier {
         ctx.setVariable("qrCodeUrl",      showQr ? "cid:" + QR_CONTENT_ID : null);
         ctx.setVariable("bookingUrl",     publicBookingViewUrl(booking));
         ctx.setVariable("invoiceUrl",     publicBookingPdfUrl(booking));
+        // Lot R5b : « Ajouter à mon agenda » (invitation iCalendar).
+        ctx.setVariable("calendarUrl",    StringUtils.hasText(booking.getCheckInToken())
+                ? publicBookingPdfUrl(booking).replace("/confirmation.pdf?", "/invitation.ics?") : null);
         ctx.setVariable("accountUrl",     frontendUrl());
 
         // ── CSAT pour booking-completed ─────────────────────────────

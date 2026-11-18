@@ -2,13 +2,14 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-80 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+119 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
 | GET | `/sni/api/v1/resources/occupied-slots` | RESOURCE:READ | [AdminResourceCalendarController](routes/AdminResourceCalendarController.md#r-get-sni-api-v1-resources-occupied-slots) |
 | GET | `/sni/api/v1/resources/{resourceCode}/calendar/admin` | RESOURCE:READ | [AdminResourceCalendarController](routes/AdminResourceCalendarController.md#r-get-sni-api-v1-resources-resourcecode-calendar-admin) |
 | GET | `/sni/api/v1/public/resources/{resourceCode}/calendar` | public | [PublicResourceCalendarController](routes/PublicResourceCalendarController.md#r-get-sni-api-v1-public-resources-resourcecode-calendar) |
+| GET | `/sni/api/v1/public/resource-calendars/{token}.ics` | public | [PublicResourceIcalController](routes/PublicResourceIcalController.md#r-get-sni-api-v1-public-resource-calendars-token-ics) |
 | GET | `/sni/api/v1/resource-amenities` | RESOURCE:READ | [ResourceAmenitiesController](routes/ResourceAmenitiesController.md#r-get-sni-api-v1-resource-amenities) |
 | POST | `/sni/api/v1/resource-amenities` | RESOURCE:CREATE | [ResourceAmenitiesController](routes/ResourceAmenitiesController.md#r-post-sni-api-v1-resource-amenities) |
 | GET | `/sni/api/v1/resource-amenities/search` | RESOURCE:READ | [ResourceAmenitiesController](routes/ResourceAmenitiesController.md#r-get-sni-api-v1-resource-amenities-search) |
@@ -16,6 +17,7 @@
 | DELETE | `/sni/api/v1/resource-amenities/{code}` | RESOURCE:DELETE | [ResourceAmenitiesController](routes/ResourceAmenitiesController.md#r-delete-sni-api-v1-resource-amenities-code) |
 | GET | `/sni/api/v1/resource-amenities/{code}` | RESOURCE:READ | [ResourceAmenitiesController](routes/ResourceAmenitiesController.md#r-get-sni-api-v1-resource-amenities-code) |
 | PUT | `/sni/api/v1/resource-amenities/{code}` | RESOURCE:UPDATE | [ResourceAmenitiesController](routes/ResourceAmenitiesController.md#r-put-sni-api-v1-resource-amenities-code) |
+| DELETE | `/sni/api/v1/resource-availabilities` | RESOURCE:DELETE | [ResourceAvailabilityController](routes/ResourceAvailabilityController.md#r-delete-sni-api-v1-resource-availabilities) |
 | GET | `/sni/api/v1/resource-availabilities` | RESOURCE:READ | [ResourceAvailabilityController](routes/ResourceAvailabilityController.md#r-get-sni-api-v1-resource-availabilities) |
 | POST | `/sni/api/v1/resource-availabilities` | RESOURCE:CREATE | [ResourceAvailabilityController](routes/ResourceAvailabilityController.md#r-post-sni-api-v1-resource-availabilities) |
 | POST | `/sni/api/v1/resource-availabilities/bulk` | RESOURCE:CREATE | [ResourceAvailabilityController](routes/ResourceAvailabilityController.md#r-post-sni-api-v1-resource-availabilities-bulk) |
@@ -23,6 +25,16 @@
 | PATCH | `/sni/api/v1/resource-availabilities/release` | RESOURCE:UPDATE | [ResourceAvailabilityController](routes/ResourceAvailabilityController.md#r-patch-sni-api-v1-resource-availabilities-release) |
 | GET | `/sni/api/v1/resource-availabilities/remaining-slots` | RESOURCE:READ | [ResourceAvailabilityController](routes/ResourceAvailabilityController.md#r-get-sni-api-v1-resource-availabilities-remaining-slots) |
 | POST | `/sni/api/v1/resource-availabilities/reserve` | RESOURCE:CREATE | [ResourceAvailabilityController](routes/ResourceAvailabilityController.md#r-post-sni-api-v1-resource-availabilities-reserve) |
+| DELETE | `/sni/api/v1/resource-availabilities/{id}` | RESOURCE:DELETE | [ResourceAvailabilityController](routes/ResourceAvailabilityController.md#r-delete-sni-api-v1-resource-availabilities-id) |
+| PATCH | `/sni/api/v1/resource-availabilities/{id}/active` | RESOURCE:UPDATE | [ResourceAvailabilityController](routes/ResourceAvailabilityController.md#r-patch-sni-api-v1-resource-availabilities-id-active) |
+| GET | `/sni/api/v1/resource-bundles` | RESOURCE:READ | [ResourceBundleController](routes/ResourceBundleController.md#r-get-sni-api-v1-resource-bundles) |
+| POST | `/sni/api/v1/resource-bundles` | RESOURCE:CREATE | [ResourceBundleController](routes/ResourceBundleController.md#r-post-sni-api-v1-resource-bundles) |
+| DELETE | `/sni/api/v1/resource-bundles/{code}` | RESOURCE:DELETE | [ResourceBundleController](routes/ResourceBundleController.md#r-delete-sni-api-v1-resource-bundles-code) |
+| GET | `/sni/api/v1/resource-bundles/{code}` | RESOURCE:READ | [ResourceBundleController](routes/ResourceBundleController.md#r-get-sni-api-v1-resource-bundles-code) |
+| PATCH | `/sni/api/v1/resource-bundles/{code}` | RESOURCE:UPDATE | [ResourceBundleController](routes/ResourceBundleController.md#r-patch-sni-api-v1-resource-bundles-code) |
+| GET | `/sni/api/v1/resource-calendar-days` | RESOURCE:READ | [ResourceCalendarDayController](routes/ResourceCalendarDayController.md#r-get-sni-api-v1-resource-calendar-days) |
+| POST | `/sni/api/v1/resource-calendar-days` | RESOURCE:CREATE | [ResourceCalendarDayController](routes/ResourceCalendarDayController.md#r-post-sni-api-v1-resource-calendar-days) |
+| DELETE | `/sni/api/v1/resource-calendar-days/{id}` | RESOURCE:DELETE | [ResourceCalendarDayController](routes/ResourceCalendarDayController.md#r-delete-sni-api-v1-resource-calendar-days-id) |
 | GET | `/sni/api/v1/resource-closures` | RESOURCE:READ | [ResourceClosureController](routes/ResourceClosureController.md#r-get-sni-api-v1-resource-closures) |
 | POST | `/sni/api/v1/resource-closures` | RESOURCE:CREATE | [ResourceClosureController](routes/ResourceClosureController.md#r-post-sni-api-v1-resource-closures) |
 | DELETE | `/sni/api/v1/resource-closures/{id}` | RESOURCE:DELETE | [ResourceClosureController](routes/ResourceClosureController.md#r-delete-sni-api-v1-resource-closures-id) |
@@ -31,6 +43,7 @@
 | GET | `/sni/api/v1/resources` | RESOURCE:READ | [ResourceController](routes/ResourceController.md#r-get-sni-api-v1-resources) |
 | POST | `/sni/api/v1/resources` | RESOURCE:CREATE | [ResourceController](routes/ResourceController.md#r-post-sni-api-v1-resources) |
 | POST | `/sni/api/v1/resources/amenities/link` | RESOURCE:CREATE | [ResourceController](routes/ResourceController.md#r-post-sni-api-v1-resources-amenities-link) |
+| POST | `/sni/api/v1/resources/find` | RESOURCE:READ | [ResourceController](routes/ResourceController.md#r-post-sni-api-v1-resources-find) |
 | POST | `/sni/api/v1/resources/search` | RESOURCE:READ | [ResourceController](routes/ResourceController.md#r-post-sni-api-v1-resources-search) |
 | GET | `/sni/api/v1/resources/search/basic` | RESOURCE:READ | [ResourceController](routes/ResourceController.md#r-get-sni-api-v1-resources-search-basic) |
 | DELETE | `/sni/api/v1/resources/{code}` | RESOURCE:DELETE | [ResourceController](routes/ResourceController.md#r-delete-sni-api-v1-resources-code) |
@@ -40,10 +53,16 @@
 | GET | `/sni/api/v1/resources/{code}/amenities` | RESOURCE:READ | [ResourceController](routes/ResourceController.md#r-get-sni-api-v1-resources-code-amenities) |
 | DELETE | `/sni/api/v1/resources/{code}/amenities/{amenityCode}` | RESOURCE:DELETE | [ResourceController](routes/ResourceController.md#r-delete-sni-api-v1-resources-code-amenities-amenitycode) |
 | PATCH | `/sni/api/v1/resources/{code}/booking-enabled` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-patch-sni-api-v1-resources-code-booking-enabled) |
+| GET | `/sni/api/v1/resources/{code}/calendar.ics` | RESOURCE:READ | [ResourceController](routes/ResourceController.md#r-get-sni-api-v1-resources-code-calendar-ics) |
 | PATCH | `/sni/api/v1/resources/{code}/classification` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-patch-sni-api-v1-resources-code-classification) |
 | PATCH | `/sni/api/v1/resources/{code}/display-order` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-patch-sni-api-v1-resources-code-display-order) |
+| POST | `/sni/api/v1/resources/{code}/ical-token` | RESOURCE:CREATE | [ResourceController](routes/ResourceController.md#r-post-sni-api-v1-resources-code-ical-token) |
+| GET | `/sni/api/v1/resources/{code}/impacted-bookings` | RESOURCE:READ | [ResourceController](routes/ResourceController.md#r-get-sni-api-v1-resources-code-impacted-bookings) |
+| PUT | `/sni/api/v1/resources/{code}/placement` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-put-sni-api-v1-resources-code-placement) |
 | PATCH | `/sni/api/v1/resources/{code}/portal-visible` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-patch-sni-api-v1-resources-code-portal-visible) |
+| PUT | `/sni/api/v1/resources/{code}/sales-settings` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-put-sni-api-v1-resources-code-sales-settings) |
 | PATCH | `/sni/api/v1/resources/{code}/status` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-patch-sni-api-v1-resources-code-status) |
+| PUT | `/sni/api/v1/resources/{code}/usage-settings` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-put-sni-api-v1-resources-code-usage-settings) |
 | GET | `/sni/api/v1/resource-groups` | RESOURCE:READ | [ResourceGroupController](routes/ResourceGroupController.md#r-get-sni-api-v1-resource-groups) |
 | POST | `/sni/api/v1/resource-groups` | RESOURCE:CREATE | [ResourceGroupController](routes/ResourceGroupController.md#r-post-sni-api-v1-resource-groups) |
 | GET | `/sni/api/v1/resource-groups/search` | RESOURCE:READ | [ResourceGroupController](routes/ResourceGroupController.md#r-get-sni-api-v1-resource-groups-search) |
@@ -54,6 +73,16 @@
 | DELETE | `/sni/api/v1/resources/{resourceCode}/opening-hours` | RESOURCE:UPDATE | [ResourceOpeningHoursController](routes/ResourceOpeningHoursController.md#r-delete-sni-api-v1-resources-resourcecode-opening-hours) |
 | GET | `/sni/api/v1/resources/{resourceCode}/opening-hours` | RESOURCE:READ | [ResourceOpeningHoursController](routes/ResourceOpeningHoursController.md#r-get-sni-api-v1-resources-resourcecode-opening-hours) |
 | PUT | `/sni/api/v1/resources/{resourceCode}/opening-hours` | RESOURCE:UPDATE | [ResourceOpeningHoursController](routes/ResourceOpeningHoursController.md#r-put-sni-api-v1-resources-resourcecode-opening-hours) |
+| GET | `/sni/api/v1/resource-incidents` | RESOURCE:READ | [ResourceOperationsController](routes/ResourceOperationsController.md#r-get-sni-api-v1-resource-incidents) |
+| POST | `/sni/api/v1/resource-incidents` | RESOURCE:CREATE | [ResourceOperationsController](routes/ResourceOperationsController.md#r-post-sni-api-v1-resource-incidents) |
+| GET | `/sni/api/v1/resource-incidents/{code}` | RESOURCE:READ | [ResourceOperationsController](routes/ResourceOperationsController.md#r-get-sni-api-v1-resource-incidents-code) |
+| POST | `/sni/api/v1/resource-incidents/{code}/resolve` | RESOURCE:CREATE | [ResourceOperationsController](routes/ResourceOperationsController.md#r-post-sni-api-v1-resource-incidents-code-resolve) |
+| POST | `/sni/api/v1/resource-incidents/{code}/start` | RESOURCE:CREATE | [ResourceOperationsController](routes/ResourceOperationsController.md#r-post-sni-api-v1-resource-incidents-code-start) |
+| GET | `/sni/api/v1/resource-task-templates` | RESOURCE:READ | [ResourceOperationsController](routes/ResourceOperationsController.md#r-get-sni-api-v1-resource-task-templates) |
+| POST | `/sni/api/v1/resource-task-templates` | RESOURCE:CREATE | [ResourceOperationsController](routes/ResourceOperationsController.md#r-post-sni-api-v1-resource-task-templates) |
+| DELETE | `/sni/api/v1/resource-task-templates/{id}` | RESOURCE:DELETE | [ResourceOperationsController](routes/ResourceOperationsController.md#r-delete-sni-api-v1-resource-task-templates-id) |
+| PATCH | `/sni/api/v1/resource-task-templates/{id}` | RESOURCE:UPDATE | [ResourceOperationsController](routes/ResourceOperationsController.md#r-patch-sni-api-v1-resource-task-templates-id) |
+| GET | `/sni/api/v1/resources/{code}/maintenance-history` | RESOURCE:READ | [ResourceOperationsController](routes/ResourceOperationsController.md#r-get-sni-api-v1-resources-code-maintenance-history) |
 | GET | `/sni/api/v1/resources/{resourceCode}/photos` | RESOURCE:READ | [ResourcePhotoController](routes/ResourcePhotoController.md#r-get-sni-api-v1-resources-resourcecode-photos) |
 | POST | `/sni/api/v1/resources/{resourceCode}/photos` | RESOURCE:GALLERY | [ResourcePhotoController](routes/ResourcePhotoController.md#r-post-sni-api-v1-resources-resourcecode-photos) |
 | DELETE | `/sni/api/v1/resources/{resourceCode}/photos/{id}` | RESOURCE:GALLERY | [ResourcePhotoController](routes/ResourcePhotoController.md#r-delete-sni-api-v1-resources-resourcecode-photos-id) |
@@ -79,6 +108,16 @@
 | PATCH PUT | `/sni/api/v1/resource-pricing-rules/{id}` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-patch-put-sni-api-v1-resource-pricing-rules-id) |
 | PATCH | `/sni/api/v1/resource-pricing-rules/{id}/active` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-patch-sni-api-v1-resource-pricing-rules-id-active) |
 | GET | `/sni/api/v1/resource-pricing-rules/{id}/history` | RESOURCE:PRICE | [ResourcePricingRuleController](routes/ResourcePricingRuleController.md#r-get-sni-api-v1-resource-pricing-rules-id-history) |
+| DELETE | `/sni/api/v1/resource-floors/{code}` | RESOURCE:DELETE | [ResourceSiteController](routes/ResourceSiteController.md#r-delete-sni-api-v1-resource-floors-code) |
+| PATCH | `/sni/api/v1/resource-floors/{code}` | RESOURCE:UPDATE | [ResourceSiteController](routes/ResourceSiteController.md#r-patch-sni-api-v1-resource-floors-code) |
+| GET | `/sni/api/v1/resource-floors/{code}/plan` | RESOURCE:READ | [ResourceSiteController](routes/ResourceSiteController.md#r-get-sni-api-v1-resource-floors-code-plan) |
+| GET | `/sni/api/v1/resource-sites` | RESOURCE:READ | [ResourceSiteController](routes/ResourceSiteController.md#r-get-sni-api-v1-resource-sites) |
+| POST | `/sni/api/v1/resource-sites` | RESOURCE:CREATE | [ResourceSiteController](routes/ResourceSiteController.md#r-post-sni-api-v1-resource-sites) |
+| DELETE | `/sni/api/v1/resource-sites/{code}` | RESOURCE:DELETE | [ResourceSiteController](routes/ResourceSiteController.md#r-delete-sni-api-v1-resource-sites-code) |
+| GET | `/sni/api/v1/resource-sites/{code}` | RESOURCE:READ | [ResourceSiteController](routes/ResourceSiteController.md#r-get-sni-api-v1-resource-sites-code) |
+| PATCH | `/sni/api/v1/resource-sites/{code}` | RESOURCE:UPDATE | [ResourceSiteController](routes/ResourceSiteController.md#r-patch-sni-api-v1-resource-sites-code) |
+| GET | `/sni/api/v1/resource-sites/{code}/floors` | RESOURCE:READ | [ResourceSiteController](routes/ResourceSiteController.md#r-get-sni-api-v1-resource-sites-code-floors) |
+| POST | `/sni/api/v1/resource-sites/{code}/floors` | RESOURCE:CREATE | [ResourceSiteController](routes/ResourceSiteController.md#r-post-sni-api-v1-resource-sites-code-floors) |
 | GET | `/sni/api/v1/resource-types` | RESOURCE:READ | [ResourceTypeController](routes/ResourceTypeController.md#r-get-sni-api-v1-resource-types) |
 | POST | `/sni/api/v1/resource-types` | RESOURCE:CREATE | [ResourceTypeController](routes/ResourceTypeController.md#r-post-sni-api-v1-resource-types) |
 | GET | `/sni/api/v1/resource-types/search` | RESOURCE:READ | [ResourceTypeController](routes/ResourceTypeController.md#r-get-sni-api-v1-resource-types-search) |

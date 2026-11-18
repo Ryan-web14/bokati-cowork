@@ -57,4 +57,10 @@ public class CreateResourceAvailabilityRequest {
      * supprimer d'abord. Seuls les diviseurs de 60 sont admis.
      */
     private Integer slotDurationMinutes;
+
+    /**
+     * Lot R3 : creneaux hors des horaires d'ouverture de la ressource (derogation de l'equipe) ;
+     * sans ce drapeau, la plage doit tenir dans les horaires du jour.
+     */
+    private Boolean outsideOpeningHours;
 }

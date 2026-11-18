@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,39 @@ public class AdminResourceCalendarServiceImpl implements AdminResourceCalendarSe
 
     private final ResourceService resourceService;
     private final ResourceAvailabilityRepository availabilityRepository;
+
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarDays calendarDays;
+    private com.sni.bokaticowork.features.ressource.repository.repo.ResourceClosureRepository closureRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setR5a(com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarDays calendarDays,
+                com.sni.bokaticowork.features.ressource.repository.repo.ResourceClosureRepository closureRepository) {
+        this.calendarDays = calendarDays;
+        this.closureRepository = closureRepository;
+    }
+
+    private String dayLabel(Resource resource, LocalDate date) {
+        return calendarDays == null ? null : calendarDays.dayLabel(resource, date);
+    }
+
+    /** Lot R5a : fermetures et blocages de la plage, occurrences comprises. */
+    private List<AdminResourceCalendarResponse.Block> blocks(Resource resource, LocalDate start, LocalDate end) {
+        if (closureRepository == null) {
+            return List.of();
+        }
+        LocalDateTime from = start.atStartOfDay();
+        LocalDateTime to = end.plusDays(1).atStartOfDay();
+        List<AdminResourceCalendarResponse.Block> blocks = new ArrayList<>();
+        for (var closure : closureRepository.findActiveForCalendar(resource, from, to)) {
+            for (LocalDateTime[] occurrence : closure.occurrences(from, to)) {
+                blocks.add(new AdminResourceCalendarResponse.Block(closure.getId(),
+                        closure.getKind() == null ? null : closure.getKind().name(), closure.getReason(),
+                        occurrence[0], occurrence[1], closure.getRecurrence() == null ? null : closure.getRecurrence().name()));
+            }
+        }
+        blocks.sort(java.util.Comparator.comparing(AdminResourceCalendarResponse.Block::startedAt));
+        return blocks;
+    }
 
     @Override
     public AdminResourceCalendarResponse calendar(String resourceCode, LocalDate fromDate, LocalDate toDate) {
@@ -45,7 +79,7 @@ public class AdminResourceCalendarServiceImpl implements AdminResourceCalendarSe
 
         List<AdminResourceCalendarResponse.Day> days = new ArrayList<>();
         for (LocalDate day = start; !day.isAfter(end); day = day.plusDays(1)) {
-            days.add(buildDay(day, byDay.getOrDefault(day, List.of())));
+            days.add(buildDay(day, byDay.getOrDefault(day, List.of()), dayLabel(resource, day)));
         }
 
         return AdminResourceCalendarResponse.builder()
@@ -54,6 +88,7 @@ public class AdminResourceCalendarServiceImpl implements AdminResourceCalendarSe
                 .fromDate(start)
                 .toDate(end)
                 .days(days)
+                .blocks(blocks(resource, start, end))
                 .build();
     }
 
@@ -99,6 +134,10 @@ public class AdminResourceCalendarServiceImpl implements AdminResourceCalendarSe
     }
 
     private AdminResourceCalendarResponse.Day buildDay(LocalDate date, List<ResourceAvailability> daySlots) {
+        return buildDay(date, daySlots, null);
+    }
+
+    private AdminResourceCalendarResponse.Day buildDay(LocalDate date, List<ResourceAvailability> daySlots, String dayLabel) {
         int totalSlots = daySlots.size();
 
         int availableSlots = (int) daySlots.stream()
@@ -162,6 +201,7 @@ public class AdminResourceCalendarServiceImpl implements AdminResourceCalendarSe
                 .occupancyLevel(occupancyLevel(dayOccupancyRate))
                 .status(dayStatus(totalSlots, availableSlots))
                 .windows(windows)
+                .dayLabel(dayLabel)
                 .build();
     }
 

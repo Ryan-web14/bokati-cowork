@@ -113,6 +113,10 @@ public class ResourcePricingRule {
     @Column(name = "channel", length = 20)
     private String channel;
 
+    /** Lot R5a : ONLY = jours feries seulement, EXCLUDED = hors jours feries, vide = tous les jours. */
+    @Column(name = "holiday_mode", length = 10)
+    private String holidayMode;
+
     /** Lot R1 : ajustement cumulable avec les autres (sinon, seul le meilleur s'applique). */
     @Builder.Default
     @Column(name = "stackable", nullable = false)

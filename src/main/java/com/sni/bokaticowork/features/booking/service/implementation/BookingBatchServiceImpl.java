@@ -182,8 +182,68 @@ public class BookingBatchServiceImpl implements BookingBatchService {
         return planned;
     }
 
+    /** Lot R5c : remise du lot de ressources en cours de reservation (nom, pourcentage). */
+    private static final ThreadLocal<Object[]> BUNDLE = new ThreadLocal<>();
+
+    public static void withBundleDiscount(String name, java.math.BigDecimal percent) {
+        if (name == null || percent == null || percent.signum() <= 0) {
+            BUNDLE.remove();
+        } else {
+            BUNDLE.set(new Object[]{name, percent});
+        }
+    }
+
+    private com.sni.bokaticowork.features.booking.repository.BookingLineRepository bundleLines;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setBundleLines(com.sni.bokaticowork.features.booking.repository.BookingLineRepository bundleLines) {
+        this.bundleLines = bundleLines;
+    }
+
+    /** Lot R5c : la remise du lot baisse chaque reservation payante du lot avant sa facture. */
+    private void applyBundleDiscount(List<BillableItem> items, List<Booking> bookings) {
+        Object[] bundle = BUNDLE.get();
+        if (bundle == null) {
+            return;
+        }
+        String name = (String) bundle[0];
+        java.math.BigDecimal percent = (java.math.BigDecimal) bundle[1];
+        Map<String, Booking> byNumber = new LinkedHashMap<>();
+        bookings.forEach(booking -> byNumber.put(booking.getBookingNumber(), booking));
+        for (BillableItem item : items) {
+            Booking booking = byNumber.get(item.getSourceId());
+            if (booking == null || !"BOOKING".equals(item.getSourceType()) || item.getAmount() == null || item.getAmount().signum() <= 0) {
+                continue;
+            }
+            java.math.BigDecimal discount = item.getAmount().multiply(percent)
+                    .divide(java.math.BigDecimal.valueOf(100), 0, java.math.RoundingMode.HALF_UP);
+            if (discount.signum() <= 0) {
+                continue;
+            }
+            item.setAmount(item.getAmount().subtract(discount));
+            billableItemRepository.save(item);
+            booking.setTotalAmount(booking.getTotalAmount().subtract(discount));
+            bookingRepository.save(booking);
+            if (bundleLines != null) {
+                bundleLines.save(com.sni.bokaticowork.features.booking.model.BookingLine.builder()
+                        .booking(booking)
+                        .lineType(com.sni.bokaticowork.features.booking.enums.BookingLineType.DISCOUNT)
+                        .description("Remise du lot " + name + " (" + percent.stripTrailingZeros().toPlainString() + " %)")
+                        .quantity(java.math.BigDecimal.ONE)
+                        .unit(booking.getBookingUnit() == null ? com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit.HOUR : booking.getBookingUnit())
+                        .unitPrice(discount.negate())
+                        .amount(discount.negate())
+                        .currency(booking.getCurrency())
+                        .billableNumber(item.getBillableNumber())
+                        .createdAt(java.time.Instant.now())
+                        .build());
+            }
+        }
+    }
+
     /** Une facture par titulaire : les elements mis de cote pendant le lot, regroupes. */
     private void invoicePerMember(String batchNumber, List<BillableItem> items, List<Booking> bookings) {
+        applyBundleDiscount(items, bookings);
         Map<InvoiceKey, List<BillableItem>> groups = new LinkedHashMap<>();
         for (BillableItem item : items) {
             groups.computeIfAbsent(InvoiceKey.of(item), key -> new ArrayList<>()).add(item);

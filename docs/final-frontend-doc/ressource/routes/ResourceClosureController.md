@@ -25,8 +25,8 @@ Module [ressource](../README.md) · 5 route(s).
 - Accès : back-office : rôle d'administration et droit `RESOURCE:CREATE`
 - En-tête `Idempotency-Key` : conseillé (opération `RESOURCE_CLOSURE_CREATE`, voir le README racine)
 - Corps JSON (obligatoire) : `CreateResourceClosureRequest`
-- Réponse : `vide`
-- Modèles : [CreateResourceClosureRequest](#m-CreateResourceClosureRequest)
+- Réponse : `ResourceClosureResponse`
+- Modèles : [ResourceClosureResponse](#m-ResourceClosureResponse), [CreateResourceClosureRequest](#m-CreateResourceClosureRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceClosureController.java`, méthode `create`
 
 <a id="r-delete-sni-api-v1-resource-closures-id"></a>
@@ -80,6 +80,10 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `startedAt` | date-heure locale sans fuseau |  |  |
 | `endedAt` | date-heure locale sans fuseau |  |  |
 | `active` | booléen |  |  |
+| `reason` | texte |  |  |
+| `kind` | texte |  |  |
+| `recurrence` | texte |  |  |
+| `recurrenceUntil` | date AAAA-MM-JJ |  |  |
 
 <a id="m-CreateResourceClosureRequest"></a>
 #### CreateResourceClosureRequest
@@ -90,7 +94,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `startedAt` | date-heure locale sans fuseau | oui |  |
 | `endedAt` | date-heure locale sans fuseau | oui |  |
 | `reason` | texte |  |  |
+| `kind` | texte |  |  |
+| `recurrence` | texte |  |  |
+| `recurrenceUntil` | date AAAA-MM-JJ |  |  |
 | `active` | booléen |  |  |
+| `cancelBookings` | booléen |  |  |
 
 <a id="m-UpdateActiveRequest"></a>
 #### UpdateActiveRequest
@@ -98,3 +106,4 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `active` | booléen | oui |  |
+| `cancelBookings` | booléen |  |  |

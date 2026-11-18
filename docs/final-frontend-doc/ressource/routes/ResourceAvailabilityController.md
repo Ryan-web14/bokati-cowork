@@ -2,9 +2,22 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [ressource](../README.md) · 7 route(s).
+Module [ressource](../README.md) · 10 route(s).
 
 ## Routes
+
+<a id="r-delete-sni-api-v1-resource-availabilities"></a>
+### DELETE /sni/api/v1/resource-availabilities
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:DELETE`
+- Réponse : `Map<String, Integer>`
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java`, méthode `deleteFutureSlots`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `resourceCode` | requête | `String` | oui |  |
+| `from` | requête | `LocalDateTime` |  |  |
+| `to` | requête | `LocalDateTime` |  |  |
 
 <a id="r-get-sni-api-v1-resource-availabilities"></a>
 ### GET /sni/api/v1/resource-availabilities
@@ -82,6 +95,29 @@ Module [ressource](../README.md) · 7 route(s).
 - Modèles : [ReserveResourceAvailabilityRequest](#m-ReserveResourceAvailabilityRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java`, méthode `reserve`
 
+<a id="r-delete-sni-api-v1-resource-availabilities-id"></a>
+### DELETE /sni/api/v1/resource-availabilities/{id}
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:DELETE`
+- Réponse : `vide`
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java`, méthode `deleteSlot`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+
+<a id="r-patch-sni-api-v1-resource-availabilities-id-active"></a>
+### PATCH /sni/api/v1/resource-availabilities/{id}/active
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:UPDATE`
+- Réponse : `vide`
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java`, méthode `updateSlotActive`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+| `active` | requête | `boolean` | oui |  |
+
 ## Modèles
 
 Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
@@ -113,6 +149,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `capacity` | entier |  |  |
 | `active` | booléen |  |  |
 | `slotDurationMinutes` | entier |  |  |
+| `outsideOpeningHours` | booléen |  |  |
 
 <a id="m-BulkResourceOperationResponse"></a>
 #### BulkResourceOperationResponse
@@ -153,6 +190,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `startedAt` | date-heure locale sans fuseau | oui |  |
 | `endedAt` | date-heure locale sans fuseau | oui |  |
 | `quantity` | entier | oui |  |
+| `reason` | texte |  |  |
+| `bookingNumber` | texte |  |  |
 
 <a id="m-ResourceAvailabilityWindowResponse"></a>
 #### ResourceAvailabilityWindowResponse
@@ -175,6 +214,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `startedAt` | date-heure locale sans fuseau | oui |  |
 | `endedAt` | date-heure locale sans fuseau | oui |  |
 | `quantity` | entier | oui |  |
+| `reason` | texte |  |  |
+| `bookingNumber` | texte |  |  |
 
 <a id="m-BulkResourceOperationResponse-Entry"></a>
 #### BulkResourceOperationResponse.Entry

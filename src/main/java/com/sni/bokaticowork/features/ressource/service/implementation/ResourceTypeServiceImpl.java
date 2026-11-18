@@ -46,17 +46,17 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
     private final RetryPolicy defaultRetryPolicy;
 
     @Override
-    public void createType(CreateResourceTypeRequest request) {
+    public com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse createType(CreateResourceTypeRequest request) {
         List<String> errors = validateForCreate(request);
 
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource type request", errors);
+            throw new ValidationException("Demande de type de ressource invalide", errors);
         }
 
         String normalizedName = request.getName().trim();
 
         if (typeRepository.existsByNameIgnoreCase(normalizedName)) {
-            throw new ResourceAlreadyExistException("A resource type with this name already exists");
+            throw new ResourceAlreadyExistException("Un type de ressource porte déjà ce nom");
         }
 
         request.setName(normalizedName);
@@ -66,27 +66,27 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         long typeSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_type", LocalDate.now()));
         type.setCode(CodeComposer.refWithYear("RTY", LocalDate.now(), typeSeq));
 
-        retryExecutor.execute("create resource type", defaultRetryPolicy, () -> typeRepository.save(type));
+        return typeMapper.toResponse(typeRepository.save(type));
     }
 
     @Override
     public void updateType(String code, UpdateResourceTypeRequest request) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Resource type code is required");
+            throw new BadRequestException("Le code du type de ressource est requis");
         }
 
         ResourceType type = getTypeForService(code.trim());
         List<String> errors = validateForUpdate(request, type);
 
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource type request", errors);
+            throw new ValidationException("Demande de type de ressource invalide", errors);
         }
 
         String normalizedName = request.getName() == null ? type.getName() : request.getName().trim();
 
         if (!type.getName().equalsIgnoreCase(normalizedName)
                 && typeRepository.existsByNameIgnoreCase(normalizedName)) {
-            throw new ResourceAlreadyExistException("A resource type with this name already exists");
+            throw new ResourceAlreadyExistException("Un type de ressource porte déjà ce nom");
         }
 
         if (request.getName() != null) {
@@ -95,18 +95,21 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         request.setDescription(normalizeText(request.getDescription()));
 
         typeMapper.updateEntity(type, request);
-        retryExecutor.execute("update resource type", defaultRetryPolicy, () -> typeRepository.save(type));
+        typeRepository.save(type);
     }
 
     @Override
     public void deleteType(String code) {
         ResourceType type = getTypeForService(code);
 
-        if (!resourceRepository.findAllByResourceType(type).isEmpty()) {
-            throw new ConflictException("resource type", "it is currently assigned to one or more resources");
+        // Lot R2 : ressources archivees comprises (elles retiennent la cle etrangere ; avant : 500).
+        long attached = resourceRepository.countAttachedToType(type.getId());
+        if (attached > 0) {
+            throw new ConflictException("Le type " + type.getCode() + " a encore " + attached
+                    + " ressource(s) rattachée(s), archivées comprises : changez-leur de type d'abord");
         }
 
-        retryExecutor.run("delete resource type", defaultRetryPolicy, () -> typeRepository.delete(type));
+        typeRepository.delete(type);
     }
 
     @Override
@@ -121,10 +124,10 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
                 .anyMatch(type -> !resourceRepository.findAllByResourceType(type).isEmpty());
 
         if (hasAssignedTypes) {
-            throw new ConflictException("resource types", "some types are currently assigned to resources");
+            throw new ConflictException("Certains types sont attribués à des ressources");
         }
 
-        retryExecutor.run("delete all resource types", defaultRetryPolicy, () -> typeRepository.deleteAll(types));
+        typeRepository.deleteAll(types);
     }
 
     @Override
@@ -137,22 +140,22 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
     @Transactional(readOnly = true)
     public ResourceType getTypeForService(String code) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Resource type code is required");
+            throw new BadRequestException("Le code du type de ressource est requis");
         }
 
         return typeRepository.findByCode(code.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Resource type with code " + code.trim() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Type de ressource introuvable : " + code.trim()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResourceType getTypeForService(Long id) {
         if (id == null) {
-            throw new BadRequestException("Resource type id is required");
+            throw new BadRequestException("L'identifiant du type de ressource est requis");
         }
 
         return typeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource type with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Type de ressource introuvable : " + id));
     }
 
     @Override
@@ -168,7 +171,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
     @Transactional(readOnly = true)
     public PaginatedResponse<ResourceTypeResponse> search(String query) {
         if (!StringUtils.hasText(query)) {
-            throw new BadRequestException("Search query is required");
+            throw new BadRequestException("Le texte de recherche est requis");
         }
 
         List<ResourceTypeResponse> responses = typeRepository.basicSearch(query.trim()).stream()
@@ -190,7 +193,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
     @Transactional(readOnly = true)
     public List<ResourceTypeResponse> searchActive(String query) {
         if (!StringUtils.hasText(query)) {
-            throw new BadRequestException("Search query is required");
+            throw new BadRequestException("Le texte de recherche est requis");
         }
         return typeRepository.basicSearch(query.trim()).stream()
                 .filter(t -> Boolean.TRUE.equals(t.getActive()))
@@ -202,7 +205,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         List<String> errors = new ArrayList<>();
 
         if (request == null) {
-            errors.add("Invalid resource type request, the request body is required");
+            errors.add("Demande de type de ressource invalide : le corps de la demande est requis");
         } else {
             validateCommonFields(errors, request.getName(), request.getDescription());
         }
@@ -214,7 +217,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         List<String> errors = new ArrayList<>();
 
         if (request == null) {
-            errors.add("Invalid resource type request, the request body is required");
+            errors.add("Demande de type de ressource invalide : le corps de la demande est requis");
         } else {
             validateCommonFields(
                     errors,
@@ -228,11 +231,11 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
 
     private void validateCommonFields(List<String> errors, String name, String description) {
         if (!StringUtils.hasText(name) || !ValidationUtils.validateString(name.trim())) {
-            errors.add("Invalid resource type request, the name is not valid");
+            errors.add("Demande de type de ressource invalide : le nom n'est pas valide");
         }
 
         if (StringUtils.hasText(description) && !ValidationUtils.validateDescription(description.trim())) {
-            errors.add("Invalid resource type request, the description is not valid");
+            errors.add("Demande de type de ressource invalide : la description n'est pas valide");
         }
     }
 

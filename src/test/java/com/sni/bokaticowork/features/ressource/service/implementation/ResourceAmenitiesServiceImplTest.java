@@ -58,11 +58,7 @@ class ResourceAmenitiesServiceImplTest {
         when(amenitiesRepository.existsByNameIgnoreCase("Wifi Access")).thenReturn(false);
         when(amenitiesMapper.toEntity(any(CreateAmenityRequest.class))).thenReturn(amenity);
         when(sequenceGenerator.next("resource_amenity", today)).thenReturn("AMN-00027");
-        doAnswer(invocation -> {
-            @SuppressWarnings("unchecked")
-            Supplier<ResourceAmenities> action = invocation.getArgument(2);
-            return action.get();
-        }).when(retryExecutor).execute(eq("create resource amenity"), eq(defaultRetryPolicy), any());
+        // Lot R4 : enregistrement direct, sans nouvel essai dans la transaction.
         when(amenitiesRepository.save(any(ResourceAmenities.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.createAmenity(request);

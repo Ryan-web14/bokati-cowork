@@ -16,6 +16,19 @@ import java.util.List;
 
 public interface ResourceAvailabilityService {
 
+    /** Lot R3 : creneaux passes clos (tache horaire). */
+    int expirePastSlots();
+
+    void updateSlotActive(Long id, boolean active);
+
+    void deleteSlot(Long id);
+
+    java.util.Map<String, Integer> deleteFutureSlots(String resourceCode, java.time.LocalDateTime from, java.time.LocalDateTime to);
+
+    void reserveManually(com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest request);
+
+    void releaseManually(com.sni.bokaticowork.features.ressource.dto.request.ReleaseResourceAvailabilityRequest request);
+
     void createAvailability(CreateResourceAvailabilityRequest request);
 
     /**

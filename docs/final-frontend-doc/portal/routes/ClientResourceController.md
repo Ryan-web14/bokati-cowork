@@ -207,6 +207,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `maxDurationMinutes` | entier |  |  |
 | `minLeadMinutes` | entier |  |  |
 | `channel` | texte |  |  |
+| `holidayMode` | texte |  |  |
 | `stackable` | booléen |  |  |
 | `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
@@ -223,6 +224,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `remainingCapacity` | entier |  |  |
 | `status` | texte |  |  |
 | `windows` | [PublicResourceCalendarResponse.Window](#m-PublicResourceCalendarResponse-Window)[] |  |  |
+| `dayLabel` | texte |  |  |
 
 <a id="m-PriceResult-Line"></a>
 #### PriceResult.Line

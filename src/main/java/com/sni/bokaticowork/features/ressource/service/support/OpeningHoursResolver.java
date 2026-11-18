@@ -48,7 +48,8 @@ public class OpeningHoursResolver {
         this.weekdaySubscriberHours = weekdaySubscriberHours;
         this.saturdayHours = saturdayHours;
         this.sundayHours = sundayHours;
-        // Une plage mal ecrite dans la configuration arrete le demarrage, plutot que d'ouvrir n'importe quoi.
+        // Une plage mal ecrite ne bloque plus le demarrage : elle est signalee et remplacee par
+        // le defaut (horaires par defaut de la plateforme).
         global();
     }
 
@@ -65,23 +66,65 @@ public class OpeningHoursResolver {
         return hours;
     }
 
+    private ResourceCalendarDays calendarDays;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCalendarDays(ResourceCalendarDays calendarDays) {
+        this.calendarDays = calendarDays;
+    }
+
+    /**
+     * Lot R5a : horaires d'une date precise · jour particulier (ressource, puis general), jour ferie
+     * (parametre), sinon la semaine type.
+     */
+    public List<OpeningHours> forDate(Resource resource, java.time.LocalDate date) {
+        if (calendarDays != null) {
+            java.util.Optional<List<OpeningHours>> special = calendarDays.hoursOn(resource, date);
+            if (special.isPresent()) {
+                return special.get();
+            }
+        }
+        return forResource(resource).getOrDefault(date.getDayOfWeek(), List.of());
+    }
+
     public List<ResourceOpeningHours> own(Resource resource) {
         return resourceHours == null ? List.of() : resourceHours.findAllByResourceOrderByDayOfWeekAscOpenTimeAsc(resource);
     }
 
     public Map<DayOfWeek, List<OpeningHours>> global() {
         Map<DayOfWeek, List<OpeningHours>> hours = new EnumMap<>(DayOfWeek.class);
-        OpeningHours weekday = OpeningHours.parse(value(WEEKDAY, weekdayHours));
-        OpeningHours evening = OpeningHours.parse(value(WEEKDAY_SUBSCRIBERS, weekdaySubscriberHours));
+        OpeningHours weekday = tolerant(WEEKDAY, weekdayHours, "08:00-18:00");
+        OpeningHours evening = tolerant(WEEKDAY_SUBSCRIBERS, weekdaySubscriberHours, "18:00-22:00");
         for (DayOfWeek day : new DayOfWeek[]{DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
                 DayOfWeek.THURSDAY, DayOfWeek.FRIDAY}) {
             putIfOpen(hours, day, weekday);
             putIfOpen(hours, day, evening);
         }
-        putIfOpen(hours, DayOfWeek.SATURDAY, OpeningHours.parse(value(SATURDAY, saturdayHours)));
-        putIfOpen(hours, DayOfWeek.SUNDAY, OpeningHours.parse(value(SUNDAY, sundayHours)));
+        putIfOpen(hours, DayOfWeek.SATURDAY, tolerant(SATURDAY, saturdayHours, "08:00-12:00"));
+        putIfOpen(hours, DayOfWeek.SUNDAY, tolerant(SUNDAY, sundayHours, ""));
         return hours;
     }
+
+    /**
+     * Plage d'un parametre ; mal ecrite, elle est signalee et remplacee par la configuration, puis
+     * par le defaut de la plateforme. Jamais d'exception : un reglage ne bloque ni le demarrage ni
+     * l'ouverture des creneaux.
+     */
+    private OpeningHours tolerant(String key, String configured, String platformDefault) {
+        String value = value(key, configured);
+        try {
+            return OpeningHours.parse(value);
+        } catch (RuntimeException ex) {
+            LOG.warn("Horaires {} mal ecrits ({}) : valeur ignoree, defaut applique", key, value);
+        }
+        try {
+            return OpeningHours.parse(configured);
+        } catch (RuntimeException ex) {
+            return platformDefault.isEmpty() ? null : OpeningHours.parse(platformDefault);
+        }
+    }
+
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(OpeningHoursResolver.class);
 
     private String value(String key, String fallback) {
         return settings == null ? fallback : settings.text(key, fallback);

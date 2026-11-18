@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface ResourceAmenitiesService {
 
-    void createAmenity(CreateAmenityRequest request);
+    com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse createAmenity(CreateAmenityRequest request);
     void updateAmenity(String code, UpdateAmenityRequest request);
     void deleteAmenity(String code);
     void deleteAllAmenities();

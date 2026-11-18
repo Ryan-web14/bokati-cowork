@@ -25,6 +25,17 @@ public class ReserveResourceAvailabilityRequest {
     @NotNull
     private Integer quantity;
 
+    /** Forme d'avant le lot R3 (sans motif ni reservation). */
+    public ReserveResourceAvailabilityRequest(String resourceCode, LocalDateTime startedAt, LocalDateTime endedAt, Integer quantity, boolean staffOverride) {
+        this(resourceCode, startedAt, endedAt, quantity, null, null, staffOverride);
+    }
+
+    /** Lot R3 : motif obligatoire d'une operation manuelle (rattrapage), journalise. */
+    private String reason;
+
+    /** Lot R3 : reservation concernee, s'il y en a une. */
+    private String bookingNumber;
+
     /**
      * Reservation de l'equipe hors preavis · creneaux du jour ou passes et restes libres. Interne :
      * jamais lu dans un corps de requete, seule la reservation le pose.

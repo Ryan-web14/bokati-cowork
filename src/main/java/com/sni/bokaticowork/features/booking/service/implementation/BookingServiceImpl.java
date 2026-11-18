@@ -206,7 +206,7 @@ public class BookingServiceImpl implements BookingService {
         // Saisie par l'equipe (administration, gerance, operations) hors du portail : le preavis de
         // la ressource ne s'applique pas, sauf si sa politique l'interdit (stricte, evenementielle).
         String staffActor = staffOverride == null ? null
-                : staffOverride.actorFor(resource.getResourcePolicy()).orElse(null);
+                : staffOverride.actorFor(resource.getEffectivePolicy()).orElse(null);
         resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity, staffActor != null);
         BookingIdentityResolver.ResolvedBookingIdentity identity = suppliedIdentity == null
                 ? identityResolver.resolve(request.identityLookup())
@@ -493,6 +493,18 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public BookingResponse cancelForResourceUnavailability(String bookingNumber, String reason) {
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String actor = auth == null ? "SYSTEM" : auth.getName();
+        return bookingMapper.toResponse(cancelInternal(
+                getForService(bookingNumber),
+                new BookingStatusChangeRequest(actor, reason, Boolean.TRUE),
+                true
+        ));
+    }
+
+    @Override
     public BookingResponse noShow(String bookingNumber, BookingStatusChangeRequest request) {
         return bookingMapper.toResponse(markNoShowInternal(getForService(bookingNumber), request));
     }
@@ -614,6 +626,10 @@ public class BookingServiceImpl implements BookingService {
         }
         booking.setCheckedOutAt(Instant.now());
         booking = bookingRepository.save(booking);
+        // Lot R5c : depassement mesure au depart, selon la politique.
+        if (bookingExtras != null) {
+            bookingExtras.onCheckOut(booking);
+        }
         eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_OUT, "Booking checked out", request == null ? null : request.note(), null,
                 emailRequested(request == null ? null : request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_OUT, new BookingStatusChangeRequest(request == null ? null : request.actor(), request == null ? null : request.note(), request == null ? null : request.sendEmail()));
@@ -793,7 +809,7 @@ public class BookingServiceImpl implements BookingService {
         resourceGuard.validateBookable(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity(),
                 StringUtils.hasText(booking.getPolicyOverrideBy())
                         && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(
-                        booking.getResource().getResourcePolicy()));
+                        booking.getResource().getEffectivePolicy()));
         resourceGuard.validateNoSingleCapacityConflict(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getBookingNumber());
         boolean confirmedFromHold = confirmHoldIfPresent(booking);
         if (!confirmedFromHold) {
@@ -859,6 +875,10 @@ public class BookingServiceImpl implements BookingService {
         booking.setCancellationReason(reason(request, "Booking cancelled"));
         booking.setCancelledAt(Instant.now());
         booking = bookingRepository.save(booking);
+        // Lot R5d : taches ouvertes de la reservation annulees avec elle.
+        if (bookingOperations != null) {
+            bookingOperations.cancelTasks(booking);
+        }
         writeHistory(booking, from, BookingStatus.CANCELLED, changedBy(request), reason(request, "Booking cancelled"));
         eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Booking cancelled", booking.getCancellationReason(), null,
                 emailRequested(request));
@@ -873,6 +893,19 @@ public class BookingServiceImpl implements BookingService {
         return booking;
     }
 
+    private com.sni.bokaticowork.features.booking.service.support.BookingExtras bookingExtras;
+    private com.sni.bokaticowork.features.booking.service.support.BookingOperations bookingOperations;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setBookingOperations(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingOperations bookingOperations) {
+        this.bookingOperations = bookingOperations;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setBookingExtras(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingExtras bookingExtras) {
+        this.bookingExtras = bookingExtras;
+    }
+
     private Booking markNoShowInternal(Booking booking, BookingStatusChangeRequest request) {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be marked as no-show");
@@ -884,6 +917,10 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.NO_SHOW);
         booking.setCompletedAt(Instant.now());
         booking = bookingRepository.save(booking);
+        // Lot R5c : frais de non-presentation de la politique.
+        if (bookingExtras != null) {
+            bookingExtras.onNoShow(booking);
+        }
         writeHistory(booking, from, BookingStatus.NO_SHOW, changedBy(request), reason(request, "No-show"));
         eventWriter.write(booking, BookingEventType.BOOKING_NO_SHOW, "Booking no-show", "Booking was marked as no-show", null,
                 emailRequested(request));
@@ -912,6 +949,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void createBookingPreparationTask(Booking booking) {
+        // Lot R5d : les modeles de taches de la ressource remplacent la tache par defaut.
+        if (bookingOperations != null && bookingOperations.hasTemplates(booking)) {
+            bookingOperations.createBookingTasks(booking);
+            return;
+        }
         try {
             taskManagementService.createFromAutomation(new CreateTaskRequest(
                     "Preparer la ressource " + booking.getResource().getName(),
@@ -936,6 +978,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void createBookingCleanupTask(Booking booking) {
+        // Lot R5d : avec des modeles, les taches d'apres sont deja creees a la confirmation.
+        if (bookingOperations != null && bookingOperations.hasTemplates(booking)) {
+            return;
+        }
         try {
             taskManagementService.createFromAutomation(new CreateTaskRequest(
                     "Nettoyer la ressource " + booking.getResource().getName(),
@@ -1098,7 +1144,7 @@ public class BookingServiceImpl implements BookingService {
      * une minute apres la reservation, alors meme que l'argent n'a pas bouge.</p>
      */
     private void assertCancellationAllowed(Booking booking) {
-        ResourcePolicy policy = booking.getResource().getResourcePolicy();
+        ResourcePolicy policy = booking.getResource().getEffectivePolicy();
         if (policy == null || booking.getStatus() == BookingStatus.DRAFT
                 || booking.getStatus() == BookingStatus.PENDING_PAYMENT) {
             return;

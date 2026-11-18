@@ -35,9 +35,8 @@ public class ResourceClosureController {
     @PostMapping
     @Audited(module = "RESOURCE", action = "CREATE_CLOSURE", ressource = "resource_closure")
     @Idempotent(operation = "RESOURCE_CLOSURE_CREATE")
-    public ResponseEntity<Void> create(@Valid @RequestBody CreateResourceClosureRequest request) {
-        resourceClosureService.createClosure(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse> create(@Valid @RequestBody CreateResourceClosureRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(resourceClosureService.createClosure(request));
     }
 
     @GetMapping("/{id}")
@@ -59,7 +58,7 @@ public class ResourceClosureController {
     @Audited(module = "RESOURCE", action = "UPDATE_CLOSURE_ACTIVE", ressource = "resource_closure")
     @Idempotent(operation = "RESOURCE_CLOSURE_UPDATE_ACTIVE", requestBodyArgIndex = 1)
     public ResponseEntity<Void> updateActive(@PathVariable Long id, @Valid @RequestBody UpdateActiveRequest request) {
-        resourceClosureService.updateActive(id, request.getActive());
+        resourceClosureService.updateActive(id, request.getActive(), Boolean.TRUE.equals(request.getCancelBookings()));
         return ResponseEntity.noContent().build();
     }
 

@@ -24,6 +24,20 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
     private final ResourceService resourceService;
     private final ResourceAvailabilityRepository availabilityRepository;
 
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarDays calendarDays;
+    private com.sni.bokaticowork.features.ressource.repository.repo.ResourceClosureRepository closureRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setR5a(com.sni.bokaticowork.features.ressource.service.support.ResourceCalendarDays calendarDays,
+                com.sni.bokaticowork.features.ressource.repository.repo.ResourceClosureRepository closureRepository) {
+        this.calendarDays = calendarDays;
+        this.closureRepository = closureRepository;
+    }
+
+    private String dayLabel(Resource resource, LocalDate date) {
+        return calendarDays == null ? null : calendarDays.dayLabel(resource, date);
+    }
+
     @Override
     public PublicResourceCalendarResponse calendar(String resourceCode, LocalDate fromDate, LocalDate toDate) {
         return calendar(resourceCode, fromDate, toDate, false);
@@ -86,6 +100,7 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
                     .remainingCapacity(remainingCapacity)
                     .status(status(totalSlots, availableSlots))
                     .windows(windows)
+                    .dayLabel(dayLabel(resource, day))
                     .build());
         }
 

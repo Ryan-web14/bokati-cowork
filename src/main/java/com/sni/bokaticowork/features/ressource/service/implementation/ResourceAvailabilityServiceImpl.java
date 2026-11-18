@@ -125,7 +125,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     public void createAvailability(CreateResourceAvailabilityRequest request) {
         List<String> errors = validateCreateRequest(request);
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource availability request", errors);
+            throw new ValidationException("Demande de créneau invalide", errors);
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
@@ -133,23 +133,37 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         assertResourceBookable(resource);
         slotPolicy.assertAligned(resource, request.getStartedAt(), request.getEndedAt());
         assertAvailabilityCreationWindow(request.getStartedAt(), request.getEndedAt());
+        // Lot R3 : dans les horaires d'ouverture de la ressource (avant : 08:00-22:00 fixe), sauf derogation.
+        if (!Boolean.TRUE.equals(request.getOutsideOpeningHours()) && openingHours != null
+                && !withinOpeningHours(resource, request.getStartedAt(), request.getEndedAt())) {
+            throw new ConflictException("Plage hors des horaires d'ouverture de " + resource.getCode() + " le "
+                    + request.getStartedAt().toLocalDate() + " : ajustez-la, ou posez outsideOpeningHours=true pour une dérogation");
+        }
 
         if (closureRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
-            throw new ConflictException("resource availability", "the requested range overlaps an active closure");
+            throw new ConflictException("La plage demandée chevauche une fermeture active");
         }
 
         if (availabilityRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
-            throw new ConflictException("resource availability", "the requested range overlaps existing availability slots");
+            throw new ConflictException("La plage demandée chevauche des créneaux existants");
         }
 
         int capacity = resolveCapacity(resource);
         List<ResourceAvailability> slots = buildSlots(resource, request.getStartedAt(), request.getEndedAt(), capacity, request.getActive());
+        // Lot R5a : une fermeture repetee ne refuse pas la journee, elle rend indisponibles les creneaux qu'elle couvre.
+        List<com.sni.bokaticowork.features.ressource.model.ResourceClosure> recurring = closureRepository.findActiveRecurring(resource);
+        if (recurring != null && !recurring.isEmpty()) {
+            for (ResourceAvailability slot : slots) {
+                if (recurring.stream().anyMatch(closure -> closure.occursWithin(slot.getStartedAt(), slot.getEndedAt()))) {
+                    slot.setAvailable(Boolean.FALSE);
+                }
+            }
+        }
         availabilityRepository.saveAll(slots);
     }
 
     @Override
     public PaginatedResponse<ResourceAvailabilityResponse> list(Pageable pageable) {
-        expirePastAvailabilitySlots();
         Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByEndedAtAfter(LocalDateTime.now(), pageable)
                 .map(this::toResponse);
         return new PaginatedResponse<>(page);
@@ -158,7 +172,6 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     @Override
     public PaginatedResponse<ResourceAvailabilityResponse> listByResource(String resourceCode, Pageable pageable) {
         Resource resource = resourceService.getResourceForService(resourceCode);
-        expirePastAvailabilitySlots();
         Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByResourceAndEndedAtAfter(resource, LocalDateTime.now(), pageable)
                 .map(this::toResponse);
         return new PaginatedResponse<>(page);
@@ -166,7 +179,6 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     @Override
     public List<ResourceAvailabilityGroupResponse> listGroupedByResource() {
-        expirePastAvailabilitySlots();
         Map<String, ResourceAvailabilityGroupResponse> grouped = new LinkedHashMap<>();
 
         availabilityRepository.findFutureForGroupedView(LocalDateTime.now()).forEach(slot -> {
@@ -202,7 +214,6 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             Integer quantity,
             boolean includeSubscribersOnly
     ) {
-        expirePastAvailabilitySlots();
         Resource resource = resourceService.getResourceForService(resourceCode);
         int normalizedQuantity = normalizeQuantity(quantity);
         if (startedAt == null && endedAt == null && durationMinutes == null) {
@@ -218,7 +229,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         if (durationViolation(resource, normalizedDuration) != null) {
             return List.of();
         }
-        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getResourcePolicy()).isPresent();
+        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getEffectivePolicy()).isPresent();
         LocalDateTime earliestStaffStart = staff ? staffOverride.earliestStart(LocalDateTime.now()) : LocalDateTime.now();
 
         // Sans le droit aux soirees, un creneau d'abonnes n'existe pas · une fenetre qui le
@@ -244,6 +255,11 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             if (!allReservable(candidate, normalizedQuantity, resource, staff)) {
                 continue;
             }
+            // Lot R5a : avance maximale et battement.
+            if (!staff && (beyondMaxAdvance(resource, candidate.getFirst().getStartedAt())
+                    || bufferTaken(resource, candidate.getFirst().getStartedAt(), candidate.getLast().getEndedAt()))) {
+                continue;
+            }
 
             int remainingCapacity = candidate.stream()
                     .map(ResourceAvailability::getRemainingCapacity)
@@ -265,36 +281,40 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     @Override
     public void reserve(ReserveResourceAvailabilityRequest request) {
-        expirePastAvailabilitySlots();
         List<String> errors = validateReservationRequest(request);
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource reservation request", errors);
+            throw new ValidationException("Demande de réservation de créneau invalide", errors);
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
         slotPolicy.assertAligned(resource, request.getStartedAt(), request.getEndedAt());
         assertResourceBookable(resource);
         boolean staff = request.isStaffOverride()
-                && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(resource.getResourcePolicy());
+                && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(resource.getEffectivePolicy());
         if (staff) {
             String violation = durationViolation(resource,
                     Math.toIntExact(Duration.between(request.getStartedAt(), request.getEndedAt()).toMinutes()));
             if (violation != null) {
-                throw new ConflictException("resource availability", violation);
+                throw new ConflictException(violation);
             }
         } else {
             assertPolicyAllowsWindow(resource, request.getStartedAt(), request.getEndedAt());
         }
 
-        if (closureRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
-            throw new ConflictException("resource reservation", "the requested range overlaps an active closure");
+        if (closedDuring(resource, request.getStartedAt(), request.getEndedAt())) {
+            throw new ConflictException("La plage demandée chevauche une fermeture active");
         }
 
         List<ResourceAvailability> slots = availabilityRepository.lockAllSlotsInRange(resource, request.getStartedAt(), request.getEndedAt());
         assertExactRequestedCoverage(slots, request.getStartedAt(), request.getEndedAt());
+        // Lot R5a : battement de la politique autour d'une piece louee entiere (l'equipe peut passer outre).
+        if (!staff && bufferTaken(resource, request.getStartedAt(), request.getEndedAt())) {
+            throw new ConflictException("Le battement de " + resource.getEffectivePolicy().getBufferMinutes()
+                    + " minutes entre deux réservations n'est pas respecté (ménage, installation)");
+        }
 
         if (!allReservable(slots, request.getQuantity(), resource, staff)) {
-            throw new ConflictException("resource reservation", "insufficient remaining availability for the requested range");
+            throw new ConflictException("Disponibilité restante insuffisante sur la plage demandée");
         }
 
         for (ResourceAvailability slot : slots) {
@@ -313,10 +333,9 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     @Override
     public void release(ReleaseResourceAvailabilityRequest request) {
-        expirePastAvailabilitySlots();
         List<String> errors = validateReleaseRequest(request);
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource availability release request", errors);
+            throw new ValidationException("Demande de libération de créneau invalide", errors);
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
@@ -338,13 +357,13 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     private void assertResourceBookable(Resource resource) {
         if (!Boolean.TRUE.equals(resource.getBookingEnabled())) {
-            throw new ConflictException("resource availability", "the resource is not bookable");
+            throw new ConflictException("La ressource n'est pas réservable");
         }
         if (!Boolean.TRUE.equals(resource.getActive())) {
-            throw new ConflictException("resource availability", "the resource is inactive");
+            throw new ConflictException("La ressource est inactive");
         }
         if (resource.getStatus() == null || resource.getStatus() != ResourceStatus.ACTIVE) {
-            throw new ConflictException("resource availability", "the resource status does not allow bookings");
+            throw new ConflictException("Le statut de la ressource ne permet pas de réserver");
         }
     }
 
@@ -360,35 +379,65 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
      * @return le motif du refus, ou {@code null} si la plage est acceptable
      */
     private String policyViolation(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
-        ResourcePolicy policy = resource.getResourcePolicy();
+        ResourcePolicy policy = resource.getEffectivePolicy();
         if (policy == null) {
             return null;
         }
 
         int requestedMinutes = Math.toIntExact(Duration.between(startedAt, endedAt).toMinutes());
         if (requestedMinutes < policy.getMinBookingDurationMinutes()) {
-            return "the requested duration is below the policy minimum";
+            return "La durée demandée est inférieure au minimum de la politique";
         }
         if (requestedMinutes > policy.getMaxBookingDurationMinutes()) {
-            return "the requested duration exceeds the policy maximum";
+            return "La durée demandée dépasse le maximum de la politique";
         }
         if (startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
-            return "the requested start time violates the minimum booking notice";
+            return "L'heure de début ne respecte pas le préavis minimal de réservation";
+        }
+        if (beyondMaxAdvance(resource, startedAt)) {
+            return "Réservation au plus " + policy.getMaxAdvanceDays() + " jours à l'avance pour cette ressource";
         }
         return null;
     }
 
+    /** Lot R5a : au-dela de l'avance maximale de la politique. */
+    private static boolean beyondMaxAdvance(Resource resource, LocalDateTime startedAt) {
+        ResourcePolicy policy = resource.getEffectivePolicy();
+        return policy != null && policy.getMaxAdvanceDays() != null && policy.getMaxAdvanceDays() > 0
+                && startedAt.toLocalDate().isAfter(java.time.LocalDate.now().plusDays(policy.getMaxAdvanceDays()));
+    }
+
+    /**
+     * Lot R5a : une reservation occupe-t-elle le battement avant ou apres la plage ? Seulement pour
+     * une piece louee entiere ; un creneau entame dans le battement suffit a refuser.
+     */
+    private boolean bufferTaken(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+        ResourcePolicy policy = resource.getEffectivePolicy();
+        if (policy == null || policy.getBufferMinutes() == null || policy.getBufferMinutes() <= 0
+                || !resource.isWholeResourceBooking()) {
+            return false;
+        }
+        int buffer = policy.getBufferMinutes();
+        List<ResourceAvailability> around = new ArrayList<>();
+        List<ResourceAvailability> before = availabilityRepository.findOverlapping(resource, startedAt.minusMinutes(buffer), startedAt);
+        List<ResourceAvailability> after = availabilityRepository.findOverlapping(resource, endedAt, endedAt.plusMinutes(buffer));
+        if (before != null) around.addAll(before);
+        if (after != null) around.addAll(after);
+        return around.stream().anyMatch(slot -> slot.getTotalCapacity() != null && slot.getRemainingCapacity() != null
+                && slot.getRemainingCapacity() < slot.getTotalCapacity());
+    }
+
     /** La duree seule, au regard de la politique · le motif du refus, ou {@code null}. */
     private String durationViolation(Resource resource, int requestedMinutes) {
-        ResourcePolicy policy = resource.getResourcePolicy();
+        ResourcePolicy policy = resource.getEffectivePolicy();
         if (policy == null) {
             return null;
         }
         if (requestedMinutes < policy.getMinBookingDurationMinutes()) {
-            return "the requested duration is below the policy minimum";
+            return "La durée demandée est inférieure au minimum de la politique";
         }
         if (requestedMinutes > policy.getMaxBookingDurationMinutes()) {
-            return "the requested duration exceeds the policy maximum";
+            return "La durée demandée dépasse le maximum de la politique";
         }
         return null;
     }
@@ -396,29 +445,163 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private void assertPolicyAllowsWindow(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
         String violation = policyViolation(resource, startedAt, endedAt);
         if (violation != null) {
-            throw new ConflictException("resource availability", violation);
+            throw new ConflictException(violation);
         }
     }
 
+    /** Lot R3 : pas dans le passe, et pas au-dela de l'horizon de reservation (90 jours par defaut). */
     private void assertAvailabilityCreationWindow(LocalDateTime startedAt, LocalDateTime endedAt) {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime latestAllowedEnd = now.toLocalDate()
-                .plusMonths(MAX_AVAILABILITY_CREATION_MONTHS)
-                .atTime(WORKING_DAY_END);
-
         if (startedAt.isBefore(now)) {
-            throw new ConflictException("resource availability", "availability cannot be created in the past");
+            throw new ConflictException("Impossible d'ouvrir des créneaux dans le passé");
         }
-        if (endedAt.isAfter(latestAllowedEnd)) {
-            throw new ConflictException("resource availability", "availability can only be created up to one month in advance");
+        int horizon = horizonDays();
+        if (endedAt.isAfter(now.toLocalDate().plusDays(horizon + 1L).atStartOfDay())) {
+            throw new ConflictException("Créneaux ouverts au plus " + horizon + " jours à l'avance (app.resources.booking-horizon-days)");
         }
-        if (!isValidAvailabilityStart(startedAt.toLocalTime()) || !isValidAvailabilityEnd(endedAt.toLocalTime())) {
-            throw new ConflictException("resource availability", "availability must be created within working hours from 08:00 to 22:00");
+    }
+
+    public static final String HORIZON_DAYS = "app.resources.booking-horizon-days";
+
+    public int horizonDays() {
+        return platformSettings == null ? 90 : Math.max(1, platformSettings.integer(HORIZON_DAYS, 90));
+    }
+
+    private boolean withinOpeningHours(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+        if (!startedAt.toLocalDate().equals(endedAt.toLocalDate()) && !endedAt.toLocalTime().equals(LocalTime.MIDNIGHT)) {
+            return false;
+        }
+        // Lot R5a : jour ferie, horaires exceptionnels et jours fermes compris.
+        var ranges = openingHours.forDate(resource, startedAt.toLocalDate());
+        LocalTime from = startedAt.toLocalTime();
+        LocalTime to = endedAt.toLocalTime();
+        return ranges.stream().anyMatch(range -> !from.isBefore(range.open()) && !to.isAfter(range.close()));
+    }
+
+    private com.sni.bokaticowork.features.ressource.service.support.OpeningHoursResolver openingHours;
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceImpactGuard impactGuard;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setR3(com.sni.bokaticowork.features.ressource.service.support.OpeningHoursResolver openingHours,
+               com.sni.bokaticowork.features.ressource.service.support.ResourceImpactGuard impactGuard) {
+        this.openingHours = openingHours;
+        this.impactGuard = impactGuard;
+    }
+
+    // ------------------------------------------------------------------ lot R3 : gestion des creneaux
+
+    /** Lot R3 : creneaux passes clos par la tache horaire (avant : par chaque lecture). */
+    @Override
+    public int expirePastSlots() {
+        int total = 0;
+        for (int round = 0; round < 50; round++) {
+            int expired = expirePastAvailabilitySlots();
+            total += expired;
+            if (expired < EXPIRY_BATCH_SIZE) {
+                break;
+            }
+        }
+        return total;
+    }
+
+    /** Lot R3 : desactiver ou reactiver un creneau a venir ; desactiver un creneau reserve est refuse. */
+    @Override
+    public void updateSlotActive(Long id, boolean active) {
+        ResourceAvailability slot = availabilityRepository.findById(id)
+                .orElseThrow(() -> new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Créneau introuvable : " + id));
+        if (!slot.getEndedAt().isAfter(LocalDateTime.now())) {
+            throw new ConflictException("Créneau passé : il ne se modifie plus");
+        }
+        if (!active && reserved(slot)) {
+            throw new ConflictException("Créneau réservé : déplacez ou annulez d'abord les réservations qui l'occupent");
+        }
+        slot.setActive(active);
+        slot.setAvailable(active && slot.getRemainingCapacity() != null && slot.getRemainingCapacity() > 0
+                && !closedDuring(slot.getResource(), slot.getStartedAt(), slot.getEndedAt()));
+        availabilityRepository.save(slot);
+    }
+
+    /** Lot R3 : supprimer un creneau a venir sans reservation. */
+    @Override
+    public void deleteSlot(Long id) {
+        ResourceAvailability slot = availabilityRepository.findById(id)
+                .orElseThrow(() -> new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Créneau introuvable : " + id));
+        if (reserved(slot)) {
+            throw new ConflictException("Créneau réservé : déplacez ou annulez d'abord les réservations qui l'occupent");
+        }
+        availabilityRepository.delete(slot);
+    }
+
+    /**
+     * Lot R3 : supprimer les creneaux a venir sans reservation d'une ressource sur une plage (tout
+     * l'avenir par defaut) ; debloque le changement de duree de creneau. Les creneaux reserves restent.
+     *
+     * @return {deleted, kept}
+     */
+    @Override
+    public java.util.Map<String, Integer> deleteFutureSlots(String resourceCode, LocalDateTime from, LocalDateTime to) {
+        Resource resource = resourceService.getResourceForService(resourceCode);
+        LocalDateTime start = from == null || from.isBefore(LocalDateTime.now()) ? LocalDateTime.now() : from;
+        LocalDateTime end = to == null ? start.plusYears(2) : to;
+        List<ResourceAvailability> slots = availabilityRepository.lockAllSlotsInRange(resource, start, end);
+        List<ResourceAvailability> free = slots.stream().filter(slot -> !reserved(slot)).toList();
+        availabilityRepository.deleteAll(free);
+        java.util.Map<String, Integer> result = new java.util.LinkedHashMap<>();
+        result.put("deleted", free.size());
+        result.put("kept", slots.size() - free.size());
+        return result;
+    }
+
+    private static boolean reserved(ResourceAvailability slot) {
+        return slot.getTotalCapacity() != null && slot.getRemainingCapacity() != null
+                && slot.getRemainingCapacity() < slot.getTotalCapacity();
+    }
+
+    /** Lot R3 (D6) : reservation manuelle de rattrapage, motif obligatoire. */
+    @Override
+    public void reserveManually(ReserveResourceAvailabilityRequest request) {
+        requireReason(request == null ? null : request.getReason());
+        reserve(request);
+    }
+
+    /**
+     * Lot R3 (D6) : liberation manuelle de rattrapage, motif obligatoire ; jamais au-dela de ce que
+     * les reservations actives laissent libre (avant : une piece louee entiere redevenait libre).
+     */
+    @Override
+    public void releaseManually(ReleaseResourceAvailabilityRequest request) {
+        requireReason(request == null ? null : request.getReason());
+        Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
+        if (impactGuard != null) {
+            var bookings = impactGuard.impacted(resource, request.getStartedAt(), request.getEndedAt()).stream()
+                    .filter(b -> request.getBookingNumber() == null || !request.getBookingNumber().equals(b.bookingNumber()))
+                    .toList();
+            if (!bookings.isEmpty() && resource.isWholeResourceBooking()) {
+                throw new ConflictException("La plage est occupée par " + bookings.size() + " réservation(s) active(s) ("
+                        + bookings.stream().map(b -> b.bookingNumber()).limit(10).collect(java.util.stream.Collectors.joining(", "))
+                        + ") : elle ne se libère pas à la main");
+            }
+            int booked = bookings.stream().mapToInt(b -> b.quantity()).sum();
+            List<ResourceAvailability> slots = availabilityRepository.lockAllSlotsInRange(resource, request.getStartedAt(), request.getEndedAt());
+            for (ResourceAvailability slot : slots) {
+                int maxRemaining = Math.max(0, slot.getTotalCapacity() - booked);
+                int wanted = Math.min(slot.getTotalCapacity(), slot.getRemainingCapacity() + (request.getQuantity() == null ? 1 : request.getQuantity()));
+                if (wanted > maxRemaining) {
+                    throw new ConflictException("Libération refusée : " + booked + " place(s) restent occupées par des réservations actives sur ce créneau");
+                }
+            }
+        }
+        release(request);
+    }
+
+    private static void requireReason(String reason) {
+        if (!StringUtils.hasText(reason)) {
+            throw new BadRequestException("Le motif est obligatoire pour une opération manuelle sur les créneaux (reason)");
         }
     }
 
     private boolean respectsBookingNotice(Resource resource, LocalDateTime startedAt) {
-        ResourcePolicy policy = resource.getResourcePolicy();
+        ResourcePolicy policy = resource.getEffectivePolicy();
         if (policy == null) {
             return true;
         }
@@ -552,13 +735,13 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     private void assertExactRequestedCoverage(List<ResourceAvailability> slots, LocalDateTime startedAt, LocalDateTime endedAt) {
         if (slots.isEmpty()) {
-            throw new ConflictException("resource reservation", "no availability exists for the requested range");
+            throw new ConflictException("Aucun créneau sur la plage demandée");
         }
 
         long expectedSlotCount = slotPolicy.slotCount(
                 slots.getFirst().getResource(), Duration.between(startedAt, endedAt).toMinutes());
         if (slots.size() != expectedSlotCount || !slots.getFirst().getStartedAt().equals(startedAt) || !slots.getLast().getEndedAt().equals(endedAt) || !isContiguous(slots)) {
-            throw new ConflictException("resource reservation", "the requested range is not fully covered by contiguous availability slots");
+            throw new ConflictException("La plage demandée n'est pas entièrement couverte par des créneaux contigus");
         }
     }
 
@@ -589,8 +772,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
         long futureSlots = availabilityRepository.countByResourceAndEndedAtAfter(resource, LocalDateTime.now());
         if (futureSlots > 0) {
-            throw new ConflictException("resource availability",
-                    "La ressource " + resource.getCode() + " a " + futureSlots + " creneau(x) futur(s) de "
+            throw new ConflictException("La ressource " + resource.getCode() + " a " + futureSlots + " creneau(x) futur(s) de "
                             + current + " minutes · supprimez-les avant de passer a " + requested
                             + " minutes, sinon ses creneaux auraient des durees melangees et les"
                             + " fenetres calculees seraient fausses.");
@@ -617,7 +799,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
                 ? resource.resolveSeatingCapacity()
                 : resource.resolveBookableSlots();
         if (baseCapacity < 1) {
-            throw new BadRequestException("Availability capacity must be greater than zero");
+            throw new BadRequestException("La capacité du créneau doit être supérieure à zéro");
         }
         return baseCapacity;
     }
@@ -625,28 +807,28 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private int normalizeDurationMinutes(Resource resource, Integer durationMinutes) {
         int slotMinutes = slotPolicy.slotMinutes(resource);
         if (durationMinutes == null || durationMinutes < slotMinutes) {
-            throw new BadRequestException("Duration must be at least " + slotMinutes + " minutes");
+            throw new BadRequestException("La durée doit être d'au moins " + slotMinutes + " minutes");
         }
         if (durationMinutes % slotMinutes != 0) {
-            throw new BadRequestException("Duration must be a multiple of " + slotMinutes + " minutes");
+            throw new BadRequestException("La durée doit être un multiple de " + slotMinutes + " minutes");
         }
         return durationMinutes;
     }
 
     private int normalizeQuantity(Integer quantity) {
         if (quantity == null || quantity < 1) {
-            throw new BadRequestException("Quantity must be greater than zero");
+            throw new BadRequestException("La quantité doit être supérieure à zéro");
         }
         return quantity;
     }
 
     private static final int EXPIRY_BATCH_SIZE = 200;
 
-    private void expirePastAvailabilitySlots() {
+    private int expirePastAvailabilitySlots() {
         LocalDateTime now = LocalDateTime.now();
         List<ResourceAvailability> expiredSlots = availabilityRepository.findExpiredSlots(now, Limit.of(EXPIRY_BATCH_SIZE));
         if (expiredSlots.isEmpty()) {
-            return;
+            return 0;
         }
 
         java.time.Instant expiredAt = java.time.Instant.now();
@@ -659,6 +841,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             }
         });
         availabilityRepository.saveAll(expiredSlots);
+        return expiredSlots.size();
     }
 
     private List<ResourceAvailabilityWindowResponse> findFullRemainingWindows(Resource resource, int quantity,
@@ -714,44 +897,42 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     private void validateSearchWindow(LocalDateTime startedAt, LocalDateTime endedAt, int durationMinutes) {
         if (startedAt == null || endedAt == null) {
-            throw new BadRequestException("Start and end dates are required");
+            throw new BadRequestException("Les dates de début et de fin sont requises");
         }
         if (!endedAt.isAfter(startedAt)) {
-            throw new BadRequestException("End date must be after start date");
+            throw new BadRequestException("La date de fin doit suivre la date de début");
         }
         if (startedAt.plusMinutes(durationMinutes).isAfter(endedAt.plusMinutes(1))) {
-            throw new BadRequestException("Requested duration does not fit inside the requested search range");
+            throw new BadRequestException("La durée demandée ne tient pas dans la plage de recherche");
         }
     }
 
     private List<String> validateCreateRequest(CreateResourceAvailabilityRequest request) {
         List<String> errors = new ArrayList<>();
         if (request == null) {
-            errors.add("Invalid resource availability request, the request body is required");
+            errors.add("Demande de créneau invalide : le corps de la demande est requis");
             return errors;
         }
         if (!StringUtils.hasText(request.getResourceCode())) {
-            errors.add("Invalid resource availability request, the resource code is required");
+            errors.add("Demande de créneau invalide : le code de la ressource est requis");
         }
         validateTimeRange(errors, request.getStartedAt(), request.getEndedAt());
-        if (request.getCapacity() != null && request.getCapacity() < 1) {
-            errors.add("Invalid resource availability request, the capacity must be greater than zero");
-        }
+        // Lot R3 : capacity n'est plus controle ; la capacite d'un creneau suit toujours la ressource.
         return errors;
     }
 
     private List<String> validateReservationRequest(ReserveResourceAvailabilityRequest request) {
         List<String> errors = new ArrayList<>();
         if (request == null) {
-            errors.add("Invalid resource reservation request, the request body is required");
+            errors.add("Demande de réservation de créneau invalide : le corps de la demande est requis");
             return errors;
         }
         if (!StringUtils.hasText(request.getResourceCode())) {
-            errors.add("Invalid resource reservation request, the resource code is required");
+            errors.add("Demande de réservation de créneau invalide : le code de la ressource est requis");
         }
         validateTimeRange(errors, request.getStartedAt(), request.getEndedAt());
         if (request.getQuantity() == null || request.getQuantity() < 1) {
-            errors.add("Invalid resource reservation request, the quantity must be greater than zero");
+            errors.add("Demande de réservation de créneau invalide : la quantité doit être supérieure à zéro");
         }
         return errors;
     }
@@ -759,36 +940,45 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private List<String> validateReleaseRequest(ReleaseResourceAvailabilityRequest request) {
         List<String> errors = new ArrayList<>();
         if (request == null) {
-            errors.add("Invalid resource availability release request, the request body is required");
+            errors.add("Demande de libération de créneau invalide : le corps de la demande est requis");
             return errors;
         }
         if (!StringUtils.hasText(request.getResourceCode())) {
-            errors.add("Invalid resource availability release request, the resource code is required");
+            errors.add("Demande de libération de créneau invalide : le code de la ressource est requis");
         }
         validateTimeRange(errors, request.getStartedAt(), request.getEndedAt());
         if (request.getQuantity() == null || request.getQuantity() < 1) {
-            errors.add("Invalid resource availability release request, the quantity must be greater than zero");
+            errors.add("Demande de libération de créneau invalide : la quantité doit être supérieure à zéro");
         }
         return errors;
     }
 
     private void validateTimeRange(List<String> errors, LocalDateTime startedAt, LocalDateTime endedAt) {
         if (startedAt == null) {
-            errors.add("The start date is required");
+            errors.add("La date de début est requise");
         }
         if (endedAt == null) {
-            errors.add("The end date is required");
+            errors.add("La date de fin est requise");
         }
         if (startedAt != null && endedAt != null) {
             if (!endedAt.isAfter(startedAt)) {
-                errors.add("The end date must be after the start date");
+                errors.add("La date de fin doit suivre la date de début");
             }
             // L'alignement sur les creneaux ne se verifie pas ici : il depend de la duree de la
             // ressource, encore inconnue a ce stade. Il est controle apres resolution, par
             // ResourceSlotPolicy.assertAligned, qui peut alors nommer la duree effective.
             if (startedAt.getSecond() != 0 || endedAt.getSecond() != 0 || startedAt.getNano() != 0 || endedAt.getNano() != 0) {
-                errors.add("The requested range must not contain seconds or fractional seconds");
+                errors.add("La plage demandée ne doit pas contenir de secondes");
             }
         }
+    }
+
+    /** Lot R5a : une fermeture, unique ou repetee, couvre-t-elle une partie de la plage ? */
+    private boolean closedDuring(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+        if (closureRepository.existsActiveOverlap(resource, startedAt, endedAt)) {
+            return true;
+        }
+        List<com.sni.bokaticowork.features.ressource.model.ResourceClosure> recurring = closureRepository.findActiveRecurring(resource);
+        return recurring != null && recurring.stream().anyMatch(closure -> closure.occursWithin(startedAt, endedAt));
     }
 }

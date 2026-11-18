@@ -24,8 +24,8 @@ Module [ressource](../README.md) · 7 route(s).
 - Accès : back-office : rôle d'administration et droit `RESOURCE:CREATE`
 - En-tête `Idempotency-Key` : conseillé (opération `RESOURCE_AMENITY_CREATE`, voir le README racine)
 - Corps JSON (obligatoire) : `CreateAmenityRequest`
-- Réponse : `vide`
-- Modèles : [CreateAmenityRequest](#m-CreateAmenityRequest)
+- Réponse : `AmenityResponse`
+- Modèles : [AmenityResponse](#m-AmenityResponse), [CreateAmenityRequest](#m-CreateAmenityRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAmenitiesController.java`, méthode `create`
 
 <a id="r-get-sni-api-v1-resource-amenities-search"></a>

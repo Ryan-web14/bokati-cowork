@@ -62,6 +62,12 @@ public interface BookingService {
 
     BookingResponse systemCancel(String bookingNumber, String reason);
 
+    /**
+     * Lot R2 (D4) : annulation par l'equipe parce que la ressource devient indisponible (suppression,
+     * fermeture, maintenance) ; le client est prevenu, sans controle du delai d'annulation.
+     */
+    BookingResponse cancelForResourceUnavailability(String bookingNumber, String reason);
+
     BookingResponse noShow(String bookingNumber, BookingStatusChangeRequest request);
 
     /** Les reservations a marquer absentes · a traiter une par une avec {@link #markOverdueNoShow}. */

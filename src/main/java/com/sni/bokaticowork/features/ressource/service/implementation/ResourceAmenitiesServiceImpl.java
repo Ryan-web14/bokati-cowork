@@ -44,17 +44,17 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
     private final RetryPolicy defaultRetryPolicy;
 
     @Override
-    public void createAmenity(CreateAmenityRequest request) {
+    public com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse createAmenity(CreateAmenityRequest request) {
         List<String> errors = validateForCreate(request);
 
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid amenity request", errors);
+            throw new ValidationException("Demande d'équipement invalide", errors);
         }
 
         String normalizedName = request.getName().trim();
 
         if (amenitiesRepository.existsByNameIgnoreCase(normalizedName)) {
-            throw new ResourceAlreadyExistException("An amenity with this name already exists");
+            throw new ResourceAlreadyExistException("Un équipement porte déjà ce nom");
         }
 
         request.setName(normalizedName);
@@ -64,27 +64,27 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         LocalDate businessDate = LocalDate.now();
         amenity.setCode(buildAmenityCode(normalizedName, businessDate));
 
-        retryExecutor.execute("create resource amenity", defaultRetryPolicy, () -> amenitiesRepository.save(amenity));
+        return amenitiesMapper.toResponse(amenitiesRepository.save(amenity));
     }
 
     @Override
     public void updateAmenity(String code, UpdateAmenityRequest request) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Amenity code is required");
+            throw new BadRequestException("Le code de l'équipement est requis");
         }
 
         ResourceAmenities amenity = getAmenityForService(code.trim());
         List<String> errors = validateForUpdate(request, amenity);
 
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid amenity request", errors);
+            throw new ValidationException("Demande d'équipement invalide", errors);
         }
 
         String normalizedName = request.getName() == null ? amenity.getName() : request.getName().trim();
 
         if (!amenity.getName().equalsIgnoreCase(normalizedName)
                 && amenitiesRepository.existsByNameIgnoreCase(normalizedName)) {
-            throw new ResourceAlreadyExistException("An amenity with this name already exists");
+            throw new ResourceAlreadyExistException("Un équipement porte déjà ce nom");
         }
 
         if (request.getName() != null) {
@@ -93,7 +93,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         request.setDescription(normalizeText(request.getDescription()));
 
         amenitiesMapper.updateEntity(amenity, request);
-        retryExecutor.execute("update resource amenity", defaultRetryPolicy, () -> amenitiesRepository.save(amenity));
+        amenitiesRepository.save(amenity);
     }
 
     @Override
@@ -101,10 +101,10 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         ResourceAmenities amenity = getAmenityForService(code);
 
         if (Boolean.TRUE.equals(amenitiesRepository.existsLinkedResources(amenity.getId()))) {
-            throw new ConflictException("resource amenity", "it is currently linked to one or more resources");
+            throw new ConflictException("L'équipement est rattaché à une ou plusieurs ressources");
         }
 
-        retryExecutor.run("delete resource amenity", defaultRetryPolicy, () -> amenitiesRepository.delete(amenity));
+        amenitiesRepository.delete(amenity);
     }
 
     @Override
@@ -119,10 +119,10 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
                 .anyMatch(amenity -> Boolean.TRUE.equals(amenitiesRepository.existsLinkedResources(amenity.getId())));
 
         if (hasLinkedAmenities) {
-            throw new ConflictException("resource amenities", "some amenities are currently linked to resources");
+            throw new ConflictException("Certains équipements sont rattachés à des ressources");
         }
 
-        retryExecutor.run("delete all resource amenities", defaultRetryPolicy, () -> amenitiesRepository.deleteAll(amenities));
+        amenitiesRepository.deleteAll(amenities);
     }
 
     @Override
@@ -135,22 +135,22 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
     @Transactional(readOnly = true)
     public ResourceAmenities getAmenityForService(String code) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Amenity code is required");
+            throw new BadRequestException("Le code de l'équipement est requis");
         }
 
         return amenitiesRepository.findByCode(code.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Amenity with code " + code.trim() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Équipement introuvable : " + code.trim()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResourceAmenities getAmenityForService(Long id) {
         if (id == null) {
-            throw new BadRequestException("Amenity id is required");
+            throw new BadRequestException("L'identifiant de l'équipement est requis");
         }
 
         return amenitiesRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Amenity with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Équipement introuvable : " + id));
     }
 
     @Override
@@ -166,7 +166,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
     @Transactional(readOnly = true)
     public PaginatedResponse<AmenityResponse> search(String query) {
         if (!StringUtils.hasText(query)) {
-            throw new BadRequestException("Search query is required");
+            throw new BadRequestException("Le texte de recherche est requis");
         }
 
         List<AmenityResponse> responses = amenitiesRepository.basicSearch(query.trim()).stream()
@@ -180,7 +180,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         List<String> errors = new ArrayList<>();
 
         if (request == null) {
-            errors.add("Invalid amenity request, the request body is required");
+            errors.add("Demande d'équipement invalide : le corps de la demande est requis");
         } else {
             validateCommonFields(errors, request.getName(), request.getDescription());
         }
@@ -192,7 +192,7 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         List<String> errors = new ArrayList<>();
 
         if (request == null) {
-            errors.add("Invalid amenity request, the request body is required");
+            errors.add("Demande d'équipement invalide : le corps de la demande est requis");
         } else {
             validateCommonFields(
                     errors,
@@ -206,11 +206,11 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
 
     private void validateCommonFields(List<String> errors, String name, String description) {
         if (!StringUtils.hasText(name) || !ValidationUtils.validateString(name.trim())) {
-            errors.add("Invalid amenity request, the name is not valid");
+            errors.add("Demande d'équipement invalide : le nom n'est pas valide");
         }
 
         if (StringUtils.hasText(description) && !ValidationUtils.validateDescription(description.trim())) {
-            errors.add("Invalid amenity request, the description is not valid");
+            errors.add("Demande d'équipement invalide : la description n'est pas valide");
         }
     }
 

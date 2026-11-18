@@ -53,6 +53,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     @Query(nativeQuery = true, value = "SELECT * FROM booking WHERE check_in_token = :checkInToken AND deleted = false")
     Optional<Booking> findByCheckInToken(@Param("checkInToken") String checkInToken);
 
+    /** Lot R2 : reservations actives d'une ressource qui chevauchent une plage. */
+    @Query(nativeQuery = true, value = """
+            SELECT b.*
+            FROM booking b
+            WHERE b.resource_id = :resourceId
+              AND b.deleted = false
+              AND b.status IN ('CONFIRMED', 'IN_PROGRESS', 'PENDING_APPROVAL', 'PENDING_PAYMENT')
+              AND b.started_at < :endedAt
+              AND b.ended_at > :startedAt
+            ORDER BY b.started_at
+            """)
+    java.util.List<com.sni.bokaticowork.features.booking.model.Booking> findActiveOnResource(@Param("resourceId") Long resourceId,
+                                                                                         @Param("startedAt") LocalDateTime startedAt,
+                                                                                         @Param("endedAt") LocalDateTime endedAt);
+
     @Query(nativeQuery = true, value = """
             SELECT EXISTS(
                 SELECT 1

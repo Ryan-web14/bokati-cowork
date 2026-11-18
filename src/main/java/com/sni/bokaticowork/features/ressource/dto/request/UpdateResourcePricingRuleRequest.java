@@ -38,8 +38,19 @@ public class UpdateResourcePricingRuleRequest {
     private Integer minLeadMinutes;
     /** PORTAL ou TEAM ; vide = tous. */
     private String channel;
+
+    /** Lot R5a : ONLY (jours feries seulement), EXCLUDED (hors jours feries) ou vide. */
+    private String holidayMode;
     private Boolean stackable;
     private Boolean perParticipant;
 
     private Boolean active;
+
+    /**
+     * Ecart Rn-6 : conditions a vider (un champ absent n'est pas modifie). Noms admis : startsAt,
+     * endsAt, validFrom, validUntil, dayOfWeek, daysOfWeek, lastMinuteMinutes, minLeadMinutes,
+     * minParticipants, maxParticipants, minDurationMinutes, maxDurationMinutes, customerSegment,
+     * planCode, channel, holidayMode, adjustment (type et valeur).
+     */
+    private java.util.List<String> clear;
 }

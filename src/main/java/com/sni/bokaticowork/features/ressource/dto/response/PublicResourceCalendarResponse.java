@@ -22,7 +22,9 @@ public record PublicResourceCalendarResponse(
             Integer totalCapacity,
             Integer remainingCapacity,
             String status,
-            List<Window> windows
+            List<Window> windows,
+            /** Lot R5a : jour ferie, horaires exceptionnels ou fermeture du jour. */
+            String dayLabel
     ) {
     }
 

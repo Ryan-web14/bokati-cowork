@@ -25,6 +25,17 @@ public class ReleaseResourceAvailabilityRequest {
     @NotNull
     private Integer quantity;
 
+    /** Forme d'avant le lot R3 (sans motif ni reservation). */
+    public ReleaseResourceAvailabilityRequest(String resourceCode, LocalDateTime startedAt, LocalDateTime endedAt, Integer quantity) {
+        this(resourceCode, startedAt, endedAt, quantity, null, null);
+    }
+
+    /** Lot R3 : motif obligatoire d'une operation manuelle (rattrapage), journalise. */
+    private String reason;
+
+    /** Lot R3 : reservation concernee, s'il y en a une. */
+    private String bookingNumber;
+
     public static ReleaseResourceAvailabilityRequestBuilder builder() {
         return new ReleaseResourceAvailabilityRequestBuilder();
     }

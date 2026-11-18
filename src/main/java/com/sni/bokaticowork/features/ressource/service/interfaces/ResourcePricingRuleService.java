@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 public interface ResourcePricingRuleService {
 
-    void createPricingRule(CreateResourcePricingRuleRequest request);
+    com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse createPricingRule(CreateResourcePricingRuleRequest request);
 
     /**
      * Pose la meme regle sur plusieurs ressources · une transaction par ressource, compte rendu

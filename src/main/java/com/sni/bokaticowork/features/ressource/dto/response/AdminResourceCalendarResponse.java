@@ -12,8 +12,16 @@ public record AdminResourceCalendarResponse(
         String resourceName,
         LocalDate fromDate,
         LocalDate toDate,
-        List<Day> days
+        List<Day> days,
+        /** Lot R5a : fermetures et blocages de la plage (occurrences des repetitions comprises). */
+        List<Block> blocks
 ) {
+    /** Lot R5a : un blocage du calendrier. */
+    @Builder
+    public record Block(Long closureId, String kind, String reason, LocalDateTime startedAt, LocalDateTime endedAt,
+                        String recurrence) {
+    }
+
     @Builder
     public record Day(
             LocalDate date,
@@ -26,7 +34,9 @@ public record AdminResourceCalendarResponse(
             double occupancyRate,
             String occupancyLevel,
             String status,
-            List<Window> windows
+            List<Window> windows,
+            /** Lot R5a : jour ferie, horaires exceptionnels ou fermeture du jour. */
+            String dayLabel
     ) {
     }
 

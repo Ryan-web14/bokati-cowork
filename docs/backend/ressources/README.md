@@ -2,7 +2,7 @@
 
 Branche `feature/ressources`, partie de new-main f33d6089 le 17/11/2026. Plan à valider : les décisions de l'exploitant sont plus bas, à trancher avant le lot concerné.
 
-État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 fait** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md)).
+État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 fait** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md)), **R2 fait** ([lot-r2-politiques-cycle-de-vie.md](lot-r2-politiques-cycle-de-vie.md)), **R3 fait** ([lot-r3-creneaux-horizon.md](lot-r3-creneaux-horizon.md)), **R4 fait** ([lot-r4-listes-recherche.md](lot-r4-listes-recherche.md)), **R6 fait** ([lot-r6-messages.md](lot-r6-messages.md)), **R5a fait** ([lot-r5a-calendrier.md](lot-r5a-calendrier.md)), **R5b fait** ([lot-r5b-sites-recherche.md](lot-r5b-sites-recherche.md)), **R5c fait** ([lot-r5c-vente.md](lot-r5c-vente.md)), **R5d fait** ([lot-r5d-exploitation.md](lot-r5d-exploitation.md)), **R5e fait** ([lot-r5e-pilotage.md](lot-r5e-pilotage.md)), **R7 fait** ([lot-r7-doc-tests.md](lot-r7-doc-tests.md)). Chantier terminé : tous les écarts relevés sont réglés.
 
 ## Constat (vérifié dans le code le 17/11/2026)
 
@@ -22,18 +22,18 @@ Les 16 écarts relevés par la doc frontend (`docs/final-frontend-doc/ressource/
 
 | Lot | Contenu | Écarts |
 | --- | --- | --- |
-| **R0. Sécurité et accès** | Calendrier public : seulement une ressource visible au portail, active et réservable ; plage bornée (92 jours, l'horizon de 90 jours tient dans une demande) ; dates inversées refusées ; jour sans créneau marqué `CLOSED` et non plus `FULL`. Même borne pour le calendrier de l'équipe. `POST /resources/search` en lecture (`RESOURCE:READ`). Photos : la photo doit appartenir à la ressource du chemin, le document doit exister dans la GED, une seule couverture, lecture de la galerie en `RESOURCE:READ`. Horaires d'ouverture ouverts à `RESOURCE:UPDATE` (plus seulement le rôle ADMIN). Journal (`@Audited`) sur les traitements groupés, les photos et les horaires. | 2 (droit), 8, 13, Rn-7, Rn-8, Rn-9 |
-| **R1. Un seul moteur de prix** | `ResourcePriceEngine` dans le module ressource, appelé par la réservation, le devis, l'aperçu groupé, le portail et le catalogue. Il applique jour, heures, validité, ajustement (pourcentage en décimal), priorité, dernier moment et quantité. Durées de demi-journée et de journée en paramètres (décision D2). Le prix d'une réservation est recalculé quand son horaire, sa durée ou sa ressource change (décision D1). Équipements optionnels facturés (`extraPrice`). Modification d'une règle revalidée (jour, heures) avec possibilité de vider un champ ; suppression d'une règle douce et cohérente (champ `deleted` lu partout). Le devis expose le détail : règle retenue, base, ajustements, quantité. | 1, Rn-1, Rn-5, Rn-6, Rn-10, Rn-11 |
-| **R2. Politiques et cycle de vie** | Une politique désactivée ne s'applique plus (contrôles des réservations, des créneaux, de l'annulation, du devis) et ne peut plus être rattachée. `allowCancellation` vrai par défaut (décision D3). Suppression d'un groupe, d'un type ou d'une politique refusée en `409` s'il reste des ressources, celles supprimées en douce comprises (fini le 500). Suppression, mise en maintenance ou hors service d'une ressource qui a des réservations à venir : traitement selon la décision D4. Fermeture : liste des réservations touchées dans la réponse, traitement selon D4, `reason` rendu. Étage (`floorLabel`) enregistré. | 4, 5, 6, 7, 12, 15, Rn-4, Rn-12 |
-| **R3. Créneaux et horizon** | Horizon glissant paramétrable (`app.resources.booking-horizon-days`, 90 jours par défaut, décision D5) : génération quotidienne jusqu'à l'horizon, et non plus au mois. Création manuelle d'après les horaires d'ouverture de la ressource (fini le 08:00-22:00 en dur). Routes pour désactiver, réactiver et supprimer un créneau sans réservation, ce qui débloque le changement de durée de créneau. `capacity` retiré de la requête, ou appliqué. Expiration des créneaux passés faite par une tâche, plus jamais dans une lecture. `/reserve` et `/release` manuels réservés au rattrapage, liés à une réservation et journalisés (décision D6). | 9, 10, 11, 14, Rn-2, Rn-3 |
-| **R4. Listes, recherche, performances** | `GET /resources` filtre par type, groupe et politique, en résumé comme en détail. `POST /resources/search` par codes (`typeCode`, `groupCode`, `policyCode`). `search/basic` paginé. Graphe d'entités sur les listes (fin du N+1). Nouvel essai hors de la transaction compromise. Créations en `201` avec la ressource créée (code compris). Fermetures et créneaux désignés par code et non plus par identifiant numérique. | 2 (filtres), 3, Rn-13, Rn-14, Rn-15, Rn-16 |
-| **R5a. Calendrier et règles de réservation** | Battements entre réservations (ménage, installation) ; fenêtre d'avance maximale par politique ; fermetures et maintenances récurrentes (chaque semaine, chaque année) ; blocages typés (maintenance, ménage, événement privé) ; jours fériés du Congo et horaires exceptionnels par date, pris en compte par les créneaux, le prix et le calendrier. | |
-| **R5b. Trouver, situer, exporter** | Sites (adresse, horaires, fuseau) et filtrage par site ; étages et plan d'étage par site, position de chaque ressource, disponibilité en direct sur le plan ; « Trouver une salle » par besoin (participants, équipements, créneau, site, budget) avec alternatives ; lien iCal par ressource et invitation `.ics` à la confirmation. | |
-| **R5c. Vente** | Codes promo et remises (moteur des promotions des abonnements) ; heures incluses dans un abonnement, consommées avant facturation, solde au portail ; services additionnels (café, traiteur, impression, matériel) facturés avec la réservation ; équipements optionnels facturés ; participants supplémentaires facturables ou non, au choix de l'équipe, par ressource ou par réservation ; caution bloquée puis rendue ou retenue ; frais de dépassement (mesuré au départ) et de non-présentation, selon la politique ; lots de ressources réservées ensemble. | |
-| **R5d. Exploitation** | Tâches créées à la réservation dans la liste de tâches de l'équipe (préparer la salle, servir le café, remettre en état), modèles de tâches par ressource ou par service ; signalement d'incident (membre ou équipe) avec blocage éventuel, ticket au support et historique de maintenance ; règlement d'usage accepté à la réservation, liste de vérification et photos de fin d'utilisation. | |
-| **R5e. Pilotage** | Coûts par ressource (loyer, ménage, énergie, amortissement du matériel, coût des services) et marge par réservation, par ressource et par période ; historique des prix : versions des règles et prix appliqués à chaque réservation, avec leur trace ; taux d'occupation et chiffre d'affaires par ressource, type, site et période, heures creuses et heures pleines. | |
-| **R6. Erreurs et messages** | Environ 165 messages en anglais traduits ; réponses dédiées (409 conflit, 400 nommant le champ). | 16 |
-| **R7. Doc et tests** | Doc frontend `ressource/` mise à jour (écarts marqués Réglé, parcours corrigés), routes régénérées ; tests unitaires par lot, tests d'intégration du moteur de prix et des créneaux sur base réelle. | |
+| **R0. Sécurité et accès** (fait) | Calendrier public : seulement une ressource visible au portail, active et réservable ; plage bornée (92 jours, l'horizon de 90 jours tient dans une demande) ; dates inversées refusées ; jour sans créneau marqué `CLOSED` et non plus `FULL`. Même borne pour le calendrier de l'équipe. `POST /resources/search` en lecture (`RESOURCE:READ`). Photos : la photo doit appartenir à la ressource du chemin, le document doit exister dans la GED, une seule couverture, lecture de la galerie en `RESOURCE:READ`. Horaires d'ouverture ouverts à `RESOURCE:UPDATE` (plus seulement le rôle ADMIN). Journal (`@Audited`) sur les traitements groupés, les photos et les horaires. | 2 (droit), 8, 13, Rn-7, Rn-8, Rn-9 |
+| **R1. Un seul moteur de prix** (fait) | `ResourcePriceEngine` dans le module ressource, appelé par la réservation, le devis, l'aperçu groupé, le portail et le catalogue. Il applique jour, heures, validité, ajustement (pourcentage en décimal), priorité, dernier moment et quantité. Durées de demi-journée et de journée en paramètres (décision D2). Le prix d'une réservation est recalculé quand son horaire, sa durée ou sa ressource change (décision D1). Équipements optionnels facturés (`extraPrice`). Modification d'une règle revalidée (jour, heures) avec possibilité de vider un champ ; suppression d'une règle douce et cohérente (champ `deleted` lu partout). Le devis expose le détail : règle retenue, base, ajustements, quantité. | 1, Rn-1, Rn-5, Rn-6, Rn-10, Rn-11 |
+| **R2. Politiques et cycle de vie** (fait) | Une politique désactivée ne s'applique plus (contrôles des réservations, des créneaux, de l'annulation, du devis) et ne peut plus être rattachée. `allowCancellation` vrai par défaut (décision D3). Suppression d'un groupe, d'un type ou d'une politique refusée en `409` s'il reste des ressources, celles supprimées en douce comprises (fini le 500). Suppression, mise en maintenance ou hors service d'une ressource qui a des réservations à venir : traitement selon la décision D4. Fermeture : liste des réservations touchées dans la réponse, traitement selon D4, `reason` rendu. Étage (`floorLabel`) enregistré. | 4, 5, 6, 7, 12, 15, Rn-4, Rn-12 |
+| **R3. Créneaux et horizon** (fait) | Horizon glissant paramétrable (`app.resources.booking-horizon-days`, 90 jours par défaut, décision D5) : génération quotidienne jusqu'à l'horizon, et non plus au mois. Création manuelle d'après les horaires d'ouverture de la ressource (fini le 08:00-22:00 en dur). Routes pour désactiver, réactiver et supprimer un créneau sans réservation, ce qui débloque le changement de durée de créneau. `capacity` retiré de la requête, ou appliqué. Expiration des créneaux passés faite par une tâche, plus jamais dans une lecture. `/reserve` et `/release` manuels réservés au rattrapage, liés à une réservation et journalisés (décision D6). | 9, 10, 11, 14, Rn-2, Rn-3 |
+| **R4. Listes, recherche, performances** (fait) | `GET /resources` filtre par type, groupe et politique, en résumé comme en détail. `POST /resources/search` par codes (`typeCode`, `groupCode`, `policyCode`). `search/basic` paginé. Graphe d'entités sur les listes (fin du N+1). Nouvel essai hors de la transaction compromise. Créations en `201` avec la ressource créée (code compris). Fermetures et créneaux désignés par code et non plus par identifiant numérique. | 2 (filtres), 3, Rn-13, Rn-14, Rn-15, Rn-16 |
+| **R5a. Calendrier et règles de réservation** (fait) | Battements entre réservations (ménage, installation) ; fenêtre d'avance maximale par politique ; fermetures et maintenances récurrentes (chaque semaine, chaque année) ; blocages typés (maintenance, ménage, événement privé) ; jours fériés du Congo et horaires exceptionnels par date, pris en compte par les créneaux, le prix et le calendrier. | |
+| **R5b. Trouver, situer, exporter** (fait) | Sites (adresse, horaires, fuseau) et filtrage par site ; étages et plan d'étage par site, position de chaque ressource, disponibilité en direct sur le plan ; « Trouver une salle » par besoin (participants, équipements, créneau, site, budget) avec alternatives ; lien iCal par ressource et invitation `.ics` à la confirmation. | |
+| **R5c. Vente** (fait) | Codes promo et remises (moteur des promotions des abonnements) ; heures incluses dans un abonnement, consommées avant facturation, solde au portail ; services additionnels (café, traiteur, impression, matériel) facturés avec la réservation ; équipements optionnels facturés ; participants supplémentaires facturables ou non, au choix de l'équipe, par ressource ou par réservation ; caution bloquée puis rendue ou retenue ; frais de dépassement (mesuré au départ) et de non-présentation, selon la politique ; lots de ressources réservées ensemble. | reste : couverture partielle par les heures incluses |
+| **R5d. Exploitation** (fait) | Tâches créées à la réservation dans la liste de tâches de l'équipe (préparer la salle, servir le café, remettre en état), modèles de tâches par ressource ou par service ; signalement d'incident (membre ou équipe) avec blocage éventuel, ticket au support et historique de maintenance ; règlement d'usage accepté à la réservation, liste de vérification et photos de fin d'utilisation. | |
+| **R5e. Pilotage** (fait) | Coûts par ressource (loyer, ménage, énergie, amortissement du matériel, coût des services) et marge par réservation, par ressource et par période ; historique des prix : versions des règles et prix appliqués à chaque réservation, avec leur trace ; taux d'occupation et chiffre d'affaires par ressource, type, site et période, heures creuses et heures pleines. | |
+| **R6. Erreurs et messages** (fait) | Environ 165 messages en anglais traduits ; réponses dédiées (409 conflit, 400 nommant le champ). | 16 |
+| **R7. Doc et tests** (fait) | Doc frontend `ressource/` mise à jour (écarts marqués Réglé, parcours corrigés), routes régénérées ; tests unitaires par lot, tests d'intégration du moteur de prix et des créneaux sur base réelle. | |
 
 Ordre conseillé : R0 (sécurité), R1 (prix, ce qu'on facture), R2, R3, R4, R6, puis R5a, R5b, R5c, R5d, R5e ; R7 au fil de l'eau.
 
@@ -101,34 +101,34 @@ Absentes aujourd'hui (approbation, quotas, liste d'attente, pointage et non-pré
 | N° | Écart | État |
 | --- | --- | --- |
 | 1 | Deux moteurs de prix divergents | Réglé (R1) |
-| 2 | `POST /resources/search` en `RESOURCE:CREATE`, filtres par identifiants numériques | en partie réglé (R0 : droit ; filtres au R4) |
-| 3 | `GET /resources` sans filtres hors résumé | confirmé |
-| 4 | Politique désactivée toujours appliquée | confirmé |
-| 5 | `allowCancellation` faux par défaut | confirmé |
-| 6 | Suppression d'un groupe sans contrôle (500 sur clé étrangère) | confirmé (aussi type et politique) |
-| 7 | Suppression d'une ressource sans contrôle des réservations | confirmé |
+| 2 | `POST /resources/search` en `RESOURCE:CREATE`, filtres par identifiants numériques | Réglé (R0 et R4) |
+| 3 | `GET /resources` sans filtres hors résumé | Réglé (R4) |
+| 4 | Politique désactivée toujours appliquée | Réglé (R2) |
+| 5 | `allowCancellation` faux par défaut | Réglé (R2) |
+| 6 | Suppression d'un groupe sans contrôle (500 sur clé étrangère) | Réglé (R2) |
+| 7 | Suppression d'une ressource sans contrôle des réservations | Réglé (R2) |
 | 8 | Photos : appartenance, document, couverture | Réglé (R0) |
-| 9 | `/reserve` et `/release` manuels sans réservation | confirmé |
-| 10 | Pas de suppression ni réactivation de créneau | confirmé |
-| 11 | `capacity` de création de créneaux ignoré | confirmé (voulu, mais validé) |
-| 12 | Fermeture sans `reason` dans la réponse | confirmé |
+| 9 | `/reserve` et `/release` manuels sans réservation | Réglé (R3) |
+| 10 | Pas de suppression ni réactivation de créneau | Réglé (R3) |
+| 11 | `capacity` de création de créneaux ignoré | Réglé (R3) |
+| 12 | Fermeture sans `reason` dans la réponse | Réglé (R2) |
 | 13 | Calendrier public sans contrôle ni borne, jour vide `FULL` | Réglé (R0) |
-| 14 | Lectures de créneaux qui écrivent | confirmé |
-| 15 | `floorLabel` perdu | confirmé |
-| 16 | Messages en anglais | confirmé (environ 165) |
+| 14 | Lectures de créneaux qui écrivent | Réglé (R3) |
+| 15 | `floorLabel` perdu | Réglé (R2) |
+| 16 | Messages en anglais | Réglé (R6) |
 | Rn-1 | Prix non recalculé au changement d'horaire ou de ressource | Réglé (R1) |
-| Rn-2 | Horizon limité à la fin du mois courant | nouveau, haute |
-| Rn-3 | Création manuelle de créneaux en 08:00-22:00 fixe | nouveau |
-| Rn-4 | Fermeture sans contrôle des réservations ni avis | nouveau |
+| Rn-2 | Horizon limité à la fin du mois courant | Réglé (R3) |
+| Rn-3 | Création manuelle de créneaux en 08:00-22:00 fixe | Réglé (R3) |
+| Rn-4 | Fermeture sans contrôle des réservations ni avis | Réglé (R2) |
 | Rn-5 | Devis : base prise sur une règle de week-end ; pourcentage en division entière | Réglé (R1) |
-| Rn-6 | Modification de règle non revalidée, champ impossible à vider | en partie réglé (R1 : champs texte vidables, doublons refusés) |
+| Rn-6 | Modification de règle non revalidée, champ impossible à vider | Réglé (R1 et R7) |
 | Rn-7 | Traitements groupés, photos, horaires non journalisés | Réglé (R0) |
 | Rn-8 | Horaires d'ouverture réservés au rôle ADMIN | Réglé (R0) |
 | Rn-9 | Lecture de la galerie en `RESOURCE:GALLERY` | Réglé (R0) |
 | Rn-10 | `ResourcePricingRule.deleted` mort | Réglé (R1) |
-| Rn-11 | `extraPrice` et `optional` des équipements jamais lus | nouveau |
-| Rn-12 | Maintenance ou hors service sans effet sur l'existant | nouveau |
-| Rn-13 | N+1 sur les listes de ressources | nouveau |
-| Rn-14 | Nouvel essai dans une transaction compromise | nouveau |
-| Rn-15 | Créations en `201` vide (code jamais rendu) | nouveau |
-| Rn-16 | Identifiants numériques des fermetures et créneaux | nouveau |
+| Rn-11 | `extraPrice` et `optional` des équipements jamais lus | Réglé (R5c) |
+| Rn-12 | Maintenance ou hors service sans effet sur l'existant | Réglé (R2) |
+| Rn-13 | N+1 sur les listes de ressources | Réglé (R4) |
+| Rn-14 | Nouvel essai dans une transaction compromise | Réglé (R4) |
+| Rn-15 | Créations en `201` vide (code jamais rendu) | Réglé (R4) |
+| Rn-16 | Identifiants numériques des fermetures et créneaux | Réglé (codes réversibles du 17/11, constaté au R4) |

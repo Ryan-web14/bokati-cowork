@@ -35,9 +35,8 @@ public class ResourceAmenitiesController {
     @PostMapping
     @Audited(module = "RESOURCE", action = "CREATE_AMENITY", ressource = "resource_amenity")
     @Idempotent(operation = "RESOURCE_AMENITY_CREATE")
-    public ResponseEntity<Void> create(@Valid @RequestBody CreateAmenityRequest request) {
-        resourceAmenitiesService.createAmenity(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse> create(@Valid @RequestBody CreateAmenityRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(resourceAmenitiesService.createAmenity(request));
     }
 
     @PutMapping("/{code}")

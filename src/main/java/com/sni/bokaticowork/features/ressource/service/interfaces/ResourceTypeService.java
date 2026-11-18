@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface ResourceTypeService {
 
-    void createType(CreateResourceTypeRequest request);
+    com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse createType(CreateResourceTypeRequest request);
     void updateType(String code, UpdateResourceTypeRequest request);
     void deleteType(String code);
     void deleteAllTypes();
