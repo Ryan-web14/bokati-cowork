@@ -44,7 +44,7 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
     public com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse createClosure(CreateResourceClosureRequest request) {
         List<String> errors = validateRequest(request);
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource closure request", errors);
+            throw new ValidationException("Demande de fermeture invalide", errors);
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
@@ -131,10 +131,10 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
 
     private ResourceClosure getClosureForService(Long id) {
         if (id == null) {
-            throw new BadRequestException("Closure id is required");
+            throw new BadRequestException("L'identifiant de la fermeture est requis");
         }
         return closureRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource closure with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Fermeture introuvable : " + id));
     }
 
     private void applyClosureToAvailability(ResourceClosure closure) {
@@ -203,20 +203,20 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
     private List<String> validateRequest(CreateResourceClosureRequest request) {
         List<String> errors = new ArrayList<>();
         if (request == null) {
-            errors.add("Invalid resource closure request, the request body is required");
+            errors.add("Demande de fermeture invalide : le corps de la demande est requis");
             return errors;
         }
         if (!StringUtils.hasText(request.getResourceCode())) {
-            errors.add("Invalid resource closure request, the resource code is required");
+            errors.add("Demande de fermeture invalide : le code de la ressource est requis");
         }
         if (request.getStartedAt() == null) {
-            errors.add("Invalid resource closure request, the start date is required");
+            errors.add("Demande de fermeture invalide : la date de début est requise");
         }
         if (request.getEndedAt() == null) {
-            errors.add("Invalid resource closure request, the end date is required");
+            errors.add("Demande de fermeture invalide : la date de fin est requise");
         }
         if (request.getStartedAt() != null && request.getEndedAt() != null && !request.getEndedAt().isAfter(request.getStartedAt())) {
-            errors.add("Invalid resource closure request, the end date must be after the start date");
+            errors.add("Demande de fermeture invalide : la date de fin doit suivre la date de début");
         }
         return errors;
     }

@@ -148,7 +148,7 @@ class ResourceAvailabilityServiceImplTest {
                         .build()
         ));
 
-        assertEquals("Could not process resource availability: the requested duration exceeds the policy maximum", exception.getMessage());
+        assertEquals("La durée demandée dépasse le maximum de la politique", exception.getMessage());
     }
 
     @Test

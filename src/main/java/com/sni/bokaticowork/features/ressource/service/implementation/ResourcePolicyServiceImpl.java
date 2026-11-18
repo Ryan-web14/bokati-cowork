@@ -53,11 +53,11 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
         List<String> errors = validateForCreate(request);
 
         if(!errors.isEmpty()){
-            throw new ValidationException("Invalid resource policy request", errors);
+            throw new ValidationException("Demande de politique de ressource invalide", errors);
         }
 
         if (policyRepository.existsByNameIgnoreCase(normalizedName)) {
-            throw new ResourceAlreadyExistException("A resource policy with this name already exists");
+            throw new ResourceAlreadyExistException("Une politique porte déjà ce nom");
         }
 
         request.setName(normalizedName);
@@ -72,21 +72,21 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
     @Override
     public void updatePolicy(String code, UpdateResourcePolicyRequest request) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Resource policy code is required");
+            throw new BadRequestException("Le code de la politique est requis");
         }
 
         ResourcePolicy policy = getPolicyForService(code.trim());
         List<String> errors = validateForUpdate(request, policy);
 
         if(!errors.isEmpty()){
-            throw new ValidationException("Invalid resource policy request",errors);
+            throw new ValidationException("Demande de politique de ressource invalide",errors);
         }
 
         String normalizedName = request.getName() == null ? policy.getName() : request.getName().trim();
 
         if (!policy.getName().equalsIgnoreCase(normalizedName)
                 && policyRepository.existsByNameIgnoreCase(normalizedName)) {
-            throw new ResourceAlreadyExistException("A resource policy with this name already exists");
+            throw new ResourceAlreadyExistException("Une politique porte déjà ce nom");
         }
 
         if (request.getName() != null) {
@@ -138,7 +138,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
                 .anyMatch(policy -> !resourceRepository.findAllByResourcePolicy(policy).isEmpty());
 
         if (hasAssignedPolicies) {
-            throw new ConflictException("resource policies", "some policies are currently assigned to resources");
+            throw new ConflictException("Certaines politiques sont attribuées à des ressources");
         }
 
         policyRepository.deleteAll(policies);
@@ -154,22 +154,22 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
     @Transactional(readOnly = true)
     public ResourcePolicy getPolicyForService(String code) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Resource policy code is required");
+            throw new BadRequestException("Le code de la politique est requis");
         }
 
         return policyRepository.findByCode(code.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Resource policy with code " + code.trim() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Politique de ressource introuvable : " + code.trim()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResourcePolicy getPolicyForService(Long id) {
         if (id == null) {
-            throw new BadRequestException("Resource policy id is required");
+            throw new BadRequestException("L'identifiant de la politique est requis");
         }
 
         return policyRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource policy with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Politique de ressource introuvable : " + id));
     }
 
     @Override
@@ -185,7 +185,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
     @Transactional(readOnly = true)
     public PaginatedResponse<ResourcePolicyResponse> search(String query) {
         if (!StringUtils.hasText(query)) {
-            throw new BadRequestException("Search query is required");
+            throw new BadRequestException("Le texte de recherche est requis");
         }
 
         List<ResourcePolicyResponse> responses = policyRepository.basicSearch(query.trim()).stream()
@@ -199,7 +199,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
         List<String> errors = new ArrayList<>();
 
         if (request == null) {
-            errors.add("Invalid resource policy request, the request body is required");
+            errors.add("Demande de politique de ressource invalide : le corps de la demande est requis");
         } else {
             validateCommonFields(
                     errors,
@@ -213,7 +213,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
         }
 
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource policy request", errors);
+            throw new ValidationException("Demande de politique de ressource invalide", errors);
         }
 
         return errors;
@@ -223,7 +223,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
         List<String> errors = new ArrayList<>();
 
         if (request == null) {
-            errors.add("Invalid resource policy request, the request body is required");
+            errors.add("Demande de politique de ressource invalide : le corps de la demande est requis");
         } else {
             validateCommonFields(
                     errors,
@@ -237,7 +237,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
         }
 
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource policy request", errors);
+            throw new ValidationException("Demande de politique de ressource invalide", errors);
         }
 
         return errors;
@@ -251,33 +251,33 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
                                       Integer minBookingNoticeMinutes,
                                       Integer cancellationNoticeMinutes) {
         if (!StringUtils.hasText(name) || !ValidationUtils.validateString(name.trim())) {
-            errors.add("Invalid resource policy request, the name is not valid");
+            errors.add("Demande de politique de ressource invalide : le nom n'est pas valide");
         }
 
         if (StringUtils.hasText(description) && !ValidationUtils.validateDescription(description.trim())) {
-            errors.add("Invalid resource policy request, the description is not valid");
+            errors.add("Demande de politique de ressource invalide : la description n'est pas valide");
         }
 
         if (minBookingDurationMinutes == null || minBookingDurationMinutes < 1) {
-            errors.add("Invalid resource policy request, the minimum booking duration must be greater than zero");
+            errors.add("Demande de politique de ressource invalide : la durée minimale de réservation doit être supérieure à zéro");
         }
 
         if (maxBookingDurationMinutes == null || maxBookingDurationMinutes < 1) {
-            errors.add("Invalid resource policy request, the maximum booking duration must be greater than zero");
+            errors.add("Demande de politique de ressource invalide : la durée maximale de réservation doit être supérieure à zéro");
         }
 
         if (minBookingDurationMinutes != null
                 && maxBookingDurationMinutes != null
                 && maxBookingDurationMinutes < minBookingDurationMinutes) {
-            errors.add("Invalid resource policy request, the maximum booking duration must be greater than or equal to the minimum booking duration");
+            errors.add("Demande de politique de ressource invalide : la durée maximale de réservation doit être au moins égale à la durée minimale");
         }
 
         if (minBookingNoticeMinutes == null || minBookingNoticeMinutes < 0) {
-            errors.add("Invalid resource policy request, the minimum booking notice must be zero or greater");
+            errors.add("Demande de politique de ressource invalide : le préavis minimal de réservation doit être positif ou nul");
         }
 
         if (cancellationNoticeMinutes == null || cancellationNoticeMinutes < 0) {
-            errors.add("Invalid resource policy request, the cancellation notice must be zero or greater");
+            errors.add("Demande de politique de ressource invalide : le préavis d'annulation doit être positif ou nul");
         }
     }
 

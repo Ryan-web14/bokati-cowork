@@ -125,7 +125,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     public void createAvailability(CreateResourceAvailabilityRequest request) {
         List<String> errors = validateCreateRequest(request);
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource availability request", errors);
+            throw new ValidationException("Demande de créneau invalide", errors);
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
@@ -141,11 +141,11 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
 
         if (closureRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
-            throw new ConflictException("resource availability", "the requested range overlaps an active closure");
+            throw new ConflictException("La plage demandée chevauche une fermeture active");
         }
 
         if (availabilityRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
-            throw new ConflictException("resource availability", "the requested range overlaps existing availability slots");
+            throw new ConflictException("La plage demandée chevauche des créneaux existants");
         }
 
         int capacity = resolveCapacity(resource);
@@ -269,7 +269,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     public void reserve(ReserveResourceAvailabilityRequest request) {
         List<String> errors = validateReservationRequest(request);
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource reservation request", errors);
+            throw new ValidationException("Demande de réservation de créneau invalide", errors);
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
@@ -281,21 +281,21 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             String violation = durationViolation(resource,
                     Math.toIntExact(Duration.between(request.getStartedAt(), request.getEndedAt()).toMinutes()));
             if (violation != null) {
-                throw new ConflictException("resource availability", violation);
+                throw new ConflictException(violation);
             }
         } else {
             assertPolicyAllowsWindow(resource, request.getStartedAt(), request.getEndedAt());
         }
 
         if (closureRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
-            throw new ConflictException("resource reservation", "the requested range overlaps an active closure");
+            throw new ConflictException("La plage demandée chevauche une fermeture active");
         }
 
         List<ResourceAvailability> slots = availabilityRepository.lockAllSlotsInRange(resource, request.getStartedAt(), request.getEndedAt());
         assertExactRequestedCoverage(slots, request.getStartedAt(), request.getEndedAt());
 
         if (!allReservable(slots, request.getQuantity(), resource, staff)) {
-            throw new ConflictException("resource reservation", "insufficient remaining availability for the requested range");
+            throw new ConflictException("Disponibilité restante insuffisante sur la plage demandée");
         }
 
         for (ResourceAvailability slot : slots) {
@@ -316,7 +316,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     public void release(ReleaseResourceAvailabilityRequest request) {
         List<String> errors = validateReleaseRequest(request);
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource availability release request", errors);
+            throw new ValidationException("Demande de libération de créneau invalide", errors);
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
@@ -338,13 +338,13 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     private void assertResourceBookable(Resource resource) {
         if (!Boolean.TRUE.equals(resource.getBookingEnabled())) {
-            throw new ConflictException("resource availability", "the resource is not bookable");
+            throw new ConflictException("La ressource n'est pas réservable");
         }
         if (!Boolean.TRUE.equals(resource.getActive())) {
-            throw new ConflictException("resource availability", "the resource is inactive");
+            throw new ConflictException("La ressource est inactive");
         }
         if (resource.getStatus() == null || resource.getStatus() != ResourceStatus.ACTIVE) {
-            throw new ConflictException("resource availability", "the resource status does not allow bookings");
+            throw new ConflictException("Le statut de la ressource ne permet pas de réserver");
         }
     }
 
@@ -367,13 +367,13 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
         int requestedMinutes = Math.toIntExact(Duration.between(startedAt, endedAt).toMinutes());
         if (requestedMinutes < policy.getMinBookingDurationMinutes()) {
-            return "the requested duration is below the policy minimum";
+            return "La durée demandée est inférieure au minimum de la politique";
         }
         if (requestedMinutes > policy.getMaxBookingDurationMinutes()) {
-            return "the requested duration exceeds the policy maximum";
+            return "La durée demandée dépasse le maximum de la politique";
         }
         if (startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
-            return "the requested start time violates the minimum booking notice";
+            return "L'heure de début ne respecte pas le préavis minimal de réservation";
         }
         return null;
     }
@@ -385,10 +385,10 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             return null;
         }
         if (requestedMinutes < policy.getMinBookingDurationMinutes()) {
-            return "the requested duration is below the policy minimum";
+            return "La durée demandée est inférieure au minimum de la politique";
         }
         if (requestedMinutes > policy.getMaxBookingDurationMinutes()) {
-            return "the requested duration exceeds the policy maximum";
+            return "La durée demandée dépasse le maximum de la politique";
         }
         return null;
     }
@@ -396,7 +396,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private void assertPolicyAllowsWindow(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
         String violation = policyViolation(resource, startedAt, endedAt);
         if (violation != null) {
-            throw new ConflictException("resource availability", violation);
+            throw new ConflictException(violation);
         }
     }
 
@@ -685,13 +685,13 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     private void assertExactRequestedCoverage(List<ResourceAvailability> slots, LocalDateTime startedAt, LocalDateTime endedAt) {
         if (slots.isEmpty()) {
-            throw new ConflictException("resource reservation", "no availability exists for the requested range");
+            throw new ConflictException("Aucun créneau sur la plage demandée");
         }
 
         long expectedSlotCount = slotPolicy.slotCount(
                 slots.getFirst().getResource(), Duration.between(startedAt, endedAt).toMinutes());
         if (slots.size() != expectedSlotCount || !slots.getFirst().getStartedAt().equals(startedAt) || !slots.getLast().getEndedAt().equals(endedAt) || !isContiguous(slots)) {
-            throw new ConflictException("resource reservation", "the requested range is not fully covered by contiguous availability slots");
+            throw new ConflictException("La plage demandée n'est pas entièrement couverte par des créneaux contigus");
         }
     }
 
@@ -722,8 +722,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
         long futureSlots = availabilityRepository.countByResourceAndEndedAtAfter(resource, LocalDateTime.now());
         if (futureSlots > 0) {
-            throw new ConflictException("resource availability",
-                    "La ressource " + resource.getCode() + " a " + futureSlots + " creneau(x) futur(s) de "
+            throw new ConflictException("La ressource " + resource.getCode() + " a " + futureSlots + " creneau(x) futur(s) de "
                             + current + " minutes · supprimez-les avant de passer a " + requested
                             + " minutes, sinon ses creneaux auraient des durees melangees et les"
                             + " fenetres calculees seraient fausses.");
@@ -750,7 +749,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
                 ? resource.resolveSeatingCapacity()
                 : resource.resolveBookableSlots();
         if (baseCapacity < 1) {
-            throw new BadRequestException("Availability capacity must be greater than zero");
+            throw new BadRequestException("La capacité du créneau doit être supérieure à zéro");
         }
         return baseCapacity;
     }
@@ -758,17 +757,17 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private int normalizeDurationMinutes(Resource resource, Integer durationMinutes) {
         int slotMinutes = slotPolicy.slotMinutes(resource);
         if (durationMinutes == null || durationMinutes < slotMinutes) {
-            throw new BadRequestException("Duration must be at least " + slotMinutes + " minutes");
+            throw new BadRequestException("La durée doit être d'au moins " + slotMinutes + " minutes");
         }
         if (durationMinutes % slotMinutes != 0) {
-            throw new BadRequestException("Duration must be a multiple of " + slotMinutes + " minutes");
+            throw new BadRequestException("La durée doit être un multiple de " + slotMinutes + " minutes");
         }
         return durationMinutes;
     }
 
     private int normalizeQuantity(Integer quantity) {
         if (quantity == null || quantity < 1) {
-            throw new BadRequestException("Quantity must be greater than zero");
+            throw new BadRequestException("La quantité doit être supérieure à zéro");
         }
         return quantity;
     }
@@ -848,24 +847,24 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     private void validateSearchWindow(LocalDateTime startedAt, LocalDateTime endedAt, int durationMinutes) {
         if (startedAt == null || endedAt == null) {
-            throw new BadRequestException("Start and end dates are required");
+            throw new BadRequestException("Les dates de début et de fin sont requises");
         }
         if (!endedAt.isAfter(startedAt)) {
-            throw new BadRequestException("End date must be after start date");
+            throw new BadRequestException("La date de fin doit suivre la date de début");
         }
         if (startedAt.plusMinutes(durationMinutes).isAfter(endedAt.plusMinutes(1))) {
-            throw new BadRequestException("Requested duration does not fit inside the requested search range");
+            throw new BadRequestException("La durée demandée ne tient pas dans la plage de recherche");
         }
     }
 
     private List<String> validateCreateRequest(CreateResourceAvailabilityRequest request) {
         List<String> errors = new ArrayList<>();
         if (request == null) {
-            errors.add("Invalid resource availability request, the request body is required");
+            errors.add("Demande de créneau invalide : le corps de la demande est requis");
             return errors;
         }
         if (!StringUtils.hasText(request.getResourceCode())) {
-            errors.add("Invalid resource availability request, the resource code is required");
+            errors.add("Demande de créneau invalide : le code de la ressource est requis");
         }
         validateTimeRange(errors, request.getStartedAt(), request.getEndedAt());
         // Lot R3 : capacity n'est plus controle ; la capacite d'un creneau suit toujours la ressource.
@@ -875,15 +874,15 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private List<String> validateReservationRequest(ReserveResourceAvailabilityRequest request) {
         List<String> errors = new ArrayList<>();
         if (request == null) {
-            errors.add("Invalid resource reservation request, the request body is required");
+            errors.add("Demande de réservation de créneau invalide : le corps de la demande est requis");
             return errors;
         }
         if (!StringUtils.hasText(request.getResourceCode())) {
-            errors.add("Invalid resource reservation request, the resource code is required");
+            errors.add("Demande de réservation de créneau invalide : le code de la ressource est requis");
         }
         validateTimeRange(errors, request.getStartedAt(), request.getEndedAt());
         if (request.getQuantity() == null || request.getQuantity() < 1) {
-            errors.add("Invalid resource reservation request, the quantity must be greater than zero");
+            errors.add("Demande de réservation de créneau invalide : la quantité doit être supérieure à zéro");
         }
         return errors;
     }
@@ -891,35 +890,35 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private List<String> validateReleaseRequest(ReleaseResourceAvailabilityRequest request) {
         List<String> errors = new ArrayList<>();
         if (request == null) {
-            errors.add("Invalid resource availability release request, the request body is required");
+            errors.add("Demande de libération de créneau invalide : le corps de la demande est requis");
             return errors;
         }
         if (!StringUtils.hasText(request.getResourceCode())) {
-            errors.add("Invalid resource availability release request, the resource code is required");
+            errors.add("Demande de libération de créneau invalide : le code de la ressource est requis");
         }
         validateTimeRange(errors, request.getStartedAt(), request.getEndedAt());
         if (request.getQuantity() == null || request.getQuantity() < 1) {
-            errors.add("Invalid resource availability release request, the quantity must be greater than zero");
+            errors.add("Demande de libération de créneau invalide : la quantité doit être supérieure à zéro");
         }
         return errors;
     }
 
     private void validateTimeRange(List<String> errors, LocalDateTime startedAt, LocalDateTime endedAt) {
         if (startedAt == null) {
-            errors.add("The start date is required");
+            errors.add("La date de début est requise");
         }
         if (endedAt == null) {
-            errors.add("The end date is required");
+            errors.add("La date de fin est requise");
         }
         if (startedAt != null && endedAt != null) {
             if (!endedAt.isAfter(startedAt)) {
-                errors.add("The end date must be after the start date");
+                errors.add("La date de fin doit suivre la date de début");
             }
             // L'alignement sur les creneaux ne se verifie pas ici : il depend de la duree de la
             // ressource, encore inconnue a ce stade. Il est controle apres resolution, par
             // ResourceSlotPolicy.assertAligned, qui peut alors nommer la duree effective.
             if (startedAt.getSecond() != 0 || endedAt.getSecond() != 0 || startedAt.getNano() != 0 || endedAt.getNano() != 0) {
-                errors.add("The requested range must not contain seconds or fractional seconds");
+                errors.add("La plage demandée ne doit pas contenir de secondes");
             }
         }
     }

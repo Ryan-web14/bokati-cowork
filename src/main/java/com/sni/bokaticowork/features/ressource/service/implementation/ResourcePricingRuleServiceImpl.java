@@ -162,7 +162,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     public com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse createPricingRule(CreateResourcePricingRuleRequest request) {
         List<String> errors = validateRequest(request);
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource pricing rule request", errors);
+            throw new ValidationException("Demande de règle tarifaire invalide", errors);
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
@@ -322,7 +322,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
             rule.setResourceBookingUnit(parseUnit(request.getBookingUnit()));
         }
         if (request.getPrice() != null) {
-            if (request.getPrice() < 0) throw new BadRequestException("Price must be zero or greater");
+            if (request.getPrice() < 0) throw new BadRequestException("Le prix doit être positif ou nul");
             rule.setPrice(request.getPrice());
         }
         if (request.getLabel() != null)            rule.setLabel(request.getLabel());
@@ -357,7 +357,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     @Override
     public void updateActive(Long id, Boolean active) {
         if (active == null) {
-            throw new BadRequestException("Pricing rule active flag is required");
+            throw new BadRequestException("L'état actif de la règle tarifaire est requis");
         }
         ResourcePricingRule rule = getPricingRuleForService(id);
         rule.setActive(active);
@@ -410,7 +410,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
 
     private ResourcePricingRule getPricingRuleForService(Long id) {
         if (id == null) {
-            throw new BadRequestException("Pricing rule id is required");
+            throw new BadRequestException("L'identifiant de la règle tarifaire est requis");
         }
         // Le numero court est ce que l'API expose · l'identifiant genere reste accepte pour les
         // clients qui l'avaient garde, et ne peut pas se confondre avec un numero court.
@@ -447,15 +447,15 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         }
         long durationMinutes = java.time.Duration.between(startedAt, endedAt).toMinutes();
         if (policy.getMinBookingDurationMinutes() != null && durationMinutes < policy.getMinBookingDurationMinutes()) {
-            throw new BadRequestException("Booking duration (" + durationMinutes + " min) is below the minimum allowed (" + policy.getMinBookingDurationMinutes() + " min)");
+            throw new BadRequestException("Durée de réservation (" + durationMinutes + " min) inférieure au minimum autorisé (" + policy.getMinBookingDurationMinutes() + " min)");
         }
         if (policy.getMaxBookingDurationMinutes() != null && durationMinutes > policy.getMaxBookingDurationMinutes()) {
-            throw new BadRequestException("Booking duration (" + durationMinutes + " min) exceeds the maximum allowed (" + policy.getMaxBookingDurationMinutes() + " min)");
+            throw new BadRequestException("Durée de réservation (" + durationMinutes + " min) supérieure au maximum autorisé (" + policy.getMaxBookingDurationMinutes() + " min)");
         }
         if (policy.getMinBookingNoticeMinutes() != null && policy.getMinBookingNoticeMinutes() > 0) {
             long noticeMinutes = java.time.Duration.between(LocalDateTime.now(), startedAt).toMinutes();
             if (noticeMinutes < policy.getMinBookingNoticeMinutes()) {
-                throw new BadRequestException("Booking requires at least " + policy.getMinBookingNoticeMinutes() + " minutes advance notice");
+                throw new BadRequestException("La réservation demande un préavis d'au moins " + policy.getMinBookingNoticeMinutes() + " minutes");
             }
         }
     }
@@ -464,7 +464,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         try {
             return ResourceBookingUnit.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("Invalid booking unit: " + value, ex);
+            throw new BadRequestException("Unité de réservation invalide : " + value, ex);
         }
     }
 
@@ -475,7 +475,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         try {
             return ResourcePriceAdjustmentType.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("Invalid adjustment type: " + value, ex);
+            throw new BadRequestException("Type d'ajustement invalide : " + value, ex);
         }
     }
 
@@ -510,26 +510,26 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     private List<String> validateRequest(CreateResourcePricingRuleRequest request) {
         List<String> errors = new ArrayList<>();
         if (request == null) {
-            errors.add("Invalid resource pricing rule request, the request body is required");
+            errors.add("Demande de règle tarifaire invalide : le corps de la demande est requis");
             return errors;
         }
         if (!StringUtils.hasText(request.getResourceCode())) {
-            errors.add("Invalid resource pricing rule request, the resource code is required");
+            errors.add("Demande de règle tarifaire invalide : le code de la ressource est requis");
         }
         if (!StringUtils.hasText(request.getBookingUnit())) {
-            errors.add("Invalid resource pricing rule request, the booking unit is required");
+            errors.add("Demande de règle tarifaire invalide : l'unité de réservation est requise");
         }
         if (request.getPrice() == null || request.getPrice() < 0) {
-            errors.add("Invalid resource pricing rule request, the price must be zero or greater");
+            errors.add("Demande de règle tarifaire invalide : le prix doit être positif ou nul");
         }
         if (request.getDayOfWeek() != null && (request.getDayOfWeek() < 1 || request.getDayOfWeek() > 7)) {
-            errors.add("Invalid resource pricing rule request, dayOfWeek must be between 1 and 7");
+            errors.add("Demande de règle tarifaire invalide : dayOfWeek doit être compris entre 1 et 7");
         }
         if (request.getStartsAt() != null && request.getEndsAt() != null && !request.getEndsAt().isAfter(request.getStartsAt())) {
-            errors.add("Invalid resource pricing rule request, endsAt must be after startsAt");
+            errors.add("Demande de règle tarifaire invalide : endsAt doit suivre startsAt");
         }
         if (request.getValidFrom() != null && request.getValidUntil() != null && request.getValidUntil().isBefore(request.getValidFrom())) {
-            errors.add("Invalid resource pricing rule request, validUntil must be after validFrom");
+            errors.add("Demande de règle tarifaire invalide : validUntil doit suivre validFrom");
         }
         if (StringUtils.hasText(request.getCustomerSegment()) && !SEGMENTS.contains(request.getCustomerSegment().trim().toUpperCase(java.util.Locale.ROOT))) {
             errors.add("customerSegment : PUBLIC, MEMBER, SUBSCRIBER, COMPANY ou PARTNER");

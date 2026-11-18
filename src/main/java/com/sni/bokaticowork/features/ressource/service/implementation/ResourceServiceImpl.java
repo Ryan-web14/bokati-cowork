@@ -87,7 +87,7 @@ public class ResourceServiceImpl implements ResourceService {
     public com.sni.bokaticowork.features.ressource.dto.response.ResourceResponse createResource(ResourceRequest request) {
         validateForCreate(request);
 
-        ResourceType type = resourceTypeService.getTypeForService(normalizeCode(request.getTypeId(), "Resource type code is required"));
+        ResourceType type = resourceTypeService.getTypeForService(normalizeCode(request.getTypeId(), "Le code du type de ressource est requis"));
         ResourceGroup group = resolveGroup(request.getGroupId());
         ResourcePolicy policy = resolvePolicy(request.getPolicyId());
 
@@ -109,7 +109,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void updateResource(String code, UpdateResourceRequest request) {
-        String normalizedCode = normalizeCode(code, "Resource code is required");
+        String normalizedCode = normalizeCode(code, "Le code de la ressource est requis");
         validateForUpdate(request);
 
         Resource resource = getResourceForService(normalizedCode);
@@ -162,20 +162,20 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Resource getResourceForService(String code) {
-        String normalizedCode = normalizeCode(code, "Resource code is required");
+        String normalizedCode = normalizeCode(code, "Le code de la ressource est requis");
         return resourceRepository.findByCode(normalizedCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource with code " + normalizedCode + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ressource introuvable : " + normalizedCode));
     }
 
     @Override
     public Resource getResourceForService(Long id) {
         if (id == null) {
-            throw new BadRequestException("Resource id is required");
+            throw new BadRequestException("L'identifiant de la ressource est requis");
         }
 
         return resourceRepository.findById(id)
                 .filter(resource -> !Boolean.TRUE.equals(resource.getDeleted()))
-                .orElseThrow(() -> new ResourceNotFoundException("Resource with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ressource introuvable : " + id));
     }
 
     @Override
@@ -194,7 +194,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public PaginatedResponse<ResourceSummaryResponse> listSummaryByType(String typeCode, Pageable pageable) {
-        ResourceType type = resourceTypeService.getTypeForService(normalizeCode(typeCode, "Resource type code is required"));
+        ResourceType type = resourceTypeService.getTypeForService(normalizeCode(typeCode, "Le code du type de ressource est requis"));
         Page<ResourceSummaryResponse> page = resourceRepository.findAllByResourceType(type, pageable)
                 .map(resourceMapper::toSummary);
         return new PaginatedResponse<>(page);
@@ -202,7 +202,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public PaginatedResponse<ResourceSummaryResponse> listSummaryByGroup(String groupCode, Pageable pageable) {
-        ResourceGroup group = resourceGroupService.getResourceGroupForService(normalizeCode(groupCode, "Resource group code is required"));
+        ResourceGroup group = resourceGroupService.getResourceGroupForService(normalizeCode(groupCode, "Le code du groupe de ressources est requis"));
         Page<ResourceSummaryResponse> page = resourceRepository.findAllByResourceGroup(group, pageable)
                 .map(resourceMapper::toSummary);
         return new PaginatedResponse<>(page);
@@ -210,7 +210,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public PaginatedResponse<ResourceSummaryResponse> listSummaryByPolicy(String policyCode, Pageable pageable) {
-        ResourcePolicy policy = resourcePolicyService.getPolicyForService(normalizeCode(policyCode, "Resource policy code is required"));
+        ResourcePolicy policy = resourcePolicyService.getPolicyForService(normalizeCode(policyCode, "Le code de la politique est requis"));
         Page<ResourceSummaryResponse> page = resourceRepository.findAllByResourcePolicy(policy, pageable)
                 .map(resourceMapper::toSummary);
         return new PaginatedResponse<>(page);
@@ -235,7 +235,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public List<ResourceSummaryResponse> basicSearch(String query) {
         if (!StringUtils.hasText(query)) {
-            throw new BadRequestException("Search query is required");
+            throw new BadRequestException("Le texte de recherche est requis");
         }
 
         return resourceRepository.basicSearch(query.trim()).stream()
@@ -253,13 +253,13 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void changeClassification(String code, ChangeTypeRequest request) {
-        String normalizedCode = normalizeCode(code, "Resource code is required");
+        String normalizedCode = normalizeCode(code, "Le code de la ressource est requis");
         if (request == null) {
-            throw new BadRequestException("Resource classification request is required");
+            throw new BadRequestException("La demande de classement de la ressource est requise");
         }
 
         Resource resource = getResourceForService(normalizedCode);
-        ResourceType type = resourceTypeService.getTypeForService(normalizeCode(request.getTypeId(), "Resource type code is required"));
+        ResourceType type = resourceTypeService.getTypeForService(normalizeCode(request.getTypeId(), "Le code du type de ressource est requis"));
         ResourceGroup group = resolveGroup(request.getGroupId());
         ResourcePolicy policy = resolvePolicy(request.getPolicyId());
 
@@ -292,7 +292,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public void updateBookingEnabled(String code, Boolean bookingEnabled) {
         if (bookingEnabled == null) {
-            throw new BadRequestException("Booking enabled flag is required");
+            throw new BadRequestException("L'indicateur de réservation est requis");
         }
         Resource resource = getResourceForService(code);
         resource.setBookingEnabled(bookingEnabled);
@@ -302,7 +302,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public void updatePortalVisible(String code, Boolean portalVisible) {
         if (portalVisible == null) {
-            throw new BadRequestException("Portal visible flag is required");
+            throw new BadRequestException("L'indicateur de visibilité sur le portail est requis");
         }
         Resource resource = getResourceForService(code);
         resource.setPortalVisible(portalVisible);
@@ -312,7 +312,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public void updateActive(String code, Boolean active) {
         if (active == null) {
-            throw new BadRequestException("Active flag is required");
+            throw new BadRequestException("L'indicateur actif est requis");
         }
         Resource resource = getResourceForService(code);
         resource.setActive(active);
@@ -322,7 +322,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public void updateDisplayOrder(String code, Integer displayOrder) {
         if (displayOrder == null) {
-            throw new BadRequestException("Display order is required");
+            throw new BadRequestException("L'ordre d'affichage est requis");
         }
         Resource resource = getResourceForService(code);
         resource.setDisplayOrder(displayOrder);
@@ -332,14 +332,14 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public void linkAmenity(LinkAmenityToResourceRequest request) {
         if (request == null || !StringUtils.hasText(request.getResourceCode()) || !StringUtils.hasText(request.getAmenityCode())) {
-            throw new BadRequestException("Resource code and amenity code are required");
+            throw new BadRequestException("Le code de la ressource et celui de l'équipement sont requis");
         }
 
         Resource resource = getResourceForService(request.getResourceCode().trim());
         var amenity = resourceAmenitiesService.getAmenityForService(request.getAmenityCode().trim());
 
         if (resourceAmenityLinkRepository.existsByResourceAndAmenity(resource, amenity)) {
-            throw new ResourceAlreadyExistException("This amenity is already linked to the resource");
+            throw new ResourceAlreadyExistException("Cet équipement est déjà rattaché à la ressource");
         }
 
         ResourceAmenityLink link = ResourceAmenityLink.builder()
@@ -358,7 +358,7 @@ public class ResourceServiceImpl implements ResourceService {
         var amenity = resourceAmenitiesService.getAmenityForService(amenityCode);
 
         if (!resourceAmenityLinkRepository.existsByResourceAndAmenity(resource, amenity)) {
-            throw new ResourceNotFoundException("Amenity link not found for this resource");
+            throw new ResourceNotFoundException("Cet équipement n'est pas rattaché à la ressource");
         }
 
         resourceAmenityLinkRepository.deleteByResourceAndAmenity(resource, amenity);
@@ -397,7 +397,7 @@ public class ResourceServiceImpl implements ResourceService {
     private void validateForCreate(ResourceRequest request) {
         validationEngine.validateAndThrow(
                 request,
-                "Invalid resource request",
+                "Demande de ressource invalide",
                 createRules()
         );
     }
@@ -405,38 +405,38 @@ public class ResourceServiceImpl implements ResourceService {
     private void validateForUpdate(UpdateResourceRequest request) {
         validationEngine.validateAndThrow(
                 request,
-                "Invalid resource request",
+                "Demande de ressource invalide",
                 updateRules()
         );
     }
 
     private List<ValidationRule<ResourceRequest>> createRules() {
         return List.of(
-                request -> requireRequestBody(request, "resource"),
-                request -> requireTextField(request, request == null ? null : request.getTypeId(), "typeId", "Invalid resource request, the type is required"),
-                request -> requireValidTextField(request, request == null ? null : request.getName(), "name", "Invalid resource request, the name is not valid"),
-                request -> optionalDescriptionField(request, request == null ? null : request.getDescription(), "description", "Invalid resource request, the description is not valid"),
-                request -> positiveIntegerField(request, request == null ? null : request.getCapacity(), "capacity", "Invalid resource request, the capacity must be greater than zero"),
-                request -> optionalDescriptionField(request, request == null ? null : request.getZone(), "zone", "Invalid resource request, the zone is not valid"),
-                request -> optionalDescriptionField(request, request == null ? null : request.getLocationLabel(), "locationLabel", "Invalid resource request, the location label is not valid"),
+                request -> requireRequestBody(request, "de ressource"),
+                request -> requireTextField(request, request == null ? null : request.getTypeId(), "typeId", "Demande de ressource invalide : le type est requis"),
+                request -> requireValidTextField(request, request == null ? null : request.getName(), "name", "Demande de ressource invalide : le nom n'est pas valide"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getDescription(), "description", "Demande de ressource invalide : la description n'est pas valide"),
+                request -> positiveIntegerField(request, request == null ? null : request.getCapacity(), "capacity", "Demande de ressource invalide : la capacité doit être supérieure à zéro"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getZone(), "zone", "Demande de ressource invalide : la zone n'est pas valide"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getLocationLabel(), "locationLabel", "Demande de ressource invalide : l'emplacement n'est pas valide"),
                 request -> validStatusField(request, request == null ? null : request.getStatus())
         );
     }
 
     private List<ValidationRule<UpdateResourceRequest>> updateRules() {
         return List.of(
-                request -> requireRequestBody(request, "resource"),
-                request -> validateOptionalTextField(request, request == null ? null : request.getName(), "name", "Invalid resource request, the name is not valid"),
-                request -> optionalDescriptionField(request, request == null ? null : request.getDescription(), "description", "Invalid resource request, the description is not valid"),
-                request -> positiveIntegerField(request, request == null ? null : request.getCapacity(), "capacity", "Invalid resource request, the capacity must be greater than zero"),
-                request -> optionalDescriptionField(request, request == null ? null : request.getZone(), "zone", "Invalid resource request, the zone is not valid"),
-                request -> optionalDescriptionField(request, request == null ? null : request.getLocationLabel(), "locationLabel", "Invalid resource request, the location label is not valid")
+                request -> requireRequestBody(request, "de ressource"),
+                request -> validateOptionalTextField(request, request == null ? null : request.getName(), "name", "Demande de ressource invalide : le nom n'est pas valide"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getDescription(), "description", "Demande de ressource invalide : la description n'est pas valide"),
+                request -> positiveIntegerField(request, request == null ? null : request.getCapacity(), "capacity", "Demande de ressource invalide : la capacité doit être supérieure à zéro"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getZone(), "zone", "Demande de ressource invalide : la zone n'est pas valide"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getLocationLabel(), "locationLabel", "Demande de ressource invalide : l'emplacement n'est pas valide")
         );
     }
 
     private <T> List<ValidationError> requireRequestBody(T request, String entityName) {
         if (request == null) {
-            return List.of(error(null, "required", "Invalid " + entityName + " request, the request body is required"));
+            return List.of(error(null, "required", "Demande " + entityName + " invalide : le corps de la demande est requis"));
         }
         return List.of();
     }
@@ -496,7 +496,7 @@ public class ResourceServiceImpl implements ResourceService {
             return List.of();
         }
         if (!isValidStatus(status)) {
-            return List.of(error("status", "invalid", "Invalid resource request, the status is not valid"));
+            return List.of(error("status", "invalid", "Demande de ressource invalide : le statut n'est pas valide"));
         }
         return List.of();
     }

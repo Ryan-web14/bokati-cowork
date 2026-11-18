@@ -2,7 +2,7 @@
 
 Branche `feature/ressources`, partie de new-main f33d6089 le 17/11/2026. Plan à valider : les décisions de l'exploitant sont plus bas, à trancher avant le lot concerné.
 
-État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 fait** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md)), **R2 fait** ([lot-r2-politiques-cycle-de-vie.md](lot-r2-politiques-cycle-de-vie.md)), **R3 fait** ([lot-r3-creneaux-horizon.md](lot-r3-creneaux-horizon.md)), **R4 fait** ([lot-r4-listes-recherche.md](lot-r4-listes-recherche.md)).
+État : plan validé le 18/11/2026 (décisions ci-dessous) ; **R0 fait** ([lot-r0-securite-acces.md](lot-r0-securite-acces.md)), **R1 fait** ([lot-r1-moteur-prix.md](lot-r1-moteur-prix.md)), **R2 fait** ([lot-r2-politiques-cycle-de-vie.md](lot-r2-politiques-cycle-de-vie.md)), **R3 fait** ([lot-r3-creneaux-horizon.md](lot-r3-creneaux-horizon.md)), **R4 fait** ([lot-r4-listes-recherche.md](lot-r4-listes-recherche.md)), **R6 fait** ([lot-r6-messages.md](lot-r6-messages.md)).
 
 ## Constat (vérifié dans le code le 17/11/2026)
 
@@ -115,7 +115,7 @@ Absentes aujourd'hui (approbation, quotas, liste d'attente, pointage et non-pré
 | 13 | Calendrier public sans contrôle ni borne, jour vide `FULL` | Réglé (R0) |
 | 14 | Lectures de créneaux qui écrivent | Réglé (R3) |
 | 15 | `floorLabel` perdu | Réglé (R2) |
-| 16 | Messages en anglais | confirmé (environ 165) |
+| 16 | Messages en anglais | Réglé (R6) |
 | Rn-1 | Prix non recalculé au changement d'horaire ou de ressource | Réglé (R1) |
 | Rn-2 | Horizon limité à la fin du mois courant | Réglé (R3) |
 | Rn-3 | Création manuelle de créneaux en 08:00-22:00 fixe | Réglé (R3) |

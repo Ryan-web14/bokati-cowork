@@ -49,7 +49,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
         log.debug("Creating resource group");
 
         if (groupRepo.existsByNameIgnoreCase(request.getName().trim())) {
-            throw new ResourceAlreadyExistException("A resource group with this name already exists");
+            throw new ResourceAlreadyExistException("Un groupe de ressources porte déjà ce nom");
         }
 
         ResourceGroup group = groupMapper.toEntity(request);
@@ -61,7 +61,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     @Override
     public void updateResourceGroup(String code, UpdateResourceGroupRequest request) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Resource group code is required");
+            throw new BadRequestException("Le code du groupe de ressources est requis");
         }
 
         validateForUpdate(request);
@@ -71,7 +71,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
 
         if (!group.getName().equalsIgnoreCase(normalizedName)
                 && groupRepo.existsByNameIgnoreCase(normalizedName)) {
-            throw new ResourceAlreadyExistException("A resource group with this name already exists");
+            throw new ResourceAlreadyExistException("Un groupe de ressources porte déjà ce nom");
         }
 
         request.setName(normalizedName.toUpperCase());
@@ -84,7 +84,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     @Override
     public void deleteResourceGroup(String code) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Resource group code is required");
+            throw new BadRequestException("Le code du groupe de ressources est requis");
         }
 
         ResourceGroup group = getResourceGroupForService(code.trim());
@@ -105,7 +105,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     @Override
     public ResourceGroupResponse getResourceGroup(String code) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Resource group code is required");
+            throw new BadRequestException("Le code du groupe de ressources est requis");
         }
 
         return groupMapper.toResponse(getResourceGroupForService(code.trim()));
@@ -114,7 +114,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     @Override
     public PaginatedResponse<ResourceGroupResponse> search(String query) {
         if (!StringUtils.hasText(query)) {
-            throw new BadRequestException("Search query is required");
+            throw new BadRequestException("Le texte de recherche est requis");
         }
 
         List<ResourceGroupResponse> responses = groupRepo.basicSearch(query.trim()).stream()
@@ -129,11 +129,11 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     @Override
     public ResourceGroup getResourceGroupForService(String code) {
         if (!StringUtils.hasText(code)) {
-            throw new BadRequestException("Resource group code is required");
+            throw new BadRequestException("Le code du groupe de ressources est requis");
         }
 
         return groupRepo.findByCode(code.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Resource group with code " + code.trim() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Groupe de ressources introuvable : " + code.trim()));
     }
 
     @Override
@@ -149,21 +149,21 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
         List<String> errors = new ArrayList<>();
 
         if (request == null) {
-            errors.add("Invalid resource group request, the request body is required");
+            errors.add("Demande de groupe de ressources invalide : le corps de la demande est requis");
         } else {
             if (!StringUtils.hasText(request.getName())
                     || !ValidationUtils.validateString(request.getName().trim())) {
-                errors.add("Invalid resource group request, the name is not valid");
+                errors.add("Demande de groupe de ressources invalide : le nom n'est pas valide");
             }
 
             if (StringUtils.hasText(request.getDescription())
                     && !ValidationUtils.validateDescription(request.getDescription().trim())) {
-                errors.add("Invalid resource group request, the description is not valid");
+                errors.add("Demande de groupe de ressources invalide : la description n'est pas valide");
             }
         }
 
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource group request", errors);
+            throw new ValidationException("Demande de groupe de ressources invalide", errors);
         }
 
         return errors;
@@ -173,21 +173,21 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
         List<String> errors = new ArrayList<>();
 
         if (request == null) {
-            errors.add("Invalid resource group request, the request body is required");
+            errors.add("Demande de groupe de ressources invalide : le corps de la demande est requis");
         } else {
             if (!StringUtils.hasText(request.getName())
                     || !ValidationUtils.validateString(request.getName().trim())) {
-                errors.add("Invalid resource group request, the name is not valid");
+                errors.add("Demande de groupe de ressources invalide : le nom n'est pas valide");
             }
 
             if (StringUtils.hasText(request.getDescription())
                     && !ValidationUtils.validateDescription(request.getDescription().trim())) {
-                errors.add("Invalid resource group request, the description is not valid");
+                errors.add("Demande de groupe de ressources invalide : la description n'est pas valide");
             }
         }
 
         if (!errors.isEmpty()) {
-            throw new ValidationException("Invalid resource group request", errors);
+            throw new ValidationException("Demande de groupe de ressources invalide", errors);
         }
 
         return errors;

@@ -93,7 +93,7 @@ public abstract class ResourceMapperDecorator implements ResourceMapper {
         try {
             return ResourceStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("Invalid resource status: " + value, ex);
+            throw new BadRequestException("Statut de ressource invalide : " + value, ex);
         }
     }
 }
