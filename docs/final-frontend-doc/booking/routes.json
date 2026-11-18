@@ -177,7 +177,7 @@
    "declaredIn": "BookingController",
    "access": {
     "kind": "admin",
-    "permission": "BOOKING:CANCEL"
+    "permission": "BOOKING:READ"
    },
    "params": [],
    "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse>>"
@@ -742,7 +742,7 @@
    "declaredIn": "BookingController",
    "access": {
     "kind": "admin",
-    "permission": "BOOKING:UPDATE"
+    "permission": "BOOKING:CHECKIN"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.booking.dto.request.BookingCheckRequest",
@@ -1596,6 +1596,12 @@
      "required": false,
      "default": "0",
      "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "token",
+     "required": false,
+     "type": "String"
     }
    ],
    "response": "page HTML (vue serveur)"

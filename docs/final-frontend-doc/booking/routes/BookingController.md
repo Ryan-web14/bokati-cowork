@@ -71,7 +71,7 @@ Module [booking](../README.md) · 40 route(s).
 <a id="r-get-sni-api-v1-bookings-cancellation-policy"></a>
 ### GET /sni/api/v1/bookings/cancellation-policy
 
-- Accès : back-office : rôle d'administration et droit `BOOKING:CANCEL`
+- Accès : back-office : rôle d'administration et droit `BOOKING:READ`
 - Réponse : `List<CancellationPolicyResponse>`
 - Modèles : [CancellationPolicyResponse](#m-CancellationPolicyResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `cancellationPolicy`
@@ -331,7 +331,7 @@ Module [booking](../README.md) · 40 route(s).
 <a id="r-patch-sni-api-v1-bookings-bookingnumber-early-check-in"></a>
 ### PATCH /sni/api/v1/bookings/{bookingNumber}/early-check-in
 
-- Accès : back-office : rôle d'administration et droit `BOOKING:UPDATE`
+- Accès : back-office : rôle d'administration et droit `BOOKING:CHECKIN`
 - Corps JSON (facultatif) : `BookingCheckRequest`
 - Réponse : `BookingResponse`
 - Modèles : [BookingResponse](#m-BookingResponse), [BookingCheckRequest](#m-BookingCheckRequest)

@@ -47,6 +47,36 @@ public class ClientResourceService {
     private final ResourceAvailabilityService resourceAvailabilityService;
     private final PublicResourceCalendarService publicResourceCalendarService;
 
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService visibility;
+    private com.sni.bokaticowork.features.portal.context.ClientContextService clientContext;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setVisibility(com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService visibility,
+                       @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.portal.context.ClientContextService clientContext) {
+        this.visibility = visibility;
+        this.clientContext = clientContext;
+    }
+
+    /** Lot B10 : contexte du membre connecte (identites, organisations, segments, plan). */
+    private com.sni.bokaticowork.features.ressource.service.pricing.PriceContext memberContext() {
+        if (visibility == null || clientContext == null) {
+            return null;
+        }
+        try {
+            var member = clientContext.getAuthenticatedMember();
+            return visibility.context("MEMBER", member == null ? null : member.getMemberId());
+        } catch (RuntimeException ex) {
+            return visibility.context(null, null);
+        }
+    }
+
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.Access access(Resource resource) {
+        var context = memberContext();
+        return visibility == null || context == null
+                ? com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.Access.DIRECT
+                : visibility.access(resource, context);
+    }
+
     @Transactional(readOnly = true)
     public PaginatedResponse<ClientResourceSummaryResponse> listPortalResources(
             String typeCode, String groupCode, String query, Integer minCapacity, Pageable pageable) {
@@ -76,6 +106,11 @@ public class ClientResourceService {
         if (StringUtils.hasText(query)) {
             criteria.setName(query);
         }
+        // Lot B10 : les ressources reservees n'apparaissent qu'a leur audience.
+        var context = memberContext();
+        if (visibility != null && context != null) {
+            criteria.setRestrictedVisibleIds(visibility.restrictedVisibleIds(context));
+        }
 
         Specification<Resource> spec = ResourceSpecification.search(criteria);
         Page<Resource> page = resourceRepository.findAll(spec, pageable);
@@ -88,14 +123,23 @@ public class ClientResourceService {
         if (!Boolean.TRUE.equals(resource.getPortalVisible())
                 || resource.getStatus() != ResourceStatus.ACTIVE
                 || !Boolean.TRUE.equals(resource.getBookingEnabled())) {
-            throw new ResourceNotFoundException("Resource not found");
+            throw new ResourceNotFoundException("Ressource introuvable : " + code);
+        }
+        var resourceAccess = access(resource);
+        if (resourceAccess == com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.Access.HIDDEN) {
+            throw new ResourceNotFoundException("Ressource introuvable : " + code);
         }
         List<AmenityResponse> amenities = resourceService.listAmenities(code);
+        // Lot B10 : un prix reserve a d'autres clients n'est jamais montre.
+        var context = memberContext();
+        java.util.Set<String> keys = context == null ? java.util.Set.of() : context.audienceKeys();
         List<ResourcePricingRuleResponse> pricingRules = resourcePricingRuleService
                 .listByResource(code, Pageable.unpaged())
                 .getData()
                 .stream()
                 .filter(r -> Boolean.TRUE.equals(r.getActive()))
+                .filter(r -> r.getAudience() == null || r.getAudience().isEmpty()
+                        || r.getAudience().stream().anyMatch(ref -> keys.contains(ref.type() + ":" + ref.code())))
                 .toList();
         ResourcePolicy policy = resource.getEffectivePolicy();
         ResourceType type = resource.getResourceType();
@@ -115,6 +159,7 @@ public class ClientResourceService {
                 .allowCancellation(policy != null ? policy.getAllowCancellation() : null)
                 .amenities(amenities)
                 .pricingRules(pricingRules)
+                .bookingOnRequest(resourceAccess == com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.Access.ON_REQUEST)
                 .build();
     }
 
@@ -152,8 +197,9 @@ public class ClientResourceService {
         Resource resource = resourceService.getResourceForService(code);
         if (!Boolean.TRUE.equals(resource.getPortalVisible())
                 || resource.getStatus() != ResourceStatus.ACTIVE
-                || !Boolean.TRUE.equals(resource.getBookingEnabled())) {
-            throw new ResourceNotFoundException("Resource not found");
+                || !Boolean.TRUE.equals(resource.getBookingEnabled())
+                || access(resource) == com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.Access.HIDDEN) {
+            throw new ResourceNotFoundException("Ressource introuvable : " + code);
         }
     }
 

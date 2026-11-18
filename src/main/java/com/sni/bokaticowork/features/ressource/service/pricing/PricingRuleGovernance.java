@@ -123,6 +123,7 @@ public class PricingRuleGovernance {
                 && Objects.equals(a.getValidFrom(), b.getValidFrom()) && Objects.equals(a.getValidUntil(), b.getValidUntil())
                 && sameText(a.getCustomerSegment(), b.getCustomerSegment()) && sameText(a.getPlanCode(), b.getPlanCode())
                 && sameText(a.getChannel(), b.getChannel())
+                && sameText(a.getAudience(), b.getAudience())
                 && Objects.equals(a.getMinParticipants(), b.getMinParticipants()) && Objects.equals(a.getMaxParticipants(), b.getMaxParticipants())
                 && Objects.equals(a.getMinDurationMinutes(), b.getMinDurationMinutes())
                 && Objects.equals(a.getMaxDurationMinutes(), b.getMaxDurationMinutes())
@@ -139,6 +140,7 @@ public class PricingRuleGovernance {
         if (!datesOverlap(a.getValidFrom(), a.getValidUntil(), b.getValidFrom(), b.getValidUntil())) return false;
         return compatible(a.getCustomerSegment(), b.getCustomerSegment()) && compatible(a.getPlanCode(), b.getPlanCode())
                 && compatible(a.getChannel(), b.getChannel())
+                && sameText(a.getAudience(), b.getAudience())
                 && rangesOverlap(a.getMinParticipants(), a.getMaxParticipants(), b.getMinParticipants(), b.getMaxParticipants())
                 && rangesOverlap(a.getMinDurationMinutes(), a.getMaxDurationMinutes(), b.getMinDurationMinutes(), b.getMaxDurationMinutes());
     }
@@ -192,6 +194,7 @@ public class PricingRuleGovernance {
         map.put("minLeadMinutes", rule.getMinLeadMinutes());
         map.put("lastMinuteMinutes", rule.getLastMinuteMinutes());
         map.put("channel", rule.getChannel());
+        map.put("audience", rule.getAudience());
         map.put("stackable", rule.getStackable());
         map.put("perParticipant", rule.getPerParticipant());
         map.put("priority", rule.getPriority());

@@ -109,6 +109,29 @@ public class ResourceController {
         this.ical = ical;
     }
 
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService visibility;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setVisibility(com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService visibility) {
+        this.visibility = visibility;
+    }
+
+    /** Lot B10 : visibilite de la ressource et clients designes. */
+    @GetMapping("/{code}/visibility")
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.VisibilityResponse> visibility(
+            @PathVariable String code) {
+        return ResponseEntity.ok(visibility.get(code));
+    }
+
+    /** Lot B10 : PUBLIC, RESTRICTED (audience obligatoire) ou ON_REQUEST, et la liste des clients designes. */
+    @PutMapping("/{code}/visibility")
+    @Audited(module = "RESOURCE", action = "UPDATE_VISIBILITY", ressource = "resource")
+    public ResponseEntity<com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.VisibilityResponse> setVisibility(
+            @PathVariable String code,
+            @RequestBody com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.VisibilityRequest request) {
+        return ResponseEntity.ok(visibility.set(code, request));
+    }
+
     /** Lot R5c : participants compris, prix d'un participant supplementaire, caution. */
     public record SalesSettings(Integer includedParticipants, Integer extraParticipantPrice, Integer depositAmount) {
     }

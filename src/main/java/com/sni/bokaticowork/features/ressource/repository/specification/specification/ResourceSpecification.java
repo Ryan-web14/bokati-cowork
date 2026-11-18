@@ -111,6 +111,14 @@ public final class ResourceSpecification {
                 );
             }
 
+            // Lot B10 : ressources reservees visibles seulement par leur audience.
+            if (criteria.getRestrictedVisibleIds() != null) {
+                Predicate notRestricted = cb.or(cb.isNull(root.get("visibilityMode")),
+                        cb.notEqual(root.get("visibilityMode"), com.sni.bokaticowork.features.ressource.model.ResourceVisibility.RESTRICTED));
+                predicates.add(criteria.getRestrictedVisibleIds().isEmpty() ? notRestricted
+                        : cb.or(notRestricted, root.get("id").in(criteria.getRestrictedVisibleIds())));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
 
         };

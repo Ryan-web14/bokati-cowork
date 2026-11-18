@@ -49,7 +49,8 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
         Resource resource = resourceService.getResourceForService(resourceCode);
         // Lot R0 : seulement une ressource proposee aux clients (visible au portail, active,
         // reservable) ; sinon introuvable, comme une ressource inexistante (pas d'enumeration).
-        if (!Boolean.TRUE.equals(resource.getPortalVisible()) || !Boolean.TRUE.equals(resource.getActive())
+        if (resource.getVisibilityMode() == com.sni.bokaticowork.features.ressource.model.ResourceVisibility.RESTRICTED
+                || !Boolean.TRUE.equals(resource.getPortalVisible()) || !Boolean.TRUE.equals(resource.getActive())
                 || !Boolean.TRUE.equals(resource.getBookingEnabled())
                 || resource.getStatus() != com.sni.bokaticowork.features.ressource.enums.ResourceStatus.ACTIVE) {
             throw new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Ressource introuvable : " + resourceCode);

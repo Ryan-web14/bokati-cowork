@@ -55,6 +55,12 @@ Les transitions et délais (expiration d'une réservation non payée, libératio
 2. Détail : `GET /sni/api/v1/client/bookings/{bookingNumber}`.
 3. Annuler : `DELETE /sni/api/v1/client/bookings/{bookingNumber}` avec `{ "reason" }` facultatif (500 caractères au plus). Accepté seulement pour `CONFIRMED`, `PENDING_APPROVAL` ou `PENDING_PAYMENT` ; les règles de délai (`allowCancellation`, `cancellationNoticeMinutes`) et de remboursement ou de libération du droit sont appliquées par le module `booking`. Réponse : la réservation `CANCELLED`.
 
+### Ressources réservées et sur demande (lot B10, 18/11/2026)
+
+1. La liste et la fiche ne montrent une ressource réservée (`RESTRICTED`) qu'aux clients désignés : le membre lui-même, une organisation à laquelle il est rattaché, son segment ou son plan. Pour les autres, elle est introuvable (`404`).
+2. `bookingOnRequest: true` sur la fiche signale que la réservation est une **demande**. Elle naît en `PENDING_APPROVAL`, puis l'équipe l'approuve ou la refuse. Afficher « Sur demande » sur la carte, et le bouton « Demander ».
+3. Prix : la fiche ne montre que les règles valables pour ce membre (tarif membre, tarif de son plan, prix négocié de son organisation). Le devis applique le prix du membre connecté.
+
 ### Avant et après l'utilisation (chantier ressources, 18/11/2026)
 
 1. Règlement d'usage de la ressource : `GET /sni/api/v1/client/bookings/{bookingNumber}/usage-rules` (texte, version, `upToDate`) ; l'accepter : `POST .../usage-rules/accept`. Un règlement modifié se ré-accepte. À demander à la réservation ou avant l'arrivée ; l'arrivée n'est pas bloquée.

@@ -8907,6 +8907,9 @@
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse"
      }
+    },
+    "bookingOnRequest": {
+     "type": "boolean"
     }
    }
   },
@@ -11322,6 +11325,12 @@
     "holidayMode": {
      "type": "string"
     },
+    "audience": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.request.AudienceRef"
+     }
+    },
     "stackable": {
      "type": "boolean"
     },
@@ -12006,6 +12015,17 @@
     }
    }
   },
+  "AudienceRef": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    }
+   }
+  },
   "PublicResourceCalendarResponse.Window": {
    "type": "object",
    "properties": {
@@ -12561,6 +12581,7 @@
   "PassSharingDtos.BeneficiaryConsumption": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.BeneficiaryConsumption",
   "SharingDtos.SeatEntitlement": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SeatEntitlement",
   "LocalTime": "java.time.LocalTime",
+  "AudienceRef": "com.sni.bokaticowork.features.ressource.dto.request.AudienceRef",
   "PublicResourceCalendarResponse.Window": "com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Window",
   "PriceResult.Adjustment": "com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Adjustment",
   "BillingDocumentDiscountResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentDiscountResponse",

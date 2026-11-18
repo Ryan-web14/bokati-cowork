@@ -117,6 +117,13 @@ public class ResourcePricingRule {
     @Column(name = "holiday_mode", length = 10)
     private String holidayMode;
 
+    /**
+     * Lot B10 : clients vises (« TYPE:CODE » separes par des virgules : MEMBER, CUSTOMER,
+     * BUSINESS_ENTITY, SEGMENT, PLAN) ; vide = tous. Sert aux prix au cas par cas.
+     */
+    @Column(name = "audience", length = 2000)
+    private String audience;
+
     /** Lot R1 : ajustement cumulable avec les autres (sinon, seul le meilleur s'applique). */
     @Builder.Default
     @Column(name = "stackable", nullable = false)

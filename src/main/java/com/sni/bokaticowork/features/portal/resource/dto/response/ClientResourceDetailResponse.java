@@ -29,4 +29,7 @@ public class ClientResourceDetailResponse {
 
     private List<AmenityResponse> amenities;
     private List<ResourcePricingRuleResponse> pricingRules;
+
+    /** Lot B10 : la reservation passe par une demande approuvee par l'equipe. */
+    private Boolean bookingOnRequest;
 }

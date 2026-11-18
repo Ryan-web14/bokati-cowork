@@ -41,6 +41,44 @@ public class PriceContextResolver {
         this.customerRepository = customerRepository;
     }
 
+    private com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository memberRepository;
+    private com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository memberLinks;
+
+    @Autowired(required = false)
+    void setMemberLinks(com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository memberRepository,
+                        com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository memberLinks) {
+        this.memberRepository = memberRepository;
+        this.memberLinks = memberLinks;
+    }
+
+    /**
+     * Lot B10 : identites du client · lui-meme, et pour un membre les organisations auxquelles il
+     * est rattache (liens actifs), sous la forme « CUSTOMER:code ».
+     */
+    private Set<String> owners(String type, String ownerCode) {
+        Set<String> owners = new LinkedHashSet<>();
+        if (type == null || !StringUtils.hasText(ownerCode)) {
+            return owners;
+        }
+        String normalized = "BUSINESS".equals(type) ? "BUSINESS_ENTITY" : type;
+        owners.add(normalized + ":" + ownerCode.trim());
+        if ("MEMBER".equals(normalized) && memberRepository != null && memberLinks != null) {
+            try {
+                memberRepository.findByMemberIdAndDeletedFalse(ownerCode.trim()).ifPresent(member ->
+                        memberLinks.findAllByMemberAndStatusOrderByStartedAtDesc(member,
+                                        com.sni.bokaticowork.features.company.enums.MemberLinkStatus.ACTIVE)
+                                .forEach(link -> {
+                                    if (link.getCustomer() != null && link.getCustomer().getCustomerId() != null) {
+                                        owners.add("CUSTOMER:" + link.getCustomer().getCustomerId());
+                                    }
+                                }));
+            } catch (RuntimeException ex) {
+                log.warn("Organisations du membre {} illisibles : {}", ownerCode, ex.getMessage());
+            }
+        }
+        return owners;
+    }
+
     @Autowired(required = false)
     void setSubscriptionRepository(SubscriptionRepository subscriptionRepository) {
         this.subscriptionRepository = subscriptionRepository;
@@ -75,7 +113,8 @@ public class PriceContextResolver {
                 segments.add("SUBSCRIBER");
             }
         }
-        return new PriceContext(Set.copyOf(segments), "".equals(planCode) ? null : planCode, channel(), LocalDateTime.now(ZONE));
+        return new PriceContext(Set.copyOf(segments), "".equals(planCode) ? null : planCode, channel(), LocalDateTime.now(ZONE),
+                owners(type, ownerCode));
     }
 
     /** Code du plan de l'abonnement en cours ; chaine vide si abonne sans plan lisible ; nul sans abonnement. */

@@ -27,6 +27,8 @@ public class ResourceResponse {
     private String floorCode;
     private java.math.BigDecimal planX;
     private java.math.BigDecimal planY;
+    /** Lot B10 : PUBLIC, RESTRICTED ou ON_REQUEST (audience : GET /resources/{code}/visibility). */
+    private String visibilityMode;
     /** Lot R5c : vente. */
     private Integer includedParticipants;
     private Integer extraParticipantPrice;

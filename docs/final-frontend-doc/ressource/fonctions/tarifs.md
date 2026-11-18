@@ -36,3 +36,16 @@ Condition `holidayMode` d'une règle : `ONLY` (jours fériés seulement, par exe
 ## Historique des prix appliqués (lot R5e)
 
 `GET /resources/{code}/price-history?from=&to=` (droit `RESOURCE:PRICE`) : pour chaque réservation, unité, prix unitaire, sous-total, total et règles appliquées (lues dans la trace du prix). Avec `GET /resource-pricing-rules/{id}/history` (versions de chaque règle), on retrouve le prix d'hier et pourquoi.
+
+## Tarifs réservés à des clients : prix au cas par cas (lot B10)
+
+Une règle tarifaire peut viser un ou plusieurs clients, avec le champ `audience` : une liste de `{ type, code }`, avec les mêmes types que la [visibilité](visibilite.md) (`MEMBER`, `CUSTOMER`, `BUSINESS_ENTITY`, `SEGMENT`, `PLAN`).
+
+- **Prix au cas par cas** : un prix de base (`price`) ou un prix imposé (`adjustmentType: FIXED_PRICE`) avec `audience: [{ "type": "CUSTOMER", "code": "CLI-ACME" }]`. Il ne s'applique qu'à ce client, et aux membres rattachés à cette organisation. Plusieurs clients dans la même liste partagent le même prix.
+- **Tarif membre** : `audience: [{ "type": "SEGMENT", "code": "MEMBER" }]`, ou le champ `customerSegment`, équivalent pour un seul segment. Tarif des abonnés d'un plan : `{ "type": "PLAN", "code": "PREMIUM" }`.
+- **Remise négociée** pour un client : ajustement `PERCENT_DELTA` ou `AMOUNT_DELTA` avec son `audience`.
+- **Précédence** : une règle avec audience compte trois conditions de plus. À priorité égale, le prix d'un client l'emporte donc sur la grille générale, sans toucher à `priority`.
+- **Confidentialité** : la fiche du portail ne montre jamais une règle réservée à d'autres clients ; le devis et la réservation appliquent le prix du client connecté.
+- **Modifier** : `PUT /resource-pricing-rules/{id}` avec `audience` (remplace la liste), ou `clear: ["audience"]` pour une règle valable pour tous. Une règle identique (mêmes conditions et même audience) est refusée en `409`.
+- **Écran** : une colonne « Clients » dans la grille tarifaire, un filtre « prix au cas par cas ». Le simulateur (`POST /resource-pricing-rules/simulate` avec `ownerType` et `ownerCode`) montre le prix d'un client précis.
+

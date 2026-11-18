@@ -180,6 +180,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `minLeadMinutes` | entier |  |  |
 | `channel` | texte |  |  |
 | `holidayMode` | texte |  |  |
+| `audience` | [AudienceRef](#m-AudienceRef)[] |  |  |
 | `stackable` | booléen |  |  |
 | `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
@@ -212,6 +213,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `minLeadMinutes` | entier |  |  |
 | `channel` | texte |  |  |
 | `holidayMode` | texte |  |  |
+| `audience` | [AudienceRef](#m-AudienceRef)[] |  |  |
 | `stackable` | booléen |  |  |
 | `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
@@ -330,6 +332,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `minLeadMinutes` | entier |  |  |
 | `channel` | texte |  |  |
 | `holidayMode` | texte |  |  |
+| `audience` | [AudienceRef](#m-AudienceRef)[] |  |  |
 | `stackable` | booléen |  |  |
 | `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
@@ -358,6 +361,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `minute` | entier |  |  |
 | `second` | entier |  |  |
 | `nano` | entier |  |  |
+
+<a id="m-AudienceRef"></a>
+#### AudienceRef
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `type` | texte |  |  |
+| `code` | texte |  |  |
 
 <a id="m-BulkResourceOperationResponse-Entry"></a>
 #### BulkResourceOperationResponse.Entry

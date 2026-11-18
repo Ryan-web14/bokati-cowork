@@ -333,6 +333,13 @@ public class ResourcePriceEngine {
         if (!inWindow(rule.getStartsAt(), rule.getEndsAt(), at.toLocalTime())) {
             return false;
         }
+        // Lot B10 : regle reservee a des clients (prix au cas par cas, membres, segments, plans).
+        if (StringUtils.hasText(rule.getAudience())) {
+            java.util.Set<String> keys = ctx.audienceKeys();
+            if (com.sni.bokaticowork.features.ressource.dto.request.AudienceRef.split(rule.getAudience()).stream().noneMatch(ref -> keys.contains(ref.type() + ":" + ref.code()))) {
+                return false;
+            }
+        }
         // Lot R5a : jours feries (nationaux calcules et ajoutes par l'equipe).
         if (StringUtils.hasText(rule.getHolidayMode())) {
             boolean holiday = holidays.test(at.toLocalDate());
@@ -391,6 +398,8 @@ public class ResourcePriceEngine {
         if (rule.getMinDurationMinutes() != null || rule.getMaxDurationMinutes() != null) count++;
         if (rule.getLastMinuteMinutes() != null || rule.getMinLeadMinutes() != null) count++;
         if (StringUtils.hasText(rule.getChannel())) count++;
+        // Lot B10 : un prix designe pour des clients l'emporte sur les conditions generales.
+        if (StringUtils.hasText(rule.getAudience())) count += 3;
         return count;
     }
 

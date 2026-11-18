@@ -44,6 +44,9 @@ public class ResourcePricingRuleResponse {
 
     /** Lot R5a : ONLY (jours feries seulement), EXCLUDED (hors jours feries) ou vide. */
     private String holidayMode;
+
+    /** Lot B10 : clients vises (prix au cas par cas) ; vide = tous. */
+    private java.util.List<com.sni.bokaticowork.features.ressource.dto.request.AudienceRef> audience;
     private Boolean stackable;
     private Boolean perParticipant;
 

@@ -64,6 +64,7 @@ public abstract class ResourceMapperDecorator implements ResourceMapper {
                 .floorCode(resource.getFloor() == null ? null : resource.getFloor().getCode())
                 .planX(resource.getPlanX())
                 .planY(resource.getPlanY())
+                .visibilityMode(resource.getVisibilityMode() == null ? "PUBLIC" : resource.getVisibilityMode().name())
                 .includedParticipants(resource.getIncludedParticipants())
                 .extraParticipantPrice(resource.getExtraParticipantPrice())
                 .depositAmount(resource.getDepositAmount())

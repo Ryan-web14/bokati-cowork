@@ -27,10 +27,11 @@ La recherche passe par la base (requête JPA et fonction SQL), pas par Elasticse
 | Site (`ResourceSite`) | `code` (`SIT-...`) | Adresse, ville, téléphone, fuseau, horaires affichés. |
 | Étage (`ResourceFloor`) | `code` (`FLR-...`) | Étage d'un site, avec l'image de son plan (document de la GED). |
 | Lot (`ResourceBundle`) | `code` (`LOT-...`) | Ressources réservées ensemble, avec une remise. |
+| Audience (`ResourceAudience`) | aucun | Clients désignés d'une ressource réservée ou sur demande : membre, client ou organisation, entreprise, segment, plan. |
 | Créneau (`ResourceAvailability`) | `id` (code texte) | Tranche de `slotDurationMinutes` (5 à 60 min) d'une ressource, avec `totalCapacity` et `remainingCapacity`. C'est ce que consomme une réservation. |
 | Fermeture (`ResourceClosure`) | `id` (code texte) | Plage fermée, typée (fermeture, maintenance, ménage, événement privé), unique ou répétée chaque semaine ou chaque année. |
 | Jour particulier (`ResourceCalendarDay`) | `id` (code texte) | Jour férié ajouté, horaires exceptionnels ou jour fermé, pour toutes les ressources ou une seule. Les fériés nationaux du Congo sont calculés. |
-| Règle tarifaire (`ResourcePricingRule`) | `id` = numéro court | Prix de base ou ajustement par unité (`HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH`), avec conditions ; versions conservées. |
+| Règle tarifaire (`ResourcePricingRule`) | `id` = numéro court | Prix de base ou ajustement par unité (`HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH`), avec conditions, éventuellement réservé à des clients (`audience` : prix au cas par cas) ; versions conservées. |
 | Photo (`ResourcePhoto`) | `id` | Rattache une image de la GED à une ressource. |
 | Horaires propres (`ResourceOpeningHours`) | aucun | Plages par jour de semaine qui remplacent les horaires globaux. |
 | Modèle de tâche (`ResourceTaskTemplate`) | `id` | Tâche de l'équipe créée à chaque réservation confirmée, ou à la vente d'un service. |
@@ -92,7 +93,8 @@ Réservations à venir (décision D4) : la mise hors service, la maintenance, la
 4. Placement : `PUT /resources/{code}/placement` `{ siteCode, floorCode, planX, planY }`.
 5. Vente : `PUT /resources/{code}/sales-settings` `{ includedParticipants, extraParticipantPrice, depositAmount }`.
 6. Usage : `PUT /resources/{code}/usage-settings` `{ usageRules, endChecklist }`.
-7. Liste : `GET /resources?summary=&typeCode=&groupCode=&policyCode=&siteCode=` (filtres combinables, en résumé comme en détail) ; recherche : `POST /resources/search` (`typeCode`, `groupCode`, `policyCode`, `siteCode`, `floorCode`, `name`, `status`…) ; `GET /resources/search/basic?query=` paginé.
+7. Visibilité au portail : `PUT /resources/{code}/visibility` `{ mode: PUBLIC|RESTRICTED|ON_REQUEST, audiences: [{ type, code }] }` ([fonctions/visibilite.md](fonctions/visibilite.md)).
+8. Liste : `GET /resources?summary=&typeCode=&groupCode=&policyCode=&siteCode=` (filtres combinables, en résumé comme en détail) ; recherche : `POST /resources/search` (`typeCode`, `groupCode`, `policyCode`, `siteCode`, `floorCode`, `name`, `status`…) ; `GET /resources/search/basic?query=` paginé.
 
 ### Ouvrir et gérer les créneaux
 
@@ -118,7 +120,7 @@ Voir [fonctions/calendrier.md](fonctions/calendrier.md) : fermetures typées et 
 
 ### Tarifer une ressource
 
-Un seul moteur de prix sert la réservation, la disponibilité, le devis, le portail et le catalogue : **le devis annonce ce qui sera facturé**. Détail : [fonctions/tarifs.md](fonctions/tarifs.md) (règles, conditions dont les jours fériés, unité la moins chère, simulateur, versions, conflits, historique des prix appliqués).
+Un seul moteur de prix sert la réservation, la disponibilité, le devis, le portail et le catalogue : **le devis annonce ce qui sera facturé**. Tarif membre, tarif des abonnés d'un plan et **prix au cas par cas pour un ou plusieurs clients** : champ `audience` des règles. Détail : [fonctions/tarifs.md](fonctions/tarifs.md) (règles, conditions dont les jours fériés, unité la moins chère, simulateur, versions, conflits, historique des prix appliqués).
 
 ### Galerie photo
 
@@ -127,7 +129,7 @@ Un seul moteur de prix sert la réservation, la disponibilité, le devis, le por
 
 ### Calendrier public (sans jeton)
 
-`GET /public/resources/{code}/calendar?fromDate=&toDate=` : ressource visible au portail, active, réservable et `ACTIVE` (sinon `404`), 92 jours au plus, sans les créneaux des abonnés. Statut du jour `AVAILABLE`, `PARTIAL`, `FULL` ou `CLOSED` ; `dayLabel` pour un férié ou un jour particulier.
+`GET /public/resources/{code}/calendar?fromDate=&toDate=` : ressource visible au portail, non réservée (`RESTRICTED`), active, réservable et `ACTIVE` (sinon `404`), 92 jours au plus, sans les créneaux des abonnés. Statut du jour `AVAILABLE`, `PARTIAL`, `FULL` ou `CLOSED` ; `dayLabel` pour un férié ou un jour particulier.
 
 ### Vendre, exploiter, piloter
 
@@ -135,6 +137,7 @@ Un seul moteur de prix sert la réservation, la disponibilité, le devis, le por
 - Suppléments, caution, dépassement, codes promo, lots : [fonctions/vente.md](fonctions/vente.md) (routes sous `/bookings`).
 - Tâches, incidents, règlement d'usage, état des lieux : [fonctions/exploitation.md](fonctions/exploitation.md).
 - Coûts, marges, occupation, heures pleines et creuses : [fonctions/pilotage.md](fonctions/pilotage.md).
+- Visibilité par client et réservation sur demande : [fonctions/visibilite.md](fonctions/visibilite.md).
 
 ## Règles et erreurs à refléter dans l'écran
 

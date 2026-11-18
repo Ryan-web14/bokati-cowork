@@ -1634,6 +1634,58 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/resources/{code}/visibility",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "visibility",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.VisibilityResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/resources/{code}/visibility",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "setVisibility",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.VisibilityRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.VisibilityResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/resource-groups",
    "package": "features.ressource.controller",
    "controller": "ResourceGroupController",
@@ -3902,6 +3954,9 @@
     "planY": {
      "type": "number"
     },
+    "visibilityMode": {
+     "type": "string"
+    },
     "includedParticipants": {
      "type": "integer",
      "format": "int32"
@@ -4165,6 +4220,13 @@
     "minCapacity": {
      "type": "integer",
      "format": "int32"
+    },
+    "restrictedVisibleIds": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "format": "int64"
+     }
     }
    }
   },
@@ -4325,6 +4387,37 @@
      "type": "array",
      "items": {
       "type": "string"
+     }
+    }
+   }
+  },
+  "ResourceVisibilityService.VisibilityResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "mode": {
+     "type": "string"
+    },
+    "audiences": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.request.AudienceRef"
+     }
+    }
+   }
+  },
+  "ResourceVisibilityService.VisibilityRequest": {
+   "type": "object",
+   "properties": {
+    "mode": {
+     "type": "string"
+    },
+    "audiences": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.request.AudienceRef"
      }
     }
    }
@@ -4954,6 +5047,12 @@
     "holidayMode": {
      "type": "string"
     },
+    "audience": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.request.AudienceRef"
+     }
+    },
     "stackable": {
      "type": "boolean"
     },
@@ -5055,6 +5154,12 @@
     },
     "holidayMode": {
      "type": "string"
+    },
+    "audience": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.request.AudienceRef"
+     }
     },
     "stackable": {
      "type": "boolean"
@@ -5357,6 +5462,12 @@
     },
     "holidayMode": {
      "type": "string"
+    },
+    "audience": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.request.AudienceRef"
+     }
     },
     "stackable": {
      "type": "boolean"
@@ -5824,6 +5935,17 @@
     }
    }
   },
+  "AudienceRef": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    }
+   }
+  },
   "LocalTime": {
    "type": "object",
    "properties": {
@@ -6135,6 +6257,8 @@
   "ResourceController.SalesSettings": "com.sni.bokaticowork.features.ressource.controller.ResourceController.SalesSettings",
   "ResourceStatus": "com.sni.bokaticowork.features.ressource.enums.ResourceStatus",
   "ResourceController.UsageSettings": "com.sni.bokaticowork.features.ressource.controller.ResourceController.UsageSettings",
+  "ResourceVisibilityService.VisibilityResponse": "com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.VisibilityResponse",
+  "ResourceVisibilityService.VisibilityRequest": "com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.VisibilityRequest",
   "ResourceGroupResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceGroupResponse",
   "CreateResourceGroupRequest": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourceGroupRequest",
   "UpdateResourceGroupRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourceGroupRequest",
@@ -6175,6 +6299,7 @@
   "ResourceBundles.ItemResponse": "com.sni.bokaticowork.features.ressource.service.support.ResourceBundles.ItemResponse",
   "ResourceBundles.Item": "com.sni.bokaticowork.features.ressource.service.support.ResourceBundles.Item",
   "ResourceLocationResponses.Option": "com.sni.bokaticowork.features.ressource.dto.response.ResourceLocationResponses.Option",
+  "AudienceRef": "com.sni.bokaticowork.features.ressource.dto.request.AudienceRef",
   "LocalTime": "java.time.LocalTime",
   "PricingRuleConflictPreviewResponse.ResourcePreview": "com.sni.bokaticowork.features.ressource.dto.response.PricingRuleConflictPreviewResponse.ResourcePreview",
   "PriceResult.Line": "com.sni.bokaticowork.features.ressource.service.pricing.PriceResult.Line",

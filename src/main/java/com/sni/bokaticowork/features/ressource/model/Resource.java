@@ -117,6 +117,12 @@ public class Resource {
     @Column(name = "end_checklist", length = 2000)
     private String endChecklist;
 
+    /** Lot B10 : visibilite au portail (tous, reservee a une audience, ou sur demande). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility_mode", length = 20)
+    @Builder.Default
+    private ResourceVisibility visibilityMode = ResourceVisibility.PUBLIC;
+
     /** Lot R5b : jeton du flux d'abonnement iCalendar (coupe par defaut). */
     @Column(name = "ical_token", length = 60)
     private String icalToken;

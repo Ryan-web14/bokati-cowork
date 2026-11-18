@@ -272,10 +272,16 @@ public class BookingServiceImpl implements BookingService {
         booking.setSubtotalAmount(price.amount());
         booking.setTotalAmount(price.amount());
         booking.setCurrency(price.currency());
-        booking.setApprovalRequired(effectivePolicy.approvalRequired());
+        // Lot B10 : ressource sur demande, client du portail non designe : approbation de l'equipe.
+        boolean onRequest = resourceVisibility != null
+                && booking.getChannel() == com.sni.bokaticowork.features.booking.enums.BookingChannel.PORTAL
+                && resourceVisibility.access(resource, booking.getOwnerType() == null ? null : booking.getOwnerType().name(),
+                        booking.getOwnerCode()) != com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.Access.DIRECT;
+        boolean approval = effectivePolicy.approvalRequired() || onRequest;
+        booking.setApprovalRequired(approval);
         booking.setVirtualMeetingUrl(virtualMeetingSupport.meetingUrl(resource, booking.getBookingNumber()));
         boolean awaitsPayment = request.paymentMode() != null && request.paymentMode().awaitsPayment();
-        if (effectivePolicy.approvalRequired()) {
+        if (approval) {
             booking.setStatus(BookingStatus.PENDING_APPROVAL);
         } else if (awaitsPayment) {
             booking.setStatus(BookingStatus.PENDING_PAYMENT);
@@ -293,7 +299,7 @@ public class BookingServiceImpl implements BookingService {
             booking = confirmInternal(booking, new BookingStatusChangeRequest(staffActor,
                     "Reservation saisie par l'equipe apres le debut", Boolean.FALSE));
             booking = progressStaffBooking(booking, staffActor);
-        } else if (effectivePolicy.approvalRequired()) {
+        } else if (approval) {
             writeHistory(booking, BookingStatus.DRAFT, BookingStatus.PENDING_APPROVAL, null, "Approval required");
             eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking pending approval", "Booking requires approval", null);
         } else if (awaitsPayment) {
@@ -898,6 +904,12 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private com.sni.bokaticowork.features.booking.service.support.BookingExtras bookingExtras;
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService resourceVisibility;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setResourceVisibility(com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService resourceVisibility) {
+        this.resourceVisibility = resourceVisibility;
+    }
     private com.sni.bokaticowork.features.booking.service.support.BookingOperations bookingOperations;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)

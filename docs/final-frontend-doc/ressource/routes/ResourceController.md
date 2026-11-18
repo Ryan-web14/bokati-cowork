@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [ressource](../README.md) · 23 route(s).
+Module [ressource](../README.md) · 25 route(s).
 
 ## Routes
 
@@ -299,6 +299,31 @@ Module [ressource](../README.md) · 23 route(s).
 | --- | --- | --- | --- | --- |
 | `code` | chemin | `String` | oui |  |
 
+<a id="r-get-sni-api-v1-resources-code-visibility"></a>
+### GET /sni/api/v1/resources/{code}/visibility
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:READ`
+- Réponse : `ResourceVisibilityService.VisibilityResponse`
+- Modèles : [ResourceVisibilityService.VisibilityResponse](#m-ResourceVisibilityService-VisibilityResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java`, méthode `visibility`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
+<a id="r-put-sni-api-v1-resources-code-visibility"></a>
+### PUT /sni/api/v1/resources/{code}/visibility
+
+- Accès : back-office : rôle d'administration et droit `RESOURCE:UPDATE`
+- Corps JSON (obligatoire) : `ResourceVisibilityService.VisibilityRequest`
+- Réponse : `ResourceVisibilityService.VisibilityResponse`
+- Modèles : [ResourceVisibilityService.VisibilityResponse](#m-ResourceVisibilityService-VisibilityResponse), [ResourceVisibilityService.VisibilityRequest](#m-ResourceVisibilityService-VisibilityRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java`, méthode `setVisibility`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
 ## Modèles
 
 Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
@@ -322,6 +347,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `floorCode` | texte |  |  |
 | `planX` | nombre décimal |  |  |
 | `planY` | nombre décimal |  |  |
+| `visibilityMode` | texte |  |  |
 | `includedParticipants` | entier |  |  |
 | `extraParticipantPrice` | entier |  |  |
 | `depositAmount` | entier |  |  |
@@ -421,6 +447,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `bookingEnabled` | booléen |  |  |
 | `active` | booléen |  |  |
 | `minCapacity` | entier |  |  |
+| `restrictedVisibleIds` | code identifiant (texte)[] |  |  |
 
 <a id="m-UpdateResourceRequest"></a>
 #### UpdateResourceRequest
@@ -533,6 +560,23 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `usageRules` | texte |  |  |
 | `endChecklist` | texte[] |  |  |
 
+<a id="m-ResourceVisibilityService-VisibilityResponse"></a>
+#### ResourceVisibilityService.VisibilityResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `resourceCode` | texte |  |  |
+| `mode` | texte |  |  |
+| `audiences` | [AudienceRef](#m-AudienceRef)[] |  |  |
+
+<a id="m-ResourceVisibilityService-VisibilityRequest"></a>
+#### ResourceVisibilityService.VisibilityRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `mode` | texte |  |  |
+| `audiences` | [AudienceRef](#m-AudienceRef)[] |  |  |
+
 <a id="m-ResourceLocationResponses-Option"></a>
 #### ResourceLocationResponses.Option
 
@@ -549,3 +593,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `price` | nombre décimal |  |  |
 | `currency` | texte |  |  |
 | `notes` | texte[] |  |  |
+
+<a id="m-AudienceRef"></a>
+#### AudienceRef
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `type` | texte |  |  |
+| `code` | texte |  |  |

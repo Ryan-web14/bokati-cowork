@@ -47,4 +47,10 @@ public class ResourceSearchCriteria {
 
     private Integer minCapacity;
 
+    /**
+     * Lot B10 : si renseigne, les ressources reservees (RESTRICTED) ne figurent que si leur
+     * identifiant est dans cette liste (celles visibles par le client du portail).
+     */
+    private java.util.List<Long> restrictedVisibleIds;
+
 }

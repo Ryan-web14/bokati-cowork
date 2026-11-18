@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-119 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+121 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -63,6 +63,8 @@
 | PUT | `/sni/api/v1/resources/{code}/sales-settings` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-put-sni-api-v1-resources-code-sales-settings) |
 | PATCH | `/sni/api/v1/resources/{code}/status` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-patch-sni-api-v1-resources-code-status) |
 | PUT | `/sni/api/v1/resources/{code}/usage-settings` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-put-sni-api-v1-resources-code-usage-settings) |
+| GET | `/sni/api/v1/resources/{code}/visibility` | RESOURCE:READ | [ResourceController](routes/ResourceController.md#r-get-sni-api-v1-resources-code-visibility) |
+| PUT | `/sni/api/v1/resources/{code}/visibility` | RESOURCE:UPDATE | [ResourceController](routes/ResourceController.md#r-put-sni-api-v1-resources-code-visibility) |
 | GET | `/sni/api/v1/resource-groups` | RESOURCE:READ | [ResourceGroupController](routes/ResourceGroupController.md#r-get-sni-api-v1-resource-groups) |
 | POST | `/sni/api/v1/resource-groups` | RESOURCE:CREATE | [ResourceGroupController](routes/ResourceGroupController.md#r-post-sni-api-v1-resource-groups) |
 | GET | `/sni/api/v1/resource-groups/search` | RESOURCE:READ | [ResourceGroupController](routes/ResourceGroupController.md#r-get-sni-api-v1-resource-groups-search) |

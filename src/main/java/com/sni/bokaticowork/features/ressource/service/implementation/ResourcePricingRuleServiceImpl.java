@@ -191,6 +191,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .minLeadMinutes(request.getMinLeadMinutes())
                 .channel(upper(request.getChannel()))
                 .holidayMode(upper(request.getHolidayMode()))
+                .audience(com.sni.bokaticowork.features.ressource.dto.request.AudienceRef.join(request.getAudience()))
                 .stackable(Boolean.TRUE.equals(request.getStackable()))
                 .perParticipant(Boolean.TRUE.equals(request.getPerParticipant()))
                 .build();
@@ -250,8 +251,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 ? com.sni.bokaticowork.features.ressource.service.pricing.PriceContext.anonymous()
                 : priceContextResolver.forOwner(ownerType, ownerCode);
         if (StringUtils.hasText(channel)) {
-            context = new com.sni.bokaticowork.features.ressource.service.pricing.PriceContext(context.segments(), context.planCode(),
-                    channel.trim().toUpperCase(java.util.Locale.ROOT), context.now());
+            context = context.withChannel(channel.trim().toUpperCase(java.util.Locale.ROOT));
         }
         com.sni.bokaticowork.features.ressource.service.pricing.PriceResult result =
                 priceEngine.price(resource, startedAt, endedAt, quantity == null ? 1 : quantity, unit, context);
@@ -348,6 +348,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         if (request.getMinLeadMinutes() != null)    rule.setMinLeadMinutes(request.getMinLeadMinutes());
         if (request.getChannel() != null)           rule.setChannel(upper(request.getChannel()));
         if (request.getHolidayMode() != null)       rule.setHolidayMode(upper(request.getHolidayMode()));
+        if (request.getAudience() != null)          rule.setAudience(com.sni.bokaticowork.features.ressource.dto.request.AudienceRef.join(request.getAudience()));
         if (request.getStackable() != null)        rule.setStackable(request.getStackable());
         if (request.getPerParticipant() != null)   rule.setPerParticipant(request.getPerParticipant());
         // Ecart Rn-6 : vider une condition, puis revalider la regle telle qu'elle sera enregistree.
@@ -448,6 +449,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .validUntil(rule.getValidUntil())
                 .lastMinuteMinutes(rule.getLastMinuteMinutes())
                 .holidayMode(rule.getHolidayMode())
+                .audience(com.sni.bokaticowork.features.ressource.dto.request.AudienceRef.split(rule.getAudience()))
                 .priority(rule.getPriority())
                 .active(rule.getActive())
                 .build();
@@ -541,6 +543,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
             case "planCode" -> rule.setPlanCode(null);
             case "channel" -> rule.setChannel(null);
             case "holidayMode" -> rule.setHolidayMode(null);
+            case "audience" -> rule.setAudience(null);
             case "adjustment" -> {
                 rule.setAdjustmentType(null);
                 rule.setAdjustmentValue(null);

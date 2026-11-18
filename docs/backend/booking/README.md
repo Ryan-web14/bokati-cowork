@@ -93,7 +93,7 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 
 ## Avancement
 
-**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)).
+**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients.
 
 ## Lots proposés
 
@@ -131,4 +131,4 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 | D7 | Fonctions nouvelles | Rappels et venue ; planning et séries ; fiabilité et acompte ; invitations et demandes ; budget par collaborateur ; relevé mensuel groupé ; forfait d'heures entreprise ; offres de dernière minute ; alternatives ; prolongation ; tableau de bord ; avis ; agenda personnel ; rapport de réservations par client imprimable. Non retenue : approbation par le gérant. |
 | D8 | Listes de choix | **Socle commun** (lot L0 du [constat](../listes-de-choix/README.md)), fait avant B7 ; listes de la caisse migrées sans changer leurs routes. |
 
-Ordre : B0, B1, B2, B8, L0 (socle des listes), B7, B3, B4, B5, B6, B10, B9a à B9g, B11.
+Ordre : B0, B10 (avancé le 18/11 à la demande, avec les prix au cas par cas), B1, B2, B8, L0 (socle des listes), B7, B3, B4, B5, B6, B9a à B9g, B11.

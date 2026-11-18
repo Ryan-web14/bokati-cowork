@@ -11,7 +11,7 @@
 | GET | `/sni/api/v1/bookings/batches` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-batches) |
 | POST | `/sni/api/v1/bookings/batches` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-batches) |
 | GET | `/sni/api/v1/bookings/batches/{batchNumber}` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-batches-batchnumber) |
-| GET | `/sni/api/v1/bookings/cancellation-policy` | BOOKING:CANCEL | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-cancellation-policy) |
+| GET | `/sni/api/v1/bookings/cancellation-policy` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-cancellation-policy) |
 | POST | `/sni/api/v1/bookings/check-availability` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-check-availability) |
 | PATCH | `/sni/api/v1/bookings/check-in/qr/{checkInToken}` | BOOKING:CHECKIN | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-check-in-qr-checkintoken) |
 | POST | `/sni/api/v1/bookings/holds` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-holds) |
@@ -35,7 +35,7 @@
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/check-out` | BOOKING:CHECKIN | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-check-out) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/complete` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-complete) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/confirm` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-confirm) |
-| PATCH | `/sni/api/v1/bookings/{bookingNumber}/early-check-in` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-early-check-in) |
+| PATCH | `/sni/api/v1/bookings/{bookingNumber}/early-check-in` | BOOKING:CHECKIN | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-early-check-in) |
 | GET | `/sni/api/v1/bookings/{bookingNumber}/events` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-bookingnumber-events) |
 | GET | `/sni/api/v1/bookings/{bookingNumber}/history` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-bookingnumber-history) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/no-show` | BOOKING:CANCEL | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-no-show) |

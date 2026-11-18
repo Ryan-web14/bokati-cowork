@@ -120,6 +120,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `allowCancellation` | booléen |  |  |
 | `amenities` | [AmenityResponse](#m-AmenityResponse)[] |  |  |
 | `pricingRules` | [ResourcePricingRuleResponse](#m-ResourcePricingRuleResponse)[] |  |  |
+| `bookingOnRequest` | booléen |  |  |
 
 <a id="m-PublicResourceCalendarResponse"></a>
 #### PublicResourceCalendarResponse
@@ -208,6 +209,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `minLeadMinutes` | entier |  |  |
 | `channel` | texte |  |  |
 | `holidayMode` | texte |  |  |
+| `audience` | [AudienceRef](#m-AudienceRef)[] |  |  |
 | `stackable` | booléen |  |  |
 | `perParticipant` | booléen |  |  |
 | `active` | booléen |  |  |
@@ -258,6 +260,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `minute` | entier |  |  |
 | `second` | entier |  |  |
 | `nano` | entier |  |  |
+
+<a id="m-AudienceRef"></a>
+#### AudienceRef
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `type` | texte |  |  |
+| `code` | texte |  |  |
 
 <a id="m-PublicResourceCalendarResponse-Window"></a>
 #### PublicResourceCalendarResponse.Window

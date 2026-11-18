@@ -83,6 +83,7 @@ Module [booking](../README.md) · 10 route(s).
 | --- | --- | --- | --- | --- |
 | `bookingNumber` | chemin | `String` | oui |  |
 | `score` | requête | `int` |  | 0 |
+| `token` | requête | `String` |  |  |
 
 <a id="r-get-sni-api-v1-public-bookings-bookingnumber"></a>
 ### GET /sni/api/v1/public/bookings/{bookingNumber}
