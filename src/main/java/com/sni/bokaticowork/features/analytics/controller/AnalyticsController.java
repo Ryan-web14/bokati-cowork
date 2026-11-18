@@ -33,6 +33,19 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
     private final AnalyticsRepository analyticsRepository;
 
+    /**
+     * Tableau de bord : meme contenu que {@code /analytics/overview}. Sans dates, le mois en cours
+     * jusqu'a aujourd'hui.
+     */
+    @GetMapping("/analytics/dashboard")
+    public ResponseEntity<AnalyticsOverviewResponse> dashboard(@RequestParam(required = false) String fromDate,
+                                                               @RequestParam(required = false) String toDate) {
+        LocalDate from = parseDate(fromDate);
+        LocalDate to = parseDate(toDate);
+        LocalDate today = LocalDate.now();
+        return ResponseEntity.ok(analyticsService.overview(from == null ? today.withDayOfMonth(1) : from, to == null ? today : to));
+    }
+
     @GetMapping("/analytics/overview")
     public ResponseEntity<AnalyticsOverviewResponse> overview(@RequestParam(required = false) String fromDate,
                                                               @RequestParam(required = false) String toDate) {

@@ -97,7 +97,17 @@ class BillingDocumentPdfLinesRenderTest {
         context.setVariable("payments", List.of());
         context.setVariable("logo", null);
         context.setVariable("usageAnnex", annex);
+        context.setVariable("equivalents", List.of(new com.sni.bokaticowork.features.billing.service.support.BillingCurrencyEquivalents.Equivalent(
+                "EUR", new BigDecimal("655.957"), new BigDecimal("38.11"), new BigDecimal("38.11"), LocalDate.of(2026, 9, 23), true)));
         return engine.process("billing/document", context);
+    }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("Le total est aussi donne en devises etrangeres sous le total TTC")
+    void theTotalIsAlsoGivenInForeignCurrencies() {
+        String html = render(List.of(line(1, "Salle de réunion", "1", "25000", "21186.44", true)))
+                .replace(' ', ' ').replace(' ', ' ');
+        assertThat(html).contains("Soit en EUR (1 EUR = 655,96 XAF, taux du 23/09/2026)").contains("38,11 EUR");
     }
 
     @Test
