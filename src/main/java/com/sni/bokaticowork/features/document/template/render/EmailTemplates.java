@@ -63,6 +63,12 @@ public final class EmailTemplates {
         if (!TONES.contains(tone)) {
             errors.add("ton inconnu « " + tone + " » (vide, warn ou alert)");
         }
+        List<String> pieceBlocks = blocks.stream().map(EmailTemplates::type)
+                .filter(type -> !BLOCK_TYPES.contains(type) && TemplateContent.BLOCK_TYPES.contains(type)).distinct().toList();
+        if (!pieceBlocks.isEmpty()) {
+            errors.add("ce modèle est un courriel : " + String.join(", ", pieceBlocks)
+                    + " sont des blocs de pièce PDF ; blocs d'un courriel : SUBJECT, PREHEADER, TITLE, GREETING, TEXT, DETAILS, AMOUNT, BUTTON, ATTACHMENT_NOTE, SIGNATURE, LEGAL");
+        }
         long subjects = blocks.stream().filter(block -> "SUBJECT".equals(type(block))).count();
         if (subjects != 1) {
             errors.add("un et un seul bloc SUBJECT (objet du courriel)");

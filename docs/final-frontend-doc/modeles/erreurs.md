@@ -4,7 +4,7 @@
 
 | Code | Statut | Cas | Côté écran |
 | --- | --- | --- | --- |
-| `MODELE_INVALIDE` | 400 | Contenu refusé à l'enregistrement ou à la publication ; le message liste chaque erreur (« Bloc 3 (FIELDS) : de une à quatre colonnes ; ... ») | Afficher la liste, rester dans l'éditeur |
+| `MODELE_INVALIDE` | 400 | Contenu refusé à l'enregistrement ou à la publication ; le message liste chaque erreur (« Bloc 3 (FIELDS) : de une à quatre colonnes ; ... ») | Afficher la liste, rester dans l'éditeur. Si le message commence par « Ce modèle est une pièce PDF » ou « ce modèle est un courriel », l'écran a choisi l'éditeur sans lire `family` : ouvrir l'éditeur des pièces pour `PDF`, celui des courriels pour `EMAIL` |
 | `BROUILLON_ABSENT` | 400 | Publier ou supprimer sans brouillon | Désactiver le bouton quand `draft` est nul |
 | `AUCUN_CONTENU` | 400 | Aperçu sans corps, sans brouillon ni version publiée | Envoyer le contenu en cours d'édition |
 | `AUCUNE_VERSION_PUBLIEE` | 400 | Retour à l'original alors que rien n'est publié | Désactiver le bouton quand `published` est nul |

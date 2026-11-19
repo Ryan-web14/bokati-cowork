@@ -22,6 +22,8 @@ public record TemplateContent(String pageFormat, List<Map<String, Object>> copie
     public static final Set<String> PAGE_FORMATS = Set.of("A4", "A5_TWO_UP", "A6");
     public static final Set<String> BLOCK_TYPES = Set.of("HEADER", "TITLE", "FIELDS", "LINES", "TOTALS", "TEXT", "SIGNATURES", "FOOTER",
             "SECTIONS");
+    /** Blocs d'une piece dans l'ordre de la documentation, pour les messages d'erreur. */
+    static final List<String> BLOCK_ORDER = List.of("HEADER", "TITLE", "FIELDS", "LINES", "TOTALS", "TEXT", "SIGNATURES", "SECTIONS", "FOOTER");
     /** Champs ajoutes (lot D3) : types, modes et prefixe de leur cle dans les blocs. */
     public static final Set<String> FIELD_TYPES = Set.of("TEXT", "NUMBER", "AMOUNT", "DATE", "LIST", "CHECKBOX");
     public static final Set<String> FIELD_MODES = Set.of("PRINTED_BLANK", "CAPTURED");
@@ -80,6 +82,12 @@ public record TemplateContent(String pageFormat, List<Map<String, Object>> copie
         }
         if (blocks.size() > MAX_BLOCKS) {
             errors.add("Quarante blocs au plus");
+        }
+        List<String> emailBlocks = blocks.stream().map(block -> text(block.get("type")).toUpperCase())
+                .filter(type -> !BLOCK_TYPES.contains(type) && EmailTemplates.BLOCK_TYPES.contains(type)).distinct().toList();
+        if (!emailBlocks.isEmpty()) {
+            errors.add("Ce modèle est une pièce PDF : " + String.join(", ", emailBlocks)
+                    + " sont des blocs de courriel ; blocs d'une pièce : " + String.join(", ", BLOCK_ORDER));
         }
         for (int index = 0; index < blocks.size(); index++) {
             validateBlock(index + 1, blocks.get(index), errors);

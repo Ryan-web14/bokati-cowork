@@ -28,6 +28,8 @@ Corps de `PUT /document-templates/{code}/draft` et de `POST .../preview` :
 
 Une option inconnue d'un bloc est refusée (pas ignorée) : l'éditeur n'envoie que les options ci-dessous.
 
+Cet éditeur sert aux modèles de `family` `PDF` (lue dans `GET /document-templates/{code}`). Les blocs de courriel (`SUBJECT`, `GREETING`, `LEGAL`...) y sont refusés : l'erreur commence par « Ce modèle est une pièce PDF : ... sont des blocs de courriel » et donne la liste des blocs d'une pièce. Si elle apparaît, l'écran a ouvert le mauvais éditeur (cas vu sur `PURCHASE_ORDER`, une pièce PDF). Les courriels (`family` `EMAIL`) ont leur éditeur, voir [editeur-courriels.md](editeur-courriels.md).
+
 ## Blocs
 
 | Type | Options | Ce qui s'imprime |

@@ -113,4 +113,13 @@ class EmailTemplatesE1Test {
         assertThat(variables).contains("customerName", "documentNumber", "paidAmount", "balanceDue");
         assertThat(EmailTemplates.sampleVariables(List.of("document.number", "document"))).containsKey("document");
     }
+
+    @Test
+    void pieceBlocksSentToAnEmailAreNamedAsSuch() {
+        List<Map<String, Object>> blocks = List.of(Map.of("type", "SUBJECT", "text", "Objet"), Map.of("type", "HEADER"),
+                Map.of("type", "SIGNATURES"));
+        assertThatThrownBy(() -> EmailTemplates.validate(blocks, Map.of(), Set.of(), List.of()))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("ce modèle est un courriel : HEADER, SIGNATURES sont des blocs de pièce PDF");
+    }
 }

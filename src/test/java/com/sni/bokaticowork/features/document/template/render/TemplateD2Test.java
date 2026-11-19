@@ -96,4 +96,16 @@ class TemplateD2Test {
         assertThat(CashVoucherDocumentData.templateCode(in)).isEqualTo("CASH_IN_VOUCHER");
         assertThat(CashVoucherDocumentData.templateCode(payment)).isNull();
     }
+
+    @Test
+    void emailBlocksSentToAPrintedPieceAreNamedAsSuch() {
+        TemplateContent content = new TemplateContent("A4", List.of(), Map.of(), List.of(
+                Map.of("type", "SUBJECT", "text", ""), Map.of("type", "GREETING", "text", ""),
+                Map.of("type", "TEXT", "text", ""), Map.of("type", "LEGAL")));
+
+        assertThatThrownBy(content::validate).isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Ce modèle est une pièce PDF : SUBJECT, GREETING, LEGAL sont des blocs de courriel")
+                .hasMessageContaining("blocs d'une pièce : HEADER, TITLE, FIELDS")
+                .hasMessageContaining("bloc 1 : type inconnu « SUBJECT »");
+    }
 }
