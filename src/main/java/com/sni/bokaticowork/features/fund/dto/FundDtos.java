@@ -98,7 +98,19 @@ public final class FundDtos {
     public record Decision(String comment, BigDecimal reducedAmount) {
     }
 
-    public record Disburse(@NotBlank String sessionNumber, BigDecimal amount, String signedByName, String signature) {
+    /**
+     * Decaissement. {@code lineNatures} : nature d'operation de chaque ligne qui n'en a pas (une
+     * demande peut etre saisie et approuvee sans nature ; la caissiere la complete ici).
+     */
+    public record Disburse(@NotBlank String sessionNumber, BigDecimal amount, String signedByName, String signature,
+                           List<LineNature> lineNatures) {
+        public Disburse(String sessionNumber, BigDecimal amount, String signedByName, String signature) {
+            this(sessionNumber, amount, signedByName, signature, null);
+        }
+    }
+
+    /** Nature d'operation a poser sur une ligne au decaissement. */
+    public record LineNature(Integer lineNo, String natureCode) {
     }
 
     public record CashBack(@NotBlank String sessionNumber, BigDecimal amount, String signedByName, String signature) {

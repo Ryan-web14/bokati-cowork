@@ -556,6 +556,26 @@ public class FundRequestService {
 
     // ------------------------------------------------------------------ decaissement
 
+    /** Pose les natures donnees au decaissement (code connu, ligne de la demande). */
+    private void completeNatures(List<FundRequestLine> lines, List<FundDtos.LineNature> natures) {
+        if (natures == null) {
+            return;
+        }
+        for (FundDtos.LineNature given : natures) {
+            if (given == null || given.lineNo() == null || !StringUtils.hasText(given.natureCode())) {
+                continue;
+            }
+            FundRequestLine line = lines.stream().filter(candidate -> given.lineNo().equals(candidate.getLineNo())).findFirst()
+                    .orElseThrow(() -> new BadRequestException("Ligne " + given.lineNo() + " inconnue sur cette demande"));
+            String code = given.natureCode().trim().toUpperCase(Locale.ROOT);
+            if (natureRepository.findByCode(code).isEmpty()) {
+                throw new BadRequestException("Nature d'opération inconnue : " + given.natureCode());
+            }
+            line.setNatureCode(code);
+            lineRepository.save(line);
+        }
+    }
+
     /**
      * Decaissement par la caissiere, depuis sa session. Depense directe : un mouvement de sortie par
      * ligne, avec sa nature. Avance : un mouvement sur la nature d'avance ({@code 421}), total ou
@@ -598,6 +618,14 @@ public class FundRequestService {
                     : approved.divide(request.getTotalAmount(), 10, RoundingMode.HALF_UP);
             BigDecimal left = value;
             List<FundRequestLine> lines = lineRepository.findByRequestIdOrderByLineNoAsc(request.getId());
+            completeNatures(lines, input.lineNatures());
+            List<String> missing = lines.stream().filter(line -> !StringUtils.hasText(line.getNatureCode()))
+                    .map(line -> String.valueOf(line.getLineNo())).toList();
+            if (!missing.isEmpty()) {
+                throw BadRequestException.coded("NATURE_REQUISE", (missing.size() == 1 ? "Ligne " : "Lignes ") + String.join(", ", missing)
+                        + " sans nature d'opération : indiquez-la au décaissement dans lineNatures [{ lineNo, natureCode }] "
+                        + "(natures : GET /cash-registers/natures)");
+            }
             for (int index = 0; index < lines.size(); index++) {
                 FundRequestLine line = lines.get(index);
                 BigDecimal part = index == lines.size() - 1 ? left : money(line.getAmount().multiply(factor));

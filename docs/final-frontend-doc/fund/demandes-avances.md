@@ -65,6 +65,7 @@ APPROVED sans décaissement après fund.request.expiry-days (15) → EXPIRED
 `POST /fund-requests/{n}/disburse` par la caissière (`FUND_REQUEST:DISBURSE`), depuis sa session, avec le nom du signataire et la signature (image) :
 
 - **dépense directe** (et remboursement, paiement fournisseur) : un mouvement `CASH_OUT` par ligne avec sa nature, en une fois ;
+  - chaque ligne doit avoir une **nature d'opération**. Le demandeur peut la laisser vide ; la caissière la complète au décaissement : corps `{ "sessionNumber": "...", "signedByName": "...", "signature": "...", "lineNatures": [{ "lineNo": 1, "natureCode": "FOURNITURES" }] }` (natures de la caisse : `GET /cash-registers/natures`). Une ligne restée sans nature : `400 NATURE_REQUISE` avec les numéros de lignes. Écran : dans la fenêtre de décaissement, une liste déroulante de nature sur chaque ligne sans nature, pré-remplie avec la nature déjà saisie ;
 - **avance**, acompte : un mouvement `CASH_OUT` sur la nature `AVANCE_A_JUSTIFIER` (`421` du bénéficiaire), total ou partiel ;
 - refus si la session n'a pas les fonds ; la caissière ne se décaisse pas sa propre demande ;
 - approvisionnement et remise de fonds : ordre de transfert entre caisses (lot C3), rattaché par `PATCH /fund-requests/{n}/transfer`.
