@@ -197,6 +197,17 @@ public class Booking {
     @Column(name = "call_note", length = 1000)
     private String callNote;
 
+    /** Lot B9a : reponse du client au rappel (COMING, CANCELLED). */
+    @Column(name = "attendance_answer", length = 20)
+    private String attendanceAnswer;
+
+    @Column(name = "attendance_answered_at")
+    private Instant attendanceAnsweredAt;
+
+    /** Lot B9a : creneau libere faute d'arrivee. */
+    @Column(name = "released_early_at")
+    private Instant releasedEarlyAt;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

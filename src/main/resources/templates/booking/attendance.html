@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{fragments/page :: pagehead('Votre venue · Elle A Osé')}"></head>
+<body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
+
+  <th:block th:switch="${state}">
+    <th:block th:case="'COMING'">
+      <p class="state ok">Noté</p>
+      <h1>Merci, nous vous attendons</h1>
+      <p class="lede">Votre venue est confirmée. Présentez votre QR à l'accueil à votre arrivée.</p>
+    </th:block>
+    <th:block th:case="'ASK_CANCEL'">
+      <p class="state">Annulation</p>
+      <h1>Annuler votre réservation ?</h1>
+      <p class="lede">Le créneau sera libéré. Les conditions d'annulation de l'espace s'appliquent (délai, remboursement).</p>
+      <form method="post" th:action="@{${cancelAction}}">
+        <input type="hidden" name="token" th:value="${token}">
+        <button type="submit" class="btn">Confirmer l'annulation</button>
+      </form>
+    </th:block>
+    <th:block th:case="'CANCELLED'">
+      <p class="state ok">Annulée</p>
+      <h1>Votre réservation est annulée</h1>
+      <p class="lede">Le créneau est libéré. Vous recevrez une confirmation par courriel.</p>
+    </th:block>
+    <th:block th:case="*">
+      <p class="state">Impossible</p>
+      <h1>Action impossible</h1>
+      <p class="lede" th:text="${message}">La réservation ne peut plus être modifiée depuis ce lien. Contactez l'accueil.</p>
+    </th:block>
+  </th:block>
+
+  <dl class="rows">
+    <div th:if="${bookingNumber != null}"><dt>Réservation</dt><dd class="mono" th:text="${bookingNumber}">BKG</dd></div>
+    <div th:if="${resourceName != null}"><dt>Espace</dt><dd th:text="${resourceName}">Salle</dd></div>
+    <div th:if="${startLabel != null}"><dt>Début</dt><dd th:text="${startLabel}">date</dd></div>
+  </dl>
+
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
+</body>
+</html>

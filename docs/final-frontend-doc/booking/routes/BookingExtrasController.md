@@ -251,6 +251,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `priceAdjustmentApprovalNumber` | texte |  |  |
 | `leadNumber` | texte |  |  |
 | `callNote` | texte |  |  |
+| `attendanceAnswer` | texte |  |  |
+| `attendanceAnsweredAt` | date-heure ISO 8601 UTC |  |  |
+| `releasedEarlyAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-BookingLineResponse"></a>
 #### BookingLineResponse

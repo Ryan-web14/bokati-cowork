@@ -1,6 +1,6 @@
 # booking : fonctionnement
 
-> Rédigé d'après le code, à jour des lots B0 à B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code, à jour des lots B0 à B8, B9a, B9b et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -382,3 +382,12 @@ Détail : [lot B5](../../backend/booking/lot-b5-telephone.md).
 - Liste d'attente : voir [Liste d'attente](#liste-dattente) ; portail : [portal/parcours-reservations.md](../portal/parcours-reservations.md#liste-dattente).
 
 Détail : [lot B6](../../backend/booking/lot-b6-notifications-attente.md).
+
+## Venue, planning, séries (lots B9a et B9b, 19/11/2026)
+
+- Rappel : le courriel porte « Je viens » et « J'annule » (pages publiques à jeton, rien à faire côté écran). La fiche montre la réponse : `attendanceAnswer` (`COMING`, `CANCELLED`) et `attendanceAnsweredAt` ; afficher un badge « Venue confirmée ».
+- Libération anticipée (réglage `bookings.early-release.minutes`, coupée par défaut) : une réservation sans arrivée passe absente et son créneau est rendu ; `releasedEarlyAt` sur la fiche.
+- Écran « Accueil du jour » : `GET /bookings/planning?date=&resourceCode=` (par ressource ; compteurs `bookings`, `arrived`, `late`, `toCollect` ; chaque ligne avec `late` et `lateMinutes`, `paymentStatus`, `payOnSite`, `attendanceAnswer`). Rafraîchir toutes les minutes.
+- Séries : la fiche d'une réservation porte `recurrenceGroupNumber` ; `GET /bookings/series/{n}` liste la série ; « Annuler à partir du … » : `PATCH /bookings/series/{n}/cancel?from=` `{ reason }` ; « Déplacer la série » : `PATCH /bookings/series/{n}/reschedule?from=` `{ newStartTime: "10:00", newEndTime: "12:00" }` ou `{ shiftDays: 1 }`, `acceptPriceChange`. Afficher `refused` (numéro et raison) après l'opération.
+
+Détail : [lots B9a et B9b](../../backend/booking/lot-b9a-b9b-venue-planning.md).

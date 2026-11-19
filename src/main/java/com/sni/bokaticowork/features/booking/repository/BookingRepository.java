@@ -261,6 +261,30 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             """)
     List<Booking> findRepairCandidates(@Param("limit") int limit);
 
+    /** Lot B9b : reservations qui commencent dans la journee, par ressource et heure. */
+    @Query(nativeQuery = true, value = """
+            SELECT b.* FROM booking b JOIN resource r ON r.id = b.resource_id
+            WHERE b.deleted = false AND b.started_at >= :from AND b.started_at < :to
+            ORDER BY r.name ASC, b.started_at ASC
+            """)
+    List<Booking> findForDay(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    /** Lot B9b : occurrences d'une serie recurrente. */
+    List<Booking> findByRecurrenceGroupNumberOrderByStartedAtAsc(String recurrenceGroupNumber);
+
+    /** Lot B9a : reservations confirmees sans arrivee, commencees depuis le seuil, pas encore finies. */
+    @Query(nativeQuery = true, value = """
+            SELECT * FROM booking
+            WHERE deleted = false AND status = 'CONFIRMED'
+              AND checked_in_at IS NULL AND started_event_at IS NULL
+              AND started_at <= :threshold AND ended_at > :now
+              AND (attendance_answer IS NULL OR attendance_answer <> 'COMING')
+            ORDER BY started_at ASC
+            LIMIT :limit
+            """)
+    List<Booking> findEarlyReleaseCandidates(@Param("threshold") LocalDateTime threshold, @Param("now") LocalDateTime now,
+                                             @Param("limit") int limit);
+
     /** Lot B3 : absences sur des rendez-vous regles sur place depuis une date. */
     @Query(nativeQuery = true, value = """
             SELECT COUNT(*) FROM booking

@@ -207,7 +207,10 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getPriceAdjustmentStatus(),
                 booking.getPriceAdjustmentApprovalNumber(),
                 booking.getLeadNumber(),
-                booking.getCallNote()
+                booking.getCallNote(),
+                booking.getAttendanceAnswer(),
+                booking.getAttendanceAnsweredAt(),
+                booking.getReleasedEarlyAt()
         );
     }
 

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-89 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+95 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -55,6 +55,10 @@
 | GET | `/sni/api/v1/bookings/{bookingNumber}/reschedule/preview` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-bookingnumber-reschedule-preview) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/start` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-start) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/transfer` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-transfer) |
+| GET | `/sni/api/v1/bookings/planning` | BOOKING:READ | [BookingDeskController](routes/BookingDeskController.md#r-get-sni-api-v1-bookings-planning) |
+| GET | `/sni/api/v1/bookings/series/{recurrenceGroupNumber}` | BOOKING:READ | [BookingDeskController](routes/BookingDeskController.md#r-get-sni-api-v1-bookings-series-recurrencegroupnumber) |
+| PATCH | `/sni/api/v1/bookings/series/{recurrenceGroupNumber}/cancel` | BOOKING:CANCEL | [BookingDeskController](routes/BookingDeskController.md#r-patch-sni-api-v1-bookings-series-recurrencegroupnumber-cancel) |
+| PATCH | `/sni/api/v1/bookings/series/{recurrenceGroupNumber}/reschedule` | BOOKING:UPDATE | [BookingDeskController](routes/BookingDeskController.md#r-patch-sni-api-v1-bookings-series-recurrencegroupnumber-reschedule) |
 | POST | `/sni/api/v1/bookings/{number}/amenities` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-amenities) |
 | POST | `/sni/api/v1/bookings/{number}/extra-participants` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-extra-participants) |
 | GET | `/sni/api/v1/bookings/{number}/lines` | BOOKING:READ | [BookingExtrasController](routes/BookingExtrasController.md#r-get-sni-api-v1-bookings-number-lines) |
@@ -78,6 +82,8 @@
 | POST | `/sni/api/v1/bookings/waitlist/{id}/accept` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist-id-accept) |
 | PATCH | `/sni/api/v1/bookings/waitlist/{id}/cancel` | BOOKING:CANCEL | [BookingWaitlistController](routes/BookingWaitlistController.md#r-patch-sni-api-v1-bookings-waitlist-id-cancel) |
 | POST | `/sni/api/v1/bookings/waitlist/{id}/decline` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist-id-decline) |
+| GET | `/sni/api/v1/public/bookings/{bookingNumber}/attendance` | public | [PublicBookingAttendanceController](routes/PublicBookingAttendanceController.md#r-get-sni-api-v1-public-bookings-bookingnumber-attendance) |
+| POST | `/sni/api/v1/public/bookings/{bookingNumber}/attendance/cancel` | public | [PublicBookingAttendanceController](routes/PublicBookingAttendanceController.md#r-post-sni-api-v1-public-bookings-bookingnumber-attendance-cancel) |
 | POST | `/sni/api/v1/public/bookings/check-in/scan` | public | [PublicBookingController](routes/PublicBookingController.md#r-post-sni-api-v1-public-bookings-check-in-scan) |
 | GET | `/sni/api/v1/public/bookings/check-in/scan/{checkInToken}` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-check-in-scan-checkintoken) |
 | GET | `/sni/api/v1/public/bookings/check-in/scanner-setup` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-check-in-scanner-setup) |

@@ -510,6 +510,7 @@ bokati.whatsapp.portal-path.kyc	NOTIFICATIONS	TEXT	LIVE	client/kyc	Page de l'esp
 bokati.whatsapp.portal-path.quotes	NOTIFICATIONS	TEXT	LIVE	client/quotes	Page de l'espace client ouverte par le bouton WhatsApp : devis
 bokati.whatsapp.portal-path.subscriptions	NOTIFICATIONS	TEXT	LIVE	client/subscriptions	Page de l'espace client ouverte par le bouton WhatsApp : abonnements
 bokati.whatsapp.portal-path.wallet	NOTIFICATIONS	TEXT	LIVE	client/wallet	Page de l'espace client ouverte par le bouton WhatsApp : portefeuille
+bookings.early-release.minutes	BOOKING	INTEGER	LIVE	0	Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais)
 bookings.pay-on-site.max-no-shows	BOOKING	INTEGER	LIVE	2	Réservations : absences sur des rendez-vous réglés sur place avant retrait d'office de l'option (0 : jamais)
 bookings.pay-on-site.no-show-window-days	BOOKING	INTEGER	LIVE	90	Réservations : période, en jours, sur laquelle les absences sont comptées
 bookings.pay-on-site.portal-enabled	BOOKING	BOOLEAN	LIVE	false	Réservations : rendez-vous réglé sur place ouvert au portail pour tous les clients sans option propre

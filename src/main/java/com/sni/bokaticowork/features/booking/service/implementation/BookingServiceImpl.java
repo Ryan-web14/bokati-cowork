@@ -1497,6 +1497,40 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.toResponse(priceAdjuster.adjust(bookingNumber, request));
     }
 
+    static final String EARLY_RELEASE_KEY = "bookings.early-release.minutes";
+
+    /**
+     * Lot B9a : liberation anticipee. Une reservation confirmee sans arrivee ni demarrage
+     * {@code bookings.early-release.minutes} apres son debut (au moins la fenetre d'arrivee) est
+     * marquee absente et son creneau rendu, pour qu'un autre client le prenne. Coupe par defaut
+     * (0). Un client qui a repondu « je viens » au rappel n'est pas libere.
+     */
+    @Override
+    public int releaseNoArrivals(int limit) {
+        int minutes = platformSettings == null ? 0 : platformSettings.integer(EARLY_RELEASE_KEY, 0);
+        if (minutes <= 0) {
+            return 0;
+        }
+        int after = Math.max(minutes, checkInProperties.getLateWindowMinutes());
+        LocalDateTime now = com.sni.bokaticowork.core.utils.time.AppTime.now();
+        int released = 0;
+        for (Booking candidate : bookingRepository.findEarlyReleaseCandidates(now.minusMinutes(after), now, Math.max(1, limit))) {
+            try {
+                Booking booking = markNoShowInternal(candidate, new BookingStatusChangeRequest("SYSTEM",
+                        "Libérée : aucune arrivée " + after + " minutes après le début", Boolean.FALSE));
+                releaseSlotsIfRetained(booking, true);
+                booking.setReleasedEarlyAt(Instant.now());
+                bookingRepository.save(booking);
+                eventWriter.write(booking, BookingEventType.BOOKING_EARLY_RELEASED, "Créneau libéré faute d'arrivée",
+                        "Aucune arrivée " + after + " minutes après le début", null);
+                released++;
+            } catch (RuntimeException ex) {
+                log.warn("Reservation {} non liberee : {}", candidate.getBookingNumber(), ex.getMessage());
+            }
+        }
+        return released;
+    }
+
     /** Lot B3 (decision D2) : l'equipe est prevenue qu'un rendez-vous non regle a ete libere. */
     private void alertExpired(Booking booking) {
         if (adminNotifier == null) {

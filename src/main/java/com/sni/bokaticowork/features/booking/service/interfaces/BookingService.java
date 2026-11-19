@@ -53,6 +53,11 @@ public interface BookingService {
     /** Lot B1 : reservations non reglees a l'echeance passees en EXPIRED ; rend leur nombre. */
     int expireUnpaid(int limit);
 
+    /** Lot B9a : libere les creneaux sans arrivee N minutes apres le debut ({@code bookings.early-release.minutes}, 0 : coupe). */
+    default int releaseNoArrivals(int limit) {
+        return 0;
+    }
+
     /** Lot B4 : ajustement manuel du prix d'une reservation existante. */
     default BookingResponse adjustPrice(String bookingNumber,
                                         com.sni.bokaticowork.features.booking.dto.request.BookingPriceAdjustmentRequest request) {

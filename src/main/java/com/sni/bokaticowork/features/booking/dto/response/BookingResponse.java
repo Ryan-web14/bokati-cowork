@@ -101,6 +101,10 @@ public record BookingResponse(
         String priceAdjustmentApprovalNumber,
         /** Lot B5 : prospect du CRM relie et note d'appel (rendez-vous pris au telephone). */
         String leadNumber,
-        String callNote
+        String callNote,
+        /** Lot B9a : reponse au rappel (COMING, CANCELLED) et heure ; creneau libere faute d'arrivee. */
+        String attendanceAnswer,
+        Instant attendanceAnsweredAt,
+        Instant releasedEarlyAt
 ) {
 }

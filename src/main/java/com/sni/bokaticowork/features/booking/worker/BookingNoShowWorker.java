@@ -49,6 +49,15 @@ public class BookingNoShowWorker implements SchedulingConfigurer {
 
     public void processOverdueBookings() {
         try {
+            // Lot B9a : liberation anticipee des creneaux sans arrivee (coupee par defaut).
+            int released = bookingService.releaseNoArrivals(BATCH);
+            if (released > 0) {
+                log.info("Liberation anticipee : {} reservation(s) sans arrivee", released);
+            }
+        } catch (Exception ex) {
+            log.error("Liberation anticipee en echec : {}", ex.getMessage(), ex);
+        }
+        try {
             int started = bookingService.startCheckedInBookings(BATCH);
             if (started > 0) {
                 log.info("Auto-demarrage : {} réservation(s) pointée(s) d'avance passée(s) en cours", started);

@@ -42,5 +42,9 @@ public enum BookingEventType {
     /** Lot B5 : rendez-vous pris au telephone (note d'appel, prospect relie). */
     BOOKING_PHONE_CALL,
     /** Lot B5 : prospect du CRM converti a la venue ou au paiement. */
-    BOOKING_LEAD_CONVERTED
+    BOOKING_LEAD_CONVERTED,
+    /** Lot B9a : le client confirme sa venue depuis le rappel. */
+    BOOKING_ATTENDANCE_CONFIRMED,
+    /** Lot B9a : creneau libere faute d'arrivee N minutes apres le debut. */
+    BOOKING_EARLY_RELEASED
 }

@@ -168,7 +168,22 @@ public class BookingNotificationServiceImpl implements BookingNotificationServic
         String name = StringUtils.hasText(booking.getContactName()) ? booking.getContactName().trim() : "";
         return "Bonjour " + name + ",\n\nRappel : votre réservation " + booking.getBookingNumber() + " ("
                 + booking.getResource().getName() + ") commence le " + reminderTime(booking) + ".\n"
-                + "Présentez votre QR à l'accueil. Pour annuler ou déplacer, passez par votre espace client ou contactez l'accueil.\n";
+                + "Présentez votre QR à l'accueil.\n" + attendanceLinks(booking)
+                + "Pour déplacer, passez par votre espace client ou contactez l'accueil.\n";
+    }
+
+    @org.springframework.beans.factory.annotation.Value("${app.api-base-url:https://api.elleaose.com}")
+    private String apiBaseUrl = "https://api.elleaose.com";
+
+    /** Lot B9a : liens a jeton « je viens » et « j'annule » (le meme jeton que la confirmation). */
+    private String attendanceLinks(Booking booking) {
+        if (!StringUtils.hasText(booking.getCheckInToken())) {
+            return "";
+        }
+        String base = (settings == null ? apiBaseUrl : settings.text("app.api-base-url", apiBaseUrl)).replaceAll("/+$", "")
+                + com.sni.bokaticowork.core.utils.path.ApiPath.V1 + "/public/bookings/" + booking.getBookingNumber()
+                + "/attendance?token=" + booking.getCheckInToken();
+        return "Je viens : " + base + "&answer=COMING\nJ'annule : " + base + "&answer=CANCEL\n";
     }
 
     /** L'heure du rappel dans le fuseau du membre, sinon l'heure de l'espace. */
