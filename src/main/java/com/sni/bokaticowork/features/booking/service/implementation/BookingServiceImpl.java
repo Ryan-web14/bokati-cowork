@@ -299,6 +299,10 @@ public class BookingServiceImpl implements BookingService {
                 booking.setTotalAmount(BookingPartialCoverage.uncoveredAmount(price.amount(), booking.getDurationMinutes(), covered));
             }
         }
+        // Lot B9e : conditions de l'entreprise qui paie (forfait d'heures, budgets, releve mensuel).
+        if (companyAccounts != null) {
+            companyAccounts.applyAtCreation(booking);
+        }
         // Lot B10 : ressource sur demande, client du portail non designe : approbation de l'equipe.
         boolean onRequest = resourceVisibility != null
                 && booking.getChannel() == com.sni.bokaticowork.features.booking.enums.BookingChannel.PORTAL
@@ -317,7 +321,9 @@ public class BookingServiceImpl implements BookingService {
         booking.setApprovalRequired(approval);
         booking.setApprovalForPriceOnly(priceApproval && !effectivePolicy.approvalRequired() && !onRequest);
         booking.setVirtualMeetingUrl(virtualMeetingSupport.meetingUrl(resource, booking.getBookingNumber()));
-        boolean awaitsPayment = request.paymentMode() != null && request.paymentMode().awaitsPayment();
+        // Lot B9e : au releve mensuel, l'entreprise paie a la fin du mois : rien a attendre ici.
+        boolean awaitsPayment = request.paymentMode() != null && request.paymentMode().awaitsPayment()
+                && !Boolean.TRUE.equals(booking.getMonthlyStatement());
         // Lot B9c : acompte demande par l'equipe, ou impose par une fiabilite faible (paiement direct).
         if (request.paymentMode() == BookingPaymentMode.DIRECT) {
             java.math.BigDecimal deposit = request.depositRate() != null && isCurrentUserStaff()
@@ -342,6 +348,11 @@ public class BookingServiceImpl implements BookingService {
 
         saveLines(booking, price);
         saveParticipants(booking, request);
+        // Lot B9f : remise de derniere minute au portail (coupee par defaut).
+        if (filling != null) {
+            filling.applyLastMinute(booking);
+            booking = bookingRepository.findByBookingNumber(booking.getBookingNumber()).orElse(booking);
+        }
         if (pricePlan != null) {
             if (pricePlan.needsApproval()) {
                 priceAdjuster.requestApproval(booking, pricePlan, sessionActor());
@@ -850,6 +861,45 @@ public class BookingServiceImpl implements BookingService {
                 emailRequested(request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_RESCHEDULED,
                 new BookingStatusChangeRequest(actor(request.actor()), request.note(), request.sendEmail()));
+        return bookingMapper.toResponse(booking);
+    }
+
+    /**
+     * Lot B9f : prolongation en un clic. Seule la plage ajoutee est controlee (ouverture,
+     * alignement, capacite) : une reservation en cours se prolonge sans buter sur son debut passe.
+     * Prix recalcule ; une hausse demande {@code acceptPriceChange}.
+     */
+    @Override
+    public BookingResponse extend(String bookingNumber, int minutes, Boolean acceptPriceChange) {
+        Booking booking = getForService(bookingNumber);
+        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
+            throw new ConflictException("Seule une réservation confirmée ou en cours se prolonge");
+        }
+        Resource resource = booking.getResource();
+        LocalDateTime oldEnd = booking.getEndedAt();
+        LocalDateTime newEnd = oldEnd.plusMinutes(minutes);
+        resourceGuard.validateBookable(resource, oldEnd, newEnd, booking.getQuantity(), true);
+        if (!Boolean.TRUE.equals(booking.getSlotsReserved()) && resource.isWholeResourceBooking()
+                && bookingRepository.existsActiveConflict(resource.getId(), oldEnd, newEnd, bookingNumber)) {
+            throw new ConflictException("La ressource est déjà réservée après la fin : prolongation impossible");
+        }
+        requirePriceDecision(booking, resource, booking.getStartedAt(), newEnd, acceptPriceChange);
+        if (Boolean.TRUE.equals(booking.getSlotsReserved())) {
+            reserveResourceSlot(resource, oldEnd, newEnd, booking.getQuantity());
+        }
+        boolean entitlementRetained = booking.getPaymentMode().usesEntitlement();
+        if (entitlementRetained) {
+            entitlementBridge.release(booking);
+        }
+        booking.setEndedAt(newEnd);
+        booking.setDurationMinutes((int) Duration.between(booking.getStartedAt(), newEnd).toMinutes());
+        if (entitlementRetained) {
+            entitlementBridge.reserve(booking);
+        }
+        String text = "Prolongation de " + minutes + " minutes, fin à " + newEnd.toLocalTime();
+        markModified(booking, text, repricer == null ? null : repricer.reprice(booking, "prolongation de " + minutes + " minutes"));
+        booking = bookingRepository.save(booking);
+        eventWriter.write(booking, BookingEventType.BOOKING_EXTENDED, "Réservation prolongée", text, null);
         return bookingMapper.toResponse(booking);
     }
 
@@ -1540,6 +1590,20 @@ public class BookingServiceImpl implements BookingService {
                 "Confirmée à l'acompte de " + booking.getDepositAmount().stripTrailingZeros().toPlainString() + " " + booking.getCurrency()
                         + " ; le reste se règle sur place", Boolean.TRUE));
         return true;
+    }
+
+    private com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts companyAccounts;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCompanyAccounts(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts companyAccounts) {
+        this.companyAccounts = companyAccounts;
+    }
+
+    private com.sni.bokaticowork.features.booking.service.support.BookingFilling filling;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setFilling(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingFilling filling) {
+        this.filling = filling;
     }
 
     static final String EARLY_RELEASE_KEY = "bookings.early-release.minutes";

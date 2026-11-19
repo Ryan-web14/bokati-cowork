@@ -4,7 +4,7 @@
    "domain": "BOOKING",
    "label": "Réservation",
    "adminEditable": true,
-   "count": 31
+   "count": 34
   },
   {
    "domain": "RESOURCES",
@@ -2905,6 +2905,14 @@
    "label": "Cadence du suivi des échéanciers (ms)"
   },
   {
+   "key": "bokati.booking.company-statements.worker-delay-ms",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "21600000",
+   "label": "Réservations : intervalle de la tâche des relevés mensuels des entreprises, en millisecondes"
+  },
+  {
    "key": "bokati.booking.expiry.worker-delay-ms",
    "domain": "BOOKING",
    "type": "INTEGER",
@@ -4279,6 +4287,22 @@
    "effect": "LIVE",
    "default": "0",
    "label": "Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais)"
+  },
+  {
+   "key": "bookings.last-minute.discount-rate",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Réservations : remise (%) d'une réservation du portail qui commence bientôt (0 : coupée)"
+  },
+  {
+   "key": "bookings.last-minute.hours",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "24",
+   "label": "Réservations : fenêtre de la dernière minute, en heures avant le début"
   },
   {
    "key": "bookings.pay-on-site.max-no-shows",

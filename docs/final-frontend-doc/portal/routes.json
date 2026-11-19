@@ -467,6 +467,47 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/bookings/alternatives",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "alternatives",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "startedAt",
+     "required": true,
+     "type": "LocalDateTime"
+    },
+    {
+     "in": "query",
+     "name": "endedAt",
+     "required": true,
+     "type": "LocalDateTime"
+    },
+    {
+     "in": "query",
+     "name": "quantity",
+     "required": false,
+     "type": "Integer"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse>>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/client/bookings/availability",
@@ -504,6 +545,29 @@
    },
    "params": [],
    "response": "ResponseEntity<com.sni.bokaticowork.features.portal.booking.dto.response.ClientBookingResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/bookings/last-minute",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "lastMinute",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "durationMinutes",
+     "required": false,
+     "type": "Integer"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.portal.booking.service.ClientPortalBookingService.LastMinuteOffer>>"
   },
   {
    "methods": [
@@ -560,6 +624,33 @@
    "declaredIn": "ClientBookingController",
    "access": {
     "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.portal.booking.dto.response.ClientBookingResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/bookings/{bookingNumber}/extend",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "extend",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingController.ClientExtendRequest",
+    "required": true
    },
    "params": [
     {
@@ -6771,6 +6862,35 @@
     }
    }
   },
+  "BookingSuggestionResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
   "BookingAvailabilityResponse": {
    "type": "object",
    "properties": {
@@ -6872,6 +6992,38 @@
     }
    }
   },
+  "ClientPortalBookingService.LastMinuteOffer": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "price": {
+     "type": "number"
+    },
+    "discountedPrice": {
+     "type": "number"
+    },
+    "discountRate": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "currency": {
+     "type": "string"
+    }
+   }
+  },
   "BookingPayOnSite.Access": {
    "type": "object",
    "properties": {
@@ -6897,6 +7049,20 @@
      "maxLength": 500,
      "minLength": 0,
      "type": "string"
+    }
+   }
+  },
+  "ClientBookingController.ClientExtendRequest": {
+   "type": "object",
+   "properties": {
+    "minutes": {
+     "maximum": 1440,
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "acceptPriceChange": {
+     "type": "boolean"
     }
    }
   },
@@ -11168,35 +11334,6 @@
     }
    }
   },
-  "BookingSuggestionResponse": {
-   "type": "object",
-   "properties": {
-    "resourceCode": {
-     "type": "string"
-    },
-    "resourceName": {
-     "type": "string"
-    },
-    "startedAt": {
-     "type": "string",
-     "format": "local-date-time"
-    },
-    "endedAt": {
-     "type": "string",
-     "format": "local-date-time"
-    },
-    "remainingCapacity": {
-     "type": "integer",
-     "format": "int32"
-    },
-    "estimatedAmount": {
-     "type": "number"
-    },
-    "reason": {
-     "type": "string"
-    }
-   }
-  },
   "ClientPlanSummaryResponse.HighlightedBenefit": {
    "type": "object",
    "properties": {
@@ -12887,10 +13024,13 @@
   "BookingStatus": "com.sni.bokaticowork.features.booking.enums.BookingStatus",
   "ClientBookingResponse": "com.sni.bokaticowork.features.portal.booking.dto.response.ClientBookingResponse",
   "ClientCreateBookingRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCreateBookingRequest",
+  "BookingSuggestionResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse",
   "BookingAvailabilityResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse",
   "ClientCheckAvailabilityRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCheckAvailabilityRequest",
+  "ClientPortalBookingService.LastMinuteOffer": "com.sni.bokaticowork.features.portal.booking.service.ClientPortalBookingService.LastMinuteOffer",
   "BookingPayOnSite.Access": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access",
   "ClientCancelBookingRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCancelBookingRequest",
+  "ClientBookingController.ClientExtendRequest": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingController.ClientExtendRequest",
   "ClientBookingController.ClientRescheduleRequest": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingController.ClientRescheduleRequest",
   "BookingChangePreviewResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse",
   "BookingOperations.EndReportResponse": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse",
@@ -13015,7 +13155,6 @@
   "BookingParticipantRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest",
   "BookingAvailabilityResponse.OccupiedRange": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange",
   "BookingOperations.ChecklistAnswer": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.ChecklistAnswer",
-  "BookingSuggestionResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse",
   "ClientPlanSummaryResponse.HighlightedBenefit": "com.sni.bokaticowork.features.portal.subscription.dto.response.ClientPlanSummaryResponse.HighlightedBenefit",
   "PlanPriceResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PlanPriceResponse",
   "PlanBenefitResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PlanBenefitResponse",

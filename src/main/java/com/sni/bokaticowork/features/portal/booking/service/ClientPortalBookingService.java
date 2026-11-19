@@ -87,6 +87,82 @@ public class ClientPortalBookingService {
                         "Déplacée par le client", Boolean.TRUE, acceptPriceChange)));
     }
 
+    /** Lot B9f : prolonger sa reservation. */
+    @Transactional
+    public ClientBookingResponse extendBooking(Member member, String bookingNumber, int minutes, Boolean acceptPriceChange) {
+        verifyOwnership(member, bookingService.get(bookingNumber));
+        if (filling == null) {
+            throw new com.sni.bokaticowork.core.exception.customs.ConflictException("Prolongation indisponible");
+        }
+        return toDetailResponse(filling.extend(bookingNumber, minutes, acceptPriceChange));
+    }
+
+    private com.sni.bokaticowork.features.booking.service.support.BookingFilling filling;
+    private com.sni.bokaticowork.features.booking.service.interfaces.BookingSuggestionService suggestions;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setFilling(com.sni.bokaticowork.features.booking.service.support.BookingFilling filling,
+                    com.sni.bokaticowork.features.booking.service.interfaces.BookingSuggestionService suggestions) {
+        this.filling = filling;
+        this.suggestions = suggestions;
+    }
+
+    /** Lot B9f : creneaux libres proches d'un creneau pris (meme duree), pour le membre. */
+    @Transactional(readOnly = true)
+    public java.util.List<com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse> alternatives(Member member, String resourceCode,
+                                                                                                                  java.time.LocalDateTime startedAt,
+                                                                                                                  java.time.LocalDateTime endedAt,
+                                                                                                                  Integer quantity) {
+        clientResourceService.assertPortalVisible(resourceCode);
+        if (suggestions == null) {
+            return java.util.List.of();
+        }
+        return suggestions.suggest(new com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest(resourceCode,
+                member.getMemberId(), null, null, null, null, Boolean.FALSE, null, null, null, null, startedAt, endedAt,
+                quantity == null ? 1 : quantity, null));
+    }
+
+    /** Lot B9f : offre de derniere minute, un creneau libre et son prix remise. */
+    public record LastMinuteOffer(String resourceCode, String resourceName, java.time.LocalDateTime startedAt, java.time.LocalDateTime endedAt,
+                                  java.math.BigDecimal price, java.math.BigDecimal discountedPrice, int discountRate, String currency) {
+    }
+
+    /**
+     * Lot B9f : creneaux libres d'une heure dans les prochaines heures, au prix remise. Vide si
+     * l'offre de derniere minute est coupee.
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<LastMinuteOffer> lastMinute(Member member, Integer durationMinutes) {
+        if (filling == null || filling.lastMinuteRate() <= 0) {
+            return java.util.List.of();
+        }
+        int duration = durationMinutes == null || durationMinutes < 30 ? 60 : Math.min(durationMinutes, 480);
+        java.time.LocalDateTime now = com.sni.bokaticowork.core.utils.time.AppTime.now();
+        java.time.LocalDateTime until = now.plusHours(filling.lastMinuteHours());
+        java.util.List<LastMinuteOffer> offers = new java.util.ArrayList<>();
+        var resources = clientResourceService.listPortalResources(null, null, null, null,
+                org.springframework.data.domain.PageRequest.of(0, 30)).getData();
+        for (var resource : resources) {
+            try {
+                for (var window : clientResourceService.getAvailableSlots(resource.getCode(), now, until, duration, 1, false)) {
+                    if (window.getStartedAt() == null || !window.getStartedAt().isAfter(now)) {
+                        continue;
+                    }
+                    java.time.LocalDateTime end = window.getStartedAt().plusMinutes(duration);
+                    var quote = clientResourceService.getQuote(resource.getCode(), window.getStartedAt(), end, 1, member.getMemberId());
+                    java.math.BigDecimal price = quote == null ? null : quote.amount();
+                    offers.add(new LastMinuteOffer(resource.getCode(), resource.getName(), window.getStartedAt(), end, price,
+                            filling.discounted(price), filling.lastMinuteRate(), quote == null || quote.currency() == null ? "XAF" : quote.currency()));
+                    break;
+                }
+            } catch (RuntimeException ex) {
+                // Ressource sans creneau ou sans prix : pas d'offre pour elle.
+            }
+        }
+        offers.sort(java.util.Comparator.comparing(LastMinuteOffer::startedAt));
+        return offers;
+    }
+
     /** Lot B9d : apercu du prix avant un deplacement. */
     @Transactional(readOnly = true)
     public com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse previewReschedule(Member member, String bookingNumber,

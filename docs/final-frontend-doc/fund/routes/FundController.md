@@ -666,6 +666,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `amount` | nombre décimal |  |  |
 | `signedByName` | texte |  |  |
 | `signature` | texte |  |  |
+| `lineNatures` | [FundDtos.LineNature](#m-FundDtos-LineNature)[] |  |  |
 
 <a id="m-FundDtos-ExpenseInput"></a>
 #### FundDtos.ExpenseInput
@@ -819,6 +820,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validatedBy` | texte |  |  |
 | `validatedAt` | date-heure ISO 8601 UTC |  |  |
 | `supplierCode` | texte |  |  |
+
+<a id="m-FundDtos-LineNature"></a>
+#### FundDtos.LineNature
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `lineNo` | entier |  |  |
+| `natureCode` | texte |  |  |
 
 <a id="m-BudgetControl-Impact"></a>
 #### BudgetControl.Impact

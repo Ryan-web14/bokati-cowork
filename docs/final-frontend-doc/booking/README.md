@@ -1,6 +1,6 @@
 # booking : fonctionnement
 
-> Rédigé d'après le code, à jour des lots B0 à B8, B9a à B9d et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code, à jour des lots B0 à B8, B9a à B9f et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -402,3 +402,12 @@ Détail : [lots B9a et B9b](../../backend/booking/lot-b9a-b9b-venue-planning.md)
 - Portail : le membre déplace sa réservation lui-même (voir [portal/parcours-reservations.md](../portal/parcours-reservations.md#consulter-et-annuler-ses-réservations)).
 
 Détail : [lots B9c et B9d](../../backend/booking/lot-b9c-b9d-fiabilite-invites.md).
+
+## Entreprises, dernière minute, prolongation (lots B9e et B9f, 19/11/2026)
+
+- Écran « Entreprise › Réservations » : conditions `GET|PUT /bookings/companies/{businessCode}/terms` `{ monthlyStatement, monthlyBudget, monthlyHours }` ; budgets par collaborateur `GET /bookings/companies/{businessCode}/budgets`, `PUT .../budgets/{memberId}` `{ monthlyBudget }` ; consommation du mois `GET .../usage?month=AAAA-MM`.
+- Réservation facturée à l'entreprise (`billingCompanyCode`) : refus `409 COMPANY_BUDGET_EXCEEDED` au-delà d'un budget ; `companyCoveredMinutes` (forfait d'heures) et `monthlyStatement` (pas de facture à la réservation, relevé du mois) sur la fiche. Relevés : automatiques chaque mois ; `POST /bookings/companies/statements/run?month=` à la main.
+- Prolonger : bouton « +30 min », « +1 h » : `POST /bookings/{numéro}/extend` `{ minutes, acceptPriceChange }` (réservation confirmée ou en cours). Plus cher : `409 PRICE_INCREASE_CONFIRMATION_REQUIRED`, demander confirmation puis renvoyer avec `acceptPriceChange: true`.
+- Portail : offres de dernière minute `GET /client/bookings/last-minute`, alternatives `GET /client/bookings/alternatives`, prolongation `POST /client/bookings/{numéro}/extend`.
+
+Détail : [lot B9e](../../backend/booking/lot-b9e-entreprises.md), [lot B9f](../../backend/booking/lot-b9f-remplissage.md).

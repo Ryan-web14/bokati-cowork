@@ -216,7 +216,9 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getRoomLayout(),
                 booking.getSpecialRequests(),
                 booking.getInternalNotes(),
-                com.sni.bokaticowork.features.booking.service.support.BookingGuests.tags(booking)
+                com.sni.bokaticowork.features.booking.service.support.BookingGuests.tags(booking),
+                booking.getCompanyCoveredMinutes(),
+                Boolean.TRUE.equals(booking.getMonthlyStatement())
         );
     }
 

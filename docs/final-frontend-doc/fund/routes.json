@@ -1732,6 +1732,12 @@
     },
     "signature": {
      "type": "string"
+    },
+    "lineNatures": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.fund.dto.FundDtos.LineNature"
+     }
     }
    }
   },
@@ -2141,6 +2147,18 @@
     }
    }
   },
+  "FundDtos.LineNature": {
+   "type": "object",
+   "properties": {
+    "lineNo": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "natureCode": {
+     "type": "string"
+    }
+   }
+  },
   "BudgetControl.Impact": {
    "type": "object",
    "properties": {
@@ -2341,6 +2359,7 @@
   "FundDtos.Approval": "com.sni.bokaticowork.features.fund.dto.FundDtos.Approval",
   "FundDtos.Disbursement": "com.sni.bokaticowork.features.fund.dto.FundDtos.Disbursement",
   "FundDtos.ExpenseLine": "com.sni.bokaticowork.features.fund.dto.FundDtos.ExpenseLine",
+  "FundDtos.LineNature": "com.sni.bokaticowork.features.fund.dto.FundDtos.LineNature",
   "BudgetControl.Impact": "com.sni.bokaticowork.core.accounting.BudgetControl.Impact",
   "SupplierSuggestionDtos.Suggestion": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.Suggestion",
   "BudgetControl.LineImpact": "com.sni.bokaticowork.core.accounting.BudgetControl.LineImpact",

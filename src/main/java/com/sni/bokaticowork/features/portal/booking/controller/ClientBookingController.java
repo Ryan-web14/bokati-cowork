@@ -62,6 +62,32 @@ public class ClientBookingController {
                 request.newStartedAt(), request.newEndedAt(), request.acceptPriceChange()));
     }
 
+    public record ClientExtendRequest(@jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(1440) int minutes,
+                                      Boolean acceptPriceChange) {
+    }
+
+    /** Lot B9f : prolonger sa reservation en un clic. */
+    @PostMapping("/{bookingNumber}/extend")
+    public ResponseEntity<ClientBookingResponse> extend(@PathVariable String bookingNumber, @Valid @RequestBody ClientExtendRequest request) {
+        return ResponseEntity.ok(clientPortalBookingService.extendBooking(clientContextService.getAuthenticatedMember(), bookingNumber,
+                request.minutes(), request.acceptPriceChange()));
+    }
+
+    /** Lot B9f : creneaux libres proches d'un creneau pris. */
+    @GetMapping("/alternatives")
+    public ResponseEntity<java.util.List<com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse>> alternatives(
+            @RequestParam String resourceCode, @RequestParam java.time.LocalDateTime startedAt, @RequestParam java.time.LocalDateTime endedAt,
+            @RequestParam(required = false) Integer quantity) {
+        return ResponseEntity.ok(clientPortalBookingService.alternatives(clientContextService.getAuthenticatedMember(), resourceCode,
+                startedAt, endedAt, quantity));
+    }
+
+    /** Lot B9f : offres de derniere minute (creneaux libres a venir, prix remise). */
+    @GetMapping("/last-minute")
+    public ResponseEntity<java.util.List<ClientPortalBookingService.LastMinuteOffer>> lastMinute(@RequestParam(required = false) Integer durationMinutes) {
+        return ResponseEntity.ok(clientPortalBookingService.lastMinute(clientContextService.getAuthenticatedMember(), durationMinutes));
+    }
+
     /** Lot B9d : apercu du prix d'un deplacement. */
     @GetMapping("/{bookingNumber}/reschedule/preview")
     public ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse> previewReschedule(

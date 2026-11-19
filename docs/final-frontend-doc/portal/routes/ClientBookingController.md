@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [portal](../README.md) · 10 route(s).
+Module [portal](../README.md) · 13 route(s).
 
 ## Routes
 
@@ -30,6 +30,21 @@ Module [portal](../README.md) · 10 route(s).
 - Modèles : [ClientBookingResponse](#m-ClientBookingResponse), [ClientCreateBookingRequest](#m-ClientCreateBookingRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `createBooking`
 
+<a id="r-get-sni-api-v1-client-bookings-alternatives"></a>
+### GET /sni/api/v1/client/bookings/alternatives
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Réponse : `List<BookingSuggestionResponse>`
+- Modèles : [BookingSuggestionResponse](#m-BookingSuggestionResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `alternatives`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `resourceCode` | requête | `String` | oui |  |
+| `startedAt` | requête | `LocalDateTime` | oui |  |
+| `endedAt` | requête | `LocalDateTime` | oui |  |
+| `quantity` | requête | `Integer` |  |  |
+
 <a id="r-post-sni-api-v1-client-bookings-availability"></a>
 ### POST /sni/api/v1/client/bookings/availability
 
@@ -47,6 +62,18 @@ Module [portal](../README.md) · 10 route(s).
 - Réponse : `ClientBookingResponse`
 - Modèles : [ClientBookingResponse](#m-ClientBookingResponse), [ClientCreateBookingRequest](#m-ClientCreateBookingRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `createBooking`
+
+<a id="r-get-sni-api-v1-client-bookings-last-minute"></a>
+### GET /sni/api/v1/client/bookings/last-minute
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Réponse : `List<ClientPortalBookingService.LastMinuteOffer>`
+- Modèles : [ClientPortalBookingService.LastMinuteOffer](#m-ClientPortalBookingService-LastMinuteOffer)
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `lastMinute`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `durationMinutes` | requête | `Integer` |  |  |
 
 <a id="r-get-sni-api-v1-client-bookings-pay-on-site"></a>
 ### GET /sni/api/v1/client/bookings/pay-on-site
@@ -76,6 +103,19 @@ Module [portal](../README.md) · 10 route(s).
 - Réponse : `ClientBookingResponse`
 - Modèles : [ClientBookingResponse](#m-ClientBookingResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `getBooking`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `bookingNumber` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-client-bookings-bookingnumber-extend"></a>
+### POST /sni/api/v1/client/bookings/{bookingNumber}/extend
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Corps JSON (obligatoire) : `ClientBookingController.ClientExtendRequest`
+- Réponse : `ClientBookingResponse`
+- Modèles : [ClientBookingResponse](#m-ClientBookingResponse), [ClientBookingController.ClientExtendRequest](#m-ClientBookingController-ClientExtendRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `extend`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -213,6 +253,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `billingCompanyCode` | texte |  |  |
 | `payOnSite` | booléen |  |  |
 
+<a id="m-BookingSuggestionResponse"></a>
+#### BookingSuggestionResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `resourceCode` | texte |  |  |
+| `resourceName` | texte |  |  |
+| `startedAt` | date-heure locale sans fuseau |  |  |
+| `endedAt` | date-heure locale sans fuseau |  |  |
+| `remainingCapacity` | entier |  |  |
+| `estimatedAmount` | nombre décimal |  |  |
+| `reason` | texte |  |  |
+
 <a id="m-BookingAvailabilityResponse"></a>
 #### BookingAvailabilityResponse
 
@@ -245,6 +298,20 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `paymentMode` | enum : `DIRECT`, `WALLET`, `SUBSCRIPTION`, `PASS` |  |  |
 | `billingCompanyCode` | texte |  |  |
 
+<a id="m-ClientPortalBookingService-LastMinuteOffer"></a>
+#### ClientPortalBookingService.LastMinuteOffer
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `resourceCode` | texte |  |  |
+| `resourceName` | texte |  |  |
+| `startedAt` | date-heure locale sans fuseau |  |  |
+| `endedAt` | date-heure locale sans fuseau |  |  |
+| `price` | nombre décimal |  |  |
+| `discountedPrice` | nombre décimal |  |  |
+| `discountRate` | entier |  |  |
+| `currency` | texte |  |  |
+
 <a id="m-BookingPayOnSite-Access"></a>
 #### BookingPayOnSite.Access
 
@@ -260,6 +327,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `reason` | texte |  | longueur min `0`, longueur max `500` |
+
+<a id="m-ClientBookingController-ClientExtendRequest"></a>
+#### ClientBookingController.ClientExtendRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `minutes` | entier |  | min `1`, max `1440` |
+| `acceptPriceChange` | booléen |  |  |
 
 <a id="m-CashPaymentDeclarationResponse"></a>
 #### CashPaymentDeclarationResponse

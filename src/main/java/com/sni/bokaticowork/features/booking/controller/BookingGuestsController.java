@@ -24,6 +24,7 @@ public class BookingGuestsController {
 
     private final BookingGuests guests;
     private final BookingMapper mapper;
+    private final com.sni.bokaticowork.features.booking.service.support.BookingFilling filling;
 
     /** Invite (ou relance) un participant par courriel ; {@code sent} vaut 0 sans courriel. */
     @PostMapping("/{bookingNumber}/participants/{participantId}/invite")
@@ -41,6 +42,17 @@ public class BookingGuestsController {
     @PatchMapping("/{bookingNumber}/participants/{participantId}/check-in")
     public ResponseEntity<BookingParticipantResponse> checkIn(@PathVariable String bookingNumber, @PathVariable Long participantId) {
         return ResponseEntity.ok(mapper.toResponse(guests.checkIn(bookingNumber, participantId)));
+    }
+
+    public record ExtendRequest(@jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(1440) int minutes,
+                                Boolean acceptPriceChange) {
+    }
+
+    /** Lot B9f : prolongation en un clic (fin repoussee, prix recalcule). */
+    @PostMapping("/{bookingNumber}/extend")
+    public ResponseEntity<BookingResponse> extend(@PathVariable String bookingNumber,
+                                                  @jakarta.validation.Valid @RequestBody ExtendRequest request) {
+        return ResponseEntity.ok(filling.extend(bookingNumber, request.minutes(), request.acceptPriceChange()));
     }
 
     /** Disposition de la salle, demandes speciales, notes internes, etiquettes ; seuls les champs donnes changent. */

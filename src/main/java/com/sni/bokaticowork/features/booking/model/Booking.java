@@ -231,6 +231,15 @@ public class Booking {
     @Column(name = "tags", length = 700)
     private String tags;
 
+    /** Lot B9e : minutes couvertes par le forfait d'heures de l'entreprise. */
+    @Column(name = "company_covered_minutes")
+    private Integer companyCoveredMinutes;
+
+    /** Lot B9e : facturee au releve mensuel groupe de l'entreprise (pas de facture a la reservation). */
+    @lombok.Builder.Default
+    @Column(name = "monthly_statement", nullable = false)
+    private Boolean monthlyStatement = Boolean.FALSE;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

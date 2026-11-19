@@ -2,10 +2,16 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-101 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+108 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
+| POST | `/sni/api/v1/bookings/companies/statements/run` | BOOKING:CREATE | [BookingCompanyController](routes/BookingCompanyController.md#r-post-sni-api-v1-bookings-companies-statements-run) |
+| GET | `/sni/api/v1/bookings/companies/{businessCode}/budgets` | BOOKING:READ | [BookingCompanyController](routes/BookingCompanyController.md#r-get-sni-api-v1-bookings-companies-businesscode-budgets) |
+| PUT | `/sni/api/v1/bookings/companies/{businessCode}/budgets/{memberId}` | BOOKING:UPDATE | [BookingCompanyController](routes/BookingCompanyController.md#r-put-sni-api-v1-bookings-companies-businesscode-budgets-memberid) |
+| GET | `/sni/api/v1/bookings/companies/{businessCode}/terms` | BOOKING:READ | [BookingCompanyController](routes/BookingCompanyController.md#r-get-sni-api-v1-bookings-companies-businesscode-terms) |
+| PUT | `/sni/api/v1/bookings/companies/{businessCode}/terms` | BOOKING:UPDATE | [BookingCompanyController](routes/BookingCompanyController.md#r-put-sni-api-v1-bookings-companies-businesscode-terms) |
+| GET | `/sni/api/v1/bookings/companies/{businessCode}/usage` | BOOKING:READ | [BookingCompanyController](routes/BookingCompanyController.md#r-get-sni-api-v1-bookings-companies-businesscode-usage) |
 | GET | `/sni/api/v1/bookings` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings) |
 | POST | `/sni/api/v1/bookings` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings) |
 | GET | `/sni/api/v1/bookings/batches` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-batches) |
@@ -66,6 +72,7 @@
 | POST | `/sni/api/v1/bookings/{number}/services` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-services) |
 | POST | `/sni/api/v1/resource-bundles/{code}/book` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-resource-bundles-code-book) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/details` | BOOKING:UPDATE | [BookingGuestsController](routes/BookingGuestsController.md#r-patch-sni-api-v1-bookings-bookingnumber-details) |
+| POST | `/sni/api/v1/bookings/{bookingNumber}/extend` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-bookingnumber-extend) |
 | POST | `/sni/api/v1/bookings/{bookingNumber}/participants/invite` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-bookingnumber-participants-invite) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}/check-in` | BOOKING:CHECKIN | [BookingGuestsController](routes/BookingGuestsController.md#r-patch-sni-api-v1-bookings-bookingnumber-participants-participantid-check-in) |
 | POST | `/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}/invite` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-bookingnumber-participants-participantid-invite) |

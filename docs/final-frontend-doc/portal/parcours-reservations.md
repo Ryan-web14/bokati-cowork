@@ -50,6 +50,14 @@ Les transitions et délais (expiration d'une réservation non payée, libératio
 2. Le serveur retrouve la facture de la réservation et crée une annonce `AWAITING_CONFIRMATION` valable 4 heures par défaut (`bokati.payment.cash-declaration.validity-hours`). Le créneau est tenu jusqu'à l'échéance de l'annonce ; passé ce délai sans encaissement à la caisse, l'annonce expire et la réservation est rendue (worker toutes les 15 minutes).
 3. Afficher `declarationNumber`, le montant et l'échéance. Suivi et annulation : [parcours-facturation-paiements.md](parcours-facturation-paiements.md#annoncer-un-paiement-en-espèces).
 
+### Dernière minute, alternatives, prolongation
+
+Lot B9f.
+
+- Offres de dernière minute : `GET /sni/api/v1/client/bookings/last-minute?durationMinutes=60` → `[{ resourceCode, resourceName, startedAt, endedAt, price, discountedPrice, discountRate, currency }]` (vide si l'espace n'a pas activé l'offre). La remise s'applique d'elle-même à la réservation.
+- Créneau pris (`available: false`) : proposer `GET /sni/api/v1/client/bookings/alternatives?resourceCode=&startedAt=&endedAt=&quantity=` (créneaux libres proches, même durée).
+- Prolonger : `POST /sni/api/v1/client/bookings/{bookingNumber}/extend` `{ minutes, acceptPriceChange }` ; plus cher : `409 PRICE_INCREASE_CONFIRMATION_REQUIRED`, demander confirmation puis renvoyer avec `acceptPriceChange: true`.
+
 ### Liste d'attente
 
 Lot B6. Quand un créneau est pris (`available: false`), proposer « M'inscrire en liste d'attente » :

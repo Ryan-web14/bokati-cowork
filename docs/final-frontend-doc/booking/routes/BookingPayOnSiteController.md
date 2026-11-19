@@ -193,6 +193,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `specialRequests` | texte |  |  |
 | `internalNotes` | texte |  |  |
 | `tags` | texte[] |  |  |
+| `companyCoveredMinutes` | entier |  |  |
+| `monthlyStatement` | booléen |  |  |
 
 <a id="m-BookingReliability-Score"></a>
 #### BookingReliability.Score

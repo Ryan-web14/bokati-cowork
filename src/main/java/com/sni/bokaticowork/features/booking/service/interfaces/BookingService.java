@@ -53,6 +53,11 @@ public interface BookingService {
     /** Lot B1 : reservations non reglees a l'echeance passees en EXPIRED ; rend leur nombre. */
     int expireUnpaid(int limit);
 
+    /** Lot B9f : prolonge la fin d'une reservation confirmee ou en cours. */
+    default BookingResponse extend(String bookingNumber, int minutes, Boolean acceptPriceChange) {
+        throw new UnsupportedOperationException();
+    }
+
     /** Lot B9c : paiement partiel recu ; confirme la reservation si l'acompte est atteint. */
     default boolean onPartialPayment(String bookingNumber) {
         return false;

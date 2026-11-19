@@ -3,6 +3,170 @@
  "routes": [
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/companies/statements/run",
+   "package": "features.booking.controller",
+   "controller": "BookingCompanyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingCompanyController.java",
+   "handler": "runStatements",
+   "declaredIn": "BookingCompanyController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "month",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.Statement>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/companies/{businessCode}/budgets",
+   "package": "features.booking.controller",
+   "controller": "BookingCompanyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingCompanyController.java",
+   "handler": "budgets",
+   "declaredIn": "BookingCompanyController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "businessCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.MemberBudget>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/bookings/companies/{businessCode}/budgets/{memberId}",
+   "package": "features.booking.controller",
+   "controller": "BookingCompanyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingCompanyController.java",
+   "handler": "setBudget",
+   "declaredIn": "BookingCompanyController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingCompanyController.BudgetRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "businessCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.MemberBudget>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/companies/{businessCode}/terms",
+   "package": "features.booking.controller",
+   "controller": "BookingCompanyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingCompanyController.java",
+   "handler": "terms",
+   "declaredIn": "BookingCompanyController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "businessCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.Terms>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/bookings/companies/{businessCode}/terms",
+   "package": "features.booking.controller",
+   "controller": "BookingCompanyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingCompanyController.java",
+   "handler": "saveTerms",
+   "declaredIn": "BookingCompanyController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingCompanyController.TermsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "businessCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.Terms>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/companies/{businessCode}/usage",
+   "package": "features.booking.controller",
+   "controller": "BookingCompanyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingCompanyController.java",
+   "handler": "usage",
+   "declaredIn": "BookingCompanyController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "businessCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "month",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.Usage>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/bookings",
@@ -1613,6 +1777,34 @@
    "methods": [
     "POST"
    ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/extend",
+   "package": "features.booking.controller",
+   "controller": "BookingGuestsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingGuestsController.java",
+   "handler": "extend",
+   "declaredIn": "BookingGuestsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingGuestsController.ExtendRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
    "path": "/sni/api/v1/bookings/{bookingNumber}/participants/invite",
    "package": "features.booking.controller",
    "controller": "BookingGuestsController",
@@ -2774,6 +2966,177 @@
   }
  ],
  "schemas": {
+  "BookingCompanyAccounts.Statement": {
+   "type": "object",
+   "properties": {
+    "businessCode": {
+     "type": "string"
+    },
+    "month": {
+     "type": "object",
+     "properties": {
+      "year": {
+       "type": "integer",
+       "format": "int32"
+      },
+      "month": {
+       "type": "string",
+       "enum": [
+        "JANUARY",
+        "FEBRUARY",
+        "MARCH",
+        "APRIL",
+        "MAY",
+        "JUNE",
+        "JULY",
+        "AUGUST",
+        "SEPTEMBER",
+        "OCTOBER",
+        "NOVEMBER",
+        "DECEMBER"
+       ]
+      },
+      "monthValue": {
+       "type": "integer",
+       "format": "int32"
+      },
+      "leapYear": {
+       "type": "boolean"
+      }
+     }
+    },
+    "items": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "documentNumber": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingCompanyAccounts.MemberBudget": {
+   "type": "object",
+   "properties": {
+    "businessCode": {
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "monthlyBudget": {
+     "type": "number"
+    }
+   }
+  },
+  "BookingCompanyController.BudgetRequest": {
+   "type": "object",
+   "properties": {
+    "monthlyBudget": {
+     "type": "number"
+    }
+   }
+  },
+  "BookingCompanyAccounts.Terms": {
+   "type": "object",
+   "properties": {
+    "businessCode": {
+     "type": "string"
+    },
+    "monthlyStatement": {
+     "type": "boolean"
+    },
+    "monthlyBudget": {
+     "type": "number"
+    },
+    "monthlyHours": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "updatedBy": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingCompanyController.TermsRequest": {
+   "type": "object",
+   "properties": {
+    "monthlyStatement": {
+     "type": "boolean"
+    },
+    "monthlyBudget": {
+     "type": "number"
+    },
+    "monthlyHours": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "BookingCompanyAccounts.Usage": {
+   "type": "object",
+   "properties": {
+    "businessCode": {
+     "type": "string"
+    },
+    "month": {
+     "type": "object",
+     "properties": {
+      "year": {
+       "type": "integer",
+       "format": "int32"
+      },
+      "month": {
+       "type": "string",
+       "enum": [
+        "JANUARY",
+        "FEBRUARY",
+        "MARCH",
+        "APRIL",
+        "MAY",
+        "JUNE",
+        "JULY",
+        "AUGUST",
+        "SEPTEMBER",
+        "OCTOBER",
+        "NOVEMBER",
+        "DECEMBER"
+       ]
+      },
+      "monthValue": {
+       "type": "integer",
+       "format": "int32"
+      },
+      "leapYear": {
+       "type": "boolean"
+      }
+     }
+    },
+    "spent": {
+     "type": "number"
+    },
+    "monthlyBudget": {
+     "type": "number"
+    },
+    "coveredMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "monthlyHours": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "remainingMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "members": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.MemberUsage"
+     }
+    }
+   }
+  },
   "BookingResponse": {
    "type": "object",
    "properties": {
@@ -3098,6 +3461,13 @@
      "items": {
       "type": "string"
      }
+    },
+    "companyCoveredMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "monthlyStatement": {
+     "type": "boolean"
     }
    }
   },
@@ -4201,7 +4571,8 @@
       "BOOKING_EARLY_RELEASED",
       "BOOKING_PARTICIPANT_INVITED",
       "BOOKING_PARTICIPANT_ANSWERED",
-      "BOOKING_PARTICIPANT_CHECKED_IN"
+      "BOOKING_PARTICIPANT_CHECKED_IN",
+      "BOOKING_EXTENDED"
      ]
     },
     "title": {
@@ -4644,6 +5015,20 @@
      "items": {
       "type": "string"
      }
+    }
+   }
+  },
+  "BookingGuestsController.ExtendRequest": {
+   "type": "object",
+   "properties": {
+    "minutes": {
+     "maximum": 1440,
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "acceptPriceChange": {
+     "type": "boolean"
     }
    }
   },
@@ -5201,6 +5586,20 @@
      "items": {
       "type": "string"
      }
+    }
+   }
+  },
+  "BookingCompanyAccounts.MemberUsage": {
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "type": "string"
+    },
+    "spent": {
+     "type": "number"
+    },
+    "monthlyBudget": {
+     "type": "number"
     }
    }
   },
@@ -5792,6 +6191,12 @@
   ]
  },
  "names": {
+  "BookingCompanyAccounts.Statement": "com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.Statement",
+  "BookingCompanyAccounts.MemberBudget": "com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.MemberBudget",
+  "BookingCompanyController.BudgetRequest": "com.sni.bokaticowork.features.booking.controller.BookingCompanyController.BudgetRequest",
+  "BookingCompanyAccounts.Terms": "com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.Terms",
+  "BookingCompanyController.TermsRequest": "com.sni.bokaticowork.features.booking.controller.BookingCompanyController.TermsRequest",
+  "BookingCompanyAccounts.Usage": "com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.Usage",
   "BookingResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingResponse",
   "SubscriberType": "com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType",
   "BookingStatus": "com.sni.bokaticowork.features.booking.enums.BookingStatus",
@@ -5835,6 +6240,7 @@
   "BookingExtrasController.PromoRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.PromoRequest",
   "BookingExtrasController.BundleBookingRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.BundleBookingRequest",
   "BookingGuests.Details": "com.sni.bokaticowork.features.booking.service.support.BookingGuests.Details",
+  "BookingGuestsController.ExtendRequest": "com.sni.bokaticowork.features.booking.controller.BookingGuestsController.ExtendRequest",
   "BookingOperations.EndReportResponse": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse",
   "BookingOperations.EndReportRequest": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportRequest",
   "BookingOperations.UsageRulesView": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView",
@@ -5853,6 +6259,7 @@
   "ResourceAnalytics.CostResponse": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.CostResponse",
   "ResourceAnalytics.CostRequest": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.CostRequest",
   "ResourceAnalytics.AppliedPrice": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.AppliedPrice",
+  "BookingCompanyAccounts.MemberUsage": "com.sni.bokaticowork.features.booking.service.support.BookingCompanyAccounts.MemberUsage",
   "BookingLineResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingLineResponse",
   "BookingOptionRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingOptionRequest",
   "BookingCallerRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingCallerRequest",

@@ -50,5 +50,7 @@ public enum BookingEventType {
     /** Lot B9d : invitation envoyee a un participant, reponse, arrivee pointee. */
     BOOKING_PARTICIPANT_INVITED,
     BOOKING_PARTICIPANT_ANSWERED,
-    BOOKING_PARTICIPANT_CHECKED_IN
+    BOOKING_PARTICIPANT_CHECKED_IN,
+    /** Lot B9f : reservation prolongee. */
+    BOOKING_EXTENDED
 }

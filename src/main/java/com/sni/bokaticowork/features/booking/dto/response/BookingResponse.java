@@ -113,6 +113,9 @@ public record BookingResponse(
         String roomLayout,
         String specialRequests,
         String internalNotes,
-        List<String> tags
+        List<String> tags,
+        /** Lot B9e : minutes couvertes par le forfait d'heures de l'entreprise ; facturee au releve mensuel. */
+        Integer companyCoveredMinutes,
+        Boolean monthlyStatement
 ) {
 }

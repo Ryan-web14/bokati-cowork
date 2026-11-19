@@ -8,7 +8,7 @@
 
 | Domaine | Libellé | Ouvert à `ADMIN` | Réglages |
 | --- | --- | --- | --- |
-| [`BOOKING`](#booking) | Réservation | oui | 31 |
+| [`BOOKING`](#booking) | Réservation | oui | 34 |
 | [`RESOURCES`](#resources) | Ressources et horaires | oui | 19 |
 | [`SUBSCRIPTIONS`](#subscriptions) | Abonnements | oui | 19 |
 | [`PASSES`](#passes) | Passes | oui | 6 |
@@ -42,10 +42,11 @@ Types : `BOOLEAN`, `CRON`, `DECIMAL`, `EMAIL`, `ENUM`, `INTEGER`, `SECRET`, `TEX
 
 ## BOOKING
 
-Réservation · ouvert à ADMIN · 31 réglage(s)
+Réservation · ouvert à ADMIN · 34 réglage(s)
 
 | Clé | Type | Effet | Défaut | Libellé |
 | --- | --- | --- | --- | --- |
+| `bokati.booking.company-statements.worker-delay-ms` | INTEGER | LIVE | `21600000` | Réservations : intervalle de la tâche des relevés mensuels des entreprises, en millisecondes |
 | `bokati.booking.expiry.worker-delay-ms` | INTEGER | LIVE | `60000` | Réservations : intervalle de la tâche d'expiration (options et réservations non réglées), en millisecondes |
 | `bokati.booking.lifecycle.worker-delay-ms` | INTEGER | LIVE | `60000` | Cadence du suivi des réservations (ms) |
 | `bokati.booking.no-show.worker-delay-ms` | INTEGER | LIVE | `60000` | Cadence du suivi des absences (ms) |
@@ -59,6 +60,8 @@ Réservation · ouvert à ADMIN · 31 réglage(s)
 | `bokati.booking.wallet.worker-delay-ms` | INTEGER | LIVE | `15000` | Cadence des retenues de réservation (ms) |
 | `bookings.deposit.rate` | INTEGER | LIVE | `30` | Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose |
 | `bookings.early-release.minutes` | INTEGER | LIVE | `0` | Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais) |
+| `bookings.last-minute.discount-rate` | INTEGER | LIVE | `0` | Réservations : remise (%) d'une réservation du portail qui commence bientôt (0 : coupée) |
+| `bookings.last-minute.hours` | INTEGER | LIVE | `24` | Réservations : fenêtre de la dernière minute, en heures avant le début |
 | `bookings.pay-on-site.max-no-shows` | INTEGER | LIVE | `2` | Réservations : absences sur des rendez-vous réglés sur place avant retrait d'office de l'option (0 : jamais) |
 | `bookings.pay-on-site.no-show-window-days` | INTEGER | LIVE | `90` | Réservations : période, en jours, sur laquelle les absences sont comptées |
 | `bookings.pay-on-site.portal-enabled` | BOOLEAN | LIVE | `false` | Réservations : rendez-vous réglé sur place ouvert au portail pour tous les clients sans option propre |

@@ -137,6 +137,17 @@ public class BookingBillableBridge {
             extraItems = extras.pendingItems(booking);
         }
 
+        // Lot B9e : releve mensuel de l'entreprise : l'element attend la facture du mois.
+        if (Boolean.TRUE.equals(booking.getMonthlyStatement())) {
+            lineRepository.findByBookingId(booking.getId()).forEach(line -> {
+                if (line.getBillableNumber() == null) {
+                    line.setBillableNumber(item.getBillableNumber());
+                    lineRepository.save(line);
+                }
+            });
+            return item.getBillableNumber();
+        }
+
         List<BillableItem> deferred = DEFERRED.get();
         if (deferred != null) {
             deferred.add(item);

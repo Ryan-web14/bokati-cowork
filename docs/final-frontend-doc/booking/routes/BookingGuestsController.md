@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 4 route(s).
+Module [booking](../README.md) · 5 route(s).
 
 ## Routes
 
@@ -14,6 +14,19 @@ Module [booking](../README.md) · 4 route(s).
 - Réponse : `BookingResponse`
 - Modèles : [BookingResponse](#m-BookingResponse), [BookingGuests.Details](#m-BookingGuests-Details)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingGuestsController.java`, méthode `details`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `bookingNumber` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-bookings-bookingnumber-extend"></a>
+### POST /sni/api/v1/bookings/{bookingNumber}/extend
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:CREATE`
+- Corps JSON (obligatoire) : `BookingGuestsController.ExtendRequest`
+- Réponse : `BookingResponse`
+- Modèles : [BookingResponse](#m-BookingResponse), [BookingGuestsController.ExtendRequest](#m-BookingGuestsController-ExtendRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingGuestsController.java`, méthode `extend`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -147,6 +160,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `specialRequests` | texte |  |  |
 | `internalNotes` | texte |  |  |
 | `tags` | texte[] |  |  |
+| `companyCoveredMinutes` | entier |  |  |
+| `monthlyStatement` | booléen |  |  |
 
 <a id="m-BookingGuests-Details"></a>
 #### BookingGuests.Details
@@ -157,6 +172,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `specialRequests` | texte |  |  |
 | `internalNotes` | texte |  |  |
 | `tags` | texte[] |  |  |
+
+<a id="m-BookingGuestsController-ExtendRequest"></a>
+#### BookingGuestsController.ExtendRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `minutes` | entier |  | min `1`, max `1440` |
+| `acceptPriceChange` | booléen |  |  |
 
 <a id="m-BookingParticipantResponse"></a>
 #### BookingParticipantResponse
