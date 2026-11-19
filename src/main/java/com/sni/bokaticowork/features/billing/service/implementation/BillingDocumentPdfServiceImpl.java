@@ -296,7 +296,8 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         BillingDocumentTemplateFormatter fmt = new BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale);
         java.util.Optional<com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter.Printed> printed =
                 templatePrinter.tryRenderPinned(code, com.sni.bokaticowork.features.billing.service.support.BillingDocumentData.from(document, fmt,
-                        generateQrCode(document), entity == null ? null : entity.getCustomerVatExemptionNote()), pinned);
+                        generateQrCode(document), entity == null ? null : entity.getCustomerVatExemptionNote(),
+                        currencyEquivalents == null || entity == null ? java.util.List.of() : currencyEquivalents.forDocument(entity)), pinned);
         if (entity != null && pinned == null && Boolean.TRUE.equals(document.locked())) {
             documentRepository.pinTemplateVersion(document.documentNumber(),
                     printed.map(com.sni.bokaticowork.features.document.template.service.DocumentTemplatePrinter.Printed::version).orElse(0));
@@ -307,10 +308,11 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     /** Preview des modeles (lot D5) : donnees d'une piece de facturation, sans rien ecrire. */
     public com.sni.bokaticowork.features.document.template.render.DocumentData templateData(String documentNumber) {
         BillingDocumentResponse document = billingDocumentService.get(documentNumber);
-        String exemption = documentRepository.findByDocumentNumber(documentNumber)
-                .map(com.sni.bokaticowork.features.billing.model.BillingDocument::getCustomerVatExemptionNote).orElse(null);
+        com.sni.bokaticowork.features.billing.model.BillingDocument entity = documentRepository.findByDocumentNumber(documentNumber).orElse(null);
+        String exemption = entity == null ? null : entity.getCustomerVatExemptionNote();
         return com.sni.bokaticowork.features.billing.service.support.BillingDocumentData.from(document,
-                new BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale), generateQrCode(document), exemption);
+                new BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale), generateQrCode(document), exemption,
+                currencyEquivalents == null || entity == null ? java.util.List.of() : currencyEquivalents.forDocument(entity));
     }
 
     /**

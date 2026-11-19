@@ -100,6 +100,7 @@ Une facture affiche son total en devises étrangères, à titre indicatif (USD e
 - Taux de la comptabilité ; l'euro a sa parité fixe (655,957). Une devise sans taux est omise.
 - Les équivalents sont **figés à l'émission** (`frozen: true`, taux de la date d'émission) ; avant, ils sont au taux du jour (`frozen: false`, « indicatif »).
 - Le PDF les imprime sous le total TTC.
+- Modèle de la facture (centre des modèles) : champs `equivalent_usd`, `equivalent_eur` dans la section « Totaux », voir [modeles](../modeles/README.md#facture--montants-en-devises).
 - Écran : sous le total de la fiche, la liste des équivalents avec la date du taux ; un sélecteur « Afficher en » (XAF, USD, EUR) convertit le total et le reste dû.
 
 Détail : [facturation-devises](../../backend/facturation-devises/README.md).

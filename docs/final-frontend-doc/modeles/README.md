@@ -1,6 +1,6 @@
 # Centre des modèles de documents et de courriels
 
-> Rédigé d'après le code (lots D1 à D5, E1, E2 ; new-main 0044b67e, 14/11/2026). Routes exactes et champs JSON : [../document/routes/DocumentTemplateController.md](../document/routes/DocumentTemplateController.md) et [../document/routes/DocumentFieldController.md](../document/routes/DocumentFieldController.md) (les deux contrôleurs sont rangés dans le module `document`).
+> Rédigé d'après le code (lots D1 à D5, E1, E2 ; new-main 0044b67e, 14/11/2026), complété le 19/11/2026 : éditeur choisi selon `family`, aperçus quel que soit l'en-tête `Accept`, montants en USD et en EUR sur le modèle de la facture. Routes exactes et champs JSON : [../document/routes/DocumentTemplateController.md](../document/routes/DocumentTemplateController.md) et [../document/routes/DocumentFieldController.md](../document/routes/DocumentFieldController.md) (les deux contrôleurs sont rangés dans le module `document`).
 
 L'exploitant adapte lui-même ses pièces imprimées (PDF) et ses courriels, sans développement : il compose un modèle en blocs, le prévisualise, le publie. Tant qu'un modèle n'a pas de version publiée, la pièce ou le courriel sort de son gabarit d'origine, comme avant.
 
@@ -22,7 +22,7 @@ Toutes les routes `/sni/api/v1/document-templates/**` demandent le droit `SYSTEM
 
 `GET /document-templates` : liste `{ code, label, family, domain, active, publishedVersion, publishedAt, hasDraft }`.
 
-- `family` : `PDF` (pièce imprimée) ou `EMAIL` (courriel). L'écran sépare les deux familles : l'éditeur n'est pas le même.
+- `family` : `PDF` (pièce imprimée) ou `EMAIL` (courriel). L'écran sépare les deux familles et **choisit l'éditeur d'après `family`** : éditeur des pièces pour `PDF`, éditeur des courriels pour `EMAIL`. Des blocs de courriel envoyés à une pièce (ou l'inverse) sont refusés, `400 MODELE_INVALIDE` « Ce modèle est une pièce PDF : SUBJECT, GREETING, LEGAL sont des blocs de courriel ; blocs d'une pièce : ... ». Exemple : `PURCHASE_ORDER` (bon de commande) est une pièce `PDF`.
 - `domain` : regroupement à afficher (`CASH`, `FUND`, `ACCOUNTING`, `BILLING`, `PAYMENT`, `BOOKING`, `SUBSCRIPTION`, `WALLET`, `DOMICILIATION`, `CONTRACT`, `DOCUMENT`, `SECURITY`, `SUPPORT`, `TASK`, `CRM`, `CLIENT`, `EVENT`, `SYSTEM`).
 - `publishedVersion` nul : le gabarit d'origine sert.
 
@@ -63,3 +63,18 @@ Une version est `DRAFT` (un seul brouillon par modèle), `PUBLISHED` (une seule)
 - Une pièce de caisse ou de fonds imprimée après la publication prend le nouveau modèle, réimpressions comprises.
 - Une facture ou un avoir certifié garde la version de modèle qui l'a produit (`billing_document.template_version`, `0` pour le gabarit d'origine) : une réimpression ou un duplicata ressort à l'identique, même après une nouvelle publication.
 - Un courriel publié remplace son gabarit à l'envoi suivant ; l'objet du modèle remplace celui du code.
+
+## Facture : montants en devises
+
+Le modèle `INVOICE` (et `CREDIT_NOTE`) reçoit, pour chaque devise du réglage `billing.invoice.equivalent-currencies` (USD et EUR par défaut), un champ `equivalent_<devise>` :
+
+| Clé | Libellé | Valeur |
+| --- | --- | --- |
+| `equivalent_usd` | « Soit en USD (1 USD = 615,50 XAF, taux du 18/11/2026) » | « 958,57 USD » |
+| `equivalent_eur` | « Soit en EUR (1 EUR = 655,96 XAF, taux du 18/11/2026) » | « 899,45 EUR » |
+
+- Montants figés à l'émission au taux de la comptabilité (taux du jour pour une pièce non émise), comme sous le total du gabarit d'origine.
+- Ils sont dans la section « Totaux » : un bloc `SECTIONS` (brouillon de départ) les imprime sans rien faire. Un modèle composé de blocs `FIELDS` les ajoute par leurs clés ; le catalogue (`GET /document-templates/INVOICE/fields/catalog`) les liste avec des valeurs d'exemple.
+- Une devise retirée du réglage n'a plus de champ : la clé s'imprime vide.
+
+Doc de la facturation : [billing](../billing/README.md#montants-en-usd-et-en-eur-18112026).

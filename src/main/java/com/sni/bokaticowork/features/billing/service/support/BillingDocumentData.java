@@ -44,6 +44,16 @@ public final class BillingDocumentData {
 
     public static DocumentData from(BillingDocumentResponse document, BillingDocumentTemplateFormatter fmt, String qrDataUri,
                                     String vatExemptionNote) {
+        return from(document, fmt, qrDataUri, vatExemptionNote, List.of());
+    }
+
+    /**
+     * Avec les montants en devises (USD, EUR... reglage {@code billing.invoice.equivalent-currencies}) :
+     * un champ {@code equivalent_<devise>} par devise (« Soit en USD (1 USD = 615,50 XAF, taux du
+     * 18/11/2026) »), place dans la section des totaux, comme sous le total du gabarit d'origine.
+     */
+    public static DocumentData from(BillingDocumentResponse document, BillingDocumentTemplateFormatter fmt, String qrDataUri,
+                                    String vatExemptionNote, List<BillingCurrencyEquivalents.Equivalent> equivalents) {
         String code = templateCode(document.documentType());
         String number = document.fiscalNumber() != null && !document.fiscalNumber().isBlank() ? document.fiscalNumber() : document.documentNumber();
         DocumentData data = new DocumentData(code).title(title(document.documentType())).number(number).source(document.documentNumber())
@@ -77,6 +87,13 @@ public final class BillingDocumentData {
                 .field("motif", "Motif", document.creditNoteReason())
                 .signer("emetteur", "Pour " + (document.sellerName() == null ? "l'exploitant" : document.sellerName()), null, null)
                 .signer("client", "Le client, pour accord", null, null);
+        List<String> totals = new ArrayList<>(TOTALS);
+        for (BillingCurrencyEquivalents.Equivalent fx : equivalents == null ? List.<BillingCurrencyEquivalents.Equivalent>of() : equivalents) {
+            String key = equivalentKey(fx.currency());
+            data.field(key, equivalentLabel(fx.currency(), fx.rate(), document.currency(),
+                    fx.rateDate() == null ? null : fx.rateDate().format(DAY)), decimal(fx.totalAmount()) + " " + fx.currency());
+            totals.add(key);
+        }
         List<List<String>> rows = new ArrayList<>();
         int index = 1;
         for (BillingDocumentLineResponse line : document.lines() == null ? List.<BillingDocumentLineResponse>of() : document.lines()) {
@@ -103,9 +120,34 @@ public final class BillingDocumentData {
                         ? List.of("numero_document", "date", "facture_origine", "motif", "objet")
                         : List.of("numero_document", "date", "echeance", "reference_client", "bon_de_commande", "objet"), null)
                 .section("Lignes", List.of(), "lignes")
-                .section("Totaux", List.of("sous_total", "remise", "base_taxable", "tva", "centimes_additionnels", "total_ttc", "deja_paye", "reste_du"), null)
+                .section("Totaux", totals, null)
                 .section("Conditions", List.of("conditions", "instructions_paiement", "mention_exoneration"), null);
         return data;
+    }
+
+    private static final List<String> TOTALS = List.of("sous_total", "remise", "base_taxable", "tva", "centimes_additionnels", "total_ttc",
+            "deja_paye", "reste_du");
+    private static final java.time.format.DateTimeFormatter DAY = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    /** Cle du champ d'une devise : {@code equivalent_usd}. */
+    public static String equivalentKey(String currency) {
+        return "equivalent_" + (currency == null ? "" : currency.trim().toLowerCase(java.util.Locale.ROOT));
+    }
+
+    static String equivalentLabel(String currency, BigDecimal rate, String documentCurrency, String day) {
+        return "Soit en " + currency + " (1 " + currency + " = " + decimal(rate) + " " + (documentCurrency == null ? "XAF" : documentCurrency)
+                + (day == null ? "" : ", taux du " + day) + ")";
+    }
+
+    /** 1 234,50 : espace des milliers, virgule, deux decimales. */
+    static String decimal(BigDecimal amount) {
+        if (amount == null) {
+            return "";
+        }
+        java.text.DecimalFormatSymbols symbols = new java.text.DecimalFormatSymbols(java.util.Locale.FRANCE);
+        symbols.setGroupingSeparator(' ');
+        symbols.setDecimalSeparator(',');
+        return new java.text.DecimalFormat("#,##0.00", symbols).format(amount.setScale(2, java.math.RoundingMode.HALF_UP));
     }
 
     /** Facture d'exemple pour l'apercu. */
@@ -126,6 +168,8 @@ public final class BillingDocumentData {
                 .field("conditions", "Conditions", "Paiement à 15 jours.").field("instructions_paiement", "Règlement", "Virement ou mobile money")
                 .field("mention_exoneration", "Exonération", "").field("facture_origine", "Pièce d'origine", credit ? "FAC-2026-000042" : "")
                 .field("motif", "Motif", credit ? "Remise commerciale accordée" : "")
+                .field(equivalentKey("USD"), equivalentLabel("USD", new BigDecimal("615.50"), "XAF", "12/11/2026"), credit ? "95,86 USD" : "958,57 USD")
+                .field(equivalentKey("EUR"), equivalentLabel("EUR", new BigDecimal("655.957"), "XAF", "12/11/2026"), credit ? "89,94 EUR" : "899,45 EUR")
                 .signer("emetteur", "Pour ELLE A OSE", null, null).signer("client", "Le client, pour accord", null, null);
         data.table("lignes", new DocumentData.Table("Lignes", List.of(new DocumentData.Column("n", "N°", false),
                 new DocumentData.Column("designation", "Désignation", false), new DocumentData.Column("quantite", "Qté", true),
@@ -138,7 +182,8 @@ public final class BillingDocumentData {
                 .section("Pièce", credit ? List.of("numero_document", "date", "facture_origine", "motif", "objet")
                         : List.of("numero_document", "date", "echeance", "reference_client", "bon_de_commande", "objet"), null)
                 .section("Lignes", List.of(), "lignes")
-                .section("Totaux", List.of("sous_total", "remise", "base_taxable", "tva", "centimes_additionnels", "total_ttc", "deja_paye", "reste_du"), null)
+                .section("Totaux", List.of("sous_total", "remise", "base_taxable", "tva", "centimes_additionnels", "total_ttc", "deja_paye", "reste_du",
+                        equivalentKey("USD"), equivalentKey("EUR")), null)
                 .section("Conditions", List.of("conditions", "instructions_paiement", "mention_exoneration"), null);
         return data;
     }
