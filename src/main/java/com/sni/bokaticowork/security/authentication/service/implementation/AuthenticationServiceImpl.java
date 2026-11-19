@@ -494,6 +494,7 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
                 .emailVerified(principal.getUser().emailVerified())
                 .roles(principal.getAuthorities().stream().map(Object::toString).sorted().toList())
                 .superAdminSetupUrl(setupUrl)
+                .redirectUrl(setupUrl)
                 .build();
     }
 

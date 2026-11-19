@@ -35,6 +35,22 @@ public class SuperAdminSetupFormController {
 
     private final SuperAdminInvitationService invitations;
 
+    @org.springframework.beans.factory.annotation.Value("${app.admin-access-url:https://admin.elleaose.com}")
+    private String adminAccessUrl;
+
+    private com.sni.bokaticowork.core.settings.platform.PlatformSettings platformSettings;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPlatformSettings(com.sni.bokaticowork.core.settings.platform.PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Connexion de l'administration (reglage app.admin-access-url). */
+    String adminLoginUrl() {
+        String url = platformSettings == null ? adminAccessUrl : platformSettings.text("app.admin-access-url", adminAccessUrl);
+        return StringUtils.hasText(url) ? url.trim() : "/";
+    }
+
     @GetMapping("/form")
     public String form(@RequestParam(required = false) String token, Model model, HttpServletRequest request, HttpServletResponse response) {
         headers(model, response);
@@ -71,6 +87,7 @@ public class SuperAdminSetupFormController {
         }
         clear(request, response);
         model.addAttribute("email", email.trim().toLowerCase());
+        model.addAttribute("loginUrl", adminLoginUrl());
         return "auth/super-admin-setup-success";
     }
 

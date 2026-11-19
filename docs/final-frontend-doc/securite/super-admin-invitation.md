@@ -6,10 +6,10 @@ Un `ADMIN` ne peut pas modifier son propre rôle ni donner des droits qu'il n'a 
 
 ## Parcours
 
-1. Ce compte se connecte normalement (`POST /sni/api/v1/auth/login`). La réponse porte en plus `superAdminSetupUrl` ; le même lien part par courriel à cette adresse.
-2. Le frontend affiche un bandeau « Créer le super-administrateur » qui ouvre le lien (page du serveur, pas un écran du frontend).
+1. Ce compte se connecte normalement (`POST /sni/api/v1/auth/login`). La réponse porte en plus `redirectUrl` (et `superAdminSetupUrl`, même valeur) ; le même lien part par courriel à cette adresse.
+2. **Redirection obligatoire** : quand la réponse de connexion porte `superAdminSetupUrl`, le frontend redirige aussitôt le navigateur vers ce lien (`window.location.assign(redirectUrl)`), avant d'ouvrir le tableau de bord. C'est une page du serveur, pas un écran du frontend.
 3. La page demande prénom, nom, adresse, mot de passe et confirmation. Elle crée le compte, lui donne le rôle `SUPER_ADMIN`, l'active, puis clôt l'invitation.
-4. Se connecter ensuite avec ce nouveau compte.
+4. Après la création, la page renvoie d'elle-même (5 secondes) vers la connexion de l'administration (`app.admin-access-url`) ; un bouton « Aller à la connexion » le fait tout de suite. Se connecter avec le nouveau compte.
 
 ## Règles
 

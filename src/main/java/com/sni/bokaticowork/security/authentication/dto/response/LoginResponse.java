@@ -18,4 +18,10 @@ public class LoginResponse {
     java.util.List<String> roles;
     /** Lien a usage unique de creation du super-administrateur, seulement pour le compte invite (sinon absent). */
     String superAdminSetupUrl;
+    /**
+     * Redirection demandee par le serveur juste apres la connexion (absente le plus souvent). Le
+     * frontend, s'il la recoit, y envoie le navigateur avant d'ouvrir le tableau de bord. Generique :
+     * aujourd'hui, la creation du super-administrateur.
+     */
+    String redirectUrl;
 }
