@@ -25,6 +25,14 @@ public interface BookingMapper {
         return null;
     }
 
+    /**
+     * Lot B7 : reponses d'une liste, sans QR ni facture, lignes et participants charges en une
+     * requete pour toute la page.
+     */
+    default java.util.List<BookingResponse> toListResponses(java.util.List<Booking> bookings) {
+        return bookings.stream().map(this::toResponse).toList();
+    }
+
     default BookingLineResponse toResponse(BookingLine line) {
         return null;
     }

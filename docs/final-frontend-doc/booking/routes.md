@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-74 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+82 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -21,8 +21,14 @@
 | POST | `/sni/api/v1/bookings/notifications/dispatch-due` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-notifications-dispatch-due) |
 | GET | `/sni/api/v1/bookings/policies` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-policies) |
 | POST | `/sni/api/v1/bookings/policies` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-policies) |
+| PUT | `/sni/api/v1/bookings/policies/{policyNumber}` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-put-sni-api-v1-bookings-policies-policynumber) |
+| PATCH | `/sni/api/v1/bookings/policies/{policyNumber}/activate` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-policies-policynumber-activate) |
+| PATCH | `/sni/api/v1/bookings/policies/{policyNumber}/deactivate` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-policies-policynumber-deactivate) |
 | GET | `/sni/api/v1/bookings/quota-overrides` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-quota-overrides) |
 | POST | `/sni/api/v1/bookings/quota-overrides` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-quota-overrides) |
+| PUT | `/sni/api/v1/bookings/quota-overrides/{overrideNumber}` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-put-sni-api-v1-bookings-quota-overrides-overridenumber) |
+| PATCH | `/sni/api/v1/bookings/quota-overrides/{overrideNumber}/activate` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-quota-overrides-overridenumber-activate) |
+| PATCH | `/sni/api/v1/bookings/quota-overrides/{overrideNumber}/deactivate` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-quota-overrides-overridenumber-deactivate) |
 | POST | `/sni/api/v1/bookings/recurring` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-recurring) |
 | POST | `/sni/api/v1/bookings/repair` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-repair) |
 | GET | `/sni/api/v1/bookings/search` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-search) |
@@ -58,6 +64,8 @@
 | POST | `/sni/api/v1/bookings/{number}/end-report` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-end-report) |
 | GET | `/sni/api/v1/bookings/{number}/usage-rules` | BOOKING:READ | [BookingOperationsController](routes/BookingOperationsController.md#r-get-sni-api-v1-bookings-number-usage-rules) |
 | POST | `/sni/api/v1/bookings/{number}/usage-rules/accept` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-usage-rules-accept) |
+| GET | `/sni/api/v1/bookings/lookup/owners` | BOOKING:READ | [BookingReferenceController](routes/BookingReferenceController.md#r-get-sni-api-v1-bookings-lookup-owners) |
+| GET | `/sni/api/v1/bookings/reference` | BOOKING:READ | [BookingReferenceController](routes/BookingReferenceController.md#r-get-sni-api-v1-bookings-reference) |
 | GET | `/sni/api/v1/bookings/waitlist` | BOOKING:READ | [BookingWaitlistController](routes/BookingWaitlistController.md#r-get-sni-api-v1-bookings-waitlist) |
 | POST | `/sni/api/v1/bookings/waitlist` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist) |
 | POST | `/sni/api/v1/bookings/waitlist/expire-offers` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist-expire-offers) |

@@ -12,6 +12,8 @@ public interface BookingAudiencePolicyRepository extends JpaRepository<BookingAu
 
     List<BookingAudiencePolicy> findAllByOrderByCreatedAtDesc();
 
+    Optional<BookingAudiencePolicy> findByPolicyNumber(String policyNumber);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM booking_audience_policy

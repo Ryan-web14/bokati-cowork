@@ -32,5 +32,9 @@ public enum BookingEventType {
     /** Lot R5d : reglement d'usage accepte. */
     USAGE_RULES_ACCEPTED,
     /** Lot R5d : etat des lieux de fin enregistre. */
-    END_REPORT_RECORDED
+    END_REPORT_RECORDED,
+    /** Lot B7 : participant ajoute (avant : journalise BOOKING_CREATED). */
+    BOOKING_PARTICIPANT_ADDED,
+    /** Lot B7 : participant retire. */
+    BOOKING_PARTICIPANT_REMOVED
 }

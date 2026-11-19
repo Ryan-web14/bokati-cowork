@@ -60,6 +60,7 @@ Une valeur n'est jamais supprimée : les enregistrements qui la citent gardent l
 
 | Module | Listes |
 | --- | --- |
+| `BOOKING` (réservations, lot B7) | `BOOKING_CANCEL_REASON`, `BOOKING_REJECT_REASON` |
 | `PAYMENT` (caisse) | `VARIANCE_REASON`, `ADJUSTMENT_REASON`, `REVERSAL_REASON`, `SUSPENSION_REASON`, `SESSION_CANCEL_REASON`, `ABSENCE_REASON`, `RESPONSIBILITY_TRANSFER_REASON`, `OUT_OF_HOURS_REASON`, `EXTERNAL_DOCUMENT_TYPE`, `BANK` |
 
 Les listes de la caisse vivent désormais dans ce socle ; leurs routes `/cash-registers/reference-lists` restent valables et rendent les mêmes valeurs. Les autres modules ajoutent leurs listes lot par lot.
@@ -81,6 +82,9 @@ Recherches livrées au lot L0 :
 | Route | Éléments | Accès |
 | --- | --- | --- |
 | `GET /lookup/users` | Utilisateurs de l'équipe (assigner, désigner un responsable) ; `code` = courriel | Toute l'équipe |
+| `GET /bookings/lookup/owners` | Titulaires d'une réservation : `MEMBER`, `CUSTOMER`, `BUSINESS_ENTITY` (lot B7) | `BOOKING:READ` |
+
+Un module peut aussi rendre ses listes d'écran en un appel : `GET /bookings/reference` (valeurs fixes, listes de l'administrateur et grille d'annulation des réservations).
 
 ## Acteur
 

@@ -127,7 +127,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
                     OR normalize_text(COALESCE(rg.code, '')) % normalize_text(:query)
               )
             ORDER BY
-              CASE WHEN :query IS NULL THEN 0 ELSE GREATEST(
+              CASE WHEN :sortKey = 'RELEVANCE' AND :query IS NOT NULL THEN GREATEST(
                     similarity(normalize_text(b.booking_number), normalize_text(:query)),
                     similarity(normalize_text(b.owner_code), normalize_text(:query)),
                     similarity(normalize_text(COALESCE(b.contact_name, '')), normalize_text(:query)),
@@ -135,7 +135,24 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
                     similarity(normalize_text(r.code), normalize_text(:query)),
                     similarity(normalize_text(r.name), normalize_text(:query))
               ) END DESC,
-              b.started_at DESC
+              CASE WHEN :sortKey = 'STARTED_AT' AND :sortDir = 'ASC' THEN b.started_at END ASC,
+              CASE WHEN :sortKey = 'STARTED_AT' AND :sortDir = 'DESC' THEN b.started_at END DESC,
+              CASE WHEN :sortKey = 'ENDED_AT' AND :sortDir = 'ASC' THEN b.ended_at END ASC,
+              CASE WHEN :sortKey = 'ENDED_AT' AND :sortDir = 'DESC' THEN b.ended_at END DESC,
+              CASE WHEN :sortKey = 'CREATED_AT' AND :sortDir = 'ASC' THEN b.created_at END ASC,
+              CASE WHEN :sortKey = 'CREATED_AT' AND :sortDir = 'DESC' THEN b.created_at END DESC,
+              CASE WHEN :sortKey = 'TOTAL_AMOUNT' AND :sortDir = 'ASC' THEN b.total_amount END ASC,
+              CASE WHEN :sortKey = 'TOTAL_AMOUNT' AND :sortDir = 'DESC' THEN b.total_amount END DESC,
+              CASE WHEN :sortKey = 'STATUS' AND :sortDir = 'ASC' THEN b.status END ASC,
+              CASE WHEN :sortKey = 'STATUS' AND :sortDir = 'DESC' THEN b.status END DESC,
+              CASE WHEN :sortKey = 'BOOKING_NUMBER' AND :sortDir = 'ASC' THEN b.booking_number END ASC,
+              CASE WHEN :sortKey = 'BOOKING_NUMBER' AND :sortDir = 'DESC' THEN b.booking_number END DESC,
+              CASE WHEN :sortKey = 'RESOURCE_CODE' AND :sortDir = 'ASC' THEN r.code END ASC,
+              CASE WHEN :sortKey = 'RESOURCE_CODE' AND :sortDir = 'DESC' THEN r.code END DESC,
+              CASE WHEN :sortKey = 'CONTACT_NAME' AND :sortDir = 'ASC' THEN b.contact_name END ASC,
+              CASE WHEN :sortKey = 'CONTACT_NAME' AND :sortDir = 'DESC' THEN b.contact_name END DESC,
+              b.started_at DESC,
+              b.id DESC
             """,
             countQuery = """
             SELECT COUNT(*)
@@ -176,6 +193,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
                                @Param("status") String status,
                                @Param("startedFrom") LocalDateTime startedFrom,
                                @Param("startedTo") LocalDateTime startedTo,
+                               @Param("sortKey") String sortKey,
+                               @Param("sortDir") String sortDir,
                                Pageable pageable);
 
     @Query(nativeQuery = true, value = """

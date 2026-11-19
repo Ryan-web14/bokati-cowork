@@ -77,14 +77,58 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 .build();
     }
 
+    private com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository documents;
+
+    @Autowired(required = false)
+    void setDocuments(com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository documents) {
+        this.documents = documents;
+    }
+
+    /** Lignes qui s'ajoutent au prix de la ressource (lot B7, ecart Bn-7). */
+    static final java.util.Set<com.sni.bokaticowork.features.booking.enums.BookingLineType> EXTRA_LINES = java.util.EnumSet.of(
+            com.sni.bokaticowork.features.booking.enums.BookingLineType.SERVICE,
+            com.sni.bokaticowork.features.booking.enums.BookingLineType.AMENITY,
+            com.sni.bokaticowork.features.booking.enums.BookingLineType.PARTICIPANT,
+            com.sni.bokaticowork.features.booking.enums.BookingLineType.DEPOSIT,
+            com.sni.bokaticowork.features.booking.enums.BookingLineType.OVERRUN,
+            com.sni.bokaticowork.features.booking.enums.BookingLineType.NO_SHOW);
+
+    /** Fiche : QR et facture compris. */
     @Override
     public BookingResponse toResponse(Booking booking) {
-        List<BookingLineResponse> lines = booking.getId() == null
-                ? List.of()
-                : lineRepository.findByBookingId(booking.getId()).stream().map(this::toResponse).toList();
-        List<BookingParticipantResponse> participants = booking.getId() == null
-                ? List.of()
-                : participantRepository.findByBookingId(booking.getId()).stream().map(this::toResponse).toList();
+        List<BookingLine> lines = booking.getId() == null ? List.of() : lineRepository.findByBookingId(booking.getId());
+        List<BookingParticipant> participants = booking.getId() == null ? List.of() : participantRepository.findByBookingId(booking.getId());
+        String invoice = null;
+        if (documents != null && StringUtils.hasText(booking.getBillableNumber())) {
+            invoice = documents.findFirstBySourceAndType("BILLABLE_ITEM", booking.getBillableNumber(), "INVOICE")
+                    .map(com.sni.bokaticowork.features.billing.model.BillingDocument::getDocumentNumber).orElse(null);
+        }
+        String qr = booking.getCheckInToken() == null ? null
+                : generateQrCode(apiBaseUrl().stripTrailing() + ApiPath.V1 + "/public/bookings/check-in/scan/" + booking.getCheckInToken());
+        return build(booking, lines, participants, qr, invoice);
+    }
+
+    /** Liste : ni QR (image) ni facture ; lignes et participants de la page en deux requetes. */
+    @Override
+    public List<BookingResponse> toListResponses(List<Booking> bookings) {
+        List<Long> ids = bookings.stream().map(Booking::getId).filter(java.util.Objects::nonNull).toList();
+        java.util.Map<Long, List<BookingLine>> lines = ids.isEmpty() ? java.util.Map.of()
+                : lineRepository.findByBookingIdIn(ids).stream().collect(java.util.stream.Collectors.groupingBy(line -> line.getBooking().getId()));
+        java.util.Map<Long, List<BookingParticipant>> participants = ids.isEmpty() ? java.util.Map.of()
+                : participantRepository.findByBookingIdIn(ids).stream()
+                .collect(java.util.stream.Collectors.groupingBy(participant -> participant.getBooking().getId()));
+        return bookings.stream().map(booking -> build(booking, lines.getOrDefault(booking.getId(), List.of()),
+                participants.getOrDefault(booking.getId(), List.of()), null, null)).toList();
+    }
+
+    private BookingResponse build(Booking booking, List<BookingLine> lineEntities, List<BookingParticipant> participantEntities,
+                                  String qr, String invoiceNumber) {
+        List<BookingLineResponse> lines = lineEntities.stream().map(this::toResponse).toList();
+        List<BookingParticipantResponse> participants = participantEntities.stream().map(this::toResponse).toList();
+        java.math.BigDecimal extras = lineEntities.stream().filter(line -> EXTRA_LINES.contains(line.getLineType()))
+                .map(line -> line.getAmount() == null ? java.math.BigDecimal.ZERO : line.getAmount())
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        java.math.BigDecimal grandTotal = (booking.getTotalAmount() == null ? java.math.BigDecimal.ZERO : booking.getTotalAmount()).add(extras);
         BookingPaymentStatus paymentStatus = BookingPaymentStatus.of(
                 booking.getPaymentMode(), booking.getStatus(), booking.getPaidAt());
         com.sni.bokaticowork.features.booking.service.support.BookingSeats seats =
@@ -119,7 +163,7 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getNotes(),
                 booking.getMetadataJson(),
                 booking.getCheckInToken(),
-                booking.getCheckInToken() == null ? null : generateQrCode(apiBaseUrl().stripTrailing() + ApiPath.V1 + "/public/bookings/check-in/scan/" + booking.getCheckInToken()),
+                qr,
                 booking.getVirtualMeetingUrl(),
                 booking.getConfirmedAt(),
                 booking.getCompletedAt(),
@@ -133,7 +177,26 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getBatchNumber(),
                 booking.getModificationCount() == null ? 0 : booking.getModificationCount(),
                 booking.getLastModifiedAt(),
-                booking.getLastModification()
+                booking.getLastModification(),
+                booking.getCreatedBy(),
+                booking.getChannel(),
+                booking.getHoldNumber(),
+                booking.getRecurrenceGroupNumber(),
+                booking.getPaymentDueAt(),
+                booking.getPaidAt(),
+                booking.getCheckedInAt(),
+                booking.getCheckedOutAt(),
+                booking.getApprovedBy(),
+                booking.getApprovedAt(),
+                booking.getRejectedBy(),
+                booking.getRejectedAt(),
+                booking.getRejectionReason(),
+                booking.getRejectionReasonCode(),
+                booking.getCancellationReason(),
+                booking.getCancellationReasonCode(),
+                invoiceNumber,
+                extras,
+                grandTotal
         );
     }
 

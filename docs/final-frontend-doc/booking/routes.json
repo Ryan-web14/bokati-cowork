@@ -61,7 +61,7 @@
     {
      "in": "pageable",
      "name": "page, size, sort",
-     "default": "size=20, sort=startedAt,DESC",
+     "default": "size=20",
      "type": "Pageable"
     }
    ],
@@ -357,7 +357,14 @@
     "kind": "admin",
     "permission": "BOOKING:READ"
    },
-   "params": [],
+   "params": [
+    {
+     "in": "query",
+     "name": "active",
+     "required": false,
+     "type": "Boolean"
+    }
+   ],
    "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingAudiencePolicyResponse>>"
   },
   {
@@ -383,6 +390,82 @@
   },
   {
    "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/bookings/policies/{policyNumber}",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "updatePolicy",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingAudiencePolicyRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "policyNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingAudiencePolicyResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/policies/{policyNumber}/activate",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "activatePolicy",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "policyNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingAudiencePolicyResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/policies/{policyNumber}/deactivate",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "deactivatePolicy",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "policyNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingAudiencePolicyResponse>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/bookings/quota-overrides",
@@ -395,7 +478,14 @@
     "kind": "admin",
     "permission": "BOOKING:READ"
    },
-   "params": [],
+   "params": [
+    {
+     "in": "query",
+     "name": "active",
+     "required": false,
+     "type": "Boolean"
+    }
+   ],
    "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingQuotaOverrideResponse>>"
   },
   {
@@ -417,6 +507,82 @@
     "required": true
    },
    "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingQuotaOverrideResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/bookings/quota-overrides/{overrideNumber}",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "updateQuotaOverride",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.UpdateBookingQuotaOverrideRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "overrideNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingQuotaOverrideResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/quota-overrides/{overrideNumber}/activate",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "activateQuotaOverride",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "overrideNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingQuotaOverrideResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/quota-overrides/{overrideNumber}/deactivate",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "deactivateQuotaOverride",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "overrideNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingQuotaOverrideResponse>"
   },
   {
@@ -1369,6 +1535,67 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/bookings/lookup/owners",
+   "package": "features.booking.controller",
+   "controller": "BookingReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingReferenceController.java",
+   "handler": "owners",
+   "declaredIn": "BookingReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "types",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "20",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.reference.lookup.LookupItem>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/reference",
+   "package": "features.booking.controller",
+   "controller": "BookingReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingReferenceController.java",
+   "handler": "reference",
+   "declaredIn": "BookingReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.controller.BookingReferenceController.BookingReference>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/bookings/waitlist",
    "package": "features.booking.controller",
    "controller": "BookingWaitlistController",
@@ -2162,6 +2389,77 @@
     },
     "lastModification": {
      "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "channel": {
+     "type": "string",
+     "enum": [
+      "PORTAL",
+      "TEAM",
+      "PHONE",
+      "DESK",
+      "EMAIL",
+      "WHATSAPP"
+     ]
+    },
+    "holdNumber": {
+     "type": "string"
+    },
+    "recurrenceGroupNumber": {
+     "type": "string"
+    },
+    "paymentDueAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "paidAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checkedInAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checkedOutAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "approvedBy": {
+     "type": "string"
+    },
+    "approvedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "rejectedBy": {
+     "type": "string"
+    },
+    "rejectedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "rejectionReason": {
+     "type": "string"
+    },
+    "rejectionReasonCode": {
+     "type": "string"
+    },
+    "cancellationReason": {
+     "type": "string"
+    },
+    "cancellationReasonCode": {
+     "type": "string"
+    },
+    "invoiceNumber": {
+     "type": "string"
+    },
+    "extrasAmount": {
+     "type": "number"
+    },
+    "grandTotal": {
+     "type": "number"
     }
    }
   },
@@ -2975,6 +3273,41 @@
     }
    }
   },
+  "UpdateBookingQuotaOverrideRequest": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "extraActiveBookings": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "extraBookingsPerDay": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "extraBookingsPerWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "extraBookingsPerMonth": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
   "CreateRecurringBookingRequest": {
    "required": [
     "booking",
@@ -3074,6 +3407,12 @@
     },
     "sendEmail": {
      "type": "boolean"
+    },
+    "reasonCode": {
+     "type": "string"
+    },
+    "reasonText": {
+     "type": "string"
     }
    }
   },
@@ -3088,6 +3427,12 @@
     },
     "sendEmail": {
      "type": "boolean"
+    },
+    "reasonCode": {
+     "type": "string"
+    },
+    "reasonText": {
+     "type": "string"
     }
    }
   },
@@ -3192,7 +3537,9 @@
       "BOOKING_TRANSFERRED",
       "BOOKING_RESOURCE_CHANGED",
       "USAGE_RULES_ACCEPTED",
-      "END_REPORT_RECORDED"
+      "END_REPORT_RECORDED",
+      "BOOKING_PARTICIPANT_ADDED",
+      "BOOKING_PARTICIPANT_REMOVED"
      ]
     },
     "title": {
@@ -3578,6 +3925,52 @@
      "type": "array",
      "items": {
       "type": "string"
+     }
+    }
+   }
+  },
+  "LookupItem": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "hint": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingReferenceController.BookingReference": {
+   "type": "object",
+   "properties": {
+    "enums": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.reference.dto.ReferenceDtos.EnumGroup"
+     }
+    },
+    "lists": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/com.sni.bokaticowork.core.reference.dto.ReferenceDtos.Value"
+      }
+     }
+    },
+    "cancellationPolicy": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse"
      }
     }
    }
@@ -4095,6 +4488,60 @@
     }
    }
   },
+  "ReferenceDtos.EnumGroup": {
+   "type": "object",
+   "properties": {
+    "module": {
+     "type": "string"
+    },
+    "group": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "values": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.reference.dto.ReferenceDtos.EnumValue"
+     }
+    }
+   }
+  },
+  "ReferenceDtos.Value": {
+   "type": "object",
+   "properties": {
+    "listCode": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "requiresText": {
+     "type": "boolean"
+    },
+    "systemValue": {
+     "type": "boolean"
+    },
+    "autoAdded": {
+     "type": "boolean"
+    },
+    "usageCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
   "BookingIdentityLookup": {
    "type": "object",
    "properties": {
@@ -4218,6 +4665,27 @@
      "type": "number"
     }
    }
+  },
+  "ReferenceDtos.EnumValue": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "order": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "selectable": {
+     "type": "boolean"
+    }
+   }
   }
  },
  "enums": {
@@ -4265,6 +4733,7 @@
   "CreateBookingAudiencePolicyRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingAudiencePolicyRequest",
   "BookingQuotaOverrideResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingQuotaOverrideResponse",
   "CreateBookingQuotaOverrideRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingQuotaOverrideRequest",
+  "UpdateBookingQuotaOverrideRequest": "com.sni.bokaticowork.features.booking.dto.request.UpdateBookingQuotaOverrideRequest",
   "CreateRecurringBookingRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateRecurringBookingRequest",
   "BookingRepairResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingRepairResponse",
   "BookingSuggestionResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse",
@@ -4286,6 +4755,8 @@
   "BookingOperations.EndReportResponse": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse",
   "BookingOperations.EndReportRequest": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportRequest",
   "BookingOperations.UsageRulesView": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView",
+  "LookupItem": "com.sni.bokaticowork.core.reference.lookup.LookupItem",
+  "BookingReferenceController.BookingReference": "com.sni.bokaticowork.features.booking.controller.BookingReferenceController.BookingReference",
   "BookingWaitlistEntryResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse",
   "BookingWaitlistStatus": "com.sni.bokaticowork.features.booking.enums.BookingWaitlistStatus",
   "JoinBookingWaitlistRequest": "com.sni.bokaticowork.features.booking.dto.request.JoinBookingWaitlistRequest",
@@ -4301,8 +4772,11 @@
   "CreateBookingBatchRequest.Line": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchRequest.Line",
   "BookingAvailabilityResponse.OccupiedRange": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange",
   "BookingOperations.ChecklistAnswer": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.ChecklistAnswer",
+  "ReferenceDtos.EnumGroup": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.EnumGroup",
+  "ReferenceDtos.Value": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.Value",
   "BookingIdentityLookup": "com.sni.bokaticowork.features.booking.dto.request.BookingIdentityLookup",
   "ResourceAnalytics.MarginRow": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.MarginRow",
-  "ResourceAnalytics.OccupancyRow": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.OccupancyRow"
+  "ResourceAnalytics.OccupancyRow": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.OccupancyRow",
+  "ReferenceDtos.EnumValue": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.EnumValue"
  }
 }

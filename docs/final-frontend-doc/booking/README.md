@@ -1,6 +1,6 @@
 # booking : fonctionnement
 
-> Rédigé d'après le code, à jour des lots B0, B1, B2, B2b, B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code, à jour des lots B0, B1, B2, B2b, B7, B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -57,7 +57,7 @@ Identifiants numériques à garder en texte (lecture JSON sans perte, voir [READ
 
 Le serveur nomme les statuts en français dans ses messages (« confirmée », « en attente de paiement », « marquée absente »...) ; l'écran garde sa propre table de libellés pour les badges.
 
-Le pointage (check-in) et la sortie (check-out) ne sont pas des statuts : ils posent `checkedInAt` et `checkedOutAt`, que la réponse **n'expose pas encore** (lot B7 à venir ; d'ici là, les retrouver dans `GET .../events`, événements `BOOKING_CHECKED_IN` et `BOOKING_CHECKED_OUT`). Un pointage avant l'heure laisse la réservation `CONFIRMED` ; le worker la passe `IN_PROGRESS` à l'heure de début. La sortie ne clôt pas la réservation : la clôture vient du worker à l'heure de fin, ou de `PATCH .../complete`.
+Le pointage (check-in) et la sortie (check-out) ne sont pas des statuts : ils posent `checkedInAt` et `checkedOutAt`, rendus dans la réponse (lot B7). Un pointage avant l'heure laisse la réservation `CONFIRMED` ; le worker la passe `IN_PROGRESS` à l'heure de début. La sortie ne clôt pas la réservation : la clôture vient du worker à l'heure de fin, ou de `PATCH .../complete`.
 
 Blocage temporaire (`BookingHold.status`) : `ACTIVE` à la création ; `CONFIRMED` quand une réservation qui le cite est confirmée ; `RELEASED` par `PATCH /bookings/holds/{holdNumber}/release` ; `EXPIRED` à échéance, par le worker d'expiration (toutes les minutes) ou par `POST /bookings/holds/expire-due`.
 
@@ -72,7 +72,7 @@ Une réservation `PENDING_PAYMENT` reçoit une échéance de paiement (lot B1) :
 | 24 h si le créneau est à plus de 3 jours | `bookings.payment-due.far-days`, `bookings.payment-due.far-minutes` |
 | Échéance un samedi, un dimanche ou un jour férié : prochain jour ouvré à 10:00 | `bookings.payment-due.business-hour` |
 
-À l'échéance, sans règlement, la réservation passe `EXPIRED`. L'échéance n'est pas encore dans la réponse (lot B7 à venir) ; le rappel avant échéance arrive avec le lot B6.
+À l'échéance, sans règlement, la réservation passe `EXPIRED`. L'échéance est dans la réponse (`paymentDueAt`) ; le rappel avant échéance arrive avec le lot B6.
 
 Liste d'attente (`BookingWaitlistStatus`) : `WAITING` à l'inscription ; `OFFERED` quand le worker trouve la plage libre (offre de 30 minutes, réglage `bokati.booking.waitlist.offer-ttl-minutes`, 5 minimum) ; `EXPIRED` à échéance de l'offre ; `CANCELLED` par `PATCH /bookings/waitlist/{id}/cancel` ; `BOOKED` jamais atteint (liste d'attente refaite au lot B6 à venir).
 
@@ -96,7 +96,7 @@ Les mêmes champs servent à la vérification, au blocage, à la création et à
 3. À défaut encore, si `walkIn: true` ou un champ de contact est fourni, un **invité** est créé à la volée (code généré). Un invité ne peut pas payer par abonnement ou pass (`400`).
 4. Rien de tout cela : `400` « Un titulaire est requis : memberId, customerId, businessCode, email ou phone ».
 5. `contactName`, `contactEmail`, `contactPhone` remplacent les coordonnées de la fiche pour cette réservation.
-6. La recherche unique du titulaire (un seul champ de saisie) arrive au lot B7.
+6. Recherche unique du titulaire, un seul champ de saisie (lot B7) : `GET /bookings/lookup/owners?q=&types=&page=&size=` rend `{ data: [{ type, code, label, hint, active }], pageable }`. Selon `type`, envoyer `code` dans `memberId` (`MEMBER`), `customerId` (`CUSTOMER`) ou `businessCode` (`BUSINESS_ENTITY`). `types` restreint (`MEMBER,CUSTOMER`) ; 50 au plus par page.
 
 ### Créer une réservation (back-office)
 
@@ -110,7 +110,7 @@ Les mêmes champs servent à la vérification, au blocage, à la création et à
    - `billingCompanyCode` : organisation pour le compte de laquelle le membre réserve (doit lui être rattachée), ou `NONE` ;
    - `participants`, `notes`, `metadataJson` (texte JSON libre) ;
    - `options` : `[{ "kind": "SERVICE" | "AMENITY", "code": "...", "quantity": 1 }]`, services du catalogue et équipements optionnels ajoutés dès la création, sur la même facture (lot B2b) ;
-   - `channel` (équipe seulement) : `PHONE`, `DESK`, `EMAIL`, `WHATSAPP`. Sans lui, le serveur note `TEAM` (back-office) ou `PORTAL` (espace client). L'auteur (`createdBy`) est lu dans la session. Les deux ne sont pas encore dans la réponse (lot B7 à venir).
+   - `channel` (équipe seulement) : `PHONE`, `DESK`, `EMAIL`, `WHATSAPP`. Sans lui, le serveur note `TEAM` (back-office) ou `PORTAL` (espace client). L'auteur (`createdBy`) est lu dans la session. Les deux sont dans la réponse.
 3. Réponse `201` : la réservation. Selon le cas, `status` vaut :
    - `CONFIRMED` (cas courant : abonnement, pass, portefeuille, ou `DIRECT` saisi par l'équipe sur un début déjà passé) ;
    - `PENDING_PAYMENT` (`DIRECT`) : la facture est émise et envoyée, le créneau est retenu jusqu'à l'échéance ; orienter vers l'encaissement (modules `billing` et `payment`) ;
@@ -143,7 +143,7 @@ Réservation par l'équipe : un compte `ROLE_SUPER_ADMIN`, `ROLE_ADMIN`, `ROLE_M
 
 1. Liste : `GET /sni/api/v1/bookings?status=PENDING_APPROVAL`.
 2. `PATCH /sni/api/v1/bookings/{bookingNumber}/approve` avec `{ "reason": "...", "sendEmail": true }` (corps facultatif ; l'auteur est lu dans la session). `DIRECT` passe en `PENDING_PAYMENT` (facture émise) ; les autres modes sont confirmés (ressource, droit, portefeuille).
-3. `PATCH /sni/api/v1/bookings/{bookingNumber}/reject` avec le même corps : statut `REJECTED`, motif enregistré (lisible dans l'historique), fonds du portefeuille rendus.
+3. `PATCH /sni/api/v1/bookings/{bookingNumber}/reject` avec `{ "reasonCode": "INCOMPLETE_FILE", "reasonText": "...", "sendEmail": true }` (liste `BOOKING_REJECT_REASON` ; `reason` libre accepté) : statut `REJECTED`, `rejectionReason` et `rejectionReasonCode` dans la réponse, fonds du portefeuille rendus.
 
 ### Confirmer manuellement
 
@@ -163,7 +163,7 @@ Réservation par l'équipe : un compte `ROLE_SUPER_ADMIN`, `ROLE_ADMIN`, `ROLE_M
 ### Annuler
 
 1. Afficher les règles de remboursement : la grille de la politique de la ressource (`refundRules`, « heures:pourcentage », par exemple `72:100,24:50,0:0`, module [ressource](../ressource/README.md)) ; sans grille, la grille générale `GET /sni/api/v1/bookings/cancellation-policy` (droit `BOOKING:READ`) : paliers `hoursBeforeStart` et `refundPercentage`, dans l'ordre `ruleOrder`.
-2. `PATCH /sni/api/v1/bookings/{bookingNumber}/cancel` avec `{ "reason": "...", "sendEmail": true }` (facultatif).
+2. `PATCH /sni/api/v1/bookings/{bookingNumber}/cancel` avec `{ "reasonCode": "CLIENT_REQUEST", "reasonText": "...", "sendEmail": true }` (facultatif). `reasonCode` vient de la liste `BOOKING_CANCEL_REASON` (`GET /bookings/reference`) ; `OTHER` exige `reasonText`. L'ancien `reason` (texte libre) reste accepté. La réponse porte `cancellationReason` (libellé et précision) et `cancellationReasonCode`.
 3. Refusée (`409`) depuis `COMPLETED`, `NO_SHOW`, `REJECTED` et `EXPIRED`. Pour une réservation `CONFIRMED` ou `IN_PROGRESS`, la politique de la ressource s'applique **à tous, équipe comprise** (lot B2b) : `allowCancellation` doit être vrai (« La politique de la ressource n'autorise pas l'annulation ») et le début doit être à plus de `cancellationNoticeMinutes` (« Le délai d'annulation de la ressource est dépassé »). Sans condition : `DRAFT`, `PENDING_PAYMENT`, `PENDING_APPROVAL`, et une réservation au portefeuille dont les fonds sont encore bloqués (première minute).
 4. Effets : créneaux rendus et droit libéré, blocage de portefeuille rendu, statut `CANCELLED`. Facture (lot B2) :
    - sans encaissement, elle est annulée et archivée ;
@@ -185,7 +185,7 @@ Réservation par l'équipe : un compte `ROLE_SUPER_ADMIN`, `ROLE_ADMIN`, `ROLE_M
    - L'historique porte `BOOKING_PRICE_ADJUSTED` (ancien et nouveau montant, pièce émise). Recharger la réservation et ses pièces après l'opération.
 5. Marquage : la réponse porte `modificationCount`, `lastModifiedAt`, `lastModification` (« Report au … · +5000 XAF (pièce FAC-…) ») ; afficher un badge « Modifiée N fois ». L'équipe reçoit l'alerte en direct `BOOKING_MODIFIED` (module `BOOKING`, sévérité `WARNING` si un complément est à encaisser, `INFO` sinon) ; l'agent qui a créé la réservation la voit aussi dans ses notifications. Le client est averti par courriel (sauf `sendEmail: false`).
 6. Transférer à un autre titulaire : `PATCH .../transfer` avec `newOwnerType`, `newOwnerCode`, coordonnées facultatives. Depuis `DRAFT`, `PENDING_PAYMENT`, `PENDING_APPROVAL` ou `CONFIRMED`. Un membre doit exister. Refusé pour une réservation couverte par un droit ou réglée par portefeuille : annuler et réserver pour le nouveau titulaire.
-7. Participants : `POST .../participants` avec `memberCode`, `name`, `email`, `phone`, `role` (défaut `GUEST`, valeurs insensibles à la casse), sur une réservation vivante et dans la capacité de la ressource ; retrait : `DELETE .../participants/{participantId}` (statut `REMOVED`, la ligne reste).
+7. Participants (événements `BOOKING_PARTICIPANT_ADDED` et `BOOKING_PARTICIPANT_REMOVED`) : `POST .../participants` avec `memberCode`, `name`, `email`, `phone`, `role` (défaut `GUEST`, valeurs insensibles à la casse), sur une réservation vivante et dans la capacité de la ressource ; retrait : `DELETE .../participants/{participantId}` (statut `REMOVED`, la ligne reste).
 8. Historique : `GET .../history` (statuts, auteurs, motifs) et `GET .../events` (journal détaillé).
 
 ### Suppléments, remises, lots (chantier ressources, lot R5c)
@@ -216,7 +216,7 @@ Détail : [ressource/fonctions/exploitation.md](../ressource/fonctions/exploitat
 
 1. Politiques : `POST /sni/api/v1/bookings/policies` avec `audienceType` (obligatoire), `resourceTypeCode`, `resourceGroupCode`, `approvalRequired`, plafonds (`maxActiveBookings`, `maxBookingsPerDay`/`Week`/`Month`, `maxNoShowsPerMonth`), `minBookingNoticeMinutes`, `maxBookingDurationMinutes`, `active`. Liste : `GET /sni/api/v1/bookings/policies`. La politique retenue pour une réservation est la plus précise (type puis groupe renseignés), puis la plus récente.
 2. Dérogations : `POST /sni/api/v1/bookings/quota-overrides` avec le titulaire (champs à plat), `resourceCode` facultatif, quotas supplémentaires, `reason`, `approvedBy`, `validFrom` et `validUntil` (`Instant` avec fuseau). Liste : `GET /sni/api/v1/bookings/quota-overrides`.
-3. Aucune route ne modifie, désactive ni supprime encore une politique ou une dérogation (lot B7 à venir).
+3. Modifier (lot B7) : `PUT /bookings/policies/{policyNumber}` (même corps que la création), `PATCH .../activate`, `PATCH .../deactivate` ; `PUT /bookings/quota-overrides/{overrideNumber}` avec `{ resourceCode, extraActiveBookings, extraBookingsPerDay, extraBookingsPerWeek, extraBookingsPerMonth, reason, validFrom, validUntil }` (le titulaire ne change pas), `PATCH .../activate`, `PATCH .../deactivate`. Listes filtrables par `?active=true|false`. L'auteur d'une dérogation est lu dans la session (`approvedBy` ignoré). Rien ne se supprime.
 
 ### Pages publiques à jeton
 
@@ -277,8 +277,10 @@ Quotas du public : `maxActiveBookings` compte les réservations `CONFIRMED`, `IN
   - `BOOKING:CANCEL` : annuler, refuser, absence, annuler une entrée de liste d'attente ;
   - `BOOKING:CHECKIN` : arrivée, arrivée anticipée, arrivée par QR, départ.
 - Boutons selon le statut : Confirmer (`DRAFT`, `PENDING_PAYMENT`, à protéger) ; Approuver et Refuser (`PENDING_APPROVAL`) ; Arrivée, Démarrer (`CONFIRMED`), Arrivée et Départ (`IN_PROGRESS`) ; Clôturer et Absence (`CONFIRMED`, `IN_PROGRESS`) ; Déplacer (`CONFIRMED`, `PENDING_APPROVAL`, `PENDING_PAYMENT`) ; Changer de ressource (`CONFIRMED`) ; Transférer (`DRAFT`, `PENDING_PAYMENT`, `PENDING_APPROVAL`, `CONFIRMED`, hors droit et portefeuille) ; Annuler (`DRAFT`, `PENDING_PAYMENT`, `PENDING_APPROVAL`, `CONFIRMED`, `IN_PROGRESS`) ; Encaisser (`paymentStatus: PENDING` hors brouillon).
-- La liste `GET /bookings` est une page maison triée par pertinence puis début décroissant ; le paramètre `sort` est encore ignoré (lot B7 à venir). `GET /bookings/search?query=` rend au plus 20 résultats pour l'autocomplétion.
-- Champs absents de la réponse jusqu'au lot B7 : heure de pointage et de sortie, motif de refus ou d'annulation, numéro de facture, numéro de série récurrente, échéance de paiement, `createdBy`, `channel`, total avec suppléments. Les lire dans `history` et `events`, ou dans le module `billing`. Présents depuis B2b : `modificationCount`, `lastModifiedAt`, `lastModification`.
+- Tri de `GET /bookings` (lot B7) : `sort=startedAt,desc` ; champs `startedAt`, `endedAt`, `createdAt`, `totalAmount`, `status`, `bookingNumber`, `resourceCode`, `contactName`. Sans `sort` : pertinence si `query`, puis début décroissant. Champ inconnu : `400`. Même tri au portail. `GET /bookings/search?query=` rend au plus 20 résultats pour l'autocomplétion.
+- Listes (`GET /bookings`, `/bookings/search`, portail) : chaque ligne a tous les champs, sauf `checkInQrValue` et `invoiceNumber`, nuls : les lire sur la fiche `GET /bookings/{numéro}`.
+- Réponse complète (lot B7) : `createdBy`, `channel`, `holdNumber`, `recurrenceGroupNumber`, `paymentDueAt`, `paidAt`, `checkedInAt`, `checkedOutAt`, `approvedBy`, `approvedAt`, `rejectedBy`, `rejectedAt`, `rejectionReason`, `rejectionReasonCode`, `cancellationReason`, `cancellationReasonCode`, `invoiceNumber` (fiche seulement), `extrasAmount` (services, équipements, participants, caution, dépassement, non-présentation), `grandTotal` (`totalAmount` + `extrasAmount` : le montant à afficher comme total). Depuis B2b : `modificationCount`, `lastModifiedAt`, `lastModification`.
+- Listes déroulantes de l'écran : `GET /bookings/reference` en un appel (valeurs fixes, motifs d'annulation et de refus, grille d'annulation générale), voir [listes-de-choix](../listes-de-choix/README.md).
 - Ne pas envoyer de fuseau dans les dates de plage ; arrondir les heures saisies sur la durée de créneau de la ressource (`slotDurationMinutes` de la ressource).
 - Un rappel (`POST /bookings/{bookingNumber}/notifications/reminder?minutesBefore=30`) est seulement mis en file : il ne part que si quelqu'un appelle `POST /bookings/notifications/dispatch-due`. Si l'écran propose le rappel, prévoir aussi ce déclenchement (rappels automatiques au lot B6 à venir).
 - Afficher `checkInQrValue` comme image ; le contenu du QR est l'adresse de la page de scan publique, utilisable par la borne d'accueil.
@@ -302,18 +304,13 @@ Quotas du public : `maxActiveBookings` compte les réservations `CONFIRMED`, `IN
 
 ## Écarts encore ouverts
 
-Les écarts relevés dans la première version de cette page sont réglés (lots B0, B1, B2, B2b, B8), sauf ceux-ci, prévus au plan :
+Les écarts relevés dans la première version de cette page sont réglés (lots B0, B1, B2, B2b, B7, B8), sauf ceux-ci, prévus au plan :
 
 | Écart | Lot prévu |
 | --- | --- |
 | Liste d'attente : aucune notification à l'offre, `BOOKED` jamais posé, promotion sans regard à la capacité, type `BUSINESS` au lieu de `BUSINESS_ENTITY` dans les alternatives | B6 |
 | Rappels mis en file sans envoi automatique ; rappel avant échéance de paiement ; pas de courriel à la création en attente de paiement ou d'approbation | B6 |
-| `POST /bookings/repair` ne répare rien | B7 |
-| Politiques d'audience et dérogations : création et liste seulement | B7 |
-| Réponse sans pointage, sortie, motifs, facture, série, échéance, `createdBy`, `channel`, total avec suppléments | B7 |
-| Ajout et retrait de participant journalisés `BOOKING_CREATED` | B7 |
-| `sort` ignoré par `GET /bookings` (et au portail), listes non paginées (attente, historique, événements, politiques, dérogations) | B7 |
-| Quota d'absences : un ticket support à chaque tentative | B7 |
+| Liste d'attente non paginée | B6 |
 
 Plan complet et suivi : [plan booking](../../backend/booking/README.md).
 
@@ -335,3 +332,13 @@ Détail : [lot B2b](../../backend/booking/lot-b2b-reports-options.md).
 - Les heures des créneaux sont en heure locale de l'application (Africa/Brazzaville), quel que soit le fuseau du serveur.
 
 Détail : [lot B8](../../backend/booking/lot-b8-messages-fuseau.md).
+
+## Listes, recherche, réponse complète (lot B7, 19/11/2026)
+
+- `GET /bookings/reference` : valeurs fixes, motifs d'annulation et de refus, grille d'annulation générale, en un appel.
+- Motifs en `reasonCode` + `reasonText` pour annuler et refuser.
+- `GET /bookings/lookup/owners` : un seul champ pour trouver un membre, un client ou une entreprise.
+- Réponse complète (pointage, motifs, facture, échéance, auteur, canal, `extrasAmount`, `grandTotal`) ; listes sans QR ni facture.
+- `sort` appliqué ; politiques et dérogations modifiables et désactivables ; `POST /bookings/repair` répare vraiment (`{ inspected, repaired, failed }`).
+
+Détail : [lot B7](../../backend/booking/lot-b7-listes-recherche-reponse.md).

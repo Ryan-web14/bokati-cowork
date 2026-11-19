@@ -90,7 +90,7 @@ public class BookingPolicyEnforcer {
         if (policy.getMaxNoShowsPerMonth() != null) {
             long noShows = bookingRepository.countNoShowsForOwnerBetween(ownerType.name(), ownerCode, monthStart.atStartOfDay(), monthStart.plusMonths(1).atStartOfDay());
             if (noShows >= policy.getMaxNoShowsPerMonth()) {
-                createNoShowTicket(ownerType, ownerCode, noShows);
+                createNoShowTicket(ownerType, ownerCode, noShows, monthStart);
                 throw new ConflictException("Trop d'absences ce mois-ci : nouvelles réservations bloquées");
             }
         }
@@ -98,7 +98,8 @@ public class BookingPolicyEnforcer {
         return new EffectivePolicy(!staffOverride && Boolean.TRUE.equals(policy.getApprovalRequired()));
     }
 
-    private void createNoShowTicket(SubscriberType ownerType, String ownerCode, long noShows) {
+    /** Lot B7 (ecart Bn-22) : un ticket par titulaire et par mois, plus un ticket a chaque tentative. */
+    private void createNoShowTicket(SubscriberType ownerType, String ownerCode, long noShows, LocalDate monthStart) {
         try {
             TransactionTemplate template = new TransactionTemplate(transactionManager);
             template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -112,7 +113,7 @@ public class BookingPolicyEnforcer {
                     ownerCode,
                     null, null, null,
                     "BOOKING_NO_SHOW_QUOTA",
-                    ownerCode
+                    ownerType.name() + ":" + ownerCode + ":" + monthStart.toString().substring(0, 7)
             )));
         } catch (Exception ex) {
             log.warn("Failed to create support ticket for no-show quota breach of owner {}/{}", ownerType, ownerCode, ex);

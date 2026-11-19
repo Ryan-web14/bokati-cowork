@@ -221,6 +221,25 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `modificationCount` | entier |  |  |
 | `lastModifiedAt` | date-heure ISO 8601 UTC |  |  |
 | `lastModification` | texte |  |  |
+| `createdBy` | texte |  |  |
+| `channel` | enum : `PORTAL`, `TEAM`, `PHONE`, `DESK`, `EMAIL`, `WHATSAPP` |  |  |
+| `holdNumber` | texte |  |  |
+| `recurrenceGroupNumber` | texte |  |  |
+| `paymentDueAt` | date-heure locale sans fuseau |  |  |
+| `paidAt` | date-heure ISO 8601 UTC |  |  |
+| `checkedInAt` | date-heure ISO 8601 UTC |  |  |
+| `checkedOutAt` | date-heure ISO 8601 UTC |  |  |
+| `approvedBy` | texte |  |  |
+| `approvedAt` | date-heure ISO 8601 UTC |  |  |
+| `rejectedBy` | texte |  |  |
+| `rejectedAt` | date-heure ISO 8601 UTC |  |  |
+| `rejectionReason` | texte |  |  |
+| `rejectionReasonCode` | texte |  |  |
+| `cancellationReason` | texte |  |  |
+| `cancellationReasonCode` | texte |  |  |
+| `invoiceNumber` | texte |  |  |
+| `extrasAmount` | nombre décimal |  |  |
+| `grandTotal` | nombre décimal |  |  |
 
 <a id="m-BookingLineResponse"></a>
 #### BookingLineResponse

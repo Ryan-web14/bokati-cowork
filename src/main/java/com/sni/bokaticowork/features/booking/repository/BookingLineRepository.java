@@ -11,4 +11,8 @@ public interface BookingLineRepository extends JpaRepository<BookingLine, Long> 
 
     @Query(nativeQuery = true, value = "SELECT * FROM booking_line WHERE booking_id = :bookingId ORDER BY created_at ASC")
     List<BookingLine> findByBookingId(@Param("bookingId") Long bookingId);
+
+    /** Lot B7 : lignes d'une page de reservations, en une requete. */
+    @Query(nativeQuery = true, value = "SELECT * FROM booking_line WHERE booking_id IN (:bookingIds) ORDER BY created_at ASC")
+    List<BookingLine> findByBookingIdIn(@Param("bookingIds") java.util.Collection<Long> bookingIds);
 }

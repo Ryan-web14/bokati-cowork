@@ -141,6 +141,14 @@ public class Booking {
     @Column(name = "cancellation_reason", columnDefinition = "text")
     private String cancellationReason;
 
+    /** Lot B7 : code du motif d'annulation (liste BOOKING_CANCEL_REASON), nul pour un texte libre. */
+    @Column(name = "cancellation_reason_code", length = 60)
+    private String cancellationReasonCode;
+
+    /** Lot B7 : code du motif de refus (liste BOOKING_REJECT_REASON), nul pour un texte libre. */
+    @Column(name = "rejection_reason_code", length = 60)
+    private String rejectionReasonCode;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

@@ -117,7 +117,7 @@ public class BookingController {
             @RequestParam(required = false) BookingStatus status,
             @RequestParam(required = false) LocalDateTime startedFrom,
             @RequestParam(required = false) LocalDateTime startedTo,
-            @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(bookingService.list(query, ownerType, ownerCode, resourceCode, status, startedFrom, startedTo, pageable));
     }
 
@@ -259,8 +259,25 @@ public class BookingController {
     }
 
     @GetMapping("/policies")
-    public ResponseEntity<List<BookingAudiencePolicyResponse>> listPolicies() {
-        return ResponseEntity.ok(policyService.listPolicies());
+    public ResponseEntity<List<BookingAudiencePolicyResponse>> listPolicies(@RequestParam(required = false) Boolean active) {
+        return ResponseEntity.ok(policyService.listPolicies(active));
+    }
+
+    /** Lot B7 : remplace une politique (meme corps que la creation). */
+    @org.springframework.web.bind.annotation.PutMapping("/policies/{policyNumber}")
+    public ResponseEntity<BookingAudiencePolicyResponse> updatePolicy(@PathVariable String policyNumber,
+                                                                      @Valid @RequestBody CreateBookingAudiencePolicyRequest request) {
+        return ResponseEntity.ok(policyService.updatePolicy(policyNumber, request));
+    }
+
+    @PatchMapping("/policies/{policyNumber}/activate")
+    public ResponseEntity<BookingAudiencePolicyResponse> activatePolicy(@PathVariable String policyNumber) {
+        return ResponseEntity.ok(policyService.setPolicyActive(policyNumber, true));
+    }
+
+    @PatchMapping("/policies/{policyNumber}/deactivate")
+    public ResponseEntity<BookingAudiencePolicyResponse> deactivatePolicy(@PathVariable String policyNumber) {
+        return ResponseEntity.ok(policyService.setPolicyActive(policyNumber, false));
     }
 
     @PostMapping("/quota-overrides")
@@ -269,8 +286,25 @@ public class BookingController {
     }
 
     @GetMapping("/quota-overrides")
-    public ResponseEntity<List<BookingQuotaOverrideResponse>> listQuotaOverrides() {
-        return ResponseEntity.ok(policyService.listOverrides());
+    public ResponseEntity<List<BookingQuotaOverrideResponse>> listQuotaOverrides(@RequestParam(required = false) Boolean active) {
+        return ResponseEntity.ok(policyService.listOverrides(active));
+    }
+
+    /** Lot B7 : modifie une derogation (le titulaire ne change pas). */
+    @org.springframework.web.bind.annotation.PutMapping("/quota-overrides/{overrideNumber}")
+    public ResponseEntity<BookingQuotaOverrideResponse> updateQuotaOverride(@PathVariable String overrideNumber,
+            @Valid @RequestBody com.sni.bokaticowork.features.booking.dto.request.UpdateBookingQuotaOverrideRequest request) {
+        return ResponseEntity.ok(policyService.updateOverride(overrideNumber, request));
+    }
+
+    @PatchMapping("/quota-overrides/{overrideNumber}/activate")
+    public ResponseEntity<BookingQuotaOverrideResponse> activateQuotaOverride(@PathVariable String overrideNumber) {
+        return ResponseEntity.ok(policyService.setOverrideActive(overrideNumber, true));
+    }
+
+    @PatchMapping("/quota-overrides/{overrideNumber}/deactivate")
+    public ResponseEntity<BookingQuotaOverrideResponse> deactivateQuotaOverride(@PathVariable String overrideNumber) {
+        return ResponseEntity.ok(policyService.setOverrideActive(overrideNumber, false));
     }
 
     @PostMapping("/{bookingNumber}/notifications/reminder")

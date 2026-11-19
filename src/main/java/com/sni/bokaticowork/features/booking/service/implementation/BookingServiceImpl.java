@@ -412,7 +412,8 @@ public class BookingServiceImpl implements BookingService {
                                                    Pageable pageable) {
         String normalizedQuery = StringUtils.hasText(query) ? query.trim() : null;
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        Page<BookingResponse> page = bookingRepository.nativeSearch(
+        BookingListSort sort = BookingListSort.of(pageable.getSort());
+        Page<Booking> found = bookingRepository.nativeSearch(
                 normalizedQuery,
                 ownerType == null ? null : ownerType.name(),
                 trim(ownerCode),
@@ -420,8 +421,14 @@ public class BookingServiceImpl implements BookingService {
                 status == null ? null : status.name(),
                 startedFrom,
                 startedTo,
+                sort.key(),
+                sort.direction(),
                 unsortedPageable
-        ).map(bookingMapper::toResponse);
+        );
+        // Lot B7 : liste allegee (ni QR ni facture, lignes et participants en une requete par page).
+        List<BookingResponse> rows = bookingMapper.toListResponses(found.getContent());
+        Page<BookingResponse> page = new org.springframework.data.domain.PageImpl<>(rows,
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort.applied()), found.getTotalElements());
         return new PaginatedResponse<>(page);
     }
 
@@ -431,7 +438,7 @@ public class BookingServiceImpl implements BookingService {
         if (!StringUtils.hasText(query)) {
             return List.of();
         }
-        return bookingRepository.basicSearch(query.trim()).stream().map(bookingMapper::toResponse).toList();
+        return bookingMapper.toListResponses(bookingRepository.basicSearch(query.trim()));
     }
 
     @Override
@@ -488,7 +495,9 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.REJECTED);
         booking.setRejectedBy(request == null ? null : trim(actor(request.actor())));
         booking.setRejectedAt(Instant.now());
-        booking.setRejectionReason(request == null ? "Refusée" : reason(request.reason(), "Refusée"));
+        booking.setRejectionReason(request == null ? "Refusée"
+                : reasonOf(REJECT_REASON_LIST, request.reasonCode(), request.reasonText(), request.reason(), "Refusée"));
+        booking.setRejectionReasonCode(request == null ? null : reasonCodeOf(request.reasonCode()));
         booking = bookingRepository.save(booking);
         walletSettlement.release(booking, "reservation refusee");
         if (StringUtils.hasText(booking.getBatchNumber())) {
@@ -865,7 +874,7 @@ public class BookingServiceImpl implements BookingService {
         BookingParticipant participant = bookingMapper.toEntity(request);
         participant.setBooking(booking);
         participant = participantRepository.save(participant);
-        eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Participant ajouté", participant.getEmail(), null);
+        eventWriter.write(booking, BookingEventType.BOOKING_PARTICIPANT_ADDED, "Participant ajouté", participantLabel(participant), null);
         return bookingMapper.toResponse(participant);
     }
 
@@ -876,7 +885,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Participant introuvable"));
         participant.setStatus(BookingParticipantStatus.REMOVED);
         participant = participantRepository.save(participant);
-        eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Participant retiré", participant.getEmail(), null);
+        eventWriter.write(booking, BookingEventType.BOOKING_PARTICIPANT_REMOVED, "Participant retiré", participantLabel(participant), null);
         return bookingMapper.toResponse(participant);
     }
 
@@ -1003,14 +1012,16 @@ public class BookingServiceImpl implements BookingService {
         walletSettlement.release(booking, "reservation annulee");
         BookingStatus from = booking.getStatus();
         booking.setStatus(BookingStatus.CANCELLED);
-        booking.setCancellationReason(reason(request, "Réservation annulée"));
+        booking.setCancellationReason(request == null ? "Réservation annulée"
+                : reasonOf(CANCEL_REASON_LIST, request.reasonCode(), request.reasonText(), request.reason(), "Réservation annulée"));
+        booking.setCancellationReasonCode(request == null ? null : reasonCodeOf(request.reasonCode()));
         booking.setCancelledAt(Instant.now());
         booking = bookingRepository.save(booking);
         // Lot R5d : taches ouvertes de la reservation annulees avec elle.
         if (bookingOperations != null) {
             bookingOperations.cancelTasks(booking);
         }
-        writeHistory(booking, from, BookingStatus.CANCELLED, changedBy(request), reason(request, "Réservation annulée"));
+        writeHistory(booking, from, BookingStatus.CANCELLED, changedBy(request), booking.getCancellationReason());
         eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Réservation annulée", booking.getCancellationReason(), null,
                 emailRequested(request));
         notifyIfRequested(booking, BookingEventType.BOOKING_CANCELLED, request);
@@ -1749,6 +1760,45 @@ public class BookingServiceImpl implements BookingService {
             // hors requete : tache du systeme
         }
         return null;
+    }
+
+    /** Lot B7 : listes de motifs de l'administrateur. */
+    public static final String CANCEL_REASON_LIST = "BOOKING_CANCEL_REASON";
+    public static final String REJECT_REASON_LIST = "BOOKING_REJECT_REASON";
+
+    private com.sni.bokaticowork.core.reference.service.ReferenceLists referenceLists;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setReferenceLists(com.sni.bokaticowork.core.reference.service.ReferenceLists referenceLists) {
+        this.referenceLists = referenceLists;
+    }
+
+    /**
+     * Motif : code de la liste plus precision ; sans code, l'ancien texte libre ; sinon le defaut.
+     * Le code est controle (inconnu ou retire : 400).
+     */
+    private String reasonOf(String list, String code, String text, String legacy, String fallback) {
+        if (StringUtils.hasText(code) && referenceLists != null) {
+            return referenceLists.describe(list, code, text);
+        }
+        if (StringUtils.hasText(text)) {
+            return text.trim();
+        }
+        return reason(legacy, fallback);
+    }
+
+    private String reasonCodeOf(String code) {
+        return StringUtils.hasText(code) && referenceLists != null
+                ? com.sni.bokaticowork.core.reference.service.ReferenceLists.normalize(code) : null;
+    }
+
+    private static String participantLabel(BookingParticipant participant) {
+        String name = StringUtils.hasText(participant.getName()) ? participant.getName().trim() : null;
+        String email = StringUtils.hasText(participant.getEmail()) ? participant.getEmail().trim() : null;
+        if (name != null && email != null) {
+            return name + " (" + email + ")";
+        }
+        return name != null ? name : email;
     }
 
     private String reason(BookingStatusChangeRequest request, String fallback) {

@@ -29,16 +29,16 @@
 | 4 | Réservations en attente sans créneau retenu ; paiement reçu puis confirmation échouée sans bruit | **Réglé (B1)** | `BookingRepository.java:77` ; BSI:814-818 ; `PaymentTransactionWorkflowProcessor.java:310-320` |
 | 5 | Aucune tâche d'expiration des blocages ni d'envoi des rappels ; un blocage expiré casse la confirmation après paiement | **Réglé (B1)** pour les options et l'expiration ; rappels au lot B6 | `BookingHoldServiceImpl.java:99-108` ; `BookingNotificationServiceImpl.java:63-85` ; BSI:1039-1041 |
 | 6 | Liste d'attente : aucune notification à l'offre, `BOOKED` jamais posé, capacité ignorée, `BUSINESS` au lieu de `BUSINESS_ENTITY` | confirmé | `BookingWaitlistServiceImpl.java:98-131` |
-| 7 | `POST /bookings/repair` ne répare rien, requête contradictoire | confirmé | `BookingRepairServiceImpl.java:21-25` ; `BookingRepository.java:224-227` |
+| 7 | `POST /bookings/repair` ne répare rien, requête contradictoire | **Réglé (B7)** | `BookingRepairServiceImpl.java:21-25` ; `BookingRepository.java:224-227` |
 | 8 | Satisfaction publique sans jeton (GET qui écrit) | **Réglé (B0)** | `PublicBookingController.java:233-244` |
 | 9 | Statut `EXPIRED` jamais atteint | **Réglé (B1)** | `BookingStatus.java:13` |
 | 10 | Règle d'annulation appliquée à l'équipe, y compris `PENDING_APPROVAL` et `NO_SHOW` | **Réglé (B1)** | BSI:1146-1161 |
 | 11 | Transfert sans contrôle du nouveau titulaire ni report du droit, de la facture, du portefeuille ; permis depuis `REJECTED` et `NO_SHOW` | **Réglé (B1)** | BSI:659-677 |
-| 12 | Politiques d'audience et dérogations de quota : création et liste seulement | confirmé | `BookingController.java:240-258` ; `BookingPolicyServiceImpl.java:33-86` |
-| 13 | Réponse sans `checkedInAt`, `checkedOutAt`, motifs, numéro de facture (ni `approvedBy`, `holdNumber`, série, trace du prix…) | confirmé | `BookingResponse.java:14-60` |
-| 14 | Ajout et retrait de participant journalisés « BOOKING_CREATED » | confirmé | BSI:752, 763 |
+| 12 | Politiques d'audience et dérogations de quota : création et liste seulement | **Réglé (B7)** | `BookingController.java:240-258` ; `BookingPolicyServiceImpl.java:33-86` |
+| 13 | Réponse sans `checkedInAt`, `checkedOutAt`, motifs, numéro de facture (ni `approvedBy`, `holdNumber`, série, trace du prix…) | **Réglé (B7)** | `BookingResponse.java:14-60` |
+| 14 | Ajout et retrait de participant journalisés « BOOKING_CREATED » | **Réglé (B7)** | BSI:752, 763 |
 | 15 | `changedBy` et `reason` inversés après paiement | **Réglé (B0)** | `PaymentTransactionWorkflowProcessor.java:311-315` |
-| 16 | `sort` ignoré par `GET /bookings` (et au portail) | confirmé | BSI:366 ; `BookingRepository.java:118-127` |
+| 16 | `sort` ignoré par `GET /bookings` (et au portail) | **Réglé (B7)** | BSI:366 ; `BookingRepository.java:118-127` |
 | 17 | 3 requêtes par 10 minutes sur tout `/public/bookings/check-in/scanner*`, page d'installation comprise | **Réglé (B0)** | `RateLimitRules.java:158-160` |
 | 18 | Messages en anglais (environ 65 sur 112), préfixe « Could not process booking » | en partie | `ConflictException.java:15-17` · **Réglé (B8)** |
 
@@ -53,7 +53,7 @@
 | Bn-4 | **Réglé (B2)** Suppléments et compléments orphelins à l'annulation (factures à part jamais annulées ni remboursées) | `BookingExtras.java:385-393` ; `BookingRepricer.java:120-139` |
 | Bn-5 | **Réglé (B2)** Échec de remboursement seulement journalisé : réservation annulée sans remboursement ni alerte | BSI:888-892 |
 | Bn-6 | **Réglé (B2)** Deux sources de règles d'annulation : préavis de la politique de la ressource, pourcentage de la table globale | BSI:1146-1161 ; `BookingCancellationRefundSupport.java:103-107` |
-| Bn-7 | Reporté au lot B7 (réponse complète) : `totalAmount` de la réponse sans les suppléments | `BookingExtras.java:385-397` |
+| Bn-7 | **Réglé (B7)** (`extrasAmount`, `grandTotal`) `totalAmount` de la réponse sans les suppléments | `BookingExtras.java:385-397` |
 | Bn-8 | **Réglé (B1)** Retour d'une confirmation : la réservation reste « payée », blocage de portefeuille et tâches non rendus | BSI:837-851 |
 | **Cycle de vie** | | |
 | Bn-9 | **Réglé (B1)** `NO_SHOW` et `REJECTED` annulables (et `COMPLETED` en mode système) | BSI:853-862 |
@@ -72,11 +72,11 @@
 | Bn-20 | Accepté (B0, risque faible) : Position du pointage autonome fournie par le client | `PublicBookingController.java:188-206` |
 | Bn-21 | **Réglé (B0)** Lire `/bookings/cancellation-policy` exige `BOOKING:CANCEL` (règle d'URL) | `AdminApiAuthorizationManager.java:389` |
 | **Contrôles et quotas** | | |
-| Bn-22 | Quota d'absences atteint : un ticket au support à chaque tentative | `BookingPolicyEnforcer.java:90-95` |
+| Bn-22 | **Réglé (B7)** Quota d'absences atteint : un ticket au support à chaque tentative | `BookingPolicyEnforcer.java:90-95` |
 | Bn-23 | **Réglé (B1)** Les réservations en attente de paiement échappent au quota : un membre empile des réservations impayées | `BookingRepository.java:186` |
 | **Performances** | | |
-| Bn-24 | Par ligne de liste : deux requêtes, chargements paresseux et rendu d'un QR en PNG | `BookingMapperDecorator.java:81-134` |
-| Bn-25 | Listes non paginées (attente, historique, événements, politiques, dérogations), moteur de suggestion par entrée d'attente | `BookingWaitlistServiceImpl.java:82-87` |
+| Bn-24 | **Réglé (B7)** Par ligne de liste : deux requêtes, chargements paresseux et rendu d'un QR en PNG | `BookingMapperDecorator.java:81-134` |
+| Bn-25 | **En partie (B7)** : politiques et dérogations filtrables, historique et événements bornés par réservation ; liste d'attente au lot B6. Listes non paginées (attente, historique, événements, politiques, dérogations), moteur de suggestion par entrée d'attente | `BookingWaitlistServiceImpl.java:82-87` |
 | **Fuseau** | | |
 | Bn-26 | Dépassement calculé en heure de Brazzaville, le reste en heure du serveur ; `app.time-zone` jamais appliqué par défaut : un serveur en UTC facture une heure de dépassement à chaque départ | `BookingExtras.java:75, 252` ; `ApplicationConfig.java:37` · **Réglé (B8)** |
 | **Contradiction** | | |
@@ -93,7 +93,7 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 
 ## Avancement
 
-**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)), **B2 fait** ([lot-b2-argent.md](lot-b2-argent.md)), couverture partielle par les heures incluses comprise. **B2b fait** ([lot-b2b-reports-options.md](lot-b2b-reports-options.md)) : aperçu de l'écart de prix, hausse confirmée puis encaissée, modifications marquées, équipe informée, politique d'annulation pour tous, options à la création. **B8 fait** ([lot-b8-messages-fuseau.md](lot-b8-messages-fuseau.md)) : messages, historique et événements en français, heure de l'application partout dans les réservations et les ressources.
+**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)), **B2 fait** ([lot-b2-argent.md](lot-b2-argent.md)), couverture partielle par les heures incluses comprise. **B2b fait** ([lot-b2b-reports-options.md](lot-b2b-reports-options.md)) : aperçu de l'écart de prix, hausse confirmée puis encaissée, modifications marquées, équipe informée, politique d'annulation pour tous, options à la création. **B8 fait** ([lot-b8-messages-fuseau.md](lot-b8-messages-fuseau.md)) : messages, historique et événements en français, heure de l'application partout dans les réservations et les ressources. **B7 fait** le 19/11 ([lot-b7-listes-recherche-reponse.md](lot-b7-listes-recherche-reponse.md)), après le socle L0 : `GET /bookings/reference`, motifs en listes, recherche unique du titulaire, réponse complète, listes allégées, tri, politiques et dérogations modifiables, réparation réelle.
 
 ### Reste à faire (19/11/2026)
 
@@ -101,7 +101,6 @@ Ordre retenu : L0 (socle commun des listes de choix, **fait le 19/11**, [lot-l0-
 
 | Lot | Ce qu'il apporte | Écarts encore ouverts réglés |
 | --- | --- | --- |
-| B7 | `GET /bookings/reference`, listes de motifs, recherche unique du titulaire, pagination et tri, politiques et dérogations modifiables, réponse complète (pointage, motifs, facture, série, échéance, `createdBy`, `channel`, `extrasAmount`, `grandTotal`), mapper allégé, réparation réelle ou retirée | 7, 12, 13, 14, 16, Bn-7, Bn-22, Bn-24, Bn-25 |
 | B3 | Rendez-vous sans paiement, réglé sur place | demande 2 |
 | B4 | Prix manuel avec motif, plafond et approbation ; tarif préférentiel | demande 3 |
 | B5 | Prise de rendez-vous au téléphone, appelant noté en prospect CRM | demande 4 |
@@ -109,7 +108,7 @@ Ordre retenu : L0 (socle commun des listes de choix, **fait le 19/11**, [lot-l0-
 | B9a à B9g | Rappels et venue, planning et séries, fiabilité et acompte, invitations, entreprises (budget, relevé groupé, forfait d'heures), remplissage, suivi (tableau de bord, avis, agenda, rapport par client) | |
 | B11 | Doc frontend booking, portail et ressource ; tests ; backfill KYC | reste ressources |
 
-La doc frontend [booking](../../final-frontend-doc/booking/README.md) décrit le comportement actuel (lots B0, B1, B2, B2b, B8, B10) et signale « lot Bx à venir » ce qui manque.
+La doc frontend [booking](../../final-frontend-doc/booking/README.md) décrit le comportement actuel (lots B0, B1, B2, B2b, B7, B8, B10) et signale « lot Bx à venir » ce qui manque.
 
 ## Lots proposés
 

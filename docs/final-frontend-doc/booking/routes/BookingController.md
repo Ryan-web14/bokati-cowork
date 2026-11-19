@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 42 route(s).
+Module [booking](../README.md) · 48 route(s).
 
 ## Routes
 
@@ -23,7 +23,7 @@ Module [booking](../README.md) · 42 route(s).
 | `status` | requête | `BookingStatus` |  |  |
 | `startedFrom` | requête | `LocalDateTime` |  |  |
 | `startedTo` | requête | `LocalDateTime` |  |  |
-| `page, size, sort` | requête (pagination) | `Pageable` |  | size=20, sort=startedAt,DESC |
+| `page, size, sort` | requête (pagination) | `Pageable` |  | size=20 |
 
 <a id="r-post-sni-api-v1-bookings"></a>
 ### POST /sni/api/v1/bookings
@@ -157,6 +157,10 @@ Module [booking](../README.md) · 42 route(s).
 - Modèles : [BookingAudiencePolicyResponse](#m-BookingAudiencePolicyResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `listPolicies`
 
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `active` | requête | `Boolean` |  |  |
+
 <a id="r-post-sni-api-v1-bookings-policies"></a>
 ### POST /sni/api/v1/bookings/policies
 
@@ -166,6 +170,43 @@ Module [booking](../README.md) · 42 route(s).
 - Modèles : [BookingAudiencePolicyResponse](#m-BookingAudiencePolicyResponse), [CreateBookingAudiencePolicyRequest](#m-CreateBookingAudiencePolicyRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `createPolicy`
 
+<a id="r-put-sni-api-v1-bookings-policies-policynumber"></a>
+### PUT /sni/api/v1/bookings/policies/{policyNumber}
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:UPDATE`
+- Corps JSON (obligatoire) : `CreateBookingAudiencePolicyRequest`
+- Réponse : `BookingAudiencePolicyResponse`
+- Modèles : [BookingAudiencePolicyResponse](#m-BookingAudiencePolicyResponse), [CreateBookingAudiencePolicyRequest](#m-CreateBookingAudiencePolicyRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `updatePolicy`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `policyNumber` | chemin | `String` | oui |  |
+
+<a id="r-patch-sni-api-v1-bookings-policies-policynumber-activate"></a>
+### PATCH /sni/api/v1/bookings/policies/{policyNumber}/activate
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:UPDATE`
+- Réponse : `BookingAudiencePolicyResponse`
+- Modèles : [BookingAudiencePolicyResponse](#m-BookingAudiencePolicyResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `activatePolicy`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `policyNumber` | chemin | `String` | oui |  |
+
+<a id="r-patch-sni-api-v1-bookings-policies-policynumber-deactivate"></a>
+### PATCH /sni/api/v1/bookings/policies/{policyNumber}/deactivate
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:UPDATE`
+- Réponse : `BookingAudiencePolicyResponse`
+- Modèles : [BookingAudiencePolicyResponse](#m-BookingAudiencePolicyResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `deactivatePolicy`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `policyNumber` | chemin | `String` | oui |  |
+
 <a id="r-get-sni-api-v1-bookings-quota-overrides"></a>
 ### GET /sni/api/v1/bookings/quota-overrides
 
@@ -173,6 +214,10 @@ Module [booking](../README.md) · 42 route(s).
 - Réponse : `List<BookingQuotaOverrideResponse>`
 - Modèles : [BookingQuotaOverrideResponse](#m-BookingQuotaOverrideResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `listQuotaOverrides`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `active` | requête | `Boolean` |  |  |
 
 <a id="r-post-sni-api-v1-bookings-quota-overrides"></a>
 ### POST /sni/api/v1/bookings/quota-overrides
@@ -182,6 +227,43 @@ Module [booking](../README.md) · 42 route(s).
 - Réponse : `BookingQuotaOverrideResponse`
 - Modèles : [BookingQuotaOverrideResponse](#m-BookingQuotaOverrideResponse), [CreateBookingQuotaOverrideRequest](#m-CreateBookingQuotaOverrideRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `createQuotaOverride`
+
+<a id="r-put-sni-api-v1-bookings-quota-overrides-overridenumber"></a>
+### PUT /sni/api/v1/bookings/quota-overrides/{overrideNumber}
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:UPDATE`
+- Corps JSON (obligatoire) : `UpdateBookingQuotaOverrideRequest`
+- Réponse : `BookingQuotaOverrideResponse`
+- Modèles : [BookingQuotaOverrideResponse](#m-BookingQuotaOverrideResponse), [UpdateBookingQuotaOverrideRequest](#m-UpdateBookingQuotaOverrideRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `updateQuotaOverride`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `overrideNumber` | chemin | `String` | oui |  |
+
+<a id="r-patch-sni-api-v1-bookings-quota-overrides-overridenumber-activate"></a>
+### PATCH /sni/api/v1/bookings/quota-overrides/{overrideNumber}/activate
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:UPDATE`
+- Réponse : `BookingQuotaOverrideResponse`
+- Modèles : [BookingQuotaOverrideResponse](#m-BookingQuotaOverrideResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `activateQuotaOverride`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `overrideNumber` | chemin | `String` | oui |  |
+
+<a id="r-patch-sni-api-v1-bookings-quota-overrides-overridenumber-deactivate"></a>
+### PATCH /sni/api/v1/bookings/quota-overrides/{overrideNumber}/deactivate
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:UPDATE`
+- Réponse : `BookingQuotaOverrideResponse`
+- Modèles : [BookingQuotaOverrideResponse](#m-BookingQuotaOverrideResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `deactivateQuotaOverride`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `overrideNumber` | chemin | `String` | oui |  |
 
 <a id="r-post-sni-api-v1-bookings-recurring"></a>
 ### POST /sni/api/v1/bookings/recurring
@@ -548,6 +630,25 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `modificationCount` | entier |  |  |
 | `lastModifiedAt` | date-heure ISO 8601 UTC |  |  |
 | `lastModification` | texte |  |  |
+| `createdBy` | texte |  |  |
+| `channel` | enum : `PORTAL`, `TEAM`, `PHONE`, `DESK`, `EMAIL`, `WHATSAPP` |  |  |
+| `holdNumber` | texte |  |  |
+| `recurrenceGroupNumber` | texte |  |  |
+| `paymentDueAt` | date-heure locale sans fuseau |  |  |
+| `paidAt` | date-heure ISO 8601 UTC |  |  |
+| `checkedInAt` | date-heure ISO 8601 UTC |  |  |
+| `checkedOutAt` | date-heure ISO 8601 UTC |  |  |
+| `approvedBy` | texte |  |  |
+| `approvedAt` | date-heure ISO 8601 UTC |  |  |
+| `rejectedBy` | texte |  |  |
+| `rejectedAt` | date-heure ISO 8601 UTC |  |  |
+| `rejectionReason` | texte |  |  |
+| `rejectionReasonCode` | texte |  |  |
+| `cancellationReason` | texte |  |  |
+| `cancellationReasonCode` | texte |  |  |
+| `invoiceNumber` | texte |  |  |
+| `extrasAmount` | nombre décimal |  |  |
+| `grandTotal` | nombre décimal |  |  |
 
 <a id="m-SubscriberType"></a>
 #### SubscriberType
@@ -824,6 +925,20 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `validFrom` | date-heure ISO 8601 UTC |  |  |
 | `validUntil` | date-heure ISO 8601 UTC |  |  |
 
+<a id="m-UpdateBookingQuotaOverrideRequest"></a>
+#### UpdateBookingQuotaOverrideRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `resourceCode` | texte |  |  |
+| `extraActiveBookings` | entier |  |  |
+| `extraBookingsPerDay` | entier |  |  |
+| `extraBookingsPerWeek` | entier |  |  |
+| `extraBookingsPerMonth` | entier |  |  |
+| `reason` | texte |  |  |
+| `validFrom` | date-heure ISO 8601 UTC |  |  |
+| `validUntil` | date-heure ISO 8601 UTC |  |  |
+
 <a id="m-CreateRecurringBookingRequest"></a>
 #### CreateRecurringBookingRequest
 
@@ -866,6 +981,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `actor` | texte |  |  |
 | `reason` | texte |  |  |
 | `sendEmail` | booléen |  |  |
+| `reasonCode` | texte |  |  |
+| `reasonText` | texte |  |  |
 
 <a id="m-BookingStatusChangeRequest"></a>
 #### BookingStatusChangeRequest
@@ -875,6 +992,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `changedBy` | texte |  |  |
 | `reason` | texte |  |  |
 | `sendEmail` | booléen |  |  |
+| `reasonCode` | texte |  |  |
+| `reasonText` | texte |  |  |
 
 <a id="m-BookingChangeResourceRequest"></a>
 #### BookingChangeResourceRequest
@@ -910,7 +1029,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `eventNumber` | texte |  |  |
 | `bookingNumber` | texte |  |  |
-| `eventType` | enum : `BOOKING_CREATED`, `BOOKING_HOLD_CREATED`, `BOOKING_HOLD_EXPIRED`, `BOOKING_CONFIRMED`, `BOOKING_APPROVED`, `BOOKING_REJECTED`, `BOOKING_STARTED`, `BOOKING_CHECKED_IN`, `BOOKING_CHECKED_OUT`, `BOOKING_COMPLETED`, `BOOKING_CANCELLED`, `BOOKING_NO_SHOW`, `RESOURCE_RESERVED`, `RESOURCE_RELEASED`, `ENTITLEMENT_RESERVED`, `ENTITLEMENT_CONSUMED`, `ENTITLEMENT_RELEASED`, `USAGE_RECORDED`, `EMAIL_QUEUED`, `EMAIL_SENT`, `EMAIL_FAILED`, `REPAIR_APPLIED`, `QUOTA_OVERRIDE_APPLIED`, `BOOKING_RESCHEDULED`, `BOOKING_PRICE_ADJUSTED`, `BOOKING_TRANSFERRED`, `BOOKING_RESOURCE_CHANGED`, `USAGE_RULES_ACCEPTED`, `END_REPORT_RECORDED` |  |  |
+| `eventType` | enum : `BOOKING_CREATED`, `BOOKING_HOLD_CREATED`, `BOOKING_HOLD_EXPIRED`, `BOOKING_CONFIRMED`, `BOOKING_APPROVED`, `BOOKING_REJECTED`, `BOOKING_STARTED`, `BOOKING_CHECKED_IN`, `BOOKING_CHECKED_OUT`, `BOOKING_COMPLETED`, `BOOKING_CANCELLED`, `BOOKING_NO_SHOW`, `RESOURCE_RESERVED`, `RESOURCE_RELEASED`, `ENTITLEMENT_RESERVED`, `ENTITLEMENT_CONSUMED`, `ENTITLEMENT_RELEASED`, `USAGE_RECORDED`, `EMAIL_QUEUED`, `EMAIL_SENT`, `EMAIL_FAILED`, `REPAIR_APPLIED`, `QUOTA_OVERRIDE_APPLIED`, `BOOKING_RESCHEDULED`, `BOOKING_PRICE_ADJUSTED`, `BOOKING_TRANSFERRED`, `BOOKING_RESOURCE_CHANGED`, `USAGE_RULES_ACCEPTED`, `END_REPORT_RECORDED`, `BOOKING_PARTICIPANT_ADDED`, `BOOKING_PARTICIPANT_REMOVED` |  |  |
 | `title` | texte |  |  |
 | `description` | texte |  |  |
 | `payloadJson` | texte |  |  |

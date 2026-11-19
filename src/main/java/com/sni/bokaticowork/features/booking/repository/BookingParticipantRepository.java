@@ -13,6 +13,10 @@ public interface BookingParticipantRepository extends JpaRepository<BookingParti
     @Query(nativeQuery = true, value = "SELECT * FROM booking_participant WHERE booking_id = :bookingId ORDER BY created_at ASC")
     List<BookingParticipant> findByBookingId(@Param("bookingId") Long bookingId);
 
+    /** Lot B7 : participants d'une page de reservations, en une requete. */
+    @Query(nativeQuery = true, value = "SELECT * FROM booking_participant WHERE booking_id IN (:bookingIds) ORDER BY created_at ASC")
+    List<BookingParticipant> findByBookingIdIn(@Param("bookingIds") java.util.Collection<Long> bookingIds);
+
     @Query(nativeQuery = true, value = "SELECT * FROM booking_participant WHERE id = :id AND booking_id = :bookingId")
     Optional<BookingParticipant> findByIdAndBookingId(@Param("id") Long id, @Param("bookingId") Long bookingId);
 }
