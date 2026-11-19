@@ -247,7 +247,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 <a id="m-LeadSource"></a>
 #### LeadSource
 
-Énumération : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER`
+Énumération : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `PHONE`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER`
 
 <a id="m-LeadInterest"></a>
 #### LeadInterest
@@ -266,7 +266,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `phone` | texte |  |  |
 | `company` | texte |  |  |
 | `note` | texte |  |  |
-| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
+| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `PHONE`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
 | `interest` | enum : `WORKSPACE`, `MEETING_ROOM`, `VIRTUAL_OFFICE`, `DOMICILIATION`, `DAY_PASS`, `DEDICATED_DESK`, `PRIVATE_OFFICE`, `OTHER` |  |  |
 | `stage` | enum : `NEW`, `CONTACTED`, `QUALIFIED`, `PROPOSAL_SENT`, `WON`, `LOST` |  |  |
 | `estimatedAmount` | nombre décimal |  |  |
@@ -297,7 +297,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `phone` | texte |  |  |
 | `company` | texte |  |  |
 | `note` | texte |  |  |
-| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
+| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `PHONE`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
 | `interest` | enum : `WORKSPACE`, `MEETING_ROOM`, `VIRTUAL_OFFICE`, `DOMICILIATION`, `DAY_PASS`, `DEDICATED_DESK`, `PRIVATE_OFFICE`, `OTHER` |  |  |
 | `estimatedAmount` | nombre décimal |  |  |
 | `probability` | entier |  |  |
@@ -314,7 +314,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `phone` | texte |  |  |
 | `company` | texte |  |  |
 | `note` | texte |  |  |
-| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
+| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `PHONE`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
 | `interest` | enum : `WORKSPACE`, `MEETING_ROOM`, `VIRTUAL_OFFICE`, `DOMICILIATION`, `DAY_PASS`, `DEDICATED_DESK`, `PRIVATE_OFFICE`, `OTHER` |  |  |
 | `estimatedAmount` | nombre décimal |  |  |
 | `probability` | entier |  |  |
@@ -457,7 +457,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `company` | texte |  |  |
 | `email` | texte |  |  |
 | `stage` | enum : `NEW`, `CONTACTED`, `QUALIFIED`, `PROPOSAL_SENT`, `WON`, `LOST` |  |  |
-| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
+| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `PHONE`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
 | `interest` | enum : `WORKSPACE`, `MEETING_ROOM`, `VIRTUAL_OFFICE`, `DOMICILIATION`, `DAY_PASS`, `DEDICATED_DESK`, `PRIVATE_OFFICE`, `OTHER` |  |  |
 | `estimatedAmount` | nombre décimal |  |  |
 | `probability` | entier |  |  |

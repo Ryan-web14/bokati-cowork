@@ -24,9 +24,9 @@ Modules liés : `subscription` (fournit la politique d'abonnement), `socle` (jou
 
 ### Domaines et droits
 
-`adminEditable = true` (ouverts à `ADMIN`) : `BOOKING`, `RESOURCES`, `SUBSCRIPTIONS`, `PASSES`, `MARKETPLACE`, `PROMOTIONS`, `DOMICILIATION`, `CONTRACTS`, `SUPPORT`, `TASKS`, `CRM`, `EVENTS`, `PORTAL`.
+`adminEditable = true` (ouverts à `ADMIN`) : `BOOKING`, `RESOURCES`, `SUBSCRIPTIONS`, `PASSES`, `MARKETPLACE`, `PROMOTIONS`, `DOMICILIATION`, `CONTRACTS`, `SUPPORT`, `TASKS`, `CRM`, `EVENTS`, `PORTAL`, `ACCOUNTING` (comptabilité, environ 190 réglages) et `AUDIT` (centre d'audit), ouverts à `ADMIN` le 19/11/2026.
 
-`adminEditable = false` (`SUPER_ADMIN` seul) : `COMPANIES`, `WALLET`, `PAYMENT`, `ACCOUNTING` (comptabilité, environ 190 réglages), `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `AUDIT` (centre d'audit), `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT`.
+`adminEditable = false` (`SUPER_ADMIN` seul) : `COMPANIES`, `WALLET`, `PAYMENT`, `BILLING`, `COMPLIANCE`, `DOCUMENTS`, `LOCALE`, `SECURITY`, `NOTIFICATIONS`, `WEBHOOKS`, `OUTBOX`, `GRAPH_API`, `WEBSOCKET`, `ENVIRONMENT`.
 
 Règle appliquée par `PlatformSettingsAdminService.mayAccess` (`src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettingsAdminService.java:256`) : `ROLE_SUPER_ADMIN` voit tout ; `ROLE_ADMIN` voit les domaines ouverts ; tout autre rôle est refusé avant même le service par `@PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")` sur le contrôleur, même s'il porte `SYSTEM:SETTINGS`.
 
@@ -88,7 +88,7 @@ Les préférences d'un membre n'ont pas de cycle de vie.
 
 ### Ouvrir l'écran des paramètres
 
-1. `GET /sni/api/v1/admin/settings/domains` ([détail](routes/PlatformSettingsController.md#r-get-sni-api-v1-admin-settings-domains)). Renvoie seulement les domaines accessibles au compte : 29 pour `SUPER_ADMIN`, 13 pour `ADMIN`. `AUDIT` et `ACCOUNTING` n'apparaissent donc que pour `SUPER_ADMIN`. Chaque entrée : `domain`, `label` (à afficher), `adminEditable`, `settings` (nombre de réglages, fournis compris). Afficher la liste comme menu latéral ou onglets.
+1. `GET /sni/api/v1/admin/settings/domains` ([détail](routes/PlatformSettingsController.md#r-get-sni-api-v1-admin-settings-domains)). Renvoie seulement les domaines accessibles au compte : 29 pour `SUPER_ADMIN`, 15 pour `ADMIN` (dont `AUDIT` et `ACCOUNTING`). Chaque entrée : `domain`, `label` (à afficher), `adminEditable`, `settings` (nombre de réglages, fournis compris). Afficher la liste comme menu latéral ou onglets.
 2. L'utilisateur choisit un domaine : `GET /sni/api/v1/admin/settings?domain=BOOKING` ([détail](routes/PlatformSettingsController.md#r-get-sni-api-v1-admin-settings)). Sans `domain`, tous les réglages accessibles reviennent (plus de 530 pour `SUPER_ADMIN`). `q` filtre sur la clé ou le libellé (`?q=audit.alerts`). Un `ADMIN` qui demande un domaine fermé reçoit une liste vide, pas un `403`. Ne pas écrire la liste des domaines ni des clés en dur dans le frontend : la lire par ces routes (référence : [cles.md](cles.md)).
 2 bis. **Lien direct vers un paramètre** (depuis le centre d'audit, la comptabilité, un message d'erreur...) : `GET /sni/api/v1/admin/settings/{key}` rend le `SettingView` de ce seul paramètre, avec son `domain` pour ouvrir le bon onglet. Clé inconnue : `404` ; domaine réservé au super-administrateur pour un `ADMIN` : `403` « Paramètre réservé au super-administrateur : ... ».
 3. Pour chaque réglage, afficher `label`, la valeur `value` dans le contrôle adapté au `type`, un badge selon `effect` (« immédiat » ou « au redémarrage »), un badge « modifié » si `modified`, « redémarrage requis » si `restartPending`, la valeur par défaut `defaultValue` en indication, et `updatedBy` / `updatedAt` quand ils sont présents. Afficher `key` en petit : c'est l'identifiant à utiliser dans les appels. Les secrets s'affichent en lecture seule.

@@ -8,7 +8,7 @@
 
 | Domaine | Libellé | Ouvert à `ADMIN` | Réglages |
 | --- | --- | --- | --- |
-| [`BOOKING`](#booking) | Réservation | oui | 20 |
+| [`BOOKING`](#booking) | Réservation | oui | 23 |
 | [`RESOURCES`](#resources) | Ressources et horaires | oui | 19 |
 | [`SUBSCRIPTIONS`](#subscriptions) | Abonnements | oui | 19 |
 | [`PASSES`](#passes) | Passes | oui | 6 |
@@ -24,13 +24,13 @@
 | [`COMPANIES`](#companies) | Entreprises | non | 3 |
 | [`WALLET`](#wallet) | Portefeuille | non | 16 |
 | [`PAYMENT`](#payment) | Paiement et caisses | non | 44 |
-| [`ACCOUNTING`](#accounting) | Comptabilité | non | 190 |
+| [`ACCOUNTING`](#accounting) | Comptabilité | oui | 190 |
 | [`BILLING`](#billing) | Facturation | non | 21 |
 | [`COMPLIANCE`](#compliance) | Conformité | non | 11 |
 | [`DOCUMENTS`](#documents) | Documents | non | 38 |
 | [`LOCALE`](#locale) | Langue et téléphone | non | 5 |
 | [`SECURITY`](#security) | Sécurité | non | 37 |
-| [`AUDIT`](#audit) | Centre d'audit | non | 24 |
+| [`AUDIT`](#audit) | Centre d'audit | oui | 24 |
 | [`NOTIFICATIONS`](#notifications) | Notifications et e-mails | non | 15 |
 | [`WEBHOOKS`](#webhooks) | Webhooks | non | 3 |
 | [`OUTBOX`](#outbox) | Boîte d'envoi | non | 3 |
@@ -42,13 +42,14 @@ Types : `BOOLEAN`, `CRON`, `DECIMAL`, `EMAIL`, `ENUM`, `INTEGER`, `SECRET`, `TEX
 
 ## BOOKING
 
-Réservation · ouvert à ADMIN · 20 réglage(s)
+Réservation · ouvert à ADMIN · 23 réglage(s)
 
 | Clé | Type | Effet | Défaut | Libellé |
 | --- | --- | --- | --- | --- |
 | `bokati.booking.expiry.worker-delay-ms` | INTEGER | LIVE | `60000` | Réservations : intervalle de la tâche d'expiration (options et réservations non réglées), en millisecondes |
 | `bokati.booking.lifecycle.worker-delay-ms` | INTEGER | LIVE | `60000` | Cadence du suivi des réservations (ms) |
 | `bokati.booking.no-show.worker-delay-ms` | INTEGER | LIVE | `60000` | Cadence du suivi des absences (ms) |
+| `bokati.booking.reminders.worker-delay-ms` | INTEGER | LIVE | `300000` | Réservations : intervalle de la tâche des rappels automatiques, en millisecondes |
 | `bokati.booking.staff.max-backdate-days` | INTEGER | LIVE | `31` | Rétroaction d'une réservation de l'équipe (jours) |
 | `bokati.booking.virtual-room.base-url` | TEXT | LIVE | `https://meet.jit.si` | Adresse des salles virtuelles |
 | `bokati.booking.waitlist.offer-ttl-minutes` | INTEGER | LIVE | `30` | Durée d'une offre de liste d'attente (minutes) |
@@ -66,6 +67,8 @@ Réservation · ouvert à ADMIN · 20 réglage(s)
 | `bookings.payment-due.far-minutes` | INTEGER | LIVE | `1440` | Réservations : validité longue, en minutes |
 | `bookings.payment-due.reminder-minutes` | INTEGER | LIVE | `30` | Réservations : rappel au client tant de minutes avant l'échéance de paiement (0 : aucun rappel) |
 | `bookings.price-adjustment.max-rate` | INTEGER | LIVE | `20` | Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST |
+| `bookings.reminders.enabled` | BOOLEAN | LIVE | `true` | Réservations : rappels automatiques par courriel avant le début |
+| `bookings.reminders.offsets-minutes` | TEXT | LIVE | `1440,120` | Réservations : délais des rappels avant le début, en minutes, séparés par des virgules (la veille et 2 h avant) |
 
 ## RESOURCES
 
@@ -320,7 +323,7 @@ Paiement et caisses · SUPER_ADMIN seul · 44 réglage(s)
 
 ## ACCOUNTING
 
-Comptabilité · SUPER_ADMIN seul · 190 réglage(s)
+Comptabilité · ouvert à ADMIN · 190 réglage(s)
 
 | Clé | Type | Effet | Défaut | Libellé |
 | --- | --- | --- | --- | --- |
@@ -664,7 +667,7 @@ Sécurité · SUPER_ADMIN seul · 37 réglage(s)
 
 ## AUDIT
 
-Centre d'audit · SUPER_ADMIN seul · 24 réglage(s)
+Centre d'audit · ouvert à ADMIN · 24 réglage(s)
 
 | Clé | Type | Effet | Défaut | Libellé |
 | --- | --- | --- | --- | --- |

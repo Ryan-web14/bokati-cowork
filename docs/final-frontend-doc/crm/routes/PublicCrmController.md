@@ -29,7 +29,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `phone` | texte |  |  |
 | `company` | texte |  |  |
 | `note` | texte |  |  |
-| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
+| `source` | enum : `WEBSITE`, `REFERRAL`, `COLD_CALL`, `PHONE`, `TRADE_SHOW`, `PARTNER`, `SOCIAL_MEDIA`, `EVENT`, `OTHER` |  |  |
 | `interest` | enum : `WORKSPACE`, `MEETING_ROOM`, `VIRTUAL_OFFICE`, `DOMICILIATION`, `DAY_PASS`, `DEDICATED_DESK`, `PRIVATE_OFFICE`, `OTHER` |  |  |
 | `estimatedAmount` | nombre décimal |  |  |
 | `probability` | entier |  |  |

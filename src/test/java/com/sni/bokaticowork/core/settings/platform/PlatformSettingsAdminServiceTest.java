@@ -84,7 +84,7 @@ class PlatformSettingsAdminServiceTest {
     @DisplayName("L'ADMIN ne voit que ses domaines, le SUPER_ADMIN les 29")
     void domainsFollowTheRole() {
         assertThat(service.domains(superAdmin)).hasSize(29);
-        assertThat(service.domains(admin)).hasSize(13).allMatch(view -> view.domain().adminEditable());
+        assertThat(service.domains(admin)).hasSize(15).allMatch(view -> view.domain().adminEditable());
         assertThat(service.list(null, admin)).noneMatch(view -> view.key().equals(FEE));
     }
 
@@ -235,8 +235,11 @@ class PlatformSettingsAdminServiceTest {
         assertThat(service.list(SettingDomain.ACCOUNTING, superAdmin)).isNotEmpty();
         assertThat(service.list(null, "alerts.channels", superAdmin)).extracting(PlatformSettingsAdminService.SettingView::key)
                 .contains("bokati.audit.alerts.channels");
-        // Un ADMIN ne voit pas ces domaines : refus lisible, pas une liste vide sans explication.
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.get("bokati.audit.alerts.channels", admin))
+        // Depuis le 19/11/2026, AUDIT et ACCOUNTING sont ouverts a ADMIN.
+        assertThat(service.get("bokati.audit.alerts.channels", admin).domain()).isEqualTo(SettingDomain.AUDIT);
+        assertThat(service.list(SettingDomain.ACCOUNTING, admin)).isNotEmpty();
+        // Un domaine reste ferme a ADMIN : refus lisible, pas une liste vide sans explication.
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.get("app.security.bootstrap.secret", admin))
                 .isInstanceOf(com.sni.bokaticowork.core.exception.customs.ForbiddenException.class)
                 .hasMessageContaining("super-administrateur");
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.get("cle.inconnue", superAdmin))

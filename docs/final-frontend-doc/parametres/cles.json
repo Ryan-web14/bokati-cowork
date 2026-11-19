@@ -4,7 +4,7 @@
    "domain": "BOOKING",
    "label": "Réservation",
    "adminEditable": true,
-   "count": 20
+   "count": 23
   },
   {
    "domain": "RESOURCES",
@@ -99,7 +99,7 @@
   {
    "domain": "ACCOUNTING",
    "label": "Comptabilité",
-   "adminEditable": false,
+   "adminEditable": true,
    "count": 190
   },
   {
@@ -135,7 +135,7 @@
   {
    "domain": "AUDIT",
    "label": "Centre d'audit",
-   "adminEditable": false,
+   "adminEditable": true,
    "count": 24
   },
   {
@@ -2929,6 +2929,14 @@
    "label": "Cadence du suivi des absences (ms)"
   },
   {
+   "key": "bokati.booking.reminders.worker-delay-ms",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300000",
+   "label": "Réservations : intervalle de la tâche des rappels automatiques, en millisecondes"
+  },
+  {
    "key": "bokati.booking.staff.max-backdate-days",
    "domain": "BOOKING",
    "type": "INTEGER",
@@ -4335,6 +4343,22 @@
    "effect": "LIVE",
    "default": "20",
    "label": "Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST"
+  },
+  {
+   "key": "bookings.reminders.enabled",
+   "domain": "BOOKING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Réservations : rappels automatiques par courriel avant le début"
+  },
+  {
+   "key": "bookings.reminders.offsets-minutes",
+   "domain": "BOOKING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "1440,120",
+   "label": "Réservations : délais des rappels avant le début, en minutes, séparés par des virgules (la veille et 2 h avant)"
   },
   {
    "key": "fund.advance.overdue-policy",
