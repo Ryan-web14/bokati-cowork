@@ -189,6 +189,14 @@ public class Booking {
     @Column(name = "approval_for_price_only", nullable = false)
     private Boolean approvalForPriceOnly = Boolean.FALSE;
 
+    /** Lot B5 : prospect du CRM relie (appelant inconnu au telephone). */
+    @Column(name = "lead_number", length = 80)
+    private String leadNumber;
+
+    /** Lot B5 : note de l'appel qui a donne lieu a la reservation. */
+    @Column(name = "call_note", length = 1000)
+    private String callNote;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

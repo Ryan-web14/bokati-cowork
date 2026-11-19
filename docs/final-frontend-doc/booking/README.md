@@ -1,6 +1,6 @@
 # booking : fonctionnement
 
-> Rédigé d'après le code, à jour des lots B0, B1, B2, B2b, B3, B4, B7, B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code, à jour des lots B0 à B5, B7, B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -110,6 +110,7 @@ Les mêmes champs servent à la vérification, au blocage, à la création et à
    - `billingCompanyCode` : organisation pour le compte de laquelle le membre réserve (doit lui être rattachée), ou `NONE` ;
    - `participants`, `notes`, `metadataJson` (texte JSON libre) ;
    - `options` : `[{ "kind": "SERVICE" | "AMENITY", "code": "...", "quantity": 1 }]`, services du catalogue et équipements optionnels ajoutés dès la création, sur la même facture (lot B2b) ;
+   - `caller` (lot B5, équipe) : rendez-vous pris au téléphone, `{ fullName, phone, email, company, callNote, leadNumber, createLead }`. Voir [Rendez-vous au téléphone](#rendez-vous-au-téléphone-lot-b5-19112026) ;
    - `priceAdjustment` (lot B4, équipe seulement) : `{ "discountRate": 10 }` ou `{ "newAmount": 40000 }`, avec `reasonCode` (liste `BOOKING_PRICE_ADJUSTMENT_REASON`) et `reasonText`. Voir [Ajuster le prix](#ajuster-le-prix-lot-b4-19112026) ;
    - `payOnSite: true` (lot B3) : rendez-vous sans paiement, réglé sur place ; paiement `DIRECT` seulement (`400 PAY_ON_SITE_DIRECT_ONLY`). Toujours permis à l'équipe ;
    - `channel` (équipe seulement) : `PHONE`, `DESK`, `EMAIL`, `WHATSAPP`. Sans lui, le serveur note `TEAM` (back-office) ou `PORTAL` (espace client). L'auteur (`createdBy`) est lu dans la session. Les deux sont dans la réponse.
@@ -365,3 +366,13 @@ Détail : [lot B3](../../backend/booking/lot-b3-regle-sur-place.md).
 - Tarif préférentiel par client ou segment : règles tarifaires à audience (lot B10, module ressource).
 
 Détail : [lot B4](../../backend/booking/lot-b4-ajustement-prix.md).
+
+## Rendez-vous au téléphone (lot B5, 19/11/2026)
+
+- Formulaire « Prise d'appel » : `POST /bookings` avec `caller: { fullName, phone, email, company, callNote, leadNumber?, createLead? }` en plus du reste. Sans `channel`, le canal devient `PHONE`.
+- Appelant inconnu (ni `memberId`, ni `customerId`, ni `businessCode`) : un prospect du CRM est créé (source `PHONE`), relié à la réservation (`leadNumber` dans la réponse), avec une activité « Appel » portant la note. `createLead: false` l'évite ; `leadNumber` relie un prospect existant (le chercher dans le module `crm`).
+- La réponse porte `callNote` et `leadNumber` : afficher la note sur la fiche et un lien vers le prospect.
+- À l'arrivée ou au paiement, le prospect est converti tout seul (événement `BOOKING_LEAD_CONVERTED` dans `GET .../events`).
+- Confirmation au client : courriel au contact (`contactEmail`) comme toute réservation.
+
+Détail : [lot B5](../../backend/booking/lot-b5-telephone.md).

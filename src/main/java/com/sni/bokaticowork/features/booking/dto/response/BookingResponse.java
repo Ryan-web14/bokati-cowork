@@ -98,6 +98,9 @@ public record BookingResponse(
         String priceAdjustmentReasonCode,
         String priceAdjustmentBy,
         String priceAdjustmentStatus,
-        String priceAdjustmentApprovalNumber
+        String priceAdjustmentApprovalNumber,
+        /** Lot B5 : prospect du CRM relie et note d'appel (rendez-vous pris au telephone). */
+        String leadNumber,
+        String callNote
 ) {
 }

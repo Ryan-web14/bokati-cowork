@@ -265,6 +265,10 @@ public class BookingServiceImpl implements BookingService {
                 && isCurrentUserStaff()) {
             booking.setChannel(request.channel());
         }
+        // Lot B5 : un appelant donne sans canal : rendez-vous pris au telephone.
+        if (booking.getChannel() == null && request.caller() != null && isCurrentUserStaff()) {
+            booking.setChannel(com.sni.bokaticowork.features.booking.enums.BookingChannel.PHONE);
+        }
         if (booking.getChannel() == null) {
             booking.setChannel(currentChannel());
         }
@@ -354,6 +358,11 @@ public class BookingServiceImpl implements BookingService {
                     throw new BadRequestException("Option invalide : SERVICE ou AMENITY");
                 }
             }
+        }
+        // Lot B5 : note d'appel et prospect du CRM pour un rendez-vous pris au telephone.
+        if (request.caller() != null && phoneIntake != null && isCurrentUserStaff()) {
+            phoneIntake.onBooked(booking, request.caller(), StringUtils.hasText(request.memberId())
+                    || StringUtils.hasText(request.customerId()) || StringUtils.hasText(request.businessCode()));
         }
         writeHistory(booking, null, BookingStatus.DRAFT, booking.getCreatedBy(), "Réservation créée");
         eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Réservation créée", "La réservation a été créée", null);
@@ -697,6 +706,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setCheckedInAt(Instant.now());
         startIfHourHasCome(booking);
         booking = bookingRepository.save(booking);
+        convertLead(booking, "Venue");
         eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_IN, "Arrivée pointée", request == null ? null : request.note(), null,
                 emailRequested(request == null ? null : request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_IN, new BookingStatusChangeRequest(actor(request == null ? null : request.actor()), request == null ? null : request.note(), request == null ? null : request.sendEmail()));
@@ -730,6 +740,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setCheckedInAt(Instant.now());
         startIfHourHasCome(booking);
         booking = bookingRepository.save(booking);
+        convertLead(booking, "Venue");
         eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_IN, "Arrivée anticipée validée par l'équipe",
                 request == null ? null : request.note(), null,
                 emailRequested(request == null ? null : request.sendEmail()));
@@ -984,6 +995,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getPaymentMode() == com.sni.bokaticowork.features.booking.enums.BookingPaymentMode.WALLET
                 || "SYSTEM".equals(changedBy(request))) {
             booking.setPaidAt(Instant.now());
+            convertLead(booking, "Paiement");
         }
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, BookingStatus.CONFIRMED, changedBy(request), reason(request, "Réservation confirmée"));
@@ -1534,6 +1546,21 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getPaidAt() == null) {
             booking.setPaidAt(Instant.now());
             bookingRepository.save(booking);
+            convertLead(booking, "Paiement");
+        }
+    }
+
+    private com.sni.bokaticowork.features.booking.service.support.BookingPhoneIntake phoneIntake;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPhoneIntake(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingPhoneIntake phoneIntake) {
+        this.phoneIntake = phoneIntake;
+    }
+
+    /** Lot B5 : prospect relie converti a la venue ou au paiement ; un echec n'arrete rien. */
+    private void convertLead(Booking booking, String moment) {
+        if (phoneIntake != null && StringUtils.hasText(booking.getLeadNumber())) {
+            phoneIntake.convert(booking, moment);
         }
     }
 

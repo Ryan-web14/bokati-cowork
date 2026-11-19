@@ -205,7 +205,9 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getPriceAdjustmentReasonCode(),
                 booking.getPriceAdjustmentBy(),
                 booking.getPriceAdjustmentStatus(),
-                booking.getPriceAdjustmentApprovalNumber()
+                booking.getPriceAdjustmentApprovalNumber(),
+                booking.getLeadNumber(),
+                booking.getCallNote()
         );
     }
 
