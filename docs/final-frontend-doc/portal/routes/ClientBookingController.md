@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [portal](../README.md) · 13 route(s).
+Module [portal](../README.md) · 16 route(s).
 
 ## Routes
 
@@ -53,6 +53,29 @@ Module [portal](../README.md) · 13 route(s).
 - Réponse : `BookingAvailabilityResponse`
 - Modèles : [BookingAvailabilityResponse](#m-BookingAvailabilityResponse), [ClientCheckAvailabilityRequest](#m-ClientCheckAvailabilityRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `checkAvailability`
+
+<a id="r-delete-sni-api-v1-client-bookings-calendar-feed"></a>
+### DELETE /sni/api/v1/client/bookings/calendar-feed
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Réponse : `vide`
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `revokeCalendarFeed`
+
+<a id="r-get-sni-api-v1-client-bookings-calendar-feed"></a>
+### GET /sni/api/v1/client/bookings/calendar-feed
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Réponse : `BookingCalendarFeed.Feed`
+- Modèles : [BookingCalendarFeed.Feed](#m-BookingCalendarFeed-Feed)
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `calendarFeed`
+
+<a id="r-post-sni-api-v1-client-bookings-calendar-feed"></a>
+### POST /sni/api/v1/client/bookings/calendar-feed
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Réponse : `BookingCalendarFeed.Feed`
+- Modèles : [BookingCalendarFeed.Feed](#m-BookingCalendarFeed-Feed)
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `rotateCalendarFeed`
 
 <a id="r-post-sni-api-v1-client-bookings-create"></a>
 ### POST /sni/api/v1/client/bookings/create
@@ -297,6 +320,15 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `quantity` | entier |  | min `1` |
 | `paymentMode` | enum : `DIRECT`, `WALLET`, `SUBSCRIPTION`, `PASS` |  |  |
 | `billingCompanyCode` | texte |  |  |
+
+<a id="m-BookingCalendarFeed-Feed"></a>
+#### BookingCalendarFeed.Feed
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `memberId` | texte |  |  |
+| `url` | texte |  |  |
+| `createdAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-ClientPortalBookingService-LastMinuteOffer"></a>
 #### ClientPortalBookingService.LastMinuteOffer

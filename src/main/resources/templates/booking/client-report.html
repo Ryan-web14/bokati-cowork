@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="|Rapport de réservations ${ownerCode}|">Rapport de réservations</title>
+    <style>
+        @page { size: A4; margin: 14mm; }
+        body { margin: 0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #12091f; font-size: 10px; line-height: 1.4; }
+        .header { background: #0f0720; color: #ffffff; padding: 14px 18px; border-bottom: 3px solid #c9a84c; }
+        .brand { font-size: 14px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; }
+        .title { margin-top: 4px; font-size: 18px; font-weight: 800; }
+        .meta { padding: 10px 18px; background: #f4f0fb; border-bottom: 1px solid #e5dff0; }
+        .meta td { padding: 2px 12px 2px 0; }
+        .label { color: #7d6f8a; font-size: 8px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        table.rows { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        table.rows th { text-align: left; font-size: 8px; color: #7d6f8a; text-transform: uppercase; letter-spacing: .8px; border-bottom: 1px solid #c9a84c; padding: 5px 4px; }
+        table.rows td { border-bottom: 1px solid #eee8f5; padding: 5px 4px; vertical-align: top; }
+        .num { text-align: right; white-space: nowrap; }
+        .mono { font-family: Consolas, monospace; }
+        .totals { margin-top: 14px; width: 100%; border-collapse: collapse; }
+        .totals td { padding: 6px 8px; background: #fff9e7; border: 1px solid #eadfb6; font-weight: 700; }
+        .foot { margin-top: 16px; color: #7d6f8a; font-size: 8px; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="brand">Elle A Osé</div>
+    <div class="title">Rapport de réservations</div>
+</div>
+<div class="meta">
+    <table>
+        <tr>
+            <td><span class="label">Client</span><br/><span th:text="${contactName != null ? contactName : ownerCode}">Client</span></td>
+            <td><span class="label">Référence</span><br/><span class="mono" th:text="|${ownerType} ${ownerCode}|">MEMBER</span></td>
+            <td><span class="label">Période</span><br/><span th:text="${periodLabel}">période</span></td>
+        </tr>
+    </table>
+</div>
+
+<table class="rows">
+    <thead>
+    <tr><th>Réservation</th><th>Date</th><th>Horaire</th><th>Espace</th><th>Statut</th><th class="num">Durée</th><th class="num">Montant</th><th>Règlement</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="row : ${rows}">
+        <td class="mono" th:text="${row.bookingNumber()}">BKG</td>
+        <td th:text="${row.day()}">date</td>
+        <td th:text="${row.hours()}">heures</td>
+        <td th:text="${row.resource()}">espace</td>
+        <td th:text="${row.status()}">statut</td>
+        <td class="num" th:text="${row.duration()}">1 h</td>
+        <td class="num" th:text="${row.amount()}">0</td>
+        <td th:text="${row.payment()}">Payé</td>
+    </tr>
+    <tr th:if="${count == 0}"><td colspan="8">Aucune réservation sur la période.</td></tr>
+    </tbody>
+</table>
+
+<table class="totals">
+    <tr>
+        <td th:text="|${count} réservation(s)|">0 réservation</td>
+        <td th:text="|Durée totale : ${hoursLabel}|">Durée</td>
+        <td th:text="|Montant : ${totalLabel}|">Montant</td>
+        <td th:text="|Absences : ${noShows}|">Absences</td>
+    </tr>
+</table>
+<p class="foot" th:text="|Édité le ${generatedAt}. Montants et durées hors réservations annulées, refusées ou expirées.|">Édité le</p>
+</body>
+</html>

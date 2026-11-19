@@ -528,6 +528,54 @@
   },
   {
    "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/client/bookings/calendar-feed",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "revokeCalendarFeed",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/bookings/calendar-feed",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "calendarFeed",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingCalendarFeed.Feed>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/bookings/calendar-feed",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "rotateCalendarFeed",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingCalendarFeed.Feed>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/client/bookings/create",
@@ -6992,6 +7040,21 @@
     }
    }
   },
+  "BookingCalendarFeed.Feed": {
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "type": "string"
+    },
+    "url": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
   "ClientPortalBookingService.LastMinuteOffer": {
    "type": "object",
    "properties": {
@@ -13027,6 +13090,7 @@
   "BookingSuggestionResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse",
   "BookingAvailabilityResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse",
   "ClientCheckAvailabilityRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCheckAvailabilityRequest",
+  "BookingCalendarFeed.Feed": "com.sni.bokaticowork.features.booking.service.support.BookingCalendarFeed.Feed",
   "ClientPortalBookingService.LastMinuteOffer": "com.sni.bokaticowork.features.portal.booking.service.ClientPortalBookingService.LastMinuteOffer",
   "BookingPayOnSite.Access": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access",
   "ClientCancelBookingRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCancelBookingRequest",

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-108 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+113 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -76,6 +76,9 @@
 | POST | `/sni/api/v1/bookings/{bookingNumber}/participants/invite` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-bookingnumber-participants-invite) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}/check-in` | BOOKING:CHECKIN | [BookingGuestsController](routes/BookingGuestsController.md#r-patch-sni-api-v1-bookings-bookingnumber-participants-participantid-check-in) |
 | POST | `/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}/invite` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-bookingnumber-participants-participantid-invite) |
+| GET | `/sni/api/v1/bookings/client-report.pdf` | BOOKING:READ | [BookingInsightsController](routes/BookingInsightsController.md#r-get-sni-api-v1-bookings-client-report-pdf) |
+| GET | `/sni/api/v1/bookings/dashboard` | BOOKING:READ | [BookingInsightsController](routes/BookingInsightsController.md#r-get-sni-api-v1-bookings-dashboard) |
+| GET | `/sni/api/v1/bookings/reviews` | BOOKING:READ | [BookingInsightsController](routes/BookingInsightsController.md#r-get-sni-api-v1-bookings-reviews) |
 | GET | `/sni/api/v1/bookings/{number}/end-report` | BOOKING:READ | [BookingOperationsController](routes/BookingOperationsController.md#r-get-sni-api-v1-bookings-number-end-report) |
 | POST | `/sni/api/v1/bookings/{number}/end-report` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-end-report) |
 | GET | `/sni/api/v1/bookings/{number}/usage-rules` | BOOKING:READ | [BookingOperationsController](routes/BookingOperationsController.md#r-get-sni-api-v1-bookings-number-usage-rules) |
@@ -96,6 +99,8 @@
 | POST | `/sni/api/v1/bookings/waitlist/{id}/decline` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist-id-decline) |
 | GET | `/sni/api/v1/public/bookings/{bookingNumber}/attendance` | public | [PublicBookingAttendanceController](routes/PublicBookingAttendanceController.md#r-get-sni-api-v1-public-bookings-bookingnumber-attendance) |
 | POST | `/sni/api/v1/public/bookings/{bookingNumber}/attendance/cancel` | public | [PublicBookingAttendanceController](routes/PublicBookingAttendanceController.md#r-post-sni-api-v1-public-bookings-bookingnumber-attendance-cancel) |
+| GET | `/sni/api/v1/public/bookings/calendar/{token}.ics` | public | [PublicBookingCalendarController](routes/PublicBookingCalendarController.md#r-get-sni-api-v1-public-bookings-calendar-token-ics) |
+| POST | `/sni/api/v1/public/bookings/csat/{bookingNumber}/comment` | public | [PublicBookingCalendarController](routes/PublicBookingCalendarController.md#r-post-sni-api-v1-public-bookings-csat-bookingnumber-comment) |
 | POST | `/sni/api/v1/public/bookings/check-in/scan` | public | [PublicBookingController](routes/PublicBookingController.md#r-post-sni-api-v1-public-bookings-check-in-scan) |
 | GET | `/sni/api/v1/public/bookings/check-in/scan/{checkInToken}` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-check-in-scan-checkintoken) |
 | GET | `/sni/api/v1/public/bookings/check-in/scanner-setup` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-check-in-scanner-setup) |

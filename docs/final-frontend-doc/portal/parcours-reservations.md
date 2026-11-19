@@ -50,6 +50,14 @@ Les transitions et délais (expiration d'une réservation non payée, libératio
 2. Le serveur retrouve la facture de la réservation et crée une annonce `AWAITING_CONFIRMATION` valable 4 heures par défaut (`bokati.payment.cash-declaration.validity-hours`). Le créneau est tenu jusqu'à l'échéance de l'annonce ; passé ce délai sans encaissement à la caisse, l'annonce expire et la réservation est rendue (worker toutes les 15 minutes).
 3. Afficher `declarationNumber`, le montant et l'échéance. Suivi et annulation : [parcours-facturation-paiements.md](parcours-facturation-paiements.md#annoncer-un-paiement-en-espèces).
 
+### Agenda synchronisé
+
+Lot B9g, si l'espace l'a activé (sinon `409 CALENDAR_FEED_DISABLED`). Écran « Mon agenda » :
+
+1. `GET /sni/api/v1/client/bookings/calendar-feed` : lien actuel `{ memberId, url, createdAt }`, ou `204` sans lien.
+2. `POST .../calendar-feed` : crée ou renouvelle le lien (l'ancien cesse de marcher) ; afficher `url` avec « Copier » et la marche à suivre (Google Agenda : « À partir de l'URL » ; Outlook : « S'abonner à partir du web »).
+3. `DELETE .../calendar-feed` : révoque le lien.
+
 ### Dernière minute, alternatives, prolongation
 
 Lot B9f.

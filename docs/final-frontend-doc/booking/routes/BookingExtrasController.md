@@ -262,6 +262,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `tags` | texte[] |  |  |
 | `companyCoveredMinutes` | entier |  |  |
 | `monthlyStatement` | booléen |  |  |
+| `csatScore` | entier |  |  |
+| `csatComment` | texte |  |  |
+| `csatAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-BookingLineResponse"></a>
 #### BookingLineResponse

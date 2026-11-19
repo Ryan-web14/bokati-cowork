@@ -15,6 +15,14 @@
     <div th:if="${bookingNumber != null}"><dt>Réservation</dt><dd class="mono" th:text="${bookingNumber}">BKG</dd></div>
   </dl>
 
+  <form method="post" th:if="${token != null and commented == null and score >= 1 and score <= 5}" th:action="@{${commentAction}}">
+    <input type="hidden" name="token" th:value="${token}">
+    <label for="comment">Un commentaire ? (facultatif)</label>
+    <textarea id="comment" name="comment" rows="4" maxlength="1000" style="width:100%"></textarea>
+    <button type="submit" class="btn">Envoyer</button>
+  </form>
+  <p class="lede" th:if="${commented != null}">Votre commentaire a bien été transmis à l'équipe.</p>
+
   <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
 </main>
 </body>

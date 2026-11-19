@@ -1889,6 +1889,117 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/bookings/client-report.pdf",
+   "package": "features.booking.controller",
+   "controller": "BookingInsightsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingInsightsController.java",
+   "handler": "clientReport",
+   "declaredIn": "BookingInsightsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "produces": [
+    "application/pdf"
+   ],
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/dashboard",
+   "package": "features.booking.controller",
+   "controller": "BookingInsightsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingInsightsController.java",
+   "handler": "dashboard",
+   "declaredIn": "BookingInsightsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingInsights.Dashboard>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/reviews",
+   "package": "features.booking.controller",
+   "controller": "BookingInsightsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingInsightsController.java",
+   "handler": "reviews",
+   "declaredIn": "BookingInsightsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.BookingInsights.ReviewLine>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/bookings/{number}/end-report",
    "package": "features.booking.controller",
    "controller": "BookingOperationsController",
@@ -2439,6 +2550,64 @@
     {
      "in": "query",
      "name": "token",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ModelAndView"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/bookings/calendar/{token}.ics",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingCalendarController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingCalendarController.java",
+   "handler": "calendar",
+   "declaredIn": "PublicBookingCalendarController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<String>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/bookings/csat/{bookingNumber}/comment",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingCalendarController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingCalendarController.java",
+   "handler": "comment",
+   "declaredIn": "PublicBookingCalendarController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "token",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "comment",
      "required": false,
      "type": "String"
     }
@@ -3468,6 +3637,17 @@
     },
     "monthlyStatement": {
      "type": "boolean"
+    },
+    "csatScore": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "csatComment": {
+     "type": "string"
+    },
+    "csatAt": {
+     "type": "string",
+     "format": "date-time"
     }
    }
   },
@@ -5032,6 +5212,90 @@
     }
    }
   },
+  "BookingInsights.Dashboard": {
+   "type": "object",
+   "properties": {
+    "from": {
+     "type": "string",
+     "format": "date"
+    },
+    "to": {
+     "type": "string",
+     "format": "date"
+    },
+    "bookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "confirmed": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completed": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelled": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lateCancellations": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "noShows": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "expired": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "noShowRate": {
+     "type": "number"
+    },
+    "averageLeadHours": {
+     "type": "number"
+    },
+    "revenue": {
+     "type": "number"
+    },
+    "channels": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.service.support.BookingInsights.ChannelLine"
+     }
+    },
+    "topResources": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.service.support.BookingInsights.ResourceLine"
+     }
+    }
+   }
+  },
+  "BookingInsights.ReviewLine": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "reviews": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "averageScore": {
+     "type": "number"
+    },
+    "lowScores": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
   "BookingOperations.EndReportResponse": {
    "type": "object",
    "properties": {
@@ -5883,6 +6147,39 @@
     }
    }
   },
+  "BookingInsights.ChannelLine": {
+   "type": "object",
+   "properties": {
+    "channel": {
+     "type": "string"
+    },
+    "bookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "revenue": {
+     "type": "number"
+    }
+   }
+  },
+  "BookingInsights.ResourceLine": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "bookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "revenue": {
+     "type": "number"
+    }
+   }
+  },
   "BookingOperations.ChecklistAnswer": {
    "type": "object",
    "properties": {
@@ -6241,6 +6538,8 @@
   "BookingExtrasController.BundleBookingRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.BundleBookingRequest",
   "BookingGuests.Details": "com.sni.bokaticowork.features.booking.service.support.BookingGuests.Details",
   "BookingGuestsController.ExtendRequest": "com.sni.bokaticowork.features.booking.controller.BookingGuestsController.ExtendRequest",
+  "BookingInsights.Dashboard": "com.sni.bokaticowork.features.booking.service.support.BookingInsights.Dashboard",
+  "BookingInsights.ReviewLine": "com.sni.bokaticowork.features.booking.service.support.BookingInsights.ReviewLine",
   "BookingOperations.EndReportResponse": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse",
   "BookingOperations.EndReportRequest": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportRequest",
   "BookingOperations.UsageRulesView": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView",
@@ -6268,6 +6567,8 @@
   "BookingAvailabilityResponse.OccupiedRange": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange",
   "BookingDeskService.PlanningResource": "com.sni.bokaticowork.features.booking.service.support.BookingDeskService.PlanningResource",
   "LocalTime": "java.time.LocalTime",
+  "BookingInsights.ChannelLine": "com.sni.bokaticowork.features.booking.service.support.BookingInsights.ChannelLine",
+  "BookingInsights.ResourceLine": "com.sni.bokaticowork.features.booking.service.support.BookingInsights.ResourceLine",
   "BookingOperations.ChecklistAnswer": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.ChecklistAnswer",
   "ReferenceDtos.EnumGroup": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.EnumGroup",
   "ReferenceDtos.Value": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.Value",

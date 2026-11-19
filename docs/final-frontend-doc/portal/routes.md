@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-218 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+221 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -26,6 +26,9 @@
 | POST | `/sni/api/v1/client/bookings` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings) |
 | GET | `/sni/api/v1/client/bookings/alternatives` | membre | [ClientBookingController](routes/ClientBookingController.md#r-get-sni-api-v1-client-bookings-alternatives) |
 | POST | `/sni/api/v1/client/bookings/availability` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings-availability) |
+| DELETE | `/sni/api/v1/client/bookings/calendar-feed` | membre | [ClientBookingController](routes/ClientBookingController.md#r-delete-sni-api-v1-client-bookings-calendar-feed) |
+| GET | `/sni/api/v1/client/bookings/calendar-feed` | membre | [ClientBookingController](routes/ClientBookingController.md#r-get-sni-api-v1-client-bookings-calendar-feed) |
+| POST | `/sni/api/v1/client/bookings/calendar-feed` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings-calendar-feed) |
 | POST | `/sni/api/v1/client/bookings/create` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings-create) |
 | GET | `/sni/api/v1/client/bookings/last-minute` | membre | [ClientBookingController](routes/ClientBookingController.md#r-get-sni-api-v1-client-bookings-last-minute) |
 | GET | `/sni/api/v1/client/bookings/pay-on-site` | membre | [ClientBookingController](routes/ClientBookingController.md#r-get-sni-api-v1-client-bookings-pay-on-site) |

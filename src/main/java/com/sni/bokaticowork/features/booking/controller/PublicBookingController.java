@@ -243,6 +243,9 @@ public class PublicBookingController {
         ModelAndView mav = new ModelAndView("booking/csat-thanks");
         mav.addObject("score", score);
         mav.addObject("bookingNumber", bookingNumber);
+        // Lot B9g : formulaire de commentaire sous la note.
+        mav.addObject("token", token);
+        mav.addObject("commentAction", com.sni.bokaticowork.core.utils.path.ApiPath.V1 + "/public/bookings/csat/" + bookingNumber + "/comment");
         return mav;
     }
 

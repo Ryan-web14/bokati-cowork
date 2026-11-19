@@ -2,19 +2,19 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-2434 routes dans 271 contrôleurs.
+2442 routes dans 273 contrôleurs.
 
 | Module | Routes | Back-office | Portail membre | Publiques | Fonctionnement |
 | --- | --- | --- | --- | --- | --- |
 | [accounting](accounting/routes.md) | 357 | 357 | 0 | 0 | [README](accounting/README.md) |
-| [portal](portal/routes.md) | 218 | 0 | 216 | 2 | [README](portal/README.md) |
+| [portal](portal/routes.md) | 221 | 0 | 219 | 2 | [README](portal/README.md) |
 | [document](document/routes.md) | 216 | 214 | 0 | 1 | [README](document/README.md) |
 | [payment](payment/routes.md) | 212 | 203 | 0 | 9 | [README](payment/README.md) |
 | [billing](billing/routes.md) | 202 | 200 | 0 | 2 | [README](billing/README.md) |
 | [subscription](subscription/routes.md) | 196 | 185 | 9 | 2 | [README](subscription/README.md) |
 | [inventory](inventory/routes.md) | 188 | 188 | 0 | 0 | [README](inventory/README.md) |
 | [ressource](ressource/routes.md) | 121 | 119 | 0 | 2 | [README](ressource/README.md) |
-| [booking](booking/routes.md) | 108 | 95 | 0 | 13 | [README](booking/README.md) |
+| [booking](booking/routes.md) | 113 | 98 | 0 | 15 | [README](booking/README.md) |
 | [socle](socle/routes.md) | 81 | 79 | 0 | 2 | [README](socle/README.md) |
 | [contract](contract/routes.md) | 65 | 63 | 0 | 2 | [README](contract/README.md) |
 | [securite](securite/routes.md) | 59 | 44 | 0 | 13 | [README](securite/README.md) |

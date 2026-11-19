@@ -4,7 +4,7 @@
    "domain": "BOOKING",
    "label": "Réservation",
    "adminEditable": true,
-   "count": 34
+   "count": 36
   },
   {
    "domain": "RESOURCES",
@@ -4273,6 +4273,14 @@
    "label": "Page de l'espace client ouverte par le bouton WhatsApp : portefeuille"
   },
   {
+   "key": "bookings.calendar-feed.enabled",
+   "domain": "BOOKING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Réservations : agenda personnel synchronisé (lien ICS) proposé aux membres"
+  },
+  {
    "key": "bookings.deposit.rate",
    "domain": "BOOKING",
    "type": "INTEGER",
@@ -4383,6 +4391,14 @@
    "effect": "LIVE",
    "default": "20",
    "label": "Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST"
+  },
+  {
+   "key": "bookings.reviews.alert-threshold",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "2",
+   "label": "Réservations : note (sur 5) à partir de laquelle un avis alerte l'équipe"
   },
   {
    "key": "bookings.reliability.late-cancel-hours",

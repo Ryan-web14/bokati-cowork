@@ -82,6 +82,25 @@ public class ClientBookingController {
                 startedAt, endedAt, quantity));
     }
 
+    /** Lot B9g : lien d'agenda synchronise du membre (204 sans lien). */
+    @GetMapping("/calendar-feed")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingCalendarFeed.Feed> calendarFeed() {
+        var feed = clientPortalBookingService.calendarFeed(clientContextService.getAuthenticatedMember());
+        return feed == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(feed);
+    }
+
+    /** Lot B9g : cree ou renouvelle le lien d'agenda (l'ancien cesse de marcher). */
+    @PostMapping("/calendar-feed")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingCalendarFeed.Feed> rotateCalendarFeed() {
+        return ResponseEntity.ok(clientPortalBookingService.rotateCalendarFeed(clientContextService.getAuthenticatedMember()));
+    }
+
+    @DeleteMapping("/calendar-feed")
+    public ResponseEntity<Void> revokeCalendarFeed() {
+        clientPortalBookingService.revokeCalendarFeed(clientContextService.getAuthenticatedMember());
+        return ResponseEntity.noContent().build();
+    }
+
     /** Lot B9f : offres de derniere minute (creneaux libres a venir, prix remise). */
     @GetMapping("/last-minute")
     public ResponseEntity<java.util.List<ClientPortalBookingService.LastMinuteOffer>> lastMinute(@RequestParam(required = false) Integer durationMinutes) {

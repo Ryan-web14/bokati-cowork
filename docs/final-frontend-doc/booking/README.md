@@ -1,6 +1,6 @@
 # booking : fonctionnement
 
-> Rédigé d'après le code, à jour des lots B0 à B8, B9a à B9f et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code, à jour de tout le plan booking, lots B0 à B11 (19/11/2026). Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -411,3 +411,12 @@ Détail : [lots B9c et B9d](../../backend/booking/lot-b9c-b9d-fiabilite-invites.
 - Portail : offres de dernière minute `GET /client/bookings/last-minute`, alternatives `GET /client/bookings/alternatives`, prolongation `POST /client/bookings/{numéro}/extend`.
 
 Détail : [lot B9e](../../backend/booking/lot-b9e-entreprises.md), [lot B9f](../../backend/booking/lot-b9f-remplissage.md).
+
+## Suivi (lot B9g, 19/11/2026)
+
+- Écran « Tableau de bord des réservations » : `GET /bookings/dashboard?from=&to=` (réservations, confirmées, terminées, annulées dont tardives, absences et taux, délai moyen de réservation, chiffre d'affaires, par canal, ressources les plus réservées).
+- Avis : la fiche porte `csatScore`, `csatComment`, `csatAt` ; qualité par ressource `GET /bookings/reviews?from=&to=&resourceCode=` ; une note basse déclenche l'alerte en direct `BOOKING_LOW_REVIEW` (module `BOOKING`).
+- Rapport imprimable d'un client : `GET /bookings/client-report.pdf?ownerType=&ownerCode=&from=&to=` (lire en `blob`, afficher dans un cadre ou télécharger).
+- Agenda synchronisé (portail, si activé par l'espace) : voir [portal/parcours-reservations.md](../portal/parcours-reservations.md#agenda-synchronisé).
+
+Détail : [lot B9g](../../backend/booking/lot-b9g-suivi.md). Clôture du plan et actions de l'exploitant : [lot B11](../../backend/booking/lot-b11-cloture.md).

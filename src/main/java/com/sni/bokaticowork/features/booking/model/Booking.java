@@ -288,6 +288,13 @@ public class Booking {
     @Column(name = "csat_score")
     private Integer csatScore;
 
+    /** Lot B9g : commentaire de l'avis et date de la note. */
+    @Column(name = "csat_comment", length = 1000)
+    private String csatComment;
+
+    @Column(name = "csat_at")
+    private Instant csatAt;
+
     @Column(name = "confirmed_at")
     private Instant confirmedAt;
 

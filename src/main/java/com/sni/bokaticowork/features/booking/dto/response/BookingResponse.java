@@ -116,6 +116,10 @@ public record BookingResponse(
         List<String> tags,
         /** Lot B9e : minutes couvertes par le forfait d'heures de l'entreprise ; facturee au releve mensuel. */
         Integer companyCoveredMinutes,
-        Boolean monthlyStatement
+        Boolean monthlyStatement,
+        /** Lot B9g : avis apres utilisation (note 1 a 5, commentaire, date). */
+        Integer csatScore,
+        String csatComment,
+        Instant csatAt
 ) {
 }

@@ -511,6 +511,7 @@ bokati.whatsapp.portal-path.kyc	NOTIFICATIONS	TEXT	LIVE	client/kyc	Page de l'esp
 bokati.whatsapp.portal-path.quotes	NOTIFICATIONS	TEXT	LIVE	client/quotes	Page de l'espace client ouverte par le bouton WhatsApp : devis
 bokati.whatsapp.portal-path.subscriptions	NOTIFICATIONS	TEXT	LIVE	client/subscriptions	Page de l'espace client ouverte par le bouton WhatsApp : abonnements
 bokati.whatsapp.portal-path.wallet	NOTIFICATIONS	TEXT	LIVE	client/wallet	Page de l'espace client ouverte par le bouton WhatsApp : portefeuille
+bookings.calendar-feed.enabled	BOOKING	BOOLEAN	LIVE	false	Réservations : agenda personnel synchronisé (lien ICS) proposé aux membres
 bookings.deposit.rate	BOOKING	INTEGER	LIVE	30	Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose
 bookings.early-release.minutes	BOOKING	INTEGER	LIVE	0	Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais)
 bookings.last-minute.discount-rate	BOOKING	INTEGER	LIVE	0	Réservations : remise (%) d'une réservation du portail qui commence bientôt (0 : coupée)
@@ -525,6 +526,7 @@ bookings.payment-due.far-days	BOOKING	INTEGER	LIVE	3	Réservations : au-delà de
 bookings.payment-due.far-minutes	BOOKING	INTEGER	LIVE	1440	Réservations : validité longue, en minutes
 bookings.payment-due.reminder-minutes	BOOKING	INTEGER	LIVE	30	Réservations : rappel au client tant de minutes avant l'échéance de paiement (0 : aucun rappel)
 bookings.price-adjustment.max-rate	BOOKING	INTEGER	LIVE	20	Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST
+bookings.reviews.alert-threshold	BOOKING	INTEGER	LIVE	2	Réservations : note (sur 5) à partir de laquelle un avis alerte l'équipe
 bookings.reliability.late-cancel-hours	BOOKING	INTEGER	LIVE	24	Réservations : annulation tardive si faite moins de tant d'heures avant le début
 bookings.reliability.late-cancel-penalty	BOOKING	INTEGER	LIVE	10	Réservations : points de fiabilité retirés par annulation tardive
 bookings.reliability.mode	BOOKING	ENUM	LIVE	DEPOSIT	Réservations : garantie imposée sous le seuil de fiabilité : DEPOSIT (acompte) ou PREPAY (paiement complet en ligne)

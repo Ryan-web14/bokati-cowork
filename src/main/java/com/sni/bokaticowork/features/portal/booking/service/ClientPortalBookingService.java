@@ -163,6 +163,31 @@ public class ClientPortalBookingService {
         return offers;
     }
 
+    private com.sni.bokaticowork.features.booking.service.support.BookingCalendarFeed calendarFeed;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCalendarFeed(com.sni.bokaticowork.features.booking.service.support.BookingCalendarFeed calendarFeed) {
+        this.calendarFeed = calendarFeed;
+    }
+
+    /** Lot B9g : lien d'agenda du membre (nul s'il n'en a pas, ou si la fonction est coupee). */
+    public com.sni.bokaticowork.features.booking.service.support.BookingCalendarFeed.Feed calendarFeed(Member member) {
+        return calendarFeed == null || !calendarFeed.enabled() ? null : calendarFeed.current(member.getMemberId());
+    }
+
+    public com.sni.bokaticowork.features.booking.service.support.BookingCalendarFeed.Feed rotateCalendarFeed(Member member) {
+        if (calendarFeed == null) {
+            throw new com.sni.bokaticowork.core.exception.customs.ConflictException("Agenda synchronisé indisponible");
+        }
+        return calendarFeed.rotate(member.getMemberId());
+    }
+
+    public void revokeCalendarFeed(Member member) {
+        if (calendarFeed != null) {
+            calendarFeed.revoke(member.getMemberId());
+        }
+    }
+
     /** Lot B9d : apercu du prix avant un deplacement. */
     @Transactional(readOnly = true)
     public com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse previewReschedule(Member member, String bookingNumber,

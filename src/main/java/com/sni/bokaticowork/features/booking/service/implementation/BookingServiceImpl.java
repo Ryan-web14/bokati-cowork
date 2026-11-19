@@ -2179,6 +2179,17 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getForService(bookingNumber);
         booking.setCsatScore(score);
         bookingRepository.save(booking);
+        // Lot B9g : note horodatee, equipe alertee d'une note basse.
+        if (reviews != null) {
+            reviews.rated(booking);
+        }
+    }
+
+    private com.sni.bokaticowork.features.booking.service.support.BookingReviews reviews;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setReviews(com.sni.bokaticowork.features.booking.service.support.BookingReviews reviews) {
+        this.reviews = reviews;
     }
 
     /**

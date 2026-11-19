@@ -8,7 +8,7 @@
 
 | Domaine | Libellé | Ouvert à `ADMIN` | Réglages |
 | --- | --- | --- | --- |
-| [`BOOKING`](#booking) | Réservation | oui | 34 |
+| [`BOOKING`](#booking) | Réservation | oui | 36 |
 | [`RESOURCES`](#resources) | Ressources et horaires | oui | 19 |
 | [`SUBSCRIPTIONS`](#subscriptions) | Abonnements | oui | 19 |
 | [`PASSES`](#passes) | Passes | oui | 6 |
@@ -42,7 +42,7 @@ Types : `BOOLEAN`, `CRON`, `DECIMAL`, `EMAIL`, `ENUM`, `INTEGER`, `SECRET`, `TEX
 
 ## BOOKING
 
-Réservation · ouvert à ADMIN · 34 réglage(s)
+Réservation · ouvert à ADMIN · 36 réglage(s)
 
 | Clé | Type | Effet | Défaut | Libellé |
 | --- | --- | --- | --- | --- |
@@ -58,6 +58,7 @@ Réservation · ouvert à ADMIN · 34 réglage(s)
 | `bokati.booking.wallet.hold-grace-minutes` | INTEGER | LIVE | `60` | Grâce de retenue sur portefeuille (minutes) |
 | `bokati.booking.wallet.settlement-delay-minutes` | INTEGER | LIVE | `1` | Délai de règlement sur portefeuille (minutes) |
 | `bokati.booking.wallet.worker-delay-ms` | INTEGER | LIVE | `15000` | Cadence des retenues de réservation (ms) |
+| `bookings.calendar-feed.enabled` | BOOLEAN | LIVE | `false` | Réservations : agenda personnel synchronisé (lien ICS) proposé aux membres |
 | `bookings.deposit.rate` | INTEGER | LIVE | `30` | Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose |
 | `bookings.early-release.minutes` | INTEGER | LIVE | `0` | Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais) |
 | `bookings.last-minute.discount-rate` | INTEGER | LIVE | `0` | Réservations : remise (%) d'une réservation du portail qui commence bientôt (0 : coupée) |
@@ -72,6 +73,7 @@ Réservation · ouvert à ADMIN · 34 réglage(s)
 | `bookings.payment-due.far-minutes` | INTEGER | LIVE | `1440` | Réservations : validité longue, en minutes |
 | `bookings.payment-due.reminder-minutes` | INTEGER | LIVE | `30` | Réservations : rappel au client tant de minutes avant l'échéance de paiement (0 : aucun rappel) |
 | `bookings.price-adjustment.max-rate` | INTEGER | LIVE | `20` | Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST |
+| `bookings.reviews.alert-threshold` | INTEGER | LIVE | `2` | Réservations : note (sur 5) à partir de laquelle un avis alerte l'équipe |
 | `bookings.reliability.late-cancel-hours` | INTEGER | LIVE | `24` | Réservations : annulation tardive si faite moins de tant d'heures avant le début |
 | `bookings.reliability.late-cancel-penalty` | INTEGER | LIVE | `10` | Réservations : points de fiabilité retirés par annulation tardive |
 | `bookings.reliability.mode` | ENUM | LIVE | `DEPOSIT` | Réservations : garantie imposée sous le seuil de fiabilité : DEPOSIT (acompte) ou PREPAY (paiement complet en ligne) |
