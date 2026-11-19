@@ -30,7 +30,7 @@ Contrat exact de chaque route (paramètres, corps, réponse, champs JSON) : [rou
 - Une pièce a au moins deux lignes ; une ligne porte un débit **ou** un crédit, positif.
 - Saisie manuelle : `POST /accounting/entries` crée un brouillard (numéro provisoire `BR-AAAAMM-0000001`) ; `validate: true` le valide aussitôt.
 - Validation : période ouverte, comptes existants et actifs, tiers obligatoire sur un compte de tiers, comptes autorisés par le journal, ligne sur le compte de trésorerie pour un journal de trésorerie, comptes de classe 9 seulement dans `HB` et `CAG`.
-- Chronologie stricte (`accounting.numbering.chronology = STRICT`) : une pièce ne peut pas être datée avant la dernière pièce validée du même journal. `PERIOD` relâche la règle à la période.
+- Chronologie stricte (`accounting.numbering.chronology = STRICT`) : une pièce ne peut pas être datée avant la dernière pièce validée du même journal ; **plusieurs pièces peuvent porter la même date**. Refus : `400 CHRONOLOGIE_STRICTE`, message avec la date de la pièce et celle de la dernière pièce validée (« datez-la au … ou après »). Afficher le message et proposer de corriger la date. `PERIOD` relâche la règle à la période.
 - Numéro définitif `JOURNAL-EXERCICE-000001` (largeur `accounting.numbering.width`), attribué à la validation, sans trou, compteur verrouillé ; chaque pièce porte une empreinte SHA-256 chaînée à la précédente du journal.
 - Au-delà de `accounting.manual-entry.second-validation-threshold` XAF (0 = jamais), une pièce manuelle est validée par un autre comptable que son auteur.
 

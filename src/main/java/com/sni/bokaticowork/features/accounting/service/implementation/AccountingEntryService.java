@@ -306,8 +306,12 @@ public class AccountingEntryService {
             entryRepository.lastValidatedDate(journal.getCode(), entry.getFiscalYearCode(), EntryNumbering.NUMBERED)
                     .filter(last -> entry.getEntryDate().isBefore(last))
                     .ifPresent(last -> {
-                        throw new BadRequestException("Le journal " + journal.getCode() + " a deja une piece validee au " + last
-                                + " : une piece ne peut pas etre datee avant (ordre chronologique strict)");
+                        // Plusieurs pieces peuvent porter la meme date ; seule une date anterieure est refusee.
+                        java.time.format.DateTimeFormatter day = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                        throw BadRequestException.coded("CHRONOLOGIE_STRICTE", "La pièce " + entry.getProvisionalNumber() + " est datée du "
+                                + entry.getEntryDate().format(day) + ", avant la dernière pièce validée du journal " + journal.getCode()
+                                + " (" + last.format(day) + "). Plusieurs pièces peuvent avoir la même date, mais pas une date antérieure : "
+                                + "datez-la au " + last.format(day) + " ou après, ou passez le paramètre accounting.numbering.chronology à PERIOD");
                     });
         }
         List<Issue> issues = checks(entry, journal, lines, manual);
