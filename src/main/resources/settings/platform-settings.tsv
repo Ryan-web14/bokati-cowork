@@ -518,6 +518,7 @@ bookings.payment-due.default-minutes	BOOKING	INTEGER	LIVE	120	Réservations : va
 bookings.payment-due.far-days	BOOKING	INTEGER	LIVE	3	Réservations : au-delà de ce nombre de jours avant le début, validité longue
 bookings.payment-due.far-minutes	BOOKING	INTEGER	LIVE	1440	Réservations : validité longue, en minutes
 bookings.payment-due.reminder-minutes	BOOKING	INTEGER	LIVE	30	Réservations : rappel au client tant de minutes avant l'échéance de paiement (0 : aucun rappel)
+bookings.price-adjustment.max-rate	BOOKING	INTEGER	LIVE	20	Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST
 fund.advance.overdue-policy	PAYMENT	ENUM	LIVE	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
 fund.approval.level1-max	PAYMENT	INTEGER	LIVE	50000	Montant maximal valide par le seul chef de service (XAF)
 fund.approval.level2-max	PAYMENT	INTEGER	LIVE	500000	Montant maximal valide sans la direction (XAF)

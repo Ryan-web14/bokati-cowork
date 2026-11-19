@@ -197,7 +197,15 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 invoiceNumber,
                 extras,
                 grandTotal,
-                Boolean.TRUE.equals(booking.getPayOnSite())
+                Boolean.TRUE.equals(booking.getPayOnSite()),
+                booking.getOriginalAmount(),
+                booking.getPriceAdjustmentAmount(),
+                booking.getPriceAdjustmentRate(),
+                booking.getPriceAdjustmentReason(),
+                booking.getPriceAdjustmentReasonCode(),
+                booking.getPriceAdjustmentBy(),
+                booking.getPriceAdjustmentStatus(),
+                booking.getPriceAdjustmentApprovalNumber()
         );
     }
 

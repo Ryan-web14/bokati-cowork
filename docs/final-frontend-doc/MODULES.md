@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-2401 routes dans 265 contrôleurs.
+2403 routes dans 265 contrôleurs.
 
 | Module | Routes | Back-office | Portail membre | Publiques | Fonctionnement |
 | --- | --- | --- | --- | --- | --- |
@@ -14,7 +14,7 @@
 | [subscription](subscription/routes.md) | 196 | 185 | 9 | 2 | [README](subscription/README.md) |
 | [inventory](inventory/routes.md) | 188 | 188 | 0 | 0 | [README](inventory/README.md) |
 | [ressource](ressource/routes.md) | 121 | 119 | 0 | 2 | [README](ressource/README.md) |
-| [booking](booking/routes.md) | 86 | 76 | 0 | 10 | [README](booking/README.md) |
+| [booking](booking/routes.md) | 87 | 77 | 0 | 10 | [README](booking/README.md) |
 | [socle](socle/routes.md) | 81 | 79 | 0 | 2 | [README](socle/README.md) |
 | [contract](contract/routes.md) | 65 | 63 | 0 | 2 | [README](contract/README.md) |
 | [securite](securite/routes.md) | 59 | 44 | 0 | 13 | [README](securite/README.md) |
@@ -30,7 +30,7 @@
 | [task](task/routes.md) | 15 | 15 | 0 | 0 | [README](task/README.md) |
 | [approval](approval/routes.md) | 14 | 14 | 0 | 0 | [README](approval/README.md) |
 | [analytics](analytics/routes.md) | 11 | 11 | 0 | 0 | [README](analytics/README.md) |
-| [parametres](parametres/routes.md) | 9 | 9 | 0 | 0 | [README](parametres/README.md) |
+| [parametres](parametres/routes.md) | 10 | 10 | 0 | 0 | [README](parametres/README.md) |
 | [event](event/routes.md) | 8 | 4 | 0 | 4 | [README](event/README.md) |
 | [visitor](visitor/routes.md) | 7 | 7 | 0 | 0 | [README](visitor/README.md) |
 | [verify](verify/routes.md) | 3 | 0 | 0 | 3 | [README](verify/README.md) |

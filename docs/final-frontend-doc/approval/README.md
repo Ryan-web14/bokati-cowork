@@ -20,6 +20,8 @@ Toutes les routes sont du back-office, sous `/sni/api/v1/approvals`. La caisse g
 | Hiérarchie (`HierarchyNode`) | `userCode` | Chaque collaborateur et son supérieur direct (N+1) |
 
 > Facturation : contenu de `subjectRef` et de `detailsJson`, et bouton « Ouvrir le document » : [facturation.md](facturation.md).
+>
+> Réservations (centre `BOOKING`, type `PRICE_ADJUSTMENT`, lot B4) : `subjectType` `BOOKING`, `subjectRef` = numéro de réservation ; contenu de `detailsJson` dans [booking](../booking/README.md#ajuster-le-prix-lot-b4-19112026).
 
 ## Statuts
 
@@ -47,7 +49,7 @@ Niveau : `WAITING` (pas encore atteint), `PENDING` (niveau courant), `APPROVED`,
 - `GET /approvals/{center}/history?type=&requester=&approver=&status=&from=&to=&page=&size=` : historique filtrable. Sans le droit `APPROVAL:MANAGE`, seulement les demandes où l'on est demandeur, décideur attendu ou auteur d'une décision.
 - `GET /approvals/requests/{number}` : une demande, ses niveaux et sa frise complète (`timeline`), avec le montant avant et après une réduction.
 
-`{center}` : `BILLING` ou `CASH`.
+`{center}` : `BILLING`, `CASH` ou `BOOKING`.
 
 ### Décider
 

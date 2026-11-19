@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 48 route(s).
+Module [booking](../README.md) · 49 route(s).
 
 ## Routes
 
@@ -511,6 +511,19 @@ Module [booking](../README.md) · 48 route(s).
 | `bookingNumber` | chemin | `String` | oui |  |
 | `participantId` | chemin | `Long` (code identifiant ou nombre) | oui |  |
 
+<a id="r-post-sni-api-v1-bookings-bookingnumber-price-adjustment"></a>
+### POST /sni/api/v1/bookings/{bookingNumber}/price-adjustment
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:CREATE`
+- Corps JSON (obligatoire) : `BookingPriceAdjustmentRequest`
+- Réponse : `BookingResponse`
+- Modèles : [BookingResponse](#m-BookingResponse), [BookingPriceAdjustmentRequest](#m-BookingPriceAdjustmentRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `adjustPrice`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `bookingNumber` | chemin | `String` | oui |  |
+
 <a id="r-patch-sni-api-v1-bookings-bookingnumber-reject"></a>
 ### PATCH /sni/api/v1/bookings/{bookingNumber}/reject
 
@@ -650,6 +663,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `extrasAmount` | nombre décimal |  |  |
 | `grandTotal` | nombre décimal |  |  |
 | `payOnSite` | booléen |  |  |
+| `originalAmount` | nombre décimal |  |  |
+| `priceAdjustmentAmount` | nombre décimal |  |  |
+| `priceAdjustmentRate` | nombre décimal |  |  |
+| `priceAdjustmentReason` | texte |  |  |
+| `priceAdjustmentReasonCode` | texte |  |  |
+| `priceAdjustmentBy` | texte |  |  |
+| `priceAdjustmentStatus` | texte |  |  |
+| `priceAdjustmentApprovalNumber` | texte |  |  |
 
 <a id="m-SubscriberType"></a>
 #### SubscriberType
@@ -692,6 +713,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `channel` | enum : `PORTAL`, `TEAM`, `PHONE`, `DESK`, `EMAIL`, `WHATSAPP` |  |  |
 | `options` | [BookingOptionRequest](#m-BookingOptionRequest)[] |  |  |
 | `payOnSite` | booléen |  |  |
+| `priceAdjustment` | [BookingPriceAdjustmentRequest](#m-BookingPriceAdjustmentRequest) |  |  |
 
 <a id="m-BookingBatchResponse-Summary"></a>
 #### BookingBatchResponse.Summary
@@ -1071,6 +1093,16 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `email` | texte |  |  |
 | `phone` | texte |  |  |
 | `role` | enum : `HOST`, `GUEST`, `ORGANIZER`, `MEMBER` |  |  |
+
+<a id="m-BookingPriceAdjustmentRequest"></a>
+#### BookingPriceAdjustmentRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `discountRate` | nombre décimal |  | min `0.01`, max `100` |
+| `newAmount` | nombre décimal |  | min `0` |
+| `reasonCode` | texte |  | longueur min `0`, longueur max `60` |
+| `reasonText` | texte |  | longueur min `0`, longueur max `500` |
 
 <a id="m-BookingRescheduleRequest"></a>
 #### BookingRescheduleRequest

@@ -121,7 +121,7 @@ class BookingWalletPaymentModeTest {
         verify(billableItemRepository).save(billableCaptor.capture());
         assertEquals(new BigDecimal("25000"), billableCaptor.getValue().getAmount());
         // Ni libelle ni metadonnees de couverture par droit : rien n'est couvert, tout est du.
-        assertEquals("Booking BKG-0001 - Salle de reunion", billableCaptor.getValue().getDescription());
+        assertEquals("Réservation BKG-0001 - Salle de reunion", billableCaptor.getValue().getDescription());
         verifyNoInteractions(objectMapper);
     }
 

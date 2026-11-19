@@ -1,6 +1,6 @@
 # booking : fonctionnement
 
-> Rédigé d'après le code, à jour des lots B0, B1, B2, B2b, B3, B7, B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code, à jour des lots B0, B1, B2, B2b, B3, B4, B7, B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -110,6 +110,7 @@ Les mêmes champs servent à la vérification, au blocage, à la création et à
    - `billingCompanyCode` : organisation pour le compte de laquelle le membre réserve (doit lui être rattachée), ou `NONE` ;
    - `participants`, `notes`, `metadataJson` (texte JSON libre) ;
    - `options` : `[{ "kind": "SERVICE" | "AMENITY", "code": "...", "quantity": 1 }]`, services du catalogue et équipements optionnels ajoutés dès la création, sur la même facture (lot B2b) ;
+   - `priceAdjustment` (lot B4, équipe seulement) : `{ "discountRate": 10 }` ou `{ "newAmount": 40000 }`, avec `reasonCode` (liste `BOOKING_PRICE_ADJUSTMENT_REASON`) et `reasonText`. Voir [Ajuster le prix](#ajuster-le-prix-lot-b4-19112026) ;
    - `payOnSite: true` (lot B3) : rendez-vous sans paiement, réglé sur place ; paiement `DIRECT` seulement (`400 PAY_ON_SITE_DIRECT_ONLY`). Toujours permis à l'équipe ;
    - `channel` (équipe seulement) : `PHONE`, `DESK`, `EMAIL`, `WHATSAPP`. Sans lui, le serveur note `TEAM` (back-office) ou `PORTAL` (espace client). L'auteur (`createdBy`) est lu dans la session. Les deux sont dans la réponse.
 3. Réponse `201` : la réservation. Selon le cas, `status` vaut :
@@ -353,3 +354,14 @@ Détail : [lot B7](../../backend/booking/lot-b7-listes-recherche-reponse.md).
 - Réglages : `bookings.pay-on-site.portal-enabled` (coupé), `bookings.pay-on-site.max-no-shows` (2), `bookings.pay-on-site.no-show-window-days` (90), `bookings.payment-due.reminder-minutes` (30).
 
 Détail : [lot B3](../../backend/booking/lot-b3-regle-sur-place.md).
+
+## Ajuster le prix (lot B4, 19/11/2026)
+
+- À la création (`priceAdjustment` dans le corps) ou ensuite : `POST /bookings/{numéro}/price-adjustment` avec `{ "discountRate": 10, "reasonCode": "LOYAL_CLIENT" }` ou `{ "newAmount": 40000, "reasonCode": "OTHER", "reasonText": "..." }`. Un seul des deux montants ; seulement une baisse ; motif obligatoire (liste `BOOKING_PRICE_ADJUSTMENT_REASON`, dans `GET /bookings/reference`).
+- Avec le droit `BOOKING:PRICE_ADJUST` et jusqu'à `bookings.price-adjustment.max-rate` (20 %) : appliqué tout de suite (`priceAdjustmentStatus: APPLIED`), facture ou avoir à jour.
+- Au-delà, ou sans le droit : demande d'approbation (centre `BOOKING`, type `PRICE_ADJUSTMENT`, `subjectRef` = numéro de réservation ; `priceAdjustmentStatus: PENDING`, `priceAdjustmentApprovalNumber`). À la création, la réservation attend en `PENDING_APPROVAL`. Accord : remise appliquée et la réservation continue ; refus : prix calculé gardé (`REJECTED`) et la réservation continue.
+- Afficher sur la fiche : prix d'origine barré (`originalAmount`), remise (`priceAdjustmentAmount`, `priceAdjustmentRate`), motif, auteur, état. Masquer le bouton si un ajustement existe déjà (`409`).
+- Écran d'approbation : bouton « Ouvrir la réservation » quand `subjectType === "BOOKING"` (`GET /bookings/{subjectRef}`) ; `detailsJson` : `amountBefore`, `amountAfter`, `discount`, `rate`, `reason`, `resourceCode`, `contactName`, `startedAt`.
+- Tarif préférentiel par client ou segment : règles tarifaires à audience (lot B10, module ressource).
+
+Détail : [lot B4](../../backend/booking/lot-b4-ajustement-prix.md).

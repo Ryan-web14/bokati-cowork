@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-86 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+87 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -49,6 +49,7 @@
 | POST | `/sni/api/v1/bookings/{bookingNumber}/notifications/reminder` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-bookingnumber-notifications-reminder) |
 | POST | `/sni/api/v1/bookings/{bookingNumber}/participants` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-bookingnumber-participants) |
 | DELETE | `/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-delete-sni-api-v1-bookings-bookingnumber-participants-participantid) |
+| POST | `/sni/api/v1/bookings/{bookingNumber}/price-adjustment` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-bookingnumber-price-adjustment) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/reject` | BOOKING:CANCEL | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-reject) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/reschedule` | BOOKING:UPDATE | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-bookingnumber-reschedule) |
 | GET | `/sni/api/v1/bookings/{bookingNumber}/reschedule/preview` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-bookingnumber-reschedule-preview) |

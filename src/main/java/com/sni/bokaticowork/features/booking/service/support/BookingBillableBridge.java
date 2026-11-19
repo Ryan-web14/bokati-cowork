@@ -204,7 +204,17 @@ public class BookingBillableBridge {
             return desc.toString();
         }
 
-        return "Booking " + bookingNumber + " - " + resourceName;
+        StringBuilder desc = new StringBuilder("Réservation ").append(bookingNumber).append(" - ").append(resourceName);
+        // Lot B4 : un prix ajuste par l'equipe se lit sur la facture.
+        if ("APPLIED".equals(booking.getPriceAdjustmentStatus()) && booking.getOriginalAmount() != null) {
+            desc.append(" | Prix ajusté de ").append(booking.getOriginalAmount().stripTrailingZeros().toPlainString())
+                    .append(" à ").append(booking.getTotalAmount() == null ? "0" : booking.getTotalAmount().stripTrailingZeros().toPlainString())
+                    .append(" ").append(booking.getCurrency());
+            if (StringUtils.hasText(booking.getPriceAdjustmentReason())) {
+                desc.append(" (").append(booking.getPriceAdjustmentReason()).append(")");
+            }
+        }
+        return desc.toString();
     }
 
     private void appendReferenceAmount(StringBuilder desc, Booking booking) {

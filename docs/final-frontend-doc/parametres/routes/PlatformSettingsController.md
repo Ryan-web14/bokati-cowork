@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [parametres](../README.md) · 5 route(s).
+Module [parametres](../README.md) · 6 route(s).
 
 ## Routes
 
@@ -17,6 +17,7 @@ Module [parametres](../README.md) · 5 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `domain` | requête | `SettingDomain` |  |  |
+| `q` | requête | `String` |  |  |
 
 <a id="r-get-sni-api-v1-admin-settings-domains"></a>
 ### GET /sni/api/v1/admin/settings/domains
@@ -38,6 +39,18 @@ Module [parametres](../README.md) · 5 route(s).
 | --- | --- | --- | --- | --- |
 | `key` | chemin | `String` | oui |  |
 | `reason` | requête | `String` |  |  |
+
+<a id="r-get-sni-api-v1-admin-settings-key"></a>
+### GET /sni/api/v1/admin/settings/{key}
+
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS` ; contrôle supplémentaire sur la méthode : `hasRole('SUPER_ADMIN') or hasRole('ADMIN')`
+- Réponse : `PlatformSettingsAdminService.SettingView`
+- Modèles : [PlatformSettingsAdminService.SettingView](#m-PlatformSettingsAdminService-SettingView)
+- Code : `src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettingsController.java`, méthode `get`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `key` | chemin | `String` | oui |  |
 
 <a id="r-put-sni-api-v1-admin-settings-key"></a>
 ### PUT /sni/api/v1/admin/settings/{key}

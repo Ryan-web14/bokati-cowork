@@ -347,6 +347,31 @@ public class BookingExtras {
         return view(line);
     }
 
+    /**
+     * Lot B4 : ajustement manuel du prix (remise de l'equipe, motif trace). Meme mecanique que le
+     * code promo : ligne de remise, montant baisse avant facture, avoir apres.
+     *
+     * @return la piece emise (avoir) ou {@code null} si rien n'etait encore facture
+     */
+    @Transactional
+    public String applyManualDiscount(Booking booking, BigDecimal discount, String label) {
+        BigDecimal base = booking.getTotalAmount() == null ? BigDecimal.ZERO : booking.getTotalAmount();
+        BigDecimal amount = discount.min(base);
+        if (amount.signum() <= 0) {
+            return null;
+        }
+        BookingLine line = line(booking, BookingLineType.DISCOUNT, "MANUAL", label, 1, amount.negate());
+        String document = reduce(booking, amount, label);
+        line.setBillableNumber(document);
+        lineRepository.save(line);
+        booking.setTotalAmount(base.subtract(amount));
+        bookingRepository.save(booking);
+        eventWriter.write(booking, BookingEventType.BOOKING_PRICE_ADJUSTED, "Prix ajusté",
+                label + " : -" + amount.stripTrailingZeros().toPlainString() + " " + booking.getCurrency()
+                        + (document == null ? "" : ", pièce " + document), null);
+        return document;
+    }
+
     /** Baisse le montant facture : element non facture modifie, sinon avoir sur la facture. */
     private String reduce(Booking booking, BigDecimal discount, String label) {
         if (!StringUtils.hasText(booking.getBillableNumber())) {

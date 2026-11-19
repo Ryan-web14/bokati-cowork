@@ -219,6 +219,16 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.previewChangeResource(bookingNumber, newResourceCode));
     }
 
+    /**
+     * Lot B4 : ajustement manuel du prix d'une reservation existante. Dans le plafond, applique ;
+     * au-dela, demande d'approbation (la reponse porte {@code priceAdjustmentStatus: PENDING}).
+     */
+    @PostMapping("/{bookingNumber}/price-adjustment")
+    public ResponseEntity<BookingResponse> adjustPrice(@PathVariable String bookingNumber,
+            @Valid @RequestBody com.sni.bokaticowork.features.booking.dto.request.BookingPriceAdjustmentRequest request) {
+        return ResponseEntity.ok(bookingService.adjustPrice(bookingNumber, request));
+    }
+
     @PatchMapping("/{bookingNumber}/reschedule")
     public ResponseEntity<BookingResponse> reschedule(@PathVariable String bookingNumber,
                                                       @Valid @RequestBody BookingRescheduleRequest request) {

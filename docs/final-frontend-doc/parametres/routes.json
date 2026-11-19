@@ -148,6 +148,12 @@
      "name": "domain",
      "required": false,
      "type": "com.sni.bokaticowork.core.settings.platform.SettingDomain"
+    },
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
     }
    ],
    "response": "ResponseEntity<List<com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.SettingView>>"
@@ -196,6 +202,31 @@
      "in": "query",
      "name": "reason",
      "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.SettingView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/settings/{key}",
+   "package": "core.settings.platform",
+   "controller": "PlatformSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettingsController.java",
+   "handler": "get",
+   "declaredIn": "PlatformSettingsController",
+   "access": {
+    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "key",
+     "required": true,
      "type": "String"
     }
    ],

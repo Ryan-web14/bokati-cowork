@@ -1121,6 +1121,34 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/price-adjustment",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "adjustPrice",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingPriceAdjustmentRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
     "PATCH"
    ],
    "path": "/sni/api/v1/bookings/{bookingNumber}/reject",
@@ -2568,6 +2596,30 @@
     },
     "payOnSite": {
      "type": "boolean"
+    },
+    "originalAmount": {
+     "type": "number"
+    },
+    "priceAdjustmentAmount": {
+     "type": "number"
+    },
+    "priceAdjustmentRate": {
+     "type": "number"
+    },
+    "priceAdjustmentReason": {
+     "type": "string"
+    },
+    "priceAdjustmentReasonCode": {
+     "type": "string"
+    },
+    "priceAdjustmentBy": {
+     "type": "string"
+    },
+    "priceAdjustmentStatus": {
+     "type": "string"
+    },
+    "priceAdjustmentApprovalNumber": {
+     "type": "string"
     }
    }
   },
@@ -2691,6 +2743,9 @@
     },
     "payOnSite": {
      "type": "boolean"
+    },
+    "priceAdjustment": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.request.BookingPriceAdjustmentRequest"
     }
    }
   },
@@ -3776,6 +3831,33 @@
       "ORGANIZER",
       "MEMBER"
      ]
+    }
+   }
+  },
+  "BookingPriceAdjustmentRequest": {
+   "type": "object",
+   "properties": {
+    "discountRate": {
+     "maximum": 100,
+     "exclusiveMaximum": false,
+     "minimum": 0.01,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "newAmount": {
+     "minimum": 0,
+     "exclusiveMinimum": false,
+     "type": "number"
+    },
+    "reasonCode": {
+     "maxLength": 60,
+     "minLength": 0,
+     "type": "string"
+    },
+    "reasonText": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
     }
    }
   },
@@ -4923,6 +5005,7 @@
   "BookingStatusHistoryResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingStatusHistoryResponse",
   "BookingParticipantResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingParticipantResponse",
   "BookingParticipantRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest",
+  "BookingPriceAdjustmentRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingPriceAdjustmentRequest",
   "BookingRescheduleRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingRescheduleRequest",
   "BookingTransferRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingTransferRequest",
   "BookingExtras.LineView": "com.sni.bokaticowork.features.booking.service.support.BookingExtras.LineView",

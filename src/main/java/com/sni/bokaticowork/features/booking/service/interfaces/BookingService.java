@@ -53,6 +53,12 @@ public interface BookingService {
     /** Lot B1 : reservations non reglees a l'echeance passees en EXPIRED ; rend leur nombre. */
     int expireUnpaid(int limit);
 
+    /** Lot B4 : ajustement manuel du prix d'une reservation existante. */
+    default BookingResponse adjustPrice(String bookingNumber,
+                                        com.sni.bokaticowork.features.booking.dto.request.BookingPriceAdjustmentRequest request) {
+        throw new UnsupportedOperationException();
+    }
+
     /** Lot B3 (decision D2) : rappel au client avant l'echeance de paiement ; rend le nombre de rappels envoyes. */
     default int remindPaymentsDue(int limit) {
         return 0;

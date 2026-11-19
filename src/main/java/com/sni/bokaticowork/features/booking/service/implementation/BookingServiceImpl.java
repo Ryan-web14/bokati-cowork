@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.booking.service.implementation;
 
+import com.sni.bokaticowork.features.booking.service.support.BookingPriceAdjuster;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
@@ -298,8 +300,18 @@ public class BookingServiceImpl implements BookingService {
                 && booking.getChannel() == com.sni.bokaticowork.features.booking.enums.BookingChannel.PORTAL
                 && resourceVisibility.access(resource, booking.getOwnerType() == null ? null : booking.getOwnerType().name(),
                         booking.getOwnerCode()) != com.sni.bokaticowork.features.ressource.service.support.ResourceVisibilityService.Access.DIRECT;
-        boolean approval = effectivePolicy.approvalRequired() || onRequest;
+        // Lot B4 : ajustement manuel du prix ; au-dela du plafond, approbation avant confirmation.
+        BookingPriceAdjuster.Plan pricePlan = null;
+        if (request.priceAdjustment() != null) {
+            if (priceAdjuster == null || !isCurrentUserStaff()) {
+                throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException("Seule l'équipe ajuste le prix d'une réservation");
+            }
+            pricePlan = priceAdjuster.plan(booking.getTotalAmount(), request.priceAdjustment());
+        }
+        boolean priceApproval = pricePlan != null && pricePlan.needsApproval();
+        boolean approval = effectivePolicy.approvalRequired() || onRequest || priceApproval;
         booking.setApprovalRequired(approval);
+        booking.setApprovalForPriceOnly(priceApproval && !effectivePolicy.approvalRequired() && !onRequest);
         booking.setVirtualMeetingUrl(virtualMeetingSupport.meetingUrl(resource, booking.getBookingNumber()));
         boolean awaitsPayment = request.paymentMode() != null && request.paymentMode().awaitsPayment();
         if (approval) {
@@ -319,6 +331,14 @@ public class BookingServiceImpl implements BookingService {
 
         saveLines(booking, price);
         saveParticipants(booking, request);
+        if (pricePlan != null) {
+            if (pricePlan.needsApproval()) {
+                priceAdjuster.requestApproval(booking, pricePlan, sessionActor());
+            } else {
+                priceAdjuster.apply(booking, pricePlan, sessionActor());
+            }
+            booking = bookingRepository.findByBookingNumber(booking.getBookingNumber()).orElse(booking);
+        }
         // Lot B2b : options prises avec la reservation, sur la meme facture.
         if (request.options() != null && !request.options().isEmpty() && bookingExtras != null) {
             for (var option : request.options()) {
@@ -1440,9 +1460,25 @@ public class BookingServiceImpl implements BookingService {
 
     private com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite payOnSite;
 
+    private BookingPriceAdjuster priceAdjuster;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPriceAdjuster(@org.springframework.context.annotation.Lazy BookingPriceAdjuster priceAdjuster) {
+        this.priceAdjuster = priceAdjuster;
+    }
+
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     void setPayOnSite(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite payOnSite) {
         this.payOnSite = payOnSite;
+    }
+
+    @Override
+    public BookingResponse adjustPrice(String bookingNumber,
+                                       com.sni.bokaticowork.features.booking.dto.request.BookingPriceAdjustmentRequest request) {
+        if (priceAdjuster == null) {
+            throw new ConflictException("Ajustement de prix indisponible");
+        }
+        return bookingMapper.toResponse(priceAdjuster.adjust(bookingNumber, request));
     }
 
     /** Lot B3 (decision D2) : l'equipe est prevenue qu'un rendez-vous non regle a ete libere. */

@@ -89,6 +89,15 @@ public record BookingResponse(
         /** {@code totalAmount} (ressource, remises deduites) plus {@code extrasAmount}. */
         BigDecimal grandTotal,
         /** Lot B3 : rendez-vous sans paiement, regle sur place. */
-        Boolean payOnSite
+        Boolean payOnSite,
+        /** Lot B4 : prix calcule avant ajustement, remise, taux, motif, auteur, etat (APPLIED, PENDING, REJECTED), demande d'approbation. */
+        BigDecimal originalAmount,
+        BigDecimal priceAdjustmentAmount,
+        BigDecimal priceAdjustmentRate,
+        String priceAdjustmentReason,
+        String priceAdjustmentReasonCode,
+        String priceAdjustmentBy,
+        String priceAdjustmentStatus,
+        String priceAdjustmentApprovalNumber
 ) {
 }

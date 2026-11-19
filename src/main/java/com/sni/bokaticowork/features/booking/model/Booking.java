@@ -158,6 +158,37 @@ public class Booking {
     @Column(name = "payment_reminder_sent_at")
     private Instant paymentReminderSentAt;
 
+    /** Lot B4 : prix calcule avant l'ajustement manuel. */
+    @Column(name = "original_amount", precision = 19, scale = 2)
+    private BigDecimal originalAmount;
+
+    /** Lot B4 : APPLIED, PENDING (approbation) ou REJECTED ; nul sans ajustement. */
+    @Column(name = "price_adjustment_status", length = 20)
+    private String priceAdjustmentStatus;
+
+    @Column(name = "price_adjustment_amount", precision = 19, scale = 2)
+    private BigDecimal priceAdjustmentAmount;
+
+    @Column(name = "price_adjustment_rate", precision = 7, scale = 2)
+    private BigDecimal priceAdjustmentRate;
+
+    @Column(name = "price_adjustment_reason", length = 600)
+    private String priceAdjustmentReason;
+
+    @Column(name = "price_adjustment_reason_code", length = 60)
+    private String priceAdjustmentReasonCode;
+
+    @Column(name = "price_adjustment_by", length = 180)
+    private String priceAdjustmentBy;
+
+    @Column(name = "price_adjustment_approval_number", length = 60)
+    private String priceAdjustmentApprovalNumber;
+
+    /** Lot B4 : la reservation n'attend l'approbation que pour son ajustement de prix. */
+    @lombok.Builder.Default
+    @Column(name = "approval_for_price_only", nullable = false)
+    private Boolean approvalForPriceOnly = Boolean.FALSE;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;
