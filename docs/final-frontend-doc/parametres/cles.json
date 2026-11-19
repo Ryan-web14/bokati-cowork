@@ -4,7 +4,7 @@
    "domain": "BOOKING",
    "label": "Réservation",
    "adminEditable": true,
-   "count": 23
+   "count": 31
   },
   {
    "domain": "RESOURCES",
@@ -4265,6 +4265,22 @@
    "label": "Page de l'espace client ouverte par le bouton WhatsApp : portefeuille"
   },
   {
+   "key": "bookings.deposit.rate",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose"
+  },
+  {
+   "key": "bookings.early-release.minutes",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais)"
+  },
+  {
    "key": "bookings.pay-on-site.max-no-shows",
    "domain": "BOOKING",
    "type": "INTEGER",
@@ -4343,6 +4359,54 @@
    "effect": "LIVE",
    "default": "20",
    "label": "Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST"
+  },
+  {
+   "key": "bookings.reliability.late-cancel-hours",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "24",
+   "label": "Réservations : annulation tardive si faite moins de tant d'heures avant le début"
+  },
+  {
+   "key": "bookings.reliability.late-cancel-penalty",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "10",
+   "label": "Réservations : points de fiabilité retirés par annulation tardive"
+  },
+  {
+   "key": "bookings.reliability.mode",
+   "domain": "BOOKING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "DEPOSIT",
+   "label": "Réservations : garantie imposée sous le seuil de fiabilité : DEPOSIT (acompte) ou PREPAY (paiement complet en ligne)"
+  },
+  {
+   "key": "bookings.reliability.no-show-penalty",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "20",
+   "label": "Réservations : points de fiabilité retirés par absence"
+  },
+  {
+   "key": "bookings.reliability.threshold",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60",
+   "label": "Réservations : score de fiabilité (sur 100) sous lequel une garantie est imposée (0 : jamais)"
+  },
+  {
+   "key": "bookings.reliability.window-days",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "180",
+   "label": "Réservations : période, en jours, du calcul de la fiabilité"
   },
   {
    "key": "bookings.reminders.enabled",

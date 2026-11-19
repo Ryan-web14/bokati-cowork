@@ -46,5 +46,9 @@ public enum BookingEventType {
     /** Lot B9a : le client confirme sa venue depuis le rappel. */
     BOOKING_ATTENDANCE_CONFIRMED,
     /** Lot B9a : creneau libere faute d'arrivee N minutes apres le debut. */
-    BOOKING_EARLY_RELEASED
+    BOOKING_EARLY_RELEASED,
+    /** Lot B9d : invitation envoyee a un participant, reponse, arrivee pointee. */
+    BOOKING_PARTICIPANT_INVITED,
+    BOOKING_PARTICIPANT_ANSWERED,
+    BOOKING_PARTICIPANT_CHECKED_IN
 }

@@ -8,7 +8,7 @@
 
 | Domaine | Libellé | Ouvert à `ADMIN` | Réglages |
 | --- | --- | --- | --- |
-| [`BOOKING`](#booking) | Réservation | oui | 23 |
+| [`BOOKING`](#booking) | Réservation | oui | 31 |
 | [`RESOURCES`](#resources) | Ressources et horaires | oui | 19 |
 | [`SUBSCRIPTIONS`](#subscriptions) | Abonnements | oui | 19 |
 | [`PASSES`](#passes) | Passes | oui | 6 |
@@ -42,7 +42,7 @@ Types : `BOOLEAN`, `CRON`, `DECIMAL`, `EMAIL`, `ENUM`, `INTEGER`, `SECRET`, `TEX
 
 ## BOOKING
 
-Réservation · ouvert à ADMIN · 23 réglage(s)
+Réservation · ouvert à ADMIN · 31 réglage(s)
 
 | Clé | Type | Effet | Défaut | Libellé |
 | --- | --- | --- | --- | --- |
@@ -57,6 +57,8 @@ Réservation · ouvert à ADMIN · 23 réglage(s)
 | `bokati.booking.wallet.hold-grace-minutes` | INTEGER | LIVE | `60` | Grâce de retenue sur portefeuille (minutes) |
 | `bokati.booking.wallet.settlement-delay-minutes` | INTEGER | LIVE | `1` | Délai de règlement sur portefeuille (minutes) |
 | `bokati.booking.wallet.worker-delay-ms` | INTEGER | LIVE | `15000` | Cadence des retenues de réservation (ms) |
+| `bookings.deposit.rate` | INTEGER | LIVE | `30` | Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose |
+| `bookings.early-release.minutes` | INTEGER | LIVE | `0` | Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais) |
 | `bookings.pay-on-site.max-no-shows` | INTEGER | LIVE | `2` | Réservations : absences sur des rendez-vous réglés sur place avant retrait d'office de l'option (0 : jamais) |
 | `bookings.pay-on-site.no-show-window-days` | INTEGER | LIVE | `90` | Réservations : période, en jours, sur laquelle les absences sont comptées |
 | `bookings.pay-on-site.portal-enabled` | BOOLEAN | LIVE | `false` | Réservations : rendez-vous réglé sur place ouvert au portail pour tous les clients sans option propre |
@@ -67,6 +69,12 @@ Réservation · ouvert à ADMIN · 23 réglage(s)
 | `bookings.payment-due.far-minutes` | INTEGER | LIVE | `1440` | Réservations : validité longue, en minutes |
 | `bookings.payment-due.reminder-minutes` | INTEGER | LIVE | `30` | Réservations : rappel au client tant de minutes avant l'échéance de paiement (0 : aucun rappel) |
 | `bookings.price-adjustment.max-rate` | INTEGER | LIVE | `20` | Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST |
+| `bookings.reliability.late-cancel-hours` | INTEGER | LIVE | `24` | Réservations : annulation tardive si faite moins de tant d'heures avant le début |
+| `bookings.reliability.late-cancel-penalty` | INTEGER | LIVE | `10` | Réservations : points de fiabilité retirés par annulation tardive |
+| `bookings.reliability.mode` | ENUM | LIVE | `DEPOSIT` | Réservations : garantie imposée sous le seuil de fiabilité : DEPOSIT (acompte) ou PREPAY (paiement complet en ligne) |
+| `bookings.reliability.no-show-penalty` | INTEGER | LIVE | `20` | Réservations : points de fiabilité retirés par absence |
+| `bookings.reliability.threshold` | INTEGER | LIVE | `60` | Réservations : score de fiabilité (sur 100) sous lequel une garantie est imposée (0 : jamais) |
+| `bookings.reliability.window-days` | INTEGER | LIVE | `180` | Réservations : période, en jours, du calcul de la fiabilité |
 | `bookings.reminders.enabled` | BOOLEAN | LIVE | `true` | Réservations : rappels automatiques par courriel avant le début |
 | `bookings.reminders.offsets-minutes` | TEXT | LIVE | `1440,120` | Réservations : délais des rappels avant le début, en minutes, séparés par des virgules (la veille et 2 h avant) |
 

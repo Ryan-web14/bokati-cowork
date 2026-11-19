@@ -1583,6 +1583,118 @@
   },
   {
    "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/details",
+   "package": "features.booking.controller",
+   "controller": "BookingGuestsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingGuestsController.java",
+   "handler": "details",
+   "declaredIn": "BookingGuestsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.service.support.BookingGuests.Details",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/participants/invite",
+   "package": "features.booking.controller",
+   "controller": "BookingGuestsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingGuestsController.java",
+   "handler": "inviteAll",
+   "declaredIn": "BookingGuestsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}/check-in",
+   "package": "features.booking.controller",
+   "controller": "BookingGuestsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingGuestsController.java",
+   "handler": "checkIn",
+   "declaredIn": "BookingGuestsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CHECKIN"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "participantId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingParticipantResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}/invite",
+   "package": "features.booking.controller",
+   "controller": "BookingGuestsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingGuestsController.java",
+   "handler": "invite",
+   "declaredIn": "BookingGuestsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "participantId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/bookings/{number}/end-report",
@@ -1785,6 +1897,36 @@
     }
    ],
    "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/pay-on-site/reliability/{ownerType}/{ownerCode}",
+   "package": "features.booking.controller",
+   "controller": "BookingPayOnSiteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingPayOnSiteController.java",
+   "handler": "reliability",
+   "declaredIn": "BookingPayOnSiteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ownerType",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType"
+    },
+    {
+     "in": "path",
+     "name": "ownerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingReliability.Score>"
   },
   {
    "methods": [
@@ -2390,6 +2532,36 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/public/bookings/invitations/{token}",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingInvitationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingInvitationController.java",
+   "handler": "answer",
+   "declaredIn": "PublicBookingInvitationController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "answer",
+     "required": false,
+     "default": "ACCEPT",
+     "type": "String"
+    }
+   ],
+   "response": "ModelAndView"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/resource-analytics/bookings/{number}/margin",
    "package": "features.booking.controller",
    "controller": "ResourceAnalyticsController",
@@ -2904,6 +3076,28 @@
     "releasedEarlyAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "depositAmount": {
+     "type": "number"
+    },
+    "depositPaidAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "roomLayout": {
+     "type": "string"
+    },
+    "specialRequests": {
+     "type": "string"
+    },
+    "internalNotes": {
+     "type": "string"
+    },
+    "tags": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
     }
    }
   },
@@ -3033,6 +3227,13 @@
     },
     "caller": {
      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.request.BookingCallerRequest"
+    },
+    "depositRate": {
+     "maximum": 100,
+     "exclusiveMaximum": false,
+     "minimum": 1,
+     "exclusiveMinimum": false,
+     "type": "number"
     }
    }
   },
@@ -3997,7 +4198,10 @@
       "BOOKING_PHONE_CALL",
       "BOOKING_LEAD_CONVERTED",
       "BOOKING_ATTENDANCE_CONFIRMED",
-      "BOOKING_EARLY_RELEASED"
+      "BOOKING_EARLY_RELEASED",
+      "BOOKING_PARTICIPANT_INVITED",
+      "BOOKING_PARTICIPANT_ANSWERED",
+      "BOOKING_PARTICIPANT_CHECKED_IN"
      ]
     },
     "title": {
@@ -4096,6 +4300,18 @@
       "DECLINED",
       "REMOVED"
      ]
+    },
+    "invitedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "respondedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checkedInAt": {
+     "type": "string",
+     "format": "date-time"
     }
    }
   },
@@ -4411,6 +4627,26 @@
     }
    }
   },
+  "BookingGuests.Details": {
+   "type": "object",
+   "properties": {
+    "roomLayout": {
+     "type": "string"
+    },
+    "specialRequests": {
+     "type": "string"
+    },
+    "internalNotes": {
+     "type": "string"
+    },
+    "tags": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
   "BookingOperations.EndReportResponse": {
    "type": "object",
    "properties": {
@@ -4564,6 +4800,55 @@
      "maxLength": 500,
      "minLength": 0,
      "type": "string"
+    }
+   }
+  },
+  "BookingReliability.Score": {
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "score": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "bookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "noShows": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lateCancellations": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "windowDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "threshold": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "guaranteeRequired": {
+     "type": "boolean"
+    },
+    "guarantee": {
+     "type": "string"
+    },
+    "depositRate": {
+     "type": "number"
     }
    }
   },
@@ -5549,12 +5834,14 @@
   "BookingExtrasController.ParticipantsRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.ParticipantsRequest",
   "BookingExtrasController.PromoRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.PromoRequest",
   "BookingExtrasController.BundleBookingRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.BundleBookingRequest",
+  "BookingGuests.Details": "com.sni.bokaticowork.features.booking.service.support.BookingGuests.Details",
   "BookingOperations.EndReportResponse": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse",
   "BookingOperations.EndReportRequest": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportRequest",
   "BookingOperations.UsageRulesView": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView",
   "BookingPayOnSite.Grant": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Grant",
   "BookingPayOnSite.Access": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access",
   "BookingPayOnSiteController.GrantRequest": "com.sni.bokaticowork.features.booking.controller.BookingPayOnSiteController.GrantRequest",
+  "BookingReliability.Score": "com.sni.bokaticowork.features.booking.service.support.BookingReliability.Score",
   "LookupItem": "com.sni.bokaticowork.core.reference.lookup.LookupItem",
   "BookingReferenceController.BookingReference": "com.sni.bokaticowork.features.booking.controller.BookingReferenceController.BookingReference",
   "BookingWaitlistEntryResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse",

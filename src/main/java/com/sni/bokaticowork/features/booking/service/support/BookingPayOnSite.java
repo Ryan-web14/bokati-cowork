@@ -55,6 +55,13 @@ public class BookingPayOnSite {
     private PlatformSettings settings;
     private SessionActor actor;
 
+    private BookingReliability reliability;
+
+    @Autowired(required = false)
+    void setReliability(BookingReliability reliability) {
+        this.reliability = reliability;
+    }
+
     @Autowired(required = false)
     void setOptional(PlatformSettings settings, SessionActor actor) {
         this.settings = settings;
@@ -76,6 +83,10 @@ public class BookingPayOnSite {
 
     /** Refus au portail : {@code PAY_ON_SITE_NOT_ALLOWED}. */
     public void assertPortalAllowed(SubscriberType ownerType, String ownerCode) {
+        if (reliability != null && reliability.prepayRequired(ownerType, ownerCode)) {
+            throw ConflictException.coded("PREPAYMENT_REQUIRED",
+                    "Réglez votre réservation en ligne : le rendez-vous réglé sur place n'est pas disponible pour votre compte");
+        }
         if (!access(ownerType, ownerCode).allowed()) {
             throw ConflictException.coded("PAY_ON_SITE_NOT_ALLOWED",
                     "Le rendez-vous réglé sur place n'est pas ouvert à votre compte : réglez en ligne, ou contactez l'accueil");

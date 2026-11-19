@@ -318,6 +318,13 @@ public class BookingServiceImpl implements BookingService {
         booking.setApprovalForPriceOnly(priceApproval && !effectivePolicy.approvalRequired() && !onRequest);
         booking.setVirtualMeetingUrl(virtualMeetingSupport.meetingUrl(resource, booking.getBookingNumber()));
         boolean awaitsPayment = request.paymentMode() != null && request.paymentMode().awaitsPayment();
+        // Lot B9c : acompte demande par l'equipe, ou impose par une fiabilite faible (paiement direct).
+        if (request.paymentMode() == BookingPaymentMode.DIRECT) {
+            java.math.BigDecimal deposit = request.depositRate() != null && isCurrentUserStaff()
+                    ? com.sni.bokaticowork.features.booking.service.support.BookingReliability.deposit(booking.getTotalAmount(), request.depositRate())
+                    : reliability == null ? null : reliability.depositFor(booking.getOwnerType(), booking.getOwnerCode(), booking.getTotalAmount());
+            booking.setDepositAmount(deposit);
+        }
         if (approval) {
             booking.setStatus(BookingStatus.PENDING_APPROVAL);
         } else if (awaitsPayment) {
@@ -1495,6 +1502,44 @@ public class BookingServiceImpl implements BookingService {
             throw new ConflictException("Ajustement de prix indisponible");
         }
         return bookingMapper.toResponse(priceAdjuster.adjust(bookingNumber, request));
+    }
+
+    private com.sni.bokaticowork.features.booking.service.support.BookingReliability reliability;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setReliability(com.sni.bokaticowork.features.booking.service.support.BookingReliability reliability) {
+        this.reliability = reliability;
+    }
+
+    private com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository billingDocuments;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setBillingDocuments(com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository billingDocuments) {
+        this.billingDocuments = billingDocuments;
+    }
+
+    /**
+     * Lot B9c : un paiement partiel atteint l'acompte d'une reservation en attente de paiement :
+     * elle est confirmee, le reste se regle sur place (statut de reglement « en attente »).
+     */
+    @Override
+    public boolean onPartialPayment(String bookingNumber) {
+        Booking booking = getForService(bookingNumber);
+        if (booking.getStatus() != BookingStatus.PENDING_PAYMENT || booking.getDepositAmount() == null
+                || booking.getDepositAmount().signum() <= 0 || billingDocuments == null || !StringUtils.hasText(booking.getBillableNumber())) {
+            return false;
+        }
+        java.math.BigDecimal paid = billingDocuments.findFirstBySourceAndType("BILLABLE_ITEM", booking.getBillableNumber(), "INVOICE")
+                .map(com.sni.bokaticowork.features.billing.model.BillingDocument::getPaidAmount).orElse(java.math.BigDecimal.ZERO);
+        if (paid == null || paid.compareTo(booking.getDepositAmount()) < 0) {
+            return false;
+        }
+        booking.setDepositPaidAt(Instant.now());
+        bookingRepository.save(booking);
+        confirmInternal(booking, new BookingStatusChangeRequest("ACOMPTE",
+                "Confirmée à l'acompte de " + booking.getDepositAmount().stripTrailingZeros().toPlainString() + " " + booking.getCurrency()
+                        + " ; le reste se règle sur place", Boolean.TRUE));
+        return true;
     }
 
     static final String EARLY_RELEASE_KEY = "bookings.early-release.minutes";

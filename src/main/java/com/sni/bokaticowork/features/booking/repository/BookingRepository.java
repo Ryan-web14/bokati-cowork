@@ -272,6 +272,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     /** Lot B9b : occurrences d'une serie recurrente. */
     List<Booking> findByRecurrenceGroupNumberOrderByStartedAtAsc(String recurrenceGroupNumber);
 
+    /** Lot B9c : annulations tardives (moins de {@code hours} heures avant le debut) depuis une date. */
+    @Query(nativeQuery = true, value = """
+            SELECT COUNT(*) FROM booking
+            WHERE deleted = false AND owner_type = :ownerType AND owner_code = :ownerCode
+              AND status = 'CANCELLED' AND cancelled_at IS NOT NULL AND started_at >= :from
+              AND (cancelled_at AT TIME ZONE :zone) > started_at - make_interval(hours => :hours)
+            """)
+    long countLateCancellations(@Param("ownerType") String ownerType, @Param("ownerCode") String ownerCode,
+                                @Param("from") LocalDateTime from, @Param("hours") int hours, @Param("zone") String zone);
+
     /** Lot B9a : reservations confirmees sans arrivee, commencees depuis le seuil, pas encore finies. */
     @Query(nativeQuery = true, value = """
             SELECT * FROM booking

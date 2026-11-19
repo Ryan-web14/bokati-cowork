@@ -157,6 +157,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `attendanceAnswer` | texte |  |  |
 | `attendanceAnsweredAt` | date-heure ISO 8601 UTC |  |  |
 | `releasedEarlyAt` | date-heure ISO 8601 UTC |  |  |
+| `depositAmount` | nombre décimal |  |  |
+| `depositPaidAt` | date-heure ISO 8601 UTC |  |  |
+| `roomLayout` | texte |  |  |
+| `specialRequests` | texte |  |  |
+| `internalNotes` | texte |  |  |
+| `tags` | texte[] |  |  |
 
 <a id="m-BookingDeskService-SeriesOutcome"></a>
 #### BookingDeskService.SeriesOutcome
@@ -223,6 +229,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `phone` | texte |  |  |
 | `role` | enum : `HOST`, `GUEST`, `ORGANIZER`, `MEMBER` |  |  |
 | `status` | enum : `INVITED`, `CONFIRMED`, `DECLINED`, `REMOVED` |  |  |
+| `invitedAt` | date-heure ISO 8601 UTC |  |  |
+| `respondedAt` | date-heure ISO 8601 UTC |  |  |
+| `checkedInAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-LocalTime"></a>
 #### LocalTime

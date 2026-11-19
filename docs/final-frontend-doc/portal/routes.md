@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-213 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+215 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -30,6 +30,8 @@
 | DELETE | `/sni/api/v1/client/bookings/{bookingNumber}` | membre | [ClientBookingController](routes/ClientBookingController.md#r-delete-sni-api-v1-client-bookings-bookingnumber) |
 | GET | `/sni/api/v1/client/bookings/{bookingNumber}` | membre | [ClientBookingController](routes/ClientBookingController.md#r-get-sni-api-v1-client-bookings-bookingnumber) |
 | POST | `/sni/api/v1/client/bookings/{bookingNumber}/pay/cash` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings-bookingnumber-pay-cash) |
+| POST | `/sni/api/v1/client/bookings/{bookingNumber}/reschedule` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings-bookingnumber-reschedule) |
+| GET | `/sni/api/v1/client/bookings/{bookingNumber}/reschedule/preview` | membre | [ClientBookingController](routes/ClientBookingController.md#r-get-sni-api-v1-client-bookings-bookingnumber-reschedule-preview) |
 | POST | `/sni/api/v1/client/bookings/{number}/end-report` | membre | [ClientBookingOperationsController](routes/ClientBookingOperationsController.md#r-post-sni-api-v1-client-bookings-number-end-report) |
 | GET | `/sni/api/v1/client/bookings/{number}/usage-rules` | membre | [ClientBookingOperationsController](routes/ClientBookingOperationsController.md#r-get-sni-api-v1-client-bookings-number-usage-rules) |
 | POST | `/sni/api/v1/client/bookings/{number}/usage-rules/accept` | membre | [ClientBookingOperationsController](routes/ClientBookingOperationsController.md#r-post-sni-api-v1-client-bookings-number-usage-rules-accept) |

@@ -208,6 +208,29 @@ public class Booking {
     @Column(name = "released_early_at")
     private Instant releasedEarlyAt;
 
+    /** Lot B9c : acompte qui confirme la reservation ; le reste se regle sur place. */
+    @Column(name = "deposit_amount", precision = 19, scale = 2)
+    private BigDecimal depositAmount;
+
+    /** Lot B9c : acompte recu (reservation confirmee sur acompte). */
+    @Column(name = "deposit_paid_at")
+    private Instant depositPaidAt;
+
+    /** Lot B9d : disposition de la salle (liste BOOKING_ROOM_LAYOUT). */
+    @Column(name = "room_layout", length = 60)
+    private String roomLayout;
+
+    @Column(name = "special_requests", length = 1000)
+    private String specialRequests;
+
+    /** Lot B9d : notes de l'equipe, jamais montrees au client. */
+    @Column(name = "internal_notes", length = 2000)
+    private String internalNotes;
+
+    /** Lot B9d : etiquettes (codes de la liste BOOKING_TAG, separes par des virgules). */
+    @Column(name = "tags", length = 700)
+    private String tags;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

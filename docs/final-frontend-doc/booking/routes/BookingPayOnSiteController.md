@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 4 route(s).
+Module [booking](../README.md) · 5 route(s).
 
 ## Routes
 
@@ -52,6 +52,19 @@ Module [booking](../README.md) · 4 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `date` | requête | `LocalDate` |  |  |
+
+<a id="r-get-sni-api-v1-bookings-pay-on-site-reliability-ownertype-ownercode"></a>
+### GET /sni/api/v1/bookings/pay-on-site/reliability/{ownerType}/{ownerCode}
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:READ`
+- Réponse : `BookingReliability.Score`
+- Modèles : [BookingReliability.Score](#m-BookingReliability-Score), [SubscriberType](#m-SubscriberType)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingPayOnSiteController.java`, méthode `reliability`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `ownerType` | chemin | `SubscriberType` | oui |  |
+| `ownerCode` | chemin | `String` | oui |  |
 
 ## Modèles
 
@@ -174,6 +187,29 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `attendanceAnswer` | texte |  |  |
 | `attendanceAnsweredAt` | date-heure ISO 8601 UTC |  |  |
 | `releasedEarlyAt` | date-heure ISO 8601 UTC |  |  |
+| `depositAmount` | nombre décimal |  |  |
+| `depositPaidAt` | date-heure ISO 8601 UTC |  |  |
+| `roomLayout` | texte |  |  |
+| `specialRequests` | texte |  |  |
+| `internalNotes` | texte |  |  |
+| `tags` | texte[] |  |  |
+
+<a id="m-BookingReliability-Score"></a>
+#### BookingReliability.Score
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `ownerType` | enum : `MEMBER`, `CUSTOMER`, `BUSINESS_ENTITY` |  |  |
+| `ownerCode` | texte |  |  |
+| `score` | entier |  |  |
+| `bookings` | entier int64 (texte au-delà de 2^53) |  |  |
+| `noShows` | entier int64 (texte au-delà de 2^53) |  |  |
+| `lateCancellations` | entier int64 (texte au-delà de 2^53) |  |  |
+| `windowDays` | entier |  |  |
+| `threshold` | entier |  |  |
+| `guaranteeRequired` | booléen |  |  |
+| `guarantee` | texte |  |  |
+| `depositRate` | nombre décimal |  |  |
 
 <a id="m-BookingLineResponse"></a>
 #### BookingLineResponse
@@ -203,3 +239,6 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `phone` | texte |  |  |
 | `role` | enum : `HOST`, `GUEST`, `ORGANIZER`, `MEMBER` |  |  |
 | `status` | enum : `INVITED`, `CONFIRMED`, `DECLINED`, `REMOVED` |  |  |
+| `invitedAt` | date-heure ISO 8601 UTC |  |  |
+| `respondedAt` | date-heure ISO 8601 UTC |  |  |
+| `checkedInAt` | date-heure ISO 8601 UTC |  |  |

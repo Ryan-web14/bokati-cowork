@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [portal](../README.md) · 8 route(s).
+Module [portal](../README.md) · 10 route(s).
 
 ## Routes
 
@@ -93,6 +93,33 @@ Module [portal](../README.md) · 8 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `bookingNumber` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-client-bookings-bookingnumber-reschedule"></a>
+### POST /sni/api/v1/client/bookings/{bookingNumber}/reschedule
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Corps JSON (obligatoire) : `ClientBookingController.ClientRescheduleRequest`
+- Réponse : `ClientBookingResponse`
+- Modèles : [ClientBookingResponse](#m-ClientBookingResponse), [ClientBookingController.ClientRescheduleRequest](#m-ClientBookingController-ClientRescheduleRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `reschedule`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `bookingNumber` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-client-bookings-bookingnumber-reschedule-preview"></a>
+### GET /sni/api/v1/client/bookings/{bookingNumber}/reschedule/preview
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Réponse : `BookingChangePreviewResponse`
+- Modèles : [BookingChangePreviewResponse](#m-BookingChangePreviewResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `previewReschedule`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `bookingNumber` | chemin | `String` | oui |  |
+| `newStartedAt` | requête | `LocalDateTime` | oui |  |
+| `newEndedAt` | requête | `LocalDateTime` | oui |  |
 
 ## Modèles
 
@@ -270,6 +297,31 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `amount` | nombre décimal |  |  |
 | `note` | texte |  | longueur min `0`, longueur max `500` |
 
+<a id="m-ClientBookingController-ClientRescheduleRequest"></a>
+#### ClientBookingController.ClientRescheduleRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `newStartedAt` | date-heure locale sans fuseau | oui |  |
+| `newEndedAt` | date-heure locale sans fuseau | oui |  |
+| `acceptPriceChange` | booléen |  |  |
+
+<a id="m-BookingChangePreviewResponse"></a>
+#### BookingChangePreviewResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `bookingNumber` | texte |  |  |
+| `currentAmount` | nombre décimal |  |  |
+| `newAmount` | nombre décimal |  |  |
+| `difference` | nombre décimal |  |  |
+| `change` | texte |  |  |
+| `currency` | texte |  |  |
+| `invoiced` | booléen |  |  |
+| `modificationCount` | entier |  |  |
+| `lastModifiedAt` | date-heure ISO 8601 UTC |  |  |
+| `lastModification` | texte |  |  |
+
 <a id="m-BookingParticipantResponse"></a>
 #### BookingParticipantResponse
 
@@ -282,6 +334,9 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `phone` | texte |  |  |
 | `role` | enum : `HOST`, `GUEST`, `ORGANIZER`, `MEMBER` |  |  |
 | `status` | enum : `INVITED`, `CONFIRMED`, `DECLINED`, `REMOVED` |  |  |
+| `invitedAt` | date-heure ISO 8601 UTC |  |  |
+| `respondedAt` | date-heure ISO 8601 UTC |  |  |
+| `checkedInAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-BookingParticipantRequest"></a>
 #### BookingParticipantRequest

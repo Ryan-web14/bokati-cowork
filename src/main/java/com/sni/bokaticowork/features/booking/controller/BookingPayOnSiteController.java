@@ -33,6 +33,7 @@ public class BookingPayOnSiteController {
     private final BookingPayOnSite payOnSite;
     private final BookingRepository bookings;
     private final BookingMapper mapper;
+    private final com.sni.bokaticowork.features.booking.service.support.BookingReliability reliability;
 
     public record GrantRequest(@NotNull Boolean enabled, @Size(max = 500) String reason) {
     }
@@ -54,6 +55,13 @@ public class BookingPayOnSiteController {
     public ResponseEntity<BookingPayOnSite.Grant> set(@PathVariable SubscriberType ownerType, @PathVariable String ownerCode,
                                                       @Valid @RequestBody GrantRequest request) {
         return ResponseEntity.ok(payOnSite.set(ownerType, ownerCode, request.enabled(), request.reason()));
+    }
+
+    /** Lot B9c : fiabilite d'un client (score, absences, annulations tardives, garantie demandee). */
+    @GetMapping("/reliability/{ownerType}/{ownerCode}")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingReliability.Score> reliability(
+            @PathVariable SubscriberType ownerType, @PathVariable String ownerCode) {
+        return ResponseEntity.ok(reliability.score(ownerType, ownerCode));
     }
 
     /** File de l'accueil : rendez-vous regles sur place encore a encaisser, qui commencent ce jour-la (aujourd'hui par defaut). */

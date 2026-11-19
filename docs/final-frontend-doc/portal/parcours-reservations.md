@@ -65,6 +65,7 @@ Lot B6. Quand un créneau est pris (`available: false`), proposer « M'inscrire 
 
 1. Liste : `GET /sni/api/v1/client/bookings?status=...&from=...&to=...` (dates-heures, page, tri `startedAt` décroissant).
 2. Détail : `GET /sni/api/v1/client/bookings/{bookingNumber}`.
+2 bis. Déplacer (lot B9d) : aperçu du prix `GET /sni/api/v1/client/bookings/{bookingNumber}/reschedule/preview?newStartedAt=&newEndedAt=` (ancien prix, nouveau, écart, `change`), puis `POST /sni/api/v1/client/bookings/{bookingNumber}/reschedule` `{ newStartedAt, newEndedAt, acceptPriceChange }`. Les règles de la ressource s'appliquent (préavis, durée, capacité) ; plus cher : `409 PRICE_INCREASE_CONFIRMATION_REQUIRED` sans `acceptPriceChange: true`, le complément est alors à régler.
 3. Annuler : `DELETE /sni/api/v1/client/bookings/{bookingNumber}` avec `{ "reason" }` facultatif (500 caractères au plus). Accepté seulement pour `CONFIRMED`, `PENDING_APPROVAL` ou `PENDING_PAYMENT` ; les règles de délai (`allowCancellation`, `cancellationNoticeMinutes`) et de remboursement ou de libération du droit sont appliquées par le module `booking`. Réponse : la réservation `CANCELLED`.
 
 ### Ressources réservées et sur demande (lot B10, 18/11/2026)

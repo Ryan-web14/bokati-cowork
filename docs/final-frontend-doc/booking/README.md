@@ -1,6 +1,6 @@
 # booking : fonctionnement
 
-> Rédigé d'après le code, à jour des lots B0 à B8, B9a, B9b et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code, à jour des lots B0 à B8, B9a à B9d et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -110,6 +110,7 @@ Les mêmes champs servent à la vérification, au blocage, à la création et à
    - `billingCompanyCode` : organisation pour le compte de laquelle le membre réserve (doit lui être rattachée), ou `NONE` ;
    - `participants`, `notes`, `metadataJson` (texte JSON libre) ;
    - `options` : `[{ "kind": "SERVICE" | "AMENITY", "code": "...", "quantity": 1 }]`, services du catalogue et équipements optionnels ajoutés dès la création, sur la même facture (lot B2b) ;
+   - `depositRate` (lot B9c, équipe, paiement direct) : acompte en % qui confirme la réservation ;
    - `caller` (lot B5, équipe) : rendez-vous pris au téléphone, `{ fullName, phone, email, company, callNote, leadNumber, createLead }`. Voir [Rendez-vous au téléphone](#rendez-vous-au-téléphone-lot-b5-19112026) ;
    - `priceAdjustment` (lot B4, équipe seulement) : `{ "discountRate": 10 }` ou `{ "newAmount": 40000 }`, avec `reasonCode` (liste `BOOKING_PRICE_ADJUSTMENT_REASON`) et `reasonText`. Voir [Ajuster le prix](#ajuster-le-prix-lot-b4-19112026) ;
    - `payOnSite: true` (lot B3) : rendez-vous sans paiement, réglé sur place ; paiement `DIRECT` seulement (`400 PAY_ON_SITE_DIRECT_ONLY`). Toujours permis à l'équipe ;
@@ -391,3 +392,13 @@ Détail : [lot B6](../../backend/booking/lot-b6-notifications-attente.md).
 - Séries : la fiche d'une réservation porte `recurrenceGroupNumber` ; `GET /bookings/series/{n}` liste la série ; « Annuler à partir du … » : `PATCH /bookings/series/{n}/cancel?from=` `{ reason }` ; « Déplacer la série » : `PATCH /bookings/series/{n}/reschedule?from=` `{ newStartTime: "10:00", newEndTime: "12:00" }` ou `{ shiftDays: 1 }`, `acceptPriceChange`. Afficher `refused` (numéro et raison) après l'opération.
 
 Détail : [lots B9a et B9b](../../backend/booking/lot-b9a-b9b-venue-planning.md).
+
+## Fiabilité, acompte, invités, détails (lots B9c et B9d, 19/11/2026)
+
+- Fiche client : `GET /bookings/pay-on-site/reliability/{ownerType}/{ownerCode}` → score sur 100, absences, annulations tardives, garantie imposée (`DEPOSIT` ou `PREPAY`). Afficher un badge « Fiabilité 50/100 ».
+- Acompte : `depositAmount` sur la réservation (imposé par la fiabilité, ou `depositRate` à la création par l'équipe) ; dès que l'acompte est payé, la réservation est confirmée (`depositPaidAt`) et le reste reste « à régler » sur place. Au portail, un client à prépaiement imposé reçoit `409 PREPAYMENT_REQUIRED` s'il demande le règlement sur place.
+- Invités : bouton « Inviter » par participant (`POST /bookings/{numéro}/participants/{id}/invite`) ou « Inviter tous » (`POST .../participants/invite`) ; chaque participant porte `invitedAt`, `respondedAt`, `status` (`CONFIRMED` : vient, `DECLINED` : ne vient pas) et `checkedInAt` ; « Pointer l'invité » : `PATCH .../participants/{id}/check-in`.
+- Détails : `PATCH /bookings/{numéro}/details` `{ roomLayout, specialRequests, internalNotes, tags }` ; listes `BOOKING_ROOM_LAYOUT` et `BOOKING_TAG` dans `GET /bookings/reference` (listes souples : une valeur saisie librement est ajoutée pour relecture). La réponse porte ces quatre champs ; `internalNotes` n'est pas montré au portail.
+- Portail : le membre déplace sa réservation lui-même (voir [portal/parcours-reservations.md](../portal/parcours-reservations.md#consulter-et-annuler-ses-réservations)).
+
+Détail : [lots B9c et B9d](../../backend/booking/lot-b9c-b9d-fiabilite-invites.md).

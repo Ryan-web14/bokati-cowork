@@ -50,6 +50,26 @@ public class ClientBookingController {
         return ResponseEntity.ok(clientPortalBookingService.listBookings(member, status, from, to, pageable));
     }
 
+    public record ClientRescheduleRequest(@jakarta.validation.constraints.NotNull java.time.LocalDateTime newStartedAt,
+                                          @jakarta.validation.constraints.NotNull java.time.LocalDateTime newEndedAt,
+                                          Boolean acceptPriceChange) {
+    }
+
+    /** Lot B9d : deplacer sa reservation, dans la politique de la ressource. */
+    @PostMapping("/{bookingNumber}/reschedule")
+    public ResponseEntity<ClientBookingResponse> reschedule(@PathVariable String bookingNumber, @Valid @RequestBody ClientRescheduleRequest request) {
+        return ResponseEntity.ok(clientPortalBookingService.rescheduleBooking(clientContextService.getAuthenticatedMember(), bookingNumber,
+                request.newStartedAt(), request.newEndedAt(), request.acceptPriceChange()));
+    }
+
+    /** Lot B9d : apercu du prix d'un deplacement. */
+    @GetMapping("/{bookingNumber}/reschedule/preview")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse> previewReschedule(
+            @PathVariable String bookingNumber, @RequestParam java.time.LocalDateTime newStartedAt, @RequestParam java.time.LocalDateTime newEndedAt) {
+        return ResponseEntity.ok(clientPortalBookingService.previewReschedule(clientContextService.getAuthenticatedMember(), bookingNumber,
+                newStartedAt, newEndedAt));
+    }
+
     /** Lot B3 : le rendez-vous regle sur place est-il ouvert a ce membre (et pourquoi) ? */
     @GetMapping("/pay-on-site")
     public ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access> payOnSite() {

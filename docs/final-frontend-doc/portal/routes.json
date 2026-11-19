@@ -602,6 +602,68 @@
    "methods": [
     "POST"
    ],
+   "path": "/sni/api/v1/client/bookings/{bookingNumber}/reschedule",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "reschedule",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingController.ClientRescheduleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.portal.booking.dto.response.ClientBookingResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/bookings/{bookingNumber}/reschedule/preview",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "previewReschedule",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "newStartedAt",
+     "required": true,
+     "type": "LocalDateTime"
+    },
+    {
+     "in": "query",
+     "name": "newEndedAt",
+     "required": true,
+     "type": "LocalDateTime"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
    "path": "/sni/api/v1/client/bookings/{number}/end-report",
    "package": "features.portal.booking.controller",
    "controller": "ClientBookingOperationsController",
@@ -6838,6 +6900,63 @@
     }
    }
   },
+  "ClientBookingController.ClientRescheduleRequest": {
+   "required": [
+    "newEndedAt",
+    "newStartedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "newStartedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "newEndedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "acceptPriceChange": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingChangePreviewResponse": {
+   "type": "object",
+   "properties": {
+    "bookingNumber": {
+     "type": "string"
+    },
+    "currentAmount": {
+     "type": "number"
+    },
+    "newAmount": {
+     "type": "number"
+    },
+    "difference": {
+     "type": "number"
+    },
+    "change": {
+     "type": "string"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "invoiced": {
+     "type": "boolean"
+    },
+    "modificationCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "lastModifiedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastModification": {
+     "type": "string"
+    }
+   }
+  },
   "BookingOperations.EndReportResponse": {
    "type": "object",
    "properties": {
@@ -10975,6 +11094,18 @@
       "DECLINED",
       "REMOVED"
      ]
+    },
+    "invitedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "respondedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checkedInAt": {
+     "type": "string",
+     "format": "date-time"
     }
    }
   },
@@ -12760,6 +12891,8 @@
   "ClientCheckAvailabilityRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCheckAvailabilityRequest",
   "BookingPayOnSite.Access": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access",
   "ClientCancelBookingRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCancelBookingRequest",
+  "ClientBookingController.ClientRescheduleRequest": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingController.ClientRescheduleRequest",
+  "BookingChangePreviewResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse",
   "BookingOperations.EndReportResponse": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse",
   "BookingOperations.EndReportRequest": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportRequest",
   "BookingOperations.UsageRulesView": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView",

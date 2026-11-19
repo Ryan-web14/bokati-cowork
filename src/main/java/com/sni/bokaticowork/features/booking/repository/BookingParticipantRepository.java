@@ -19,4 +19,8 @@ public interface BookingParticipantRepository extends JpaRepository<BookingParti
 
     @Query(nativeQuery = true, value = "SELECT * FROM booking_participant WHERE id = :id AND booking_id = :bookingId")
     Optional<BookingParticipant> findByIdAndBookingId(@Param("id") Long id, @Param("bookingId") Long bookingId);
+
+    /** Lot B9d : invite par le jeton de son invitation. */
+    @Query(nativeQuery = true, value = "SELECT * FROM booking_participant WHERE invite_token = :token")
+    Optional<BookingParticipant> findByInviteToken(@Param("token") String token);
 }

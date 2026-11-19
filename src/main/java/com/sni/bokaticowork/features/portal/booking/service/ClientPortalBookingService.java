@@ -74,6 +74,28 @@ public class ClientPortalBookingService {
                 : payOnSite.access(com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType.MEMBER, member.getMemberId());
     }
 
+    /**
+     * Lot B9d : le membre deplace lui-meme sa reservation, dans la politique de la ressource
+     * (preavis, duree, capacite) ; une hausse de prix demande {@code acceptPriceChange}.
+     */
+    @Transactional
+    public ClientBookingResponse rescheduleBooking(Member member, String bookingNumber, java.time.LocalDateTime newStartedAt,
+                                                   java.time.LocalDateTime newEndedAt, Boolean acceptPriceChange) {
+        verifyOwnership(member, bookingService.get(bookingNumber));
+        return toDetailResponse(bookingService.reschedule(bookingNumber,
+                new com.sni.bokaticowork.features.booking.dto.request.BookingRescheduleRequest(newStartedAt, newEndedAt, null,
+                        "Déplacée par le client", Boolean.TRUE, acceptPriceChange)));
+    }
+
+    /** Lot B9d : apercu du prix avant un deplacement. */
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse previewReschedule(Member member, String bookingNumber,
+                                                                                                          java.time.LocalDateTime newStartedAt,
+                                                                                                          java.time.LocalDateTime newEndedAt) {
+        verifyOwnership(member, bookingService.get(bookingNumber));
+        return bookingService.previewReschedule(bookingNumber, newStartedAt, newEndedAt);
+    }
+
     @Transactional
     public ClientBookingResponse createBooking(Member member, ClientCreateBookingRequest request) {
         // Une ressource retiree du portail ne se reserve pas depuis le portail · seule sa page

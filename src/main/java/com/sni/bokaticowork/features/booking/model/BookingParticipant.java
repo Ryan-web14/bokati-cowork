@@ -54,6 +54,20 @@ public class BookingParticipant {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    /** Lot B9d : jeton des liens de reponse de l'invitation. */
+    @Column(name = "invite_token", length = 64)
+    private String inviteToken;
+
+    @Column(name = "invited_at")
+    private Instant invitedAt;
+
+    @Column(name = "responded_at")
+    private Instant respondedAt;
+
+    /** Lot B9d : arrivee de l'invite pointee a l'accueil. */
+    @Column(name = "checked_in_at")
+    private Instant checkedInAt;
+
     @PrePersist
     void prePersist() {
         createdAt = Instant.now();

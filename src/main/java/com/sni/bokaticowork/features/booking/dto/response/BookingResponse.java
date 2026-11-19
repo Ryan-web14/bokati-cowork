@@ -105,6 +105,14 @@ public record BookingResponse(
         /** Lot B9a : reponse au rappel (COMING, CANCELLED) et heure ; creneau libere faute d'arrivee. */
         String attendanceAnswer,
         Instant attendanceAnsweredAt,
-        Instant releasedEarlyAt
+        Instant releasedEarlyAt,
+        /** Lot B9c : acompte demande et sa reception (confirmee a l'acompte, reste a regler sur place). */
+        BigDecimal depositAmount,
+        Instant depositPaidAt,
+        /** Lot B9d : disposition, demandes speciales, notes internes (equipe), etiquettes. */
+        String roomLayout,
+        String specialRequests,
+        String internalNotes,
+        List<String> tags
 ) {
 }

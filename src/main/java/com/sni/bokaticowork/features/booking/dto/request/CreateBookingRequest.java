@@ -62,7 +62,9 @@ public record CreateBookingRequest(
         /** Lot B4 : ajustement manuel du prix par l'equipe (motif, plafond, approbation au-dela). */
         @Valid BookingPriceAdjustmentRequest priceAdjustment,
         /** Lot B5 : rendez-vous pris au telephone (appelant, note d'appel, prospect du CRM). */
-        @Valid BookingCallerRequest caller
+        @Valid BookingCallerRequest caller,
+        /** Lot B9c : acompte demande par l'equipe, en % du total (paiement direct) ; la reservation est confirmee a l'acompte. */
+        @jakarta.validation.constraints.DecimalMin("1") @jakarta.validation.constraints.DecimalMax("100") java.math.BigDecimal depositRate
 ) {
         @com.fasterxml.jackson.annotation.JsonCreator
         public CreateBookingRequest {
@@ -79,7 +81,7 @@ public record CreateBookingRequest(
                 this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
                         contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
                         confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, billingCompanyCode,
-                        null, null, null, null, null);
+                        null, null, null, null, null, null);
         }
 
         /** Forme du lot B2b, sans rendez-vous regle sur place. */
@@ -94,7 +96,7 @@ public record CreateBookingRequest(
                 this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
                         contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
                         confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, billingCompanyCode,
-                        channel, options, null, null, null);
+                        channel, options, null, null, null, null);
         }
 
         /** Forme du lot B3, sans ajustement de prix. */
@@ -109,7 +111,7 @@ public record CreateBookingRequest(
                 this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
                         contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
                         confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, billingCompanyCode,
-                        channel, options, payOnSite, null, null);
+                        channel, options, payOnSite, null, null, null);
         }
 
         /** Forme du lot B4, sans appelant. */
@@ -124,7 +126,23 @@ public record CreateBookingRequest(
                 this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
                         contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
                         confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, billingCompanyCode,
-                        channel, options, payOnSite, priceAdjustment, null);
+                        channel, options, payOnSite, priceAdjustment, null, null);
+        }
+
+        /** Forme du lot B5, sans acompte. */
+        public CreateBookingRequest(String resourceCode, String memberId, String customerId, String businessCode,
+                                    String email, String phone, Boolean walkIn, String contactName, String contactEmail,
+                                    String contactPhone, String idempotencyKey, String holdNumber, LocalDateTime startedAt,
+                                    LocalDateTime endedAt, Integer quantity, BookingPaymentMode paymentMode,
+                                    Boolean confirmImmediately, Boolean sendEmail, String notes, String metadataJson,
+                                    ResourceBookingUnit bookingUnit, List<BookingParticipantRequest> participants,
+                                    String billingCompanyCode, com.sni.bokaticowork.features.booking.enums.BookingChannel channel,
+                                    List<BookingOptionRequest> options, Boolean payOnSite, BookingPriceAdjustmentRequest priceAdjustment,
+                                    BookingCallerRequest caller) {
+                this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
+                        contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
+                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, billingCompanyCode,
+                        channel, options, payOnSite, priceAdjustment, caller, null);
         }
 
         /** Sans organisation choisie · la facture suit le mode du rattachement du membre. */
@@ -136,7 +154,7 @@ public record CreateBookingRequest(
                                     ResourceBookingUnit bookingUnit, List<BookingParticipantRequest> participants) {
                 this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
                         contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
-                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, null, null, null, null, null, null);
+                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, null, null, null, null, null, null, null);
         }
 
         public BookingIdentityLookup identityLookup() {

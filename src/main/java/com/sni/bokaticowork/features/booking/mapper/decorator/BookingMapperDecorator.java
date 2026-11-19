@@ -210,7 +210,13 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getCallNote(),
                 booking.getAttendanceAnswer(),
                 booking.getAttendanceAnsweredAt(),
-                booking.getReleasedEarlyAt()
+                booking.getReleasedEarlyAt(),
+                booking.getDepositAmount(),
+                booking.getDepositPaidAt(),
+                booking.getRoomLayout(),
+                booking.getSpecialRequests(),
+                booking.getInternalNotes(),
+                com.sni.bokaticowork.features.booking.service.support.BookingGuests.tags(booking)
         );
     }
 
@@ -239,7 +245,10 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 participant.getEmail(),
                 participant.getPhone(),
                 participant.getRole(),
-                participant.getStatus()
+                participant.getStatus(),
+                participant.getInvitedAt(),
+                participant.getRespondedAt(),
+                participant.getCheckedInAt()
         );
     }
 

@@ -53,6 +53,11 @@ public interface BookingService {
     /** Lot B1 : reservations non reglees a l'echeance passees en EXPIRED ; rend leur nombre. */
     int expireUnpaid(int limit);
 
+    /** Lot B9c : paiement partiel recu ; confirme la reservation si l'acompte est atteint. */
+    default boolean onPartialPayment(String bookingNumber) {
+        return false;
+    }
+
     /** Lot B9a : libere les creneaux sans arrivee N minutes apres le debut ({@code bookings.early-release.minutes}, 0 : coupe). */
     default int releaseNoArrivals(int limit) {
         return 0;

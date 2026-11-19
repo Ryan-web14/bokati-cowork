@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-95 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+101 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -65,6 +65,10 @@
 | POST | `/sni/api/v1/bookings/{number}/promo-code` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-promo-code) |
 | POST | `/sni/api/v1/bookings/{number}/services` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-services) |
 | POST | `/sni/api/v1/resource-bundles/{code}/book` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-resource-bundles-code-book) |
+| PATCH | `/sni/api/v1/bookings/{bookingNumber}/details` | BOOKING:UPDATE | [BookingGuestsController](routes/BookingGuestsController.md#r-patch-sni-api-v1-bookings-bookingnumber-details) |
+| POST | `/sni/api/v1/bookings/{bookingNumber}/participants/invite` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-bookingnumber-participants-invite) |
+| PATCH | `/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}/check-in` | BOOKING:CHECKIN | [BookingGuestsController](routes/BookingGuestsController.md#r-patch-sni-api-v1-bookings-bookingnumber-participants-participantid-check-in) |
+| POST | `/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}/invite` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-bookingnumber-participants-participantid-invite) |
 | GET | `/sni/api/v1/bookings/{number}/end-report` | BOOKING:READ | [BookingOperationsController](routes/BookingOperationsController.md#r-get-sni-api-v1-bookings-number-end-report) |
 | POST | `/sni/api/v1/bookings/{number}/end-report` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-end-report) |
 | GET | `/sni/api/v1/bookings/{number}/usage-rules` | BOOKING:READ | [BookingOperationsController](routes/BookingOperationsController.md#r-get-sni-api-v1-bookings-number-usage-rules) |
@@ -73,6 +77,7 @@
 | GET | `/sni/api/v1/bookings/pay-on-site/clients/{ownerType}/{ownerCode}` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-clients-ownertype-ownercode) |
 | PUT | `/sni/api/v1/bookings/pay-on-site/clients/{ownerType}/{ownerCode}` | BOOKING:UPDATE | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-put-sni-api-v1-bookings-pay-on-site-clients-ownertype-ownercode) |
 | GET | `/sni/api/v1/bookings/pay-on-site/due` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-due) |
+| GET | `/sni/api/v1/bookings/pay-on-site/reliability/{ownerType}/{ownerCode}` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-reliability-ownertype-ownercode) |
 | GET | `/sni/api/v1/bookings/lookup/owners` | BOOKING:READ | [BookingReferenceController](routes/BookingReferenceController.md#r-get-sni-api-v1-bookings-lookup-owners) |
 | GET | `/sni/api/v1/bookings/reference` | BOOKING:READ | [BookingReferenceController](routes/BookingReferenceController.md#r-get-sni-api-v1-bookings-reference) |
 | GET | `/sni/api/v1/bookings/waitlist` | BOOKING:READ | [BookingWaitlistController](routes/BookingWaitlistController.md#r-get-sni-api-v1-bookings-waitlist) |
@@ -94,6 +99,7 @@
 | GET | `/sni/api/v1/public/bookings/{bookingNumber}` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-bookingnumber) |
 | GET | `/sni/api/v1/public/bookings/{bookingNumber}/confirmation.pdf` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-bookingnumber-confirmation-pdf) |
 | GET | `/sni/api/v1/public/bookings/{bookingNumber}/invitation.ics` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-bookingnumber-invitation-ics) |
+| GET | `/sni/api/v1/public/bookings/invitations/{token}` | public | [PublicBookingInvitationController](routes/PublicBookingInvitationController.md#r-get-sni-api-v1-public-bookings-invitations-token) |
 | GET | `/sni/api/v1/resource-analytics/bookings/{number}/margin` | REPORT:VIEW | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-get-sni-api-v1-resource-analytics-bookings-number-margin) |
 | GET | `/sni/api/v1/resource-analytics/margins` | REPORT:VIEW | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-get-sni-api-v1-resource-analytics-margins) |
 | GET | `/sni/api/v1/resource-analytics/occupancy` | REPORT:VIEW | [ResourceAnalyticsController](routes/ResourceAnalyticsController.md#r-get-sni-api-v1-resource-analytics-occupancy) |

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{fragments/page :: pagehead('Invitation · Elle A Osé')}"></head>
+<body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
+
+  <th:block th:switch="${state}">
+    <th:block th:case="'ACCEPTED'">
+      <p class="state ok">Noté</p>
+      <h1>Merci, à bientôt</h1>
+      <p class="lede">Votre participation est confirmée. Présentez-vous à l'accueil à votre arrivée.</p>
+    </th:block>
+    <th:block th:case="'DECLINED'">
+      <p class="state ok">Noté</p>
+      <h1>Merci de nous avoir prévenus</h1>
+      <p class="lede">L'organisateur sait que vous ne participerez pas.</p>
+    </th:block>
+    <th:block th:case="*">
+      <p class="state">Impossible</p>
+      <h1>Réponse impossible</h1>
+      <p class="lede" th:text="${message}">Cette invitation n'est plus valable.</p>
+    </th:block>
+  </th:block>
+
+  <dl class="rows">
+    <div th:if="${resourceName != null}"><dt>Espace</dt><dd th:text="${resourceName}">Salle</dd></div>
+    <div th:if="${startLabel != null}"><dt>Début</dt><dd th:text="${startLabel}">date</dd></div>
+    <div th:if="${bookingNumber != null}"><dt>Réservation</dt><dd class="mono" th:text="${bookingNumber}">BKG</dd></div>
+  </dl>
+
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
+</body>
+</html>

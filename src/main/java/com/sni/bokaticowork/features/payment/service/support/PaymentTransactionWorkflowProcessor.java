@@ -296,6 +296,12 @@ public class PaymentTransactionWorkflowProcessor {
     private void confirmBookingIfFullyPaid(PaymentTransaction transaction, String bookingNumber) {
         if (transaction.getPaymentIntent().getStatus() != PaymentIntentStatus.SUCCEEDED) {
             log.debug("Booking {} payment partially received · awaiting full settlement before auto-confirm", bookingNumber);
+            // Lot B9c : un acompte atteint confirme la reservation, le reste se regle sur place.
+            try {
+                bookingService.onPartialPayment(bookingNumber);
+            } catch (Exception ex) {
+                log.warn("Acompte de la reservation {} non examine : {}", bookingNumber, ex.getMessage());
+            }
             return;
         }
         // Une reservation reglee au portefeuille est confirmee des le blocage des fonds : son debit
