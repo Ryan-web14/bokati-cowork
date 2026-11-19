@@ -8,7 +8,7 @@
 
 | Domaine | Libellé | Ouvert à `ADMIN` | Réglages |
 | --- | --- | --- | --- |
-| [`BOOKING`](#booking) | Réservation | oui | 36 |
+| [`BOOKING`](#booking) | Réservation | oui | 39 |
 | [`RESOURCES`](#resources) | Ressources et horaires | oui | 19 |
 | [`SUBSCRIPTIONS`](#subscriptions) | Abonnements | oui | 19 |
 | [`PASSES`](#passes) | Passes | oui | 6 |
@@ -42,7 +42,7 @@ Types : `BOOLEAN`, `CRON`, `DECIMAL`, `EMAIL`, `ENUM`, `INTEGER`, `SECRET`, `TEX
 
 ## BOOKING
 
-Réservation · ouvert à ADMIN · 36 réglage(s)
+Réservation · ouvert à ADMIN · 39 réglage(s)
 
 | Clé | Type | Effet | Défaut | Libellé |
 | --- | --- | --- | --- | --- |
@@ -58,11 +58,13 @@ Réservation · ouvert à ADMIN · 36 réglage(s)
 | `bokati.booking.wallet.hold-grace-minutes` | INTEGER | LIVE | `60` | Grâce de retenue sur portefeuille (minutes) |
 | `bokati.booking.wallet.settlement-delay-minutes` | INTEGER | LIVE | `1` | Délai de règlement sur portefeuille (minutes) |
 | `bokati.booking.wallet.worker-delay-ms` | INTEGER | LIVE | `15000` | Cadence des retenues de réservation (ms) |
-| `bookings.calendar-feed.enabled` | BOOLEAN | LIVE | `false` | Réservations : agenda personnel synchronisé (lien ICS) proposé aux membres |
-| `bookings.deposit.rate` | INTEGER | LIVE | `30` | Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose |
-| `bookings.early-release.minutes` | INTEGER | LIVE | `0` | Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais) |
-| `bookings.last-minute.discount-rate` | INTEGER | LIVE | `0` | Réservations : remise (%) d'une réservation du portail qui commence bientôt (0 : coupée) |
+| `bookings.calendar-feed.enabled` | BOOLEAN | LIVE | `true` | Réservations : agenda personnel synchronisé (lien ICS) proposé aux membres |
+| `bookings.deposit.rate` | INTEGER | LIVE | `50` | Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose |
+| `bookings.early-release.minutes` | INTEGER | LIVE | `30` | Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais) |
+| `bookings.last-minute.discount-rate` | INTEGER | LIVE | `10` | Réservations : remise (%) d'une réservation du portail qui commence bientôt (0 : coupée) |
 | `bookings.last-minute.hours` | INTEGER | LIVE | `24` | Réservations : fenêtre de la dernière minute, en heures avant le début |
+| `bookings.last-minute.whatsapp-enabled` | BOOLEAN | LIVE | `false` | Réservations : annonce WhatsApp des offres de dernière minute aux membres volontaires (modèle offre_derniere_minute approuvé requis) |
+| `bookings.last-minute.whatsapp-max` | INTEGER | LIVE | `50` | Réservations : nombre maximal de membres prévenus par annonce de dernière minute |
 | `bookings.pay-on-site.max-no-shows` | INTEGER | LIVE | `2` | Réservations : absences sur des rendez-vous réglés sur place avant retrait d'office de l'option (0 : jamais) |
 | `bookings.pay-on-site.no-show-window-days` | INTEGER | LIVE | `90` | Réservations : période, en jours, sur laquelle les absences sont comptées |
 | `bookings.pay-on-site.portal-enabled` | BOOLEAN | LIVE | `false` | Réservations : rendez-vous réglé sur place ouvert au portail pour tous les clients sans option propre |
@@ -82,6 +84,7 @@ Réservation · ouvert à ADMIN · 36 réglage(s)
 | `bookings.reliability.window-days` | INTEGER | LIVE | `180` | Réservations : période, en jours, du calcul de la fiabilité |
 | `bookings.reminders.enabled` | BOOLEAN | LIVE | `true` | Réservations : rappels automatiques par courriel avant le début |
 | `bookings.reminders.offsets-minutes` | TEXT | LIVE | `1440,120` | Réservations : délais des rappels avant le début, en minutes, séparés par des virgules (la veille et 2 h avant) |
+| `bookings.reminders.whatsapp-enabled` | BOOLEAN | LIVE | `false` | Réservations : rappel aussi par WhatsApp (modèle rappel_reservation approuvé requis) |
 
 ## RESOURCES
 

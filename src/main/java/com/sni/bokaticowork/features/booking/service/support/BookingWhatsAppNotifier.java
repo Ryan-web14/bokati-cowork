@@ -72,6 +72,46 @@ public class BookingWhatsAppNotifier {
         whatsApp.notify(phone.get(), purpose.get(), values, booking.getBookingNumber(), UPDATED.equals(purpose.get()) ? PORTAL_PATH : null);
     }
 
+    static final String REMINDER = "BOOKING_REMINDER";
+    static final String LAST_MINUTE = "BOOKING_LAST_MINUTE";
+
+    /** Lot B9a : rappel WhatsApp (preference BOOKING_REMINDER du membre, ou contact non membre). */
+    public boolean remind(Booking booking) {
+        if (booking == null || !whatsApp.active()) {
+            return false;
+        }
+        Optional<Member> member = memberPreferences.member(booking);
+        if (!memberPreferences.allows(member, EventType.BOOKING_REMINDER, NotificationChannel.WHATSAPP)) {
+            return false;
+        }
+        Optional<String> phone = MemberBillingContact.firstPhone(booking.getContactPhone()).or(() -> member.flatMap(MemberBillingContact::whatsAppPhone));
+        if (phone.isEmpty()) {
+            return false;
+        }
+        ZoneId zone = memberPreferences.zone(member);
+        whatsApp.notify(phone.get(), REMINDER, values(booking, CONFIRMED, firstName(booking, member), zone), booking.getBookingNumber(), PORTAL_PATH);
+        return true;
+    }
+
+    /**
+     * Lot B9f : offre de derniere minute a un membre volontaire (preference LAST_MINUTE_OFFERS,
+     * coupee par defaut). Valeurs : prenom, espace, date, horaire, prix remise, prix normal.
+     */
+    public boolean lastMinute(Member member, String space, LocalDateTime start, LocalDateTime end, String price, String normalPrice) {
+        if (member == null || !whatsApp.active()
+                || !memberPreferences.allows(Optional.of(member), EventType.LAST_MINUTE_OFFERS, NotificationChannel.WHATSAPP)) {
+            return false;
+        }
+        Optional<String> phone = MemberBillingContact.whatsAppPhone(member);
+        if (phone.isEmpty()) {
+            return false;
+        }
+        String name = StringUtils.hasText(member.getFirstname()) ? member.getFirstname().trim().split("\\s+")[0] : "client";
+        whatsApp.notify(phone.get(), LAST_MINUTE, List.of(name, space, DATE.format(start), hours(start, end), price, normalPrice),
+                member.getMemberId(), PORTAL_PATH);
+        return true;
+    }
+
     /**
      * Confirmee : prenom, espace, date, horaire, reference. Modifiee : prenom, reference, espace,
      * date, horaire (ordre des variables des modeles approuves).

@@ -103,7 +103,8 @@ class MemberSettingsPatchTest {
     @DisplayName("Sans ligne, une notification est activee ; la liste du PATCH est appliquee")
     void notificationsDefaultToEnabledAndPatchListApplies() {
         MemberSettingsResponse response = service.getSettings("MBR-7");
-        assertThat(response.getNotificationPref()).isNotEmpty().allMatch(NotificationPreferenceResponse::enabled);
+        assertThat(response.getNotificationPref()).isNotEmpty()
+                .allMatch(pref -> pref.enabled() == !"LAST_MINUTE_OFFERS".equals(pref.eventType()));
         assertThat(response.getTimeZone()).isEqualTo("Africa/Brazzaville");
 
         service.updateSettings("MBR-7", UpdateMemberSettingsRequest.builder()

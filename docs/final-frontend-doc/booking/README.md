@@ -420,3 +420,14 @@ Détail : [lot B9e](../../backend/booking/lot-b9e-entreprises.md), [lot B9f](../
 - Agenda synchronisé (portail, si activé par l'espace) : voir [portal/parcours-reservations.md](../portal/parcours-reservations.md#agenda-synchronisé).
 
 Détail : [lot B9g](../../backend/booking/lot-b9g-suivi.md). Clôture du plan et actions de l'exploitant : [lot B11](../../backend/booking/lot-b11-cloture.md).
+
+## Réglages décidés et WhatsApp (19/11/2026)
+
+- Valeurs par défaut : libération d'un créneau sans arrivée après 30 min, remise de dernière minute 10 %, agenda synchronisé ouvert, seuil de fiabilité 60, garantie acompte (`DEPOSIT`, `PREPAY` possible), acompte 50 %. Tableau complet : [lot B11](../../backend/booking/lot-b11-cloture.md).
+- Écran « Règlement sur place » :
+  - état global `GET /bookings/pay-on-site/all` → `{ enabled, clearedClientOptions }` ;
+  - « Ouvrir à tous » ou « Fermer à tous » : `PUT /bookings/pay-on-site/all` `{ enabled, resetClients }`. Avec `resetClients: true`, les options posées à la main sont effacées et tous suivent le choix (réponse `clearedClientOptions`) ; les retraits d'office après absences restent ;
+  - sélection de clients (cases à cocher) : `PUT /bookings/pay-on-site/clients` `[{ ownerType, ownerCode, enabled, reason }]`, renvoie les options posées. La ligne sans code est ignorée.
+- Annonce de dernière minute par WhatsApp (bouton sur un créneau libre) : `POST /bookings/last-minute/announce` `{ resourceCode, startedAt, endedAt }` → `{ notified, volunteers, discountedPrice, normalPrice }`. Refus `409 LAST_MINUTE_WHATSAPP_DISABLED` tant que le réglage `bookings.last-minute.whatsapp-enabled` est coupé (modèle à faire approuver).
+- Préférences du membre : nouvel événement `LAST_MINUTE_OFFERS` (offres de dernière minute), **coupé par défaut** (`enabled: false` sans choix du membre) ; les autres restent ouverts par défaut.
+- Rappel WhatsApp : envoyé en plus du courriel quand `bookings.reminders.whatsapp-enabled` est ouvert, selon la préférence `BOOKING_REMINDER` WhatsApp du membre.

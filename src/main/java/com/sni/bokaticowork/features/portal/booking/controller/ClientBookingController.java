@@ -73,6 +73,16 @@ public class ClientBookingController {
                 request.minutes(), request.acceptPriceChange()));
     }
 
+    public record ClientAttendanceRequest(@jakarta.validation.constraints.NotBlank String answer) {
+    }
+
+    /** Lot B9a : je viens (COMING) ou j'annule (CANCEL), depuis le rappel. */
+    @PostMapping("/{bookingNumber}/attendance")
+    public ResponseEntity<ClientBookingResponse> attendance(@PathVariable String bookingNumber, @Valid @RequestBody ClientAttendanceRequest request) {
+        return ResponseEntity.ok(clientPortalBookingService.answerAttendance(clientContextService.getAuthenticatedMember(), bookingNumber,
+                !"CANCEL".equalsIgnoreCase(request.answer().trim())));
+    }
+
     /** Lot B9f : creneaux libres proches d'un creneau pris. */
     @GetMapping("/alternatives")
     public ResponseEntity<java.util.List<com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse>> alternatives(

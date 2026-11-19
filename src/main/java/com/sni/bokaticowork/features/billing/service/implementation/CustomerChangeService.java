@@ -47,6 +47,13 @@ public class CustomerChangeService {
     private final BillingEventWriter eventWriter;
     private final StaffProfileService staffProfiles;
 
+    private com.sni.bokaticowork.features.billing.service.support.BillingCustomerSnapshotResolver customerTypes;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCustomerTypes(com.sni.bokaticowork.features.billing.service.support.BillingCustomerSnapshotResolver customerTypes) {
+        this.customerTypes = customerTypes;
+    }
+
     public ChangeCustomerResponse change(String invoiceNumber, ChangeCustomerRequest request) {
         BillingDocument invoice = billing.serviceByNumber(invoiceNumber);
         if (invoice.getDocumentType() != BillingDocumentType.INVOICE || StringUtils.hasText(invoice.getDepositForDocumentNumber())) {
@@ -55,8 +62,10 @@ public class CustomerChangeService {
         if (invoice.getStatus() == BillingDocumentStatus.CANCELLED || StringUtils.hasText(invoice.getReplacedByDocumentNumber())) {
             throw new BadRequestException("Cette facture est annulée ou remplacée");
         }
-        String toType = request.customerType().trim();
-        String toCode = request.customerCode().trim();
+        // Fiche client entreprise et entreprise ne font qu'un : le destinataire est ramene a l'entreprise.
+        var party = customerTypes == null ? null : customerTypes.canonical(request.customerType(), request.customerCode());
+        String toType = party == null ? request.customerType().trim() : party.type();
+        String toCode = party == null ? request.customerCode().trim() : party.code();
         if (toType.equalsIgnoreCase(String.valueOf(invoice.getCustomerType())) && toCode.equals(invoice.getCustomerCode())) {
             throw new BadRequestException("La facture est déjà à ce client");
         }

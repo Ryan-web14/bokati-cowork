@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-221 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+222 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -34,6 +34,7 @@
 | GET | `/sni/api/v1/client/bookings/pay-on-site` | membre | [ClientBookingController](routes/ClientBookingController.md#r-get-sni-api-v1-client-bookings-pay-on-site) |
 | DELETE | `/sni/api/v1/client/bookings/{bookingNumber}` | membre | [ClientBookingController](routes/ClientBookingController.md#r-delete-sni-api-v1-client-bookings-bookingnumber) |
 | GET | `/sni/api/v1/client/bookings/{bookingNumber}` | membre | [ClientBookingController](routes/ClientBookingController.md#r-get-sni-api-v1-client-bookings-bookingnumber) |
+| POST | `/sni/api/v1/client/bookings/{bookingNumber}/attendance` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings-bookingnumber-attendance) |
 | POST | `/sni/api/v1/client/bookings/{bookingNumber}/extend` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings-bookingnumber-extend) |
 | POST | `/sni/api/v1/client/bookings/{bookingNumber}/pay/cash` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings-bookingnumber-pay-cash) |
 | POST | `/sni/api/v1/client/bookings/{bookingNumber}/reschedule` | membre | [ClientBookingController](routes/ClientBookingController.md#r-post-sni-api-v1-client-bookings-bookingnumber-reschedule) |

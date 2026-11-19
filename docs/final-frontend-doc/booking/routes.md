@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-113 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+117 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -71,6 +71,7 @@
 | POST | `/sni/api/v1/bookings/{number}/promo-code` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-promo-code) |
 | POST | `/sni/api/v1/bookings/{number}/services` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-bookings-number-services) |
 | POST | `/sni/api/v1/resource-bundles/{code}/book` | BOOKING:CREATE | [BookingExtrasController](routes/BookingExtrasController.md#r-post-sni-api-v1-resource-bundles-code-book) |
+| POST | `/sni/api/v1/bookings/last-minute/announce` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-last-minute-announce) |
 | PATCH | `/sni/api/v1/bookings/{bookingNumber}/details` | BOOKING:UPDATE | [BookingGuestsController](routes/BookingGuestsController.md#r-patch-sni-api-v1-bookings-bookingnumber-details) |
 | POST | `/sni/api/v1/bookings/{bookingNumber}/extend` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-bookingnumber-extend) |
 | POST | `/sni/api/v1/bookings/{bookingNumber}/participants/invite` | BOOKING:CREATE | [BookingGuestsController](routes/BookingGuestsController.md#r-post-sni-api-v1-bookings-bookingnumber-participants-invite) |
@@ -83,7 +84,10 @@
 | POST | `/sni/api/v1/bookings/{number}/end-report` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-end-report) |
 | GET | `/sni/api/v1/bookings/{number}/usage-rules` | BOOKING:READ | [BookingOperationsController](routes/BookingOperationsController.md#r-get-sni-api-v1-bookings-number-usage-rules) |
 | POST | `/sni/api/v1/bookings/{number}/usage-rules/accept` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-usage-rules-accept) |
+| GET | `/sni/api/v1/bookings/pay-on-site/all` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-all) |
+| PUT | `/sni/api/v1/bookings/pay-on-site/all` | BOOKING:UPDATE | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-put-sni-api-v1-bookings-pay-on-site-all) |
 | GET | `/sni/api/v1/bookings/pay-on-site/clients` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-clients) |
+| PUT | `/sni/api/v1/bookings/pay-on-site/clients` | BOOKING:UPDATE | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-put-sni-api-v1-bookings-pay-on-site-clients) |
 | GET | `/sni/api/v1/bookings/pay-on-site/clients/{ownerType}/{ownerCode}` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-clients-ownertype-ownercode) |
 | PUT | `/sni/api/v1/bookings/pay-on-site/clients/{ownerType}/{ownerCode}` | BOOKING:UPDATE | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-put-sni-api-v1-bookings-pay-on-site-clients-ownertype-ownercode) |
 | GET | `/sni/api/v1/bookings/pay-on-site/due` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-due) |

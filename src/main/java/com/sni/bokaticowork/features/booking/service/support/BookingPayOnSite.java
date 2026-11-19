@@ -105,6 +105,59 @@ public class BookingPayOnSite {
         return view(grants.save(grant));
     }
 
+    /** Lot B3 (19/11) : reglage global en vigueur. */
+    public boolean globallyEnabled() {
+        return settings != null && settings.bool(PORTAL_KEY, false);
+    }
+
+    /**
+     * Ouvre ou ferme le reglement sur place a tous les clients (reglage global). Avec
+     * {@code resetClients}, les options posees a la main sont effacees pour que tous suivent le
+     * reglage ; les retraits d'office apres absences restent.
+     */
+    @Transactional
+    public int setAll(boolean enabled, boolean resetClients) {
+        if (settingsAdmin == null) {
+            throw new ConflictException("Paramètres indisponibles");
+        }
+        settingsAdmin.update(PORTAL_KEY, String.valueOf(enabled), enabled ? "Règlement sur place ouvert à tous" : "Règlement sur place fermé à tous",
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
+        int cleared = 0;
+        if (resetClients) {
+            for (BookingPayOnSiteGrant grant : grants.findAllByOrderByUpdatedAtDesc()) {
+                if (!Boolean.TRUE.equals(grant.getRevokedAutomatically())) {
+                    grants.delete(grant);
+                    cleared++;
+                }
+            }
+        }
+        return cleared;
+    }
+
+    /** Pose l'option de plusieurs clients en une fois (selection de l'ecran). */
+    @Transactional
+    public List<Grant> setMany(List<ClientChoice> choices) {
+        List<Grant> done = new java.util.ArrayList<>();
+        for (ClientChoice choice : choices == null ? List.<ClientChoice>of() : choices) {
+            if (choice == null || choice.ownerType() == null || !StringUtils.hasText(choice.ownerCode()) || choice.enabled() == null) {
+                continue;
+            }
+            done.add(set(choice.ownerType(), choice.ownerCode(), choice.enabled(), choice.reason()));
+        }
+        return done;
+    }
+
+    /** Un choix de la selection. */
+    public record ClientChoice(SubscriberType ownerType, String ownerCode, Boolean enabled, String reason) {
+    }
+
+    private com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService settingsAdmin;
+
+    @Autowired(required = false)
+    void setSettingsAdmin(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService settingsAdmin) {
+        this.settingsAdmin = settingsAdmin;
+    }
+
     @Transactional(readOnly = true)
     public List<Grant> list() {
         return grants.findAllByOrderByUpdatedAtDesc().stream().map(BookingPayOnSite::view).toList();

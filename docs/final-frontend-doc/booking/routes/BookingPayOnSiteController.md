@@ -2,9 +2,26 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 5 route(s).
+Module [booking](../README.md) · 8 route(s).
 
 ## Routes
+
+<a id="r-get-sni-api-v1-bookings-pay-on-site-all"></a>
+### GET /sni/api/v1/bookings/pay-on-site/all
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:READ`
+- Réponse : `BookingPayOnSiteController.AllState`
+- Modèles : [BookingPayOnSiteController.AllState](#m-BookingPayOnSiteController-AllState)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingPayOnSiteController.java`, méthode `all`
+
+<a id="r-put-sni-api-v1-bookings-pay-on-site-all"></a>
+### PUT /sni/api/v1/bookings/pay-on-site/all
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:UPDATE`
+- Corps JSON (obligatoire) : `BookingPayOnSiteController.AllRequest`
+- Réponse : `BookingPayOnSiteController.AllState`
+- Modèles : [BookingPayOnSiteController.AllState](#m-BookingPayOnSiteController-AllState), [BookingPayOnSiteController.AllRequest](#m-BookingPayOnSiteController-AllRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingPayOnSiteController.java`, méthode `setAll`
 
 <a id="r-get-sni-api-v1-bookings-pay-on-site-clients"></a>
 ### GET /sni/api/v1/bookings/pay-on-site/clients
@@ -13,6 +30,15 @@ Module [booking](../README.md) · 5 route(s).
 - Réponse : `List<BookingPayOnSite.Grant>`
 - Modèles : [BookingPayOnSite.Grant](#m-BookingPayOnSite-Grant)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingPayOnSiteController.java`, méthode `grants`
+
+<a id="r-put-sni-api-v1-bookings-pay-on-site-clients"></a>
+### PUT /sni/api/v1/bookings/pay-on-site/clients
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:UPDATE`
+- Corps JSON (obligatoire) : `List<BookingPayOnSite.ClientChoice>`
+- Réponse : `List<BookingPayOnSite.Grant>`
+- Modèles : [BookingPayOnSite.Grant](#m-BookingPayOnSite-Grant), [BookingPayOnSite.ClientChoice](#m-BookingPayOnSite-ClientChoice)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingPayOnSiteController.java`, méthode `setMany`
 
 <a id="r-get-sni-api-v1-bookings-pay-on-site-clients-ownertype-ownercode"></a>
 ### GET /sni/api/v1/bookings/pay-on-site/clients/{ownerType}/{ownerCode}
@@ -70,6 +96,22 @@ Module [booking](../README.md) · 5 route(s).
 
 Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
+<a id="m-BookingPayOnSiteController-AllState"></a>
+#### BookingPayOnSiteController.AllState
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `enabled` | booléen |  |  |
+| `clearedClientOptions` | entier |  |  |
+
+<a id="m-BookingPayOnSiteController-AllRequest"></a>
+#### BookingPayOnSiteController.AllRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `enabled` | booléen | oui |  |
+| `resetClients` | booléen |  |  |
+
 <a id="m-BookingPayOnSite-Grant"></a>
 #### BookingPayOnSite.Grant
 
@@ -82,6 +124,16 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `revokedAutomatically` | booléen |  |  |
 | `updatedBy` | texte |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
+
+<a id="m-BookingPayOnSite-ClientChoice"></a>
+#### BookingPayOnSite.ClientChoice
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `ownerType` | enum : `MEMBER`, `CUSTOMER`, `BUSINESS_ENTITY` |  |  |
+| `ownerCode` | texte |  |  |
+| `enabled` | booléen |  |  |
+| `reason` | texte |  |  |
 
 <a id="m-BookingPayOnSite-Access"></a>
 #### BookingPayOnSite.Access

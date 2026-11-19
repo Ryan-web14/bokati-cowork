@@ -511,11 +511,13 @@ bokati.whatsapp.portal-path.kyc	NOTIFICATIONS	TEXT	LIVE	client/kyc	Page de l'esp
 bokati.whatsapp.portal-path.quotes	NOTIFICATIONS	TEXT	LIVE	client/quotes	Page de l'espace client ouverte par le bouton WhatsApp : devis
 bokati.whatsapp.portal-path.subscriptions	NOTIFICATIONS	TEXT	LIVE	client/subscriptions	Page de l'espace client ouverte par le bouton WhatsApp : abonnements
 bokati.whatsapp.portal-path.wallet	NOTIFICATIONS	TEXT	LIVE	client/wallet	Page de l'espace client ouverte par le bouton WhatsApp : portefeuille
-bookings.calendar-feed.enabled	BOOKING	BOOLEAN	LIVE	false	Réservations : agenda personnel synchronisé (lien ICS) proposé aux membres
-bookings.deposit.rate	BOOKING	INTEGER	LIVE	30	Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose
-bookings.early-release.minutes	BOOKING	INTEGER	LIVE	0	Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais)
-bookings.last-minute.discount-rate	BOOKING	INTEGER	LIVE	0	Réservations : remise (%) d'une réservation du portail qui commence bientôt (0 : coupée)
+bookings.calendar-feed.enabled	BOOKING	BOOLEAN	LIVE	true	Réservations : agenda personnel synchronisé (lien ICS) proposé aux membres
+bookings.deposit.rate	BOOKING	INTEGER	LIVE	50	Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose
+bookings.early-release.minutes	BOOKING	INTEGER	LIVE	30	Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais)
+bookings.last-minute.discount-rate	BOOKING	INTEGER	LIVE	10	Réservations : remise (%) d'une réservation du portail qui commence bientôt (0 : coupée)
 bookings.last-minute.hours	BOOKING	INTEGER	LIVE	24	Réservations : fenêtre de la dernière minute, en heures avant le début
+bookings.last-minute.whatsapp-enabled	BOOKING	BOOLEAN	LIVE	false	Réservations : annonce WhatsApp des offres de dernière minute aux membres volontaires (modèle offre_derniere_minute approuvé requis)
+bookings.last-minute.whatsapp-max	BOOKING	INTEGER	LIVE	50	Réservations : nombre maximal de membres prévenus par annonce de dernière minute
 bookings.pay-on-site.max-no-shows	BOOKING	INTEGER	LIVE	2	Réservations : absences sur des rendez-vous réglés sur place avant retrait d'office de l'option (0 : jamais)
 bookings.pay-on-site.no-show-window-days	BOOKING	INTEGER	LIVE	90	Réservations : période, en jours, sur laquelle les absences sont comptées
 bookings.pay-on-site.portal-enabled	BOOKING	BOOLEAN	LIVE	false	Réservations : rendez-vous réglé sur place ouvert au portail pour tous les clients sans option propre
@@ -535,6 +537,7 @@ bookings.reliability.threshold	BOOKING	INTEGER	LIVE	60	Réservations : score de 
 bookings.reliability.window-days	BOOKING	INTEGER	LIVE	180	Réservations : période, en jours, du calcul de la fiabilité
 bookings.reminders.enabled	BOOKING	BOOLEAN	LIVE	true	Réservations : rappels automatiques par courriel avant le début
 bookings.reminders.offsets-minutes	BOOKING	TEXT	LIVE	1440,120	Réservations : délais des rappels avant le début, en minutes, séparés par des virgules (la veille et 2 h avant)
+bookings.reminders.whatsapp-enabled	BOOKING	BOOLEAN	LIVE	false	Réservations : rappel aussi par WhatsApp (modèle rappel_reservation approuvé requis)
 fund.advance.overdue-policy	PAYMENT	ENUM	LIVE	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
 fund.approval.level1-max	PAYMENT	INTEGER	LIVE	50000	Montant maximal valide par le seul chef de service (XAF)
 fund.approval.level2-max	PAYMENT	INTEGER	LIVE	500000	Montant maximal valide sans la direction (XAF)

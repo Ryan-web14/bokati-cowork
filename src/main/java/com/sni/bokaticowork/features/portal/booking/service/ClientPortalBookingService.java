@@ -87,6 +87,24 @@ public class ClientPortalBookingService {
                         "Déplacée par le client", Boolean.TRUE, acceptPriceChange)));
     }
 
+    private com.sni.bokaticowork.features.booking.service.support.BookingAttendance attendance;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setAttendance(com.sni.bokaticowork.features.booking.service.support.BookingAttendance attendance) {
+        this.attendance = attendance;
+    }
+
+    /** Lot B9a : « je viens » ou « j'annule » depuis l'espace client. */
+    @Transactional
+    public ClientBookingResponse answerAttendance(Member member, String bookingNumber, boolean coming) {
+        verifyOwnership(member, bookingService.get(bookingNumber));
+        if (attendance == null) {
+            throw new com.sni.bokaticowork.core.exception.customs.ConflictException("Réponse indisponible");
+        }
+        attendance.answer(bookingNumber, coming);
+        return toDetailResponse(bookingService.get(bookingNumber));
+    }
+
     /** Lot B9f : prolonger sa reservation. */
     @Transactional
     public ClientBookingResponse extendBooking(Member member, String bookingNumber, int minutes, Boolean acceptPriceChange) {

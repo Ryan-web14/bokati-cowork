@@ -10,6 +10,8 @@
 
 `payments` (décision D6) : `KEEP_AS_CREDIT` (défaut) ou `TRANSFER`.
 
+Fiche client entreprise et entreprise ne font qu'un (19/11/2026) : un code de fiche client (`CUS-COM-...`) envoyé avec `customerType: "BUSINESS_ENTITY"` est accepté. La facture va à l'entreprise rattachée à cette fiche (son code d'entreprise) ; sans entreprise rattachée, à la fiche client (`CUSTOMER`). Avant, cette combinaison renvoyait `404 Business entity not found`. Une liste unique « Entreprises » peut donc mêler les deux.
+
 ## Deux cas, choisis par le serveur
 
 **Sur place** (`mode = IN_PLACE`) : facture non certifiée, sans paiement ni écriture comptable. La même facture passe au nouveau client dans une nouvelle version : fiche reprise (nom, adresse, NIU, identifiants, exonération de TVA), recalcul, contrôle du blocage et du plafond d'encours du nouveau client.

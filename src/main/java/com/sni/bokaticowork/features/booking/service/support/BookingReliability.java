@@ -90,7 +90,7 @@ public class BookingReliability {
     }
 
     public BigDecimal depositRate() {
-        return BigDecimal.valueOf(Math.max(0, integer("bookings.deposit.rate", 30)));
+        return BigDecimal.valueOf(Math.max(0, integer("bookings.deposit.rate", 50)));
     }
 
     private int integer(String key, int fallback) {

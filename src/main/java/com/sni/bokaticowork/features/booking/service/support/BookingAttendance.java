@@ -67,6 +67,14 @@ public class BookingAttendance {
         return bookings.save(cancelled);
     }
 
+    /** Lot B9a : reponse depuis l'espace client (le titulaire est deja verifie). */
+    @Transactional
+    public Booking answer(String bookingNumber, boolean coming) {
+        Booking booking = bookings.findByBookingNumber(bookingNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Réservation introuvable : " + bookingNumber));
+        return coming ? coming(bookingNumber, booking.getCheckInToken()) : cancel(bookingNumber, booking.getCheckInToken());
+    }
+
     private static void requireUpcoming(Booking booking) {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
             throw new ConflictException("Cette réservation est " + booking.getStatus().label() + " : le lien n'a plus d'effet");

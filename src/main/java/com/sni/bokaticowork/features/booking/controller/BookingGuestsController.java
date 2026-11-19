@@ -25,6 +25,8 @@ public class BookingGuestsController {
     private final BookingGuests guests;
     private final BookingMapper mapper;
     private final com.sni.bokaticowork.features.booking.service.support.BookingFilling filling;
+    private final com.sni.bokaticowork.features.ressource.service.interfaces.ResourceService resources;
+    private final com.sni.bokaticowork.features.ressource.service.interfaces.ResourcePricingRuleService pricing;
 
     /** Invite (ou relance) un participant par courriel ; {@code sent} vaut 0 sans courriel. */
     @PostMapping("/{bookingNumber}/participants/{participantId}/invite")
@@ -53,6 +55,20 @@ public class BookingGuestsController {
     public ResponseEntity<BookingResponse> extend(@PathVariable String bookingNumber,
                                                   @jakarta.validation.Valid @RequestBody ExtendRequest request) {
         return ResponseEntity.ok(filling.extend(bookingNumber, request.minutes(), request.acceptPriceChange()));
+    }
+
+    public record AnnounceRequest(@jakarta.validation.constraints.NotBlank String resourceCode,
+                                  @jakarta.validation.constraints.NotNull java.time.LocalDateTime startedAt,
+                                  @jakarta.validation.constraints.NotNull java.time.LocalDateTime endedAt) {
+    }
+
+    /** Lot B9f : annonce WhatsApp d'un creneau de derniere minute aux membres volontaires. */
+    @PostMapping("/last-minute/announce")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingFilling.Announcement> announce(
+            @jakarta.validation.Valid @RequestBody AnnounceRequest request) {
+        var resource = resources.getResourceForService(request.resourceCode().trim());
+        var quote = pricing.quote(resource.getCode(), null, request.startedAt(), request.endedAt(), 1, null, null, "PORTAL");
+        return ResponseEntity.ok(filling.announce(resource.getName(), request.startedAt(), request.endedAt(), quote == null ? null : quote.amount()));
     }
 
     /** Disposition de la salle, demandes speciales, notes internes, etiquettes ; seuls les champs donnes changent. */

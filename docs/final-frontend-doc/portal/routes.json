@@ -687,6 +687,33 @@
    "methods": [
     "POST"
    ],
+   "path": "/sni/api/v1/client/bookings/{bookingNumber}/attendance",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "attendance",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingController.ClientAttendanceRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.portal.booking.dto.response.ClientBookingResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
    "path": "/sni/api/v1/client/bookings/{bookingNumber}/extend",
    "package": "features.portal.booking.controller",
    "controller": "ClientBookingController",
@@ -7115,6 +7142,18 @@
     }
    }
   },
+  "ClientBookingController.ClientAttendanceRequest": {
+   "required": [
+    "answer"
+   ],
+   "type": "object",
+   "properties": {
+    "answer": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
   "ClientBookingController.ClientExtendRequest": {
    "type": "object",
    "properties": {
@@ -9804,7 +9843,8 @@
       "INVOICE_ISSUED",
       "PAYMENT_RECEIVED",
       "PAYMENT_FAILED",
-      "KYC_DOCUMENTS_REQUESTED"
+      "KYC_DOCUMENTS_REQUESTED",
+      "LAST_MINUTE_OFFERS"
      ]
     },
     "channel": {
@@ -13094,6 +13134,7 @@
   "ClientPortalBookingService.LastMinuteOffer": "com.sni.bokaticowork.features.portal.booking.service.ClientPortalBookingService.LastMinuteOffer",
   "BookingPayOnSite.Access": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access",
   "ClientCancelBookingRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCancelBookingRequest",
+  "ClientBookingController.ClientAttendanceRequest": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingController.ClientAttendanceRequest",
   "ClientBookingController.ClientExtendRequest": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingController.ClientExtendRequest",
   "ClientBookingController.ClientRescheduleRequest": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingController.ClientRescheduleRequest",
   "BookingChangePreviewResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingChangePreviewResponse",

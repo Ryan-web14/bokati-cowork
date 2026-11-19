@@ -38,6 +38,35 @@ public class BookingPayOnSiteController {
     public record GrantRequest(@NotNull Boolean enabled, @Size(max = 500) String reason) {
     }
 
+    public record AllRequest(@NotNull Boolean enabled, Boolean resetClients) {
+    }
+
+    public record AllState(boolean enabled, int clearedClientOptions) {
+    }
+
+    /** Reglage global : ouvert ou ferme a tous les clients sans option propre. */
+    @GetMapping("/all")
+    public ResponseEntity<AllState> all() {
+        return ResponseEntity.ok(new AllState(payOnSite.globallyEnabled(), 0));
+    }
+
+    /**
+     * Ouvre ou ferme a tous. {@code resetClients: true} efface les options posees a la main pour que
+     * tous suivent ce choix (les retraits d'office apres absences restent) ; ensuite, selectionner
+     * ou deselectionner des clients avec {@code PUT /clients}.
+     */
+    @PutMapping("/all")
+    public ResponseEntity<AllState> setAll(@Valid @RequestBody AllRequest request) {
+        int cleared = payOnSite.setAll(request.enabled(), Boolean.TRUE.equals(request.resetClients()));
+        return ResponseEntity.ok(new AllState(request.enabled(), cleared));
+    }
+
+    /** Selection : pose l'option de plusieurs clients en une fois. */
+    @PutMapping("/clients")
+    public ResponseEntity<List<BookingPayOnSite.Grant>> setMany(@RequestBody List<BookingPayOnSite.ClientChoice> choices) {
+        return ResponseEntity.ok(payOnSite.setMany(choices));
+    }
+
     /** Options posees par l'equipe (clients ouverts ou fermes), la plus recente d'abord. */
     @GetMapping("/clients")
     public ResponseEntity<List<BookingPayOnSite.Grant>> grants() {

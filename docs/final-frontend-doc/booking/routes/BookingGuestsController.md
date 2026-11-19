@@ -2,9 +2,18 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 5 route(s).
+Module [booking](../README.md) · 6 route(s).
 
 ## Routes
+
+<a id="r-post-sni-api-v1-bookings-last-minute-announce"></a>
+### POST /sni/api/v1/bookings/last-minute/announce
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:CREATE`
+- Corps JSON (obligatoire) : `BookingGuestsController.AnnounceRequest`
+- Réponse : `BookingFilling.Announcement`
+- Modèles : [BookingFilling.Announcement](#m-BookingFilling-Announcement), [BookingGuestsController.AnnounceRequest](#m-BookingGuestsController-AnnounceRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingGuestsController.java`, méthode `announce`
 
 <a id="r-patch-sni-api-v1-bookings-bookingnumber-details"></a>
 ### PATCH /sni/api/v1/bookings/{bookingNumber}/details
@@ -71,6 +80,25 @@ Module [booking](../README.md) · 5 route(s).
 ## Modèles
 
 Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
+
+<a id="m-BookingFilling-Announcement"></a>
+#### BookingFilling.Announcement
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `notified` | entier |  |  |
+| `volunteers` | entier |  |  |
+| `discountedPrice` | texte |  |  |
+| `normalPrice` | texte |  |  |
+
+<a id="m-BookingGuestsController-AnnounceRequest"></a>
+#### BookingGuestsController.AnnounceRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `resourceCode` | texte | oui | longueur min `1` |
+| `startedAt` | date-heure locale sans fuseau | oui |  |
+| `endedAt` | date-heure locale sans fuseau | oui |  |
 
 <a id="m-BookingResponse"></a>
 #### BookingResponse

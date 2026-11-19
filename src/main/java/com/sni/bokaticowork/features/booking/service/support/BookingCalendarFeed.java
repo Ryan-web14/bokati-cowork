@@ -59,7 +59,7 @@ public class BookingCalendarFeed {
     }
 
     public boolean enabled() {
-        return settings != null && settings.bool(ENABLED_KEY, false);
+        return settings == null || settings.bool(ENABLED_KEY, true);
     }
 
     /** Cree ou renouvelle le lien du membre (l'ancien cesse de marcher). */

@@ -385,7 +385,8 @@
       "INVOICE_ISSUED",
       "PAYMENT_RECEIVED",
       "PAYMENT_FAILED",
-      "KYC_DOCUMENTS_REQUESTED"
+      "KYC_DOCUMENTS_REQUESTED",
+      "LAST_MINUTE_OFFERS"
      ]
     },
     "channel": {

@@ -55,7 +55,7 @@ class BookingB9cTest {
         history(2, 1);
         BookingReliability deposit = reliability("DEPOSIT");
         assertThat(deposit.score(SubscriberType.MEMBER, "MBR-1").score()).isEqualTo(50);
-        assertThat(deposit.depositFor(SubscriberType.MEMBER, "MBR-1", new BigDecimal("50000"))).isEqualByComparingTo("15000");
+        assertThat(deposit.depositFor(SubscriberType.MEMBER, "MBR-1", new BigDecimal("50000"))).isEqualByComparingTo("25000");
         assertThat(deposit.prepayRequired(SubscriberType.MEMBER, "MBR-1")).isFalse();
 
         BookingReliability prepay = reliability("PREPAY");

@@ -118,3 +118,7 @@ Avant d'envoyer, l'écran peut contrôler lui-même la durée (`minBookingDurati
 - Proposer le choix « pour moi / pour mon organisation » seulement si `GET /sni/api/v1/client/companies` rend une organisation dont `effectiveInvoiceLinkMode` vaut `ON_CHOICE`.
 - Envoyer `startedAt`/`endedAt` sans fuseau ni `Z` dans les corps de réservation.
 - Le QR d'arrivée se construit à partir de `checkInQrValue`.
+
+## Je viens ou j'annule (19/11/2026)
+
+Depuis le rappel (courriel ou bouton WhatsApp « Je viens ou j'annule » qui ouvre la réservation) : `POST /client/bookings/{numéro}/attendance` `{ "answer": "COMING" }` ou `{ "answer": "CANCEL" }` ; renvoie la réservation. Seul le titulaire peut répondre. Préférence « Offres de dernière minute » (`LAST_MINUTE_OFFERS`) : coupée par défaut, le membre l'active dans ses préférences pour recevoir les offres par WhatsApp.

@@ -27,25 +27,33 @@
 
 Dev V381 à V397, prod V375 à V391 (dont V385/V379, équivalents en devises de la facturation, et V387/V381, socle des listes de choix). Toutes en `IF NOT EXISTS` ou avec garde : rejouables. La suite d'intégration (Docker) n'a pas été relancée sur ces migrations : à faire avant la mise en production (`./mvnw test` avec Docker).
 
-## Réglages à décider (écran des paramètres, domaine `BOOKING`)
+## Réglages décidés le 19/11/2026 (écran des paramètres, domaine `BOOKING`)
 
-| Réglage | Défaut | Décision de l'exploitant |
+Ces valeurs sont désormais les valeurs par défaut du logiciel ; elles restent modifiables à l'écran.
+
+| Réglage | Défaut | Décision |
 | --- | --- | --- |
-| `bookings.pay-on-site.portal-enabled` | coupé | Ouvrir le règlement sur place au portail pour tous, ou client par client |
-| `bookings.early-release.minutes` | 0 (coupé) | Libérer un créneau sans arrivée (par exemple 30) |
-| `bookings.last-minute.discount-rate` | 0 (coupé) | Remise de dernière minute (par exemple 15) |
-| `bookings.calendar-feed.enabled` | coupé | Proposer l'agenda synchronisé aux membres |
-| `bookings.reliability.threshold`, `.mode` | 60, `DEPOSIT` | Seuil de fiabilité et garantie (acompte ou prépaiement) |
-| `bookings.deposit.rate` | 30 | Acompte en % |
+| `bookings.pay-on-site.portal-enabled` | coupé | Client par client. Actions groupées : ouvrir ou fermer à tous (`PUT /bookings/pay-on-site/all`), puis sélectionner ou désélectionner des clients (`PUT /bookings/pay-on-site/clients`) |
+| `bookings.early-release.minutes` | 30 | Créneau sans arrivée libéré 30 minutes après le début |
+| `bookings.last-minute.discount-rate` | 10 | Remise de dernière minute de 10 % au portail |
+| `bookings.calendar-feed.enabled` | ouvert | Agenda synchronisé proposé aux membres |
+| `bookings.reliability.threshold` | 60 | Seuil de fiabilité |
+| `bookings.reliability.mode` | `DEPOSIT` | Acompte par défaut ; `PREPAY` (prépaiement) reste possible par le réglage |
+| `bookings.deposit.rate` | 50 | Acompte de 50 % |
 | `bookings.price-adjustment.max-rate` | 20 | Plafond d'ajustement sans approbation |
 | `bookings.reminders.offsets-minutes` | `1440,120` | Délais des rappels |
+| `bookings.reminders.whatsapp-enabled` | coupé | À ouvrir quand `rappel_reservation` est approuvé par Meta |
+| `bookings.last-minute.whatsapp-enabled`, `.whatsapp-max` | coupé, 50 | À ouvrir quand `offre_derniere_minute` est approuvé par Meta |
 
 ## Actions de l'exploitant
 
 1. **Droits** : `BOOKING:PRICE_ADJUST` et `BOOKING:PRICE_APPROVE` sont donnés à `SUPER_ADMIN`, `ADMIN`, `MANAGER` ; `SYSTEM:REFERENCE_LISTS` à `SUPER_ADMIN` et `ADMIN`. Ajuster dans l'écran des rôles si besoin.
 2. **Circuit d'approbation** `BOOKING_PRICE_ADJUSTMENT` (N+1) : vérifier la hiérarchie (organigramme) pour que chaque agent ait un responsable.
 3. **Listes de l'administrateur** à relire : motifs d'annulation et de refus, motifs d'ajustement, dispositions de salle, étiquettes (`/reference-lists?module=BOOKING`).
-4. **Modèles WhatsApp** à créer et faire approuver par Meta avant tout envoi : rappel de réservation (avec « je viens / j'annule »), offre de dernière minute aux membres volontaires. Rien n'est soumis sans ton accord ; tant qu'ils ne le sont pas, rappels et offres partent par courriel ou au portail seulement.
+4. **Modèles WhatsApp** écrits dans le logiciel, **non soumis** à Meta (soumission seulement avec l'accord de l'exploitant, par `POST /sni/api/v1/admin/whatsapp/templates/defaults`) :
+   - `rappel_reservation` (UTILITY) : prénom, espace, date, horaire, référence ; bouton « Je viens ou j'annule » vers la réservation au portail ;
+   - `offre_derniere_minute` (MARKETING) : prénom, espace, date, horaire, prix remisé, prix normal ; bouton « Réserver ». Envoyé seulement aux membres qui ont accepté la préférence `LAST_MINUTE_OFFERS` (WhatsApp), coupée par défaut.
+   Tant qu'ils ne sont pas approuvés et que les réglages `*.whatsapp-enabled` restent coupés, rappels et offres partent par courriel ou au portail seulement.
 5. **Rattrapage KYC** (reste du chantier ressources) : avec un compte d'administration, `POST /sni/api/v1/kyc/cases/backfill` (compte sans rien créer), puis `POST /sni/api/v1/kyc/cases/backfill?apply=true` dans chaque environnement.
 
 ## Tests

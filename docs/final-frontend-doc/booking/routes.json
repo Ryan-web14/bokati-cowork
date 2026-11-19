@@ -1747,6 +1747,27 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/last-minute/announce",
+   "package": "features.booking.controller",
+   "controller": "BookingGuestsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingGuestsController.java",
+   "handler": "announce",
+   "declaredIn": "BookingGuestsController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingGuestsController.AnnounceRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingFilling.Announcement>"
+  },
+  {
+   "methods": [
     "PATCH"
    ],
    "path": "/sni/api/v1/bookings/{bookingNumber}/details",
@@ -2100,6 +2121,44 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/bookings/pay-on-site/all",
+   "package": "features.booking.controller",
+   "controller": "BookingPayOnSiteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingPayOnSiteController.java",
+   "handler": "all",
+   "declaredIn": "BookingPayOnSiteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.controller.BookingPayOnSiteController.AllState>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/bookings/pay-on-site/all",
+   "package": "features.booking.controller",
+   "controller": "BookingPayOnSiteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingPayOnSiteController.java",
+   "handler": "setAll",
+   "declaredIn": "BookingPayOnSiteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.controller.BookingPayOnSiteController.AllRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.controller.BookingPayOnSiteController.AllState>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/bookings/pay-on-site/clients",
    "package": "features.booking.controller",
    "controller": "BookingPayOnSiteController",
@@ -2109,6 +2168,27 @@
    "access": {
     "kind": "admin",
     "permission": "BOOKING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Grant>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/bookings/pay-on-site/clients",
+   "package": "features.booking.controller",
+   "controller": "BookingPayOnSiteController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingPayOnSiteController.java",
+   "handler": "setMany",
+   "declaredIn": "BookingPayOnSiteController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "List<com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.ClientChoice>",
+    "required": true
    },
    "params": [],
    "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Grant>>"
@@ -5178,6 +5258,47 @@
     }
    }
   },
+  "BookingFilling.Announcement": {
+   "type": "object",
+   "properties": {
+    "notified": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "volunteers": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "discountedPrice": {
+     "type": "string"
+    },
+    "normalPrice": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingGuestsController.AnnounceRequest": {
+   "required": [
+    "endedAt",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    }
+   }
+  },
   "BookingGuests.Details": {
    "type": "object",
    "properties": {
@@ -5386,6 +5507,32 @@
     }
    }
   },
+  "BookingPayOnSiteController.AllState": {
+   "type": "object",
+   "properties": {
+    "enabled": {
+     "type": "boolean"
+    },
+    "clearedClientOptions": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "BookingPayOnSiteController.AllRequest": {
+   "required": [
+    "enabled"
+   ],
+   "type": "object",
+   "properties": {
+    "enabled": {
+     "type": "boolean"
+    },
+    "resetClients": {
+     "type": "boolean"
+    }
+   }
+  },
   "BookingPayOnSite.Grant": {
    "type": "object",
    "properties": {
@@ -5415,6 +5562,28 @@
     "updatedAt": {
      "type": "string",
      "format": "date-time"
+    }
+   }
+  },
+  "BookingPayOnSite.ClientChoice": {
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "enabled": {
+     "type": "boolean"
+    },
+    "reason": {
+     "type": "string"
     }
    }
   },
@@ -6536,6 +6705,8 @@
   "BookingExtrasController.ParticipantsRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.ParticipantsRequest",
   "BookingExtrasController.PromoRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.PromoRequest",
   "BookingExtrasController.BundleBookingRequest": "com.sni.bokaticowork.features.booking.controller.BookingExtrasController.BundleBookingRequest",
+  "BookingFilling.Announcement": "com.sni.bokaticowork.features.booking.service.support.BookingFilling.Announcement",
+  "BookingGuestsController.AnnounceRequest": "com.sni.bokaticowork.features.booking.controller.BookingGuestsController.AnnounceRequest",
   "BookingGuests.Details": "com.sni.bokaticowork.features.booking.service.support.BookingGuests.Details",
   "BookingGuestsController.ExtendRequest": "com.sni.bokaticowork.features.booking.controller.BookingGuestsController.ExtendRequest",
   "BookingInsights.Dashboard": "com.sni.bokaticowork.features.booking.service.support.BookingInsights.Dashboard",
@@ -6543,7 +6714,10 @@
   "BookingOperations.EndReportResponse": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse",
   "BookingOperations.EndReportRequest": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportRequest",
   "BookingOperations.UsageRulesView": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView",
+  "BookingPayOnSiteController.AllState": "com.sni.bokaticowork.features.booking.controller.BookingPayOnSiteController.AllState",
+  "BookingPayOnSiteController.AllRequest": "com.sni.bokaticowork.features.booking.controller.BookingPayOnSiteController.AllRequest",
   "BookingPayOnSite.Grant": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Grant",
+  "BookingPayOnSite.ClientChoice": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.ClientChoice",
   "BookingPayOnSite.Access": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access",
   "BookingPayOnSiteController.GrantRequest": "com.sni.bokaticowork.features.booking.controller.BookingPayOnSiteController.GrantRequest",
   "BookingReliability.Score": "com.sni.bokaticowork.features.booking.service.support.BookingReliability.Score",

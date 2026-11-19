@@ -53,7 +53,7 @@ public class BookingFilling {
     }
 
     public int lastMinuteRate() {
-        return settings == null ? 0 : Math.max(0, Math.min(90, settings.integer(RATE_KEY, 0)));
+        return settings == null ? 10 : Math.max(0, Math.min(90, settings.integer(RATE_KEY, 10)));
     }
 
     public int lastMinuteHours() {
@@ -87,6 +87,66 @@ public class BookingFilling {
         if (discount.signum() > 0) {
             extras.getObject().applyManualDiscount(booking, discount, "Offre de dernière minute (-" + lastMinuteRate() + " %)");
         }
+    }
+
+    /** Lot B9f : resultat d'une annonce. */
+    public record Announcement(int notified, int volunteers, String discountedPrice, String normalPrice) {
+    }
+
+    private org.springframework.jdbc.core.JdbcTemplate jdbc;
+    private BookingWhatsAppNotifier whatsApp;
+    private com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository members;
+
+    @Autowired(required = false)
+    void setAnnouncement(org.springframework.jdbc.core.JdbcTemplate jdbc, BookingWhatsAppNotifier whatsApp,
+                         com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository members) {
+        this.jdbc = jdbc;
+        this.whatsApp = whatsApp;
+        this.members = members;
+    }
+
+    /**
+     * Annonce WhatsApp d'un creneau libre de derniere minute aux membres qui ont accepte ces offres
+     * (preference LAST_MINUTE_OFFERS, WhatsApp). Coupee tant que {@code bookings.last-minute.whatsapp-enabled}
+     * ne l'est pas (modele {@code offre_derniere_minute} a faire approuver).
+     */
+    public Announcement announce(String resourceName, LocalDateTime start, LocalDateTime end, BigDecimal normalPrice) {
+        if (settings == null || !settings.bool("bookings.last-minute.whatsapp-enabled", false)) {
+            throw com.sni.bokaticowork.core.exception.customs.ConflictException.coded("LAST_MINUTE_WHATSAPP_DISABLED",
+                    "Annonce WhatsApp de dernière minute coupée (modèle offre_derniere_minute à faire approuver, puis réglage à ouvrir)");
+        }
+        if (jdbc == null || whatsApp == null || members == null) {
+            return new Announcement(0, 0, null, null);
+        }
+        int max = Math.max(1, settings.integer("bookings.last-minute.whatsapp-max", 50));
+        java.util.List<String> volunteers = jdbc.queryForList("""
+                SELECT m.member_id FROM notification_preferences p JOIN member m ON m.id = p.member_id
+                WHERE p.event_type = 'LAST_MINUTE_OFFERS' AND p.notification_channel = 'WHATSAPP' AND p.enabled = true AND m.deleted = false
+                ORDER BY m.member_id LIMIT ?
+                """, String.class, max);
+        String normal = plain(normalPrice);
+        String discounted = plain(discounted(normalPrice));
+        int notified = 0;
+        for (String memberId : volunteers) {
+            var member = members.findByMemberIdAndDeletedFalse(memberId).orElse(null);
+            try {
+                if (member != null && whatsApp.lastMinute(member, resourceName, start, end, discounted, normal)) {
+                    notified++;
+                }
+            } catch (RuntimeException ex) {
+                log.warn("Offre de derniere minute a {} non envoyee : {}", memberId, ex.getMessage());
+            }
+        }
+        return new Announcement(notified, volunteers.size(), discounted, normal);
+    }
+
+    private static String plain(BigDecimal value) {
+        if (value == null) {
+            return "0";
+        }
+        java.text.DecimalFormatSymbols symbols = new java.text.DecimalFormatSymbols(java.util.Locale.FRANCE);
+        symbols.setGroupingSeparator(' ');
+        return new java.text.DecimalFormat("#,##0", symbols).format(value);
     }
 
     /** Prolonge la fin de {@code minutes} (reservation confirmee ou en cours) ; une hausse demande {@code acceptPriceChange}. */

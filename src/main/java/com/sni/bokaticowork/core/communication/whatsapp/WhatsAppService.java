@@ -144,6 +144,18 @@ public class WhatsAppService implements WhatsAppMessageSender {
                     "Bonjour {{1}}, information importante sur votre portefeuille ELLE A OSE : {{2}}. "
                             + "Si vous n'êtes pas à l'origine de cette opération, contactez-nous en répondant à ce message.",
                     List.of("Awa", "votre portefeuille est suspendu"), "ELLE A OSE", null, null),
+            // Reservations (lot B9a) : rappel la veille et 2 h avant ; prenom, espace, date, horaire, reference.
+            new DefaultTemplate("BOOKING_REMINDER", "rappel_reservation", "UTILITY",
+                    "Bonjour {{1}}, rappel de votre réservation chez ELLE A OSE.\n\nEspace : {{2}}\nDate : {{3}}\nHoraire : {{4}}\nRéférence : {{5}}\n\n"
+                            + "Confirmez votre venue ou annulez depuis votre espace client. Pour toute question, répondez à ce message.",
+                    List.of("Awa", "Salle Kouilou", "20/11/2026", "09:00 - 11:00", "BKG-2026-00123"), "ELLE A OSE",
+                    new Button("URL", "Je viens ou j'annule", PORTAL + "/{{1}}", PORTAL + "/client/bookings"), null),
+            // Reservations (lot B9f) : offre de derniere minute aux membres volontaires ; prenom, espace, date, horaire, prix remise, prix normal.
+            new DefaultTemplate("BOOKING_LAST_MINUTE", "offre_derniere_minute", "MARKETING",
+                    "Bonjour {{1}}, un créneau s'est libéré chez ELLE A OSE : {{2}}, le {{3}} de {{4}}, à {{5}} XAF au lieu de {{6}} XAF. "
+                            + "Réservez vite depuis votre espace client. Vous recevez ce message car vous avez accepté les offres de dernière minute.",
+                    List.of("Awa", "Salle Kouilou", "20/11/2026", "14:00 - 15:00", "9 000", "10 000"), "ELLE A OSE",
+                    new Button("URL", "Réserver", PORTAL + "/{{1}}", PORTAL + "/client/bookings"), null),
             // Centre d'audit (lot A6) : alerte aux administrateurs choisis (bokati.audit.alerts.whatsapp-recipients).
             new DefaultTemplate("AUDIT_ALERT", "alerte_centre_audit", "UTILITY",
                     "Bonjour {{1}}, alerte du centre d'audit ELLE A OSE : {{2}}. Détail : {{3}}. "

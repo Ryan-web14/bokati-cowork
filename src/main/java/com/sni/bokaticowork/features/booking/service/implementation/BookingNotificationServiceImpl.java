@@ -73,6 +73,13 @@ public class BookingNotificationServiceImpl implements BookingNotificationServic
         return 1;
     }
 
+    private com.sni.bokaticowork.features.booking.service.support.BookingWhatsAppNotifier whatsAppReminders;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setWhatsAppReminders(com.sni.bokaticowork.features.booking.service.support.BookingWhatsAppNotifier whatsAppReminders) {
+        this.whatsAppReminders = whatsAppReminders;
+    }
+
     static final String OFFSETS_KEY = "bookings.reminders.offsets-minutes";
     static final String ENABLED_KEY = "bookings.reminders.enabled";
 
@@ -155,6 +162,14 @@ public class BookingNotificationServiceImpl implements BookingNotificationServic
             notification.setAttemptCount(notification.getAttemptCount() + 1);
             boolean sent = emailSender.sendEmail(notification.getRecipient(), notification.getSubject(), notification.getBody()).join();
             notification.setStatus(sent ? BookingNotificationStatus.SENT : BookingNotificationStatus.FAILED);
+            // Lot B9a : rappel aussi par WhatsApp quand le modele rappel_reservation est approuve et le reglage ouvert.
+            if (whatsAppReminders != null && settings != null && settings.bool("bookings.reminders.whatsapp-enabled", false)) {
+                try {
+                    whatsAppReminders.remind(notification.getBooking());
+                } catch (RuntimeException ex) {
+                    log.warn("Rappel WhatsApp de {} non envoye : {}", notification.getBooking().getBookingNumber(), ex.getMessage());
+                }
+            }
             notification.setDispatchedAt(Instant.now());
             if (!sent) {
                 notification.setErrorMessage("Le service d'envoi a refusé le courriel");

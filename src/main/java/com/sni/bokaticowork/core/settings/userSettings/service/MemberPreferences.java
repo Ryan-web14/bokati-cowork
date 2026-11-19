@@ -55,7 +55,7 @@ public class MemberPreferences {
             return notificationRepository
                     .findByMember_IdAndEventTypeAndNotificationChannel(member.getId(), event, channel)
                     .map(NotificationPreferences::isEnabled)
-                    .orElse(true);
+                    .orElse(event.defaultEnabled());
         } catch (RuntimeException ex) {
             log.warn("Preference {} {} du membre {} illisible, envoi maintenu : {}", event, channel, member.getMemberId(), ex.getMessage());
             return true;

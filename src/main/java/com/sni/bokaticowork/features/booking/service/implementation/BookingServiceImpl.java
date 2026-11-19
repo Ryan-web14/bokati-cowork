@@ -1616,7 +1616,7 @@ public class BookingServiceImpl implements BookingService {
      */
     @Override
     public int releaseNoArrivals(int limit) {
-        int minutes = platformSettings == null ? 0 : platformSettings.integer(EARLY_RELEASE_KEY, 0);
+        int minutes = platformSettings == null ? 30 : platformSettings.integer(EARLY_RELEASE_KEY, 30);
         if (minutes <= 0) {
             return 0;
         }

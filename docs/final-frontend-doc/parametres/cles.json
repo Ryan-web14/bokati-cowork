@@ -4,7 +4,7 @@
    "domain": "BOOKING",
    "label": "Réservation",
    "adminEditable": true,
-   "count": 36
+   "count": 39
   },
   {
    "domain": "RESOURCES",
@@ -4277,7 +4277,7 @@
    "domain": "BOOKING",
    "type": "BOOLEAN",
    "effect": "LIVE",
-   "default": "false",
+   "default": "true",
    "label": "Réservations : agenda personnel synchronisé (lien ICS) proposé aux membres"
   },
   {
@@ -4285,7 +4285,7 @@
    "domain": "BOOKING",
    "type": "INTEGER",
    "effect": "LIVE",
-   "default": "30",
+   "default": "50",
    "label": "Réservations : acompte demandé, en % du total, quand la fiabilité du client l'impose"
   },
   {
@@ -4293,7 +4293,7 @@
    "domain": "BOOKING",
    "type": "INTEGER",
    "effect": "LIVE",
-   "default": "0",
+   "default": "30",
    "label": "Réservations : libérer le créneau d'une réservation sans arrivée tant de minutes après le début (0 : jamais)"
   },
   {
@@ -4301,7 +4301,7 @@
    "domain": "BOOKING",
    "type": "INTEGER",
    "effect": "LIVE",
-   "default": "0",
+   "default": "10",
    "label": "Réservations : remise (%) d'une réservation du portail qui commence bientôt (0 : coupée)"
   },
   {
@@ -4311,6 +4311,22 @@
    "effect": "LIVE",
    "default": "24",
    "label": "Réservations : fenêtre de la dernière minute, en heures avant le début"
+  },
+  {
+   "key": "bookings.last-minute.whatsapp-enabled",
+   "domain": "BOOKING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Réservations : annonce WhatsApp des offres de dernière minute aux membres volontaires (modèle offre_derniere_minute approuvé requis)"
+  },
+  {
+   "key": "bookings.last-minute.whatsapp-max",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "50",
+   "label": "Réservations : nombre maximal de membres prévenus par annonce de dernière minute"
   },
   {
    "key": "bookings.pay-on-site.max-no-shows",
@@ -4463,6 +4479,14 @@
    "effect": "LIVE",
    "default": "1440,120",
    "label": "Réservations : délais des rappels avant le début, en minutes, séparés par des virgules (la veille et 2 h avant)"
+  },
+  {
+   "key": "bookings.reminders.whatsapp-enabled",
+   "domain": "BOOKING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Réservations : rappel aussi par WhatsApp (modèle rappel_reservation approuvé requis)"
   },
   {
    "key": "fund.advance.overdue-policy",

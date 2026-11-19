@@ -68,6 +68,33 @@ public class BillingCustomerSnapshotResolver {
         }
     }
 
+    /** Destinataire ramene a sa forme canonique : type et code. */
+    public record Party(String type, String code) {
+    }
+
+    /**
+     * Une fiche client entreprise et son entreprise ne font qu'un : un code de fiche client
+     * (CUS-COM-...) envoye comme BUSINESS_ENTITY designe l'entreprise rattachee a cette fiche
+     * (son code d'entreprise) ; sans entreprise rattachee, la fiche client elle-meme (CUSTOMER).
+     * Les autres destinataires restent tels quels.
+     */
+    public Party canonical(String customerType, String customerCode) {
+        if (!StringUtils.hasText(customerType) || !StringUtils.hasText(customerCode)) {
+            return new Party(customerType, customerCode);
+        }
+        String type = customerType.trim().toUpperCase();
+        String code = customerCode.trim();
+        if (("BUSINESS".equals(type) || "BUSINESS_ENTITY".equals(type)) && businessRepository.findByCode(code).isEmpty()) {
+            var customer = customerRepository.findByCustomerId(code).filter(found -> !found.isDeleted());
+            if (customer.isPresent()) {
+                return customer.get().getBusinessEntity() != null && StringUtils.hasText(customer.get().getBusinessEntity().getCode())
+                        ? new Party("BUSINESS_ENTITY", customer.get().getBusinessEntity().getCode())
+                        : new Party("CUSTOMER", code);
+            }
+        }
+        return new Party(customerType.trim(), code);
+    }
+
     private CustomerSnapshot resolveKnownCustomer(String customerType, String customerCode) {
         if (!StringUtils.hasText(customerType) || !StringUtils.hasText(customerCode)) {
             return CustomerSnapshot.empty();
@@ -83,9 +110,15 @@ public class BillingCustomerSnapshotResolver {
                 }
                 yield found.map(this::fromCustomer).orElse(CustomerSnapshot.empty());
             }
+            // Un client entreprise (fiche client CUS-COM-...) envoye comme BUSINESS_ENTITY est reconnu :
+            // l'ecran propose les deux dans la meme liste ; la piece est alors facturee a la fiche client.
             case "BUSINESS", "BUSINESS_ENTITY" -> businessRepository.findByCode(customerCode.trim())
                     .map(this::fromBusiness)
-                    .orElseThrow(() -> new ResourceNotFoundException("Business entity not found: " + customerCode));
+                    .or(() -> customerRepository.findByCustomerId(customerCode.trim())
+                            .filter(customer -> !customer.isDeleted())
+                            .map(customer -> customer.getBusinessEntity() != null ? fromBusiness(customer.getBusinessEntity()) : fromCustomer(customer)))
+                    .orElseThrow(() -> new ResourceNotFoundException("Entreprise introuvable : " + customerCode
+                            + " (ni code d'entreprise, ni fiche client)"));
             default -> CustomerSnapshot.empty();
         };
     }

@@ -213,7 +213,7 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
                         defaultPreferenceDescription(eventType, channel),
                         eventType.name(),
                         channel.name(),
-                        match == null || match.isEnabled()
+                        match == null ? eventType.defaultEnabled() : match.isEnabled()
                 ));
             }
         }

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [portal](../README.md) · 16 route(s).
+Module [portal](../README.md) · 17 route(s).
 
 ## Routes
 
@@ -126,6 +126,19 @@ Module [portal](../README.md) · 16 route(s).
 - Réponse : `ClientBookingResponse`
 - Modèles : [ClientBookingResponse](#m-ClientBookingResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `getBooking`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `bookingNumber` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-client-bookings-bookingnumber-attendance"></a>
+### POST /sni/api/v1/client/bookings/{bookingNumber}/attendance
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Corps JSON (obligatoire) : `ClientBookingController.ClientAttendanceRequest`
+- Réponse : `ClientBookingResponse`
+- Modèles : [ClientBookingResponse](#m-ClientBookingResponse), [ClientBookingController.ClientAttendanceRequest](#m-ClientBookingController-ClientAttendanceRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `attendance`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -359,6 +372,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `reason` | texte |  | longueur min `0`, longueur max `500` |
+
+<a id="m-ClientBookingController-ClientAttendanceRequest"></a>
+#### ClientBookingController.ClientAttendanceRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `answer` | texte | oui | longueur min `1` |
 
 <a id="m-ClientBookingController-ClientExtendRequest"></a>
 #### ClientBookingController.ClientExtendRequest

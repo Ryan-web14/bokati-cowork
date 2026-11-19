@@ -68,10 +68,10 @@ class BookingB9gTest {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         BookingCalendarFeed feed = new BookingCalendarFeed(jdbc, bookings);
         ReflectionTestUtils.setField(feed, "settings", settings);
-        when(settings.bool("bookings.calendar-feed.enabled", false)).thenReturn(false);
+        when(settings.bool("bookings.calendar-feed.enabled", true)).thenReturn(false);
         assertThatThrownBy(() -> feed.rotate("MBR-1")).isInstanceOf(ConflictException.class);
 
-        when(settings.bool("bookings.calendar-feed.enabled", false)).thenReturn(true);
+        when(settings.bool("bookings.calendar-feed.enabled", true)).thenReturn(true);
         when(settings.text(anyString(), anyString())).thenAnswer(call -> call.getArgument(1));
         when(jdbc.queryForList(contains("FROM booking_calendar_feed WHERE token"), eq(String.class), any(Object[].class))).thenReturn(List.of("MBR-1"));
         when(jdbc.queryForList(contains("FROM booking_calendar_feed WHERE token"), eq(String.class), anyString())).thenReturn(List.of("MBR-1"));
