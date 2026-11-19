@@ -16,4 +16,6 @@ public class LoginResponse {
     Boolean emailVerified;
     /** Les roles portes par le jeton · vide tant que le compte n'a pas ete active. */
     java.util.List<String> roles;
+    /** Lien a usage unique de creation du super-administrateur, seulement pour le compte invite (sinon absent). */
+    String superAdminSetupUrl;
 }

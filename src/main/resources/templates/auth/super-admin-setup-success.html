@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{fragments/page :: pagehead('Super-administrateur créé · Elle A Osé')}"></head>
+<body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
+  <p class="state done">Terminé</p>
+  <h1>Super-administrateur créé</h1>
+  <p class="lede">Le compte <strong th:text="${email}">adresse</strong> est actif avec le rôle SUPER_ADMIN. Connectez-vous à l'administration avec cette adresse. Ce lien est désormais clos.</p>
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
+</body>
+</html>

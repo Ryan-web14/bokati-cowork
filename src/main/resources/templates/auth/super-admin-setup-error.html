@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{fragments/page :: pagehead('Lien indisponible · Elle A Osé')}"></head>
+<body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
+  <p class="state">Lien indisponible</p>
+  <h1>Création impossible</h1>
+  <p class="lede" th:text="${reason}">Raison</p>
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
+</body>
+</html>

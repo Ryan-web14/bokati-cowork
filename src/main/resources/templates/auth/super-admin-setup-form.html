@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{fragments/page :: pagehead('Super-administrateur · Elle A Osé')}"></head>
+<body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
+
+  <p class="state todo">Action requise</p>
+  <h1>Créer le super-administrateur</h1>
+  <p class="lede">Ce compte aura tous les droits. Le lien ne sert qu'une fois.</p>
+
+  <p class="notice" th:if="${error}" style="border-left-color:#A32A34; color:#A32A34; margin-top:0; margin-bottom:16px"
+     th:text="${error}">Message</p>
+
+  <form th:action="@{/sni/api/v1/auth/super-admin-setup/form}" method="post">
+    <input type="hidden" name="token" th:value="${token}">
+    <input type="hidden" name="_csrf" th:value="${_csrf}">
+
+    <div class="field">
+      <label for="firstname">Prénom</label>
+      <input type="text" id="firstname" name="firstname" required th:value="${firstname}" autocomplete="given-name">
+    </div>
+    <div class="field">
+      <label for="lastname">Nom</label>
+      <input type="text" id="lastname" name="lastname" required th:value="${lastname}" autocomplete="family-name">
+    </div>
+    <div class="field">
+      <label for="email">Adresse électronique</label>
+      <input type="email" id="email" name="email" required th:value="${email}" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="password">Mot de passe</label>
+      <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label for="confirm">Confirmation</label>
+      <input type="password" id="confirm" name="confirmPassword" required minlength="6" autocomplete="new-password">
+    </div>
+
+    <button type="submit" class="btn">Créer le compte</button>
+  </form>
+
+  <p class="notice">Ce lien expire trente minutes après la connexion qui l'a généré.</p>
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
+</body>
+</html>

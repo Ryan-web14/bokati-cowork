@@ -31,6 +31,7 @@ public final class PublicPaths {
             ApiPath.V1 + "/auth/register",
             ApiPath.V1 + "/auth/ott/**",
             ApiPath.V1 + "/auth/password-reset/**",
+            ApiPath.V1 + "/auth/super-admin-setup/**",
             ApiPath.V1 + "/auth/unlock-account",
             ApiPath.V1 + "/auth/unlock-account/confirm",
             ApiPath.V1 + "/auth/email/verify/resend"

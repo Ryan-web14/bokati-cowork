@@ -480,12 +480,28 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
         userService.recordLoginSuccess(principal.getUser().getEmail());
         event(com.sni.bokaticowork.core.audit.security.SecurityEventType.LOGIN_SUCCESS, principal.getUser(), principal.getUsername(), "method", method);
 
+        String setupUrl = null;
+        if (superAdminInvitations != null) {
+            try {
+                setupUrl = superAdminInvitations.issueOnLogin(principal.getUser()).orElse(null);
+            } catch (RuntimeException ex) {
+                log.warn("Invitation super-administrateur non emise : {}", ex.getMessage());
+            }
+        }
         return LoginResponse.builder()
                 .accessToken(tokens.getAccessToken())
                 .refreshToken(tokens.getRefreshToken())
                 .emailVerified(principal.getUser().emailVerified())
                 .roles(principal.getAuthorities().stream().map(Object::toString).sorted().toList())
+                .superAdminSetupUrl(setupUrl)
                 .build();
+    }
+
+    private com.sni.bokaticowork.security.superadmin.SuperAdminInvitationService superAdminInvitations;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setSuperAdminInvitations(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.security.superadmin.SuperAdminInvitationService superAdminInvitations) {
+        this.superAdminInvitations = superAdminInvitations;
     }
 
 }
