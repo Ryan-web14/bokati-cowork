@@ -225,4 +225,21 @@ class PlatformSettingsAdminServiceTest {
         verify(alerter).changed(org.mockito.ArgumentMatchers.eq(FEE), any(), org.mockito.ArgumentMatchers.eq("0.05"), any(),
                 org.mockito.ArgumentMatchers.eq("root@sni"));
     }
+
+    @org.junit.jupiter.api.Test
+    void aSettingIsReachableByItsKeyAndTheAuditAndAccountingDomainsAreListed() {
+        // Lien direct depuis le centre d'audit ou la comptabilite : la cle suffit.
+        assertThat(service.get("bokati.audit.alerts.channels", superAdmin).domain()).isEqualTo(SettingDomain.AUDIT);
+        assertThat(service.domains(superAdmin)).extracting(PlatformSettingsAdminService.DomainView::domain)
+                .contains(SettingDomain.AUDIT, SettingDomain.ACCOUNTING);
+        assertThat(service.list(SettingDomain.ACCOUNTING, superAdmin)).isNotEmpty();
+        assertThat(service.list(null, "alerts.channels", superAdmin)).extracting(PlatformSettingsAdminService.SettingView::key)
+                .contains("bokati.audit.alerts.channels");
+        // Un ADMIN ne voit pas ces domaines : refus lisible, pas une liste vide sans explication.
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.get("bokati.audit.alerts.channels", admin))
+                .isInstanceOf(com.sni.bokaticowork.core.exception.customs.ForbiddenException.class)
+                .hasMessageContaining("super-administrateur");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.get("cle.inconnue", superAdmin))
+                .isInstanceOf(com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException.class);
+    }
 }

@@ -1,0 +1,4452 @@
+{
+ "domains": [
+  {
+   "domain": "BOOKING",
+   "label": "Réservation",
+   "adminEditable": true,
+   "count": 20
+  },
+  {
+   "domain": "RESOURCES",
+   "label": "Ressources et horaires",
+   "adminEditable": true,
+   "count": 19
+  },
+  {
+   "domain": "SUBSCRIPTIONS",
+   "label": "Abonnements",
+   "adminEditable": true,
+   "count": 19
+  },
+  {
+   "domain": "PASSES",
+   "label": "Passes",
+   "adminEditable": true,
+   "count": 6
+  },
+  {
+   "domain": "MARKETPLACE",
+   "label": "Marketplace",
+   "adminEditable": true,
+   "count": 3
+  },
+  {
+   "domain": "PROMOTIONS",
+   "label": "Promotions",
+   "adminEditable": true,
+   "count": 3
+  },
+  {
+   "domain": "DOMICILIATION",
+   "label": "Domiciliation",
+   "adminEditable": true,
+   "count": 10
+  },
+  {
+   "domain": "CONTRACTS",
+   "label": "Contrats",
+   "adminEditable": true,
+   "count": 3
+  },
+  {
+   "domain": "SUPPORT",
+   "label": "Support",
+   "adminEditable": true,
+   "count": 8
+  },
+  {
+   "domain": "TASKS",
+   "label": "Tâches",
+   "adminEditable": true,
+   "count": 7
+  },
+  {
+   "domain": "CRM",
+   "label": "CRM",
+   "adminEditable": true,
+   "count": 2
+  },
+  {
+   "domain": "EVENTS",
+   "label": "Événements",
+   "adminEditable": true,
+   "count": 2
+  },
+  {
+   "domain": "PORTAL",
+   "label": "Portail",
+   "adminEditable": true,
+   "count": 1
+  },
+  {
+   "domain": "COMPANIES",
+   "label": "Entreprises",
+   "adminEditable": false,
+   "count": 3
+  },
+  {
+   "domain": "WALLET",
+   "label": "Portefeuille",
+   "adminEditable": false,
+   "count": 16
+  },
+  {
+   "domain": "PAYMENT",
+   "label": "Paiement et caisses",
+   "adminEditable": false,
+   "count": 44
+  },
+  {
+   "domain": "ACCOUNTING",
+   "label": "Comptabilité",
+   "adminEditable": false,
+   "count": 190
+  },
+  {
+   "domain": "BILLING",
+   "label": "Facturation",
+   "adminEditable": false,
+   "count": 21
+  },
+  {
+   "domain": "COMPLIANCE",
+   "label": "Conformité",
+   "adminEditable": false,
+   "count": 11
+  },
+  {
+   "domain": "DOCUMENTS",
+   "label": "Documents",
+   "adminEditable": false,
+   "count": 38
+  },
+  {
+   "domain": "LOCALE",
+   "label": "Langue et téléphone",
+   "adminEditable": false,
+   "count": 5
+  },
+  {
+   "domain": "SECURITY",
+   "label": "Sécurité",
+   "adminEditable": false,
+   "count": 37
+  },
+  {
+   "domain": "AUDIT",
+   "label": "Centre d'audit",
+   "adminEditable": false,
+   "count": 24
+  },
+  {
+   "domain": "NOTIFICATIONS",
+   "label": "Notifications et e-mails",
+   "adminEditable": false,
+   "count": 15
+  },
+  {
+   "domain": "WEBHOOKS",
+   "label": "Webhooks",
+   "adminEditable": false,
+   "count": 3
+  },
+  {
+   "domain": "OUTBOX",
+   "label": "Boîte d'envoi",
+   "adminEditable": false,
+   "count": 3
+  },
+  {
+   "domain": "GRAPH_API",
+   "label": "API Graph",
+   "adminEditable": false,
+   "count": 3
+  },
+  {
+   "domain": "WEBSOCKET",
+   "label": "WebSocket",
+   "adminEditable": false,
+   "count": 10
+  },
+  {
+   "domain": "ENVIRONMENT",
+   "label": "Adresses et environnement",
+   "adminEditable": false,
+   "count": 8
+  }
+ ],
+ "settings": [
+  {
+   "key": "accounting.account.creation-mode",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "IMMEDIATE",
+   "label": "Creation de compte : IMMEDIATE ou AFTER_APPROVAL"
+  },
+  {
+   "key": "accounting.accrual.alert-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60",
+   "label": "Jours avant alerte d'une estimation non rapprochee d'une facture reelle"
+  },
+  {
+   "key": "accounting.accrual.expense-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "408",
+   "label": "Compte des factures non parvenues"
+  },
+  {
+   "key": "accounting.accrual.expense-vat-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4454",
+   "label": "TVA sur les factures non parvenues quand elle est connue"
+  },
+  {
+   "key": "accounting.accrual.revenue-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4181",
+   "label": "Compte des factures a etablir"
+  },
+  {
+   "key": "accounting.accrual.reversal-journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Journal des extournes des estimations"
+  },
+  {
+   "key": "accounting.analytic.centre-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "93",
+   "label": "Compte de classe 9 des centres d'analyse (reflet analytique)"
+  },
+  {
+   "key": "accounting.analytic.class9-axis",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "ACTIVITE",
+   "label": "Axe reflechi en classe 9 dans le journal CAG (vide : pas de reflet)"
+  },
+  {
+   "key": "accounting.analytic.creation-mode",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "IMMEDIATE",
+   "label": "Creation d'une section par un administrateur : IMMEDIATE ou AFTER_APPROVAL"
+  },
+  {
+   "key": "accounting.analytic.enabled",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Comptabilite analytique active (ventilation obligatoire sur les comptes concernes)"
+  },
+  {
+   "key": "accounting.analytic.reflected-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "91",
+   "label": "Compte des charges et produits reflechis"
+  },
+  {
+   "key": "accounting.bank.auto-match",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Pointage d'office des correspondances sures"
+  },
+  {
+   "key": "accounting.bank.date-window-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Fenetre de dates du pointage automatique (jours)"
+  },
+  {
+   "key": "accounting.bank.max-combined-lines",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "10",
+   "label": "Nombre maximal d'ecritures combinees pour une ligne de releve"
+  },
+  {
+   "key": "accounting.bank.missing-statement",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "ALERT",
+   "label": "Releve manquant a l'import : ALERT ou REFUSE"
+  },
+  {
+   "key": "accounting.bank.reconciliation-before-lock",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Rapprochement bancaire valide exige avant de verrouiller une periode"
+  },
+  {
+   "key": "accounting.cash.default-in-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "471",
+   "label": "Compte d'une entree de caisse sans nature d'operation"
+  },
+  {
+   "key": "accounting.cash.default-out-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "471",
+   "label": "Compte d'une sortie de caisse sans nature d'operation"
+  },
+  {
+   "key": "accounting.cash.exchange-gain-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "776",
+   "label": "Compte des gains de change sur especes en devise"
+  },
+  {
+   "key": "accounting.cash.exchange-loss-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "676",
+   "label": "Compte des pertes de change sur especes en devise"
+  },
+  {
+   "key": "accounting.cash.treasury-parent-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "571",
+   "label": "Compte parent sous lequel chaque caisse recoit son compte"
+  },
+  {
+   "key": "accounting.cash.vat-collected-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4431",
+   "label": "Compte de TVA collectee sur une entree de caisse"
+  },
+  {
+   "key": "accounting.cash.vat-recoverable-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4452",
+   "label": "Compte de TVA recuperable sur une sortie de caisse"
+  },
+  {
+   "key": "accounting.closing.collective-accounts",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "411,401,421,4191,422,462,165",
+   "label": "Comptes collectifs a justifier par leurs tiers avant la cloture"
+  },
+  {
+   "key": "accounting.closing.inventory-sources",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "FIXED_ASSET_DEPRECIATION,FIXED_ASSET_DEROGATORY,FIXED_ASSET_IMPAIRMENT,IMPAIRMENT_REVERSAL,RECEIVABLE_IMPAIRMENT_ADJUSTED,RECEIVABLE_IMPAIRMENT_RELEASED,RECEIVABLE_IMPAIRMENT_RECLASS,RISK_PROVISION_POSTED,RISK_PROVISION_RELEASED,RISK_PROVISION_RECLASS,STOCK_IMPAIRMENT,TREASURY_IMPAIRMENT,STAFF_ADVANCE_IMPAIRMENT,DEPOSIT_IMPAIRMENT,DISPOSAL_RECEIVABLE_IMPAIRMENT,REVENUE_DEFERRAL_ADJUSTED,EXPENSE_DEFERRAL_ADJUSTED,ACCRUED_REVENUE_POSTED,ACCRUED_EXPENSE_POSTED,TAX_RESULT",
+   "label": "Types de piece des ecritures d'inventaire (balance avant et apres inventaire)"
+  },
+  {
+   "key": "accounting.closing.loss-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "139",
+   "label": "Compte du resultat en perte repris en a-nouveau"
+  },
+  {
+   "key": "accounting.closing.off-balance-journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "HB",
+   "label": "Journal de reprise des engagements hors bilan a la cloture"
+  },
+  {
+   "key": "accounting.closing.opening-journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "AN",
+   "label": "Journal des a-nouveaux de l'exercice suivant"
+  },
+  {
+   "key": "accounting.closing.profit-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "131",
+   "label": "Compte du resultat en benefice repris en a-nouveau"
+  },
+  {
+   "key": "accounting.closing.suspense-accounts",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "471,585",
+   "label": "Comptes d'attente a solder avant la cloture (prefixes separes par des virgules)"
+  },
+  {
+   "key": "accounting.commitment.alert-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Hors bilan : alerte avant echeance, preavis et renouvellement (jours ; aussi a 7 et 1 jour)"
+  },
+  {
+   "key": "accounting.commitment.given-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "901",
+   "label": "Compte des engagements donnes"
+  },
+  {
+   "key": "accounting.commitment.given-counter-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "902",
+   "label": "Compte de contrepartie des engagements donnes"
+  },
+  {
+   "key": "accounting.commitment.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "HB",
+   "label": "Journal des engagements hors bilan"
+  },
+  {
+   "key": "accounting.commitment.received-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "905",
+   "label": "Compte des engagements recus"
+  },
+  {
+   "key": "accounting.commitment.received-counter-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "906",
+   "label": "Compte de contrepartie des engagements recus"
+  },
+  {
+   "key": "accounting.confirmation.threshold",
+   "domain": "ACCOUNTING",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "1000000",
+   "label": "Confirmations de solde : tout solde au-dela de ce montant est circularise"
+  },
+  {
+   "key": "accounting.confirmation.top-count",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "20",
+   "label": "Confirmations de solde : nombre des plus gros soldes circularises"
+  },
+  {
+   "key": "accounting.currencies",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "EUR,USD,GBP,CHF,CNY,JPY,CAD,ZAR",
+   "label": "Devises suivies (taux recuperes et proposes), separees par des virgules"
+  },
+  {
+   "key": "accounting.deferral.analytic-axis",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Constatations d'avance : axe analytique des sections reprises sur les ecritures (vide : celui des achats)"
+  },
+  {
+   "key": "accounting.deferral.cron",
+   "domain": "ACCOUNTING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 4 * * *",
+   "label": "Constatations d'avance : planification (echeanciers chaque nuit, fin de periode le 1er du mois)"
+  },
+  {
+   "key": "accounting.deferral.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Constatations d'avance : journal des ajustements et des estimations"
+  },
+  {
+   "key": "accounting.doubtful.customer-policy",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "ALERT",
+   "label": "Client a creance douteuse : ALERT, PREPAY ou BLOCK (suffixe .member, .customer, .business-entity par segment)"
+  },
+  {
+   "key": "accounting.enabled",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Comptabilite active (ecritures automatiques de la plateforme)"
+  },
+  {
+   "key": "accounting.exchange.auto-fetch",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Recuperation automatique des taux du jour sur internet"
+  },
+  {
+   "key": "accounting.exchange.eur-parity",
+   "domain": "ACCOUNTING",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "655.957",
+   "label": "Parite fixe de l'euro en francs CFA"
+  },
+  {
+   "key": "accounting.exchange.fetch-cron",
+   "domain": "ACCOUNTING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 15 7 * * *",
+   "label": "Planification de la recuperation des taux de change"
+  },
+  {
+   "key": "accounting.exchange.gain-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "776",
+   "label": "Compte des gains de change au reglement d'une facture en devise"
+  },
+  {
+   "key": "accounting.exchange.loss-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "676",
+   "label": "Compte des pertes de change au reglement d'une facture en devise"
+  },
+  {
+   "key": "accounting.exchange.provider-url",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "https://api.frankfurter.dev/v1/latest?from=EUR",
+   "label": "Adresse du fournisseur de taux (reponse JSON en base EUR)"
+  },
+  {
+   "key": "accounting.expense.deferral",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "MONTHLY",
+   "label": "Charges constatees d'avance : MONTHLY, YEAR_END ou NONE"
+  },
+  {
+   "key": "accounting.expense.deferral-threshold",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "50000",
+   "label": "Seuil de signification des charges a etaler (XAF HT par ligne)"
+  },
+  {
+   "key": "accounting.expense.deferred-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "476",
+   "label": "Compte des charges constatees d'avance"
+  },
+  {
+   "key": "accounting.export.odoo.account-length",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Export Odoo : longueur des comptes, completes par des zeros (0 : inchanges)"
+  },
+  {
+   "key": "accounting.export.sage100.account-length",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "8",
+   "label": "Export Sage 100 : longueur des comptes generaux, completes par des zeros"
+  },
+  {
+   "key": "accounting.export.sagex3.account-length",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Export Sage X3 : longueur des comptes, completes par des zeros (0 : inchanges)"
+  },
+  {
+   "key": "accounting.export.sagex3.entry-type",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Export Sage X3 : type de piece des en-tetes G"
+  },
+  {
+   "key": "accounting.export.sagex3.site",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Export Sage X3 : site des en-tetes G"
+  },
+  {
+   "key": "accounting.financing.analytic-axis",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Axe analytique des sections portees par les emprunts et la paie (vide : pas de ventilation)"
+  },
+  {
+   "key": "accounting.financing.cron",
+   "domain": "ACCOUNTING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 45 6 * * *",
+   "label": "Tenue quotidienne : echeances d'emprunt, alertes, hors bilan"
+  },
+  {
+   "key": "accounting.fixed-asset.commission-alert-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Immobilisations : jours avant alerte d'un bien recu non mis en service"
+  },
+  {
+   "key": "accounting.fixed-asset.controls-cron",
+   "domain": "ACCOUNTING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 30 6 * * *",
+   "label": "Immobilisations : planification des controles quotidiens du fichier"
+  },
+  {
+   "key": "accounting.fixed-asset.day-basis",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "360",
+   "label": "Immobilisations : base du prorata temporis (360 ou 365 jours)"
+  },
+  {
+   "key": "accounting.fixed-asset.declining-coefficients",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "3-4:1.5,5-6:2,7+:2.5",
+   "label": "Immobilisations : coefficients du degressif par duree en annees"
+  },
+  {
+   "key": "accounting.fixed-asset.depreciation-cron",
+   "domain": "ACCOUNTING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 3 1 * *",
+   "label": "Immobilisations : planification des dotations automatiques"
+  },
+  {
+   "key": "accounting.fixed-asset.derogatory-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "151",
+   "label": "Immobilisations : compte des amortissements derogatoires"
+  },
+  {
+   "key": "accounting.fixed-asset.derogatory-expense-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "851",
+   "label": "Immobilisations : compte de dotation aux amortissements derogatoires"
+  },
+  {
+   "key": "accounting.fixed-asset.derogatory-reversal-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "861",
+   "label": "Immobilisations : compte de reprise des amortissements derogatoires"
+  },
+  {
+   "key": "accounting.fixed-asset.disposal-receivable-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "485",
+   "label": "Immobilisations : compte de creance sur cession"
+  },
+  {
+   "key": "accounting.fixed-asset.draft-alert-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "15",
+   "label": "Immobilisations : jours avant alerte d'une fiche a completer"
+  },
+  {
+   "key": "accounting.fixed-asset.impairment-second-validation",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1000000",
+   "label": "Immobilisations : montant de depreciation au-dela duquel une seconde validation est exigee (XAF)"
+  },
+  {
+   "key": "accounting.fixed-asset.in-progress-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "239",
+   "label": "Immobilisations : compte des immobilisations en cours"
+  },
+  {
+   "key": "accounting.fixed-asset.insurance-claim-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "471",
+   "label": "Immobilisations : compte de l'indemnite d'assurance a recevoir"
+  },
+  {
+   "key": "accounting.fixed-asset.insurance-income-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "841",
+   "label": "Immobilisations : compte de produit des indemnites d'assurance"
+  },
+  {
+   "key": "accounting.fixed-asset.inventory-required",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Immobilisations : une campagne d'inventaire physique close est exigee avant la cloture"
+  },
+  {
+   "key": "accounting.fixed-asset.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Immobilisations : journal des dotations et operations"
+  },
+  {
+   "key": "accounting.fixed-asset.manual-entry-guard",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Immobilisations : interdire la saisie directe sur les comptes 2, 28 et 29 sans motif ni droit"
+  },
+  {
+   "key": "accounting.fixed-asset.resource-axis",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "RESSOURCE",
+   "label": "Immobilisations : axe analytique des ressources"
+  },
+  {
+   "key": "accounting.fixed-asset.rhythm",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "MONTHLY",
+   "label": "Immobilisations : rythme des dotations (MONTHLY, QUARTERLY, YEARLY)"
+  },
+  {
+   "key": "accounting.fixed-asset.sale-journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "VT",
+   "label": "Immobilisations : journal des cessions"
+  },
+  {
+   "key": "accounting.fixed-asset.subsidy-income-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "799",
+   "label": "Immobilisations : compte de reprise des subventions d'equipement"
+  },
+  {
+   "key": "accounting.fixed-asset.supplier-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "481",
+   "label": "Immobilisations : compte des fournisseurs d'investissement"
+  },
+  {
+   "key": "accounting.fixed-asset.vat-regularization-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "658",
+   "label": "Immobilisations : compte de charge des regularisations de TVA"
+  },
+  {
+   "key": "accounting.fixed-asset.vat-regularization-years",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Immobilisations : periode de regularisation de la TVA deduite (annees)"
+  },
+  {
+   "key": "accounting.fixed-asset.warranty-alert-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Immobilisations : jours d'alerte avant la fin d'une garantie ou d'un contrat"
+  },
+  {
+   "key": "accounting.forecast.history-months",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3",
+   "label": "Previsionnel de tresorerie : mois d'historique pour la moyenne du personnel et des charges courantes"
+  },
+  {
+   "key": "accounting.forecast.payment-term-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Previsionnel de tresorerie : delai de reglement d'une piece sans echeance (jours)"
+  },
+  {
+   "key": "accounting.lettering.auto-delay-ms",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600000",
+   "label": "Intervalle du lettrage automatique des comptes clients (millisecondes)"
+  },
+  {
+   "key": "accounting.lettering.difference-threshold",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "500",
+   "label": "Ecart de reglement maximal au lettrage (XAF)"
+  },
+  {
+   "key": "accounting.lettering.gain-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "758",
+   "label": "Compte des ecarts de reglement favorables"
+  },
+  {
+   "key": "accounting.lettering.loss-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "658",
+   "label": "Compte des ecarts de reglement defavorables"
+  },
+  {
+   "key": "accounting.liasse.accountant",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Liasse : expert-comptable"
+  },
+  {
+   "key": "accounting.liasse.activity",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "Location d'espaces de travail partages et services associes",
+   "label": "Liasse : activite principale"
+  },
+  {
+   "key": "accounting.liasse.auditor",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Liasse : commissaire aux comptes"
+  },
+  {
+   "key": "accounting.liasse.tax-office",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Liasse : centre des impots de rattachement"
+  },
+  {
+   "key": "accounting.liasse.tax-regime",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "Reel normal",
+   "label": "Liasse : regime fiscal"
+  },
+  {
+   "key": "accounting.loan.accrual-journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Journal des interets courus des emprunts"
+  },
+  {
+   "key": "accounting.loan.alert-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "7",
+   "label": "Alerte des comptables avant une echeance d'emprunt (jours)"
+  },
+  {
+   "key": "accounting.manual-entry.second-validation-threshold",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Montant au-dela duquel une piece manuelle est validee par un autre comptable (0 : jamais)"
+  },
+  {
+   "key": "accounting.night-worker-cron",
+   "domain": "ACCOUNTING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 30 2 * * *",
+   "label": "Planification du controle de continuite et des relances comptables"
+  },
+  {
+   "key": "accounting.notify-emails",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Destinataires des alertes comptables (comptables, administrateur finance), separes par des virgules"
+  },
+  {
+   "key": "accounting.numbering.chronology",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "STRICT",
+   "label": "Ordre des pieces : STRICT (dates croissantes) ou PERIOD"
+  },
+  {
+   "key": "accounting.numbering.width",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "6",
+   "label": "Longueur de la sequence des numeros de piece"
+  },
+  {
+   "key": "accounting.partner.account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "462",
+   "label": "Compte des comptes courants d'associes (462, ou divisionnaire de 16 si bloques)"
+  },
+  {
+   "key": "accounting.partner.dividend-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "465",
+   "label": "Compte des dividendes a payer affectes en compte courant"
+  },
+  {
+   "key": "accounting.partner.interest-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "671",
+   "label": "Compte de charge des interets des comptes courants"
+  },
+  {
+   "key": "accounting.partner.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Journal des interets et mouvements sans tresorerie des comptes courants"
+  },
+  {
+   "key": "accounting.payroll.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "PA",
+   "label": "Journal de paie"
+  },
+  {
+   "key": "accounting.payroll.section-required",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Paie : refuser un salarie sans section analytique"
+  },
+  {
+   "key": "accounting.period.billing-closure-sync",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "PROPOSE",
+   "label": "Clore un mois de facturation : PROPOSE (notifier les comptables), LOCK (verrouiller la periode comptable) ou NONE"
+  },
+  {
+   "key": "accounting.posting.batch-size",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "50",
+   "label": "Nombre d'evenements comptables traites par passage du moteur d'imputation"
+  },
+  {
+   "key": "accounting.posting.disabled-families",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Familles d'evenements non comptabilisees pour l'instant (CASH, SALES, PAYMENT...), separees par des virgules"
+  },
+  {
+   "key": "accounting.posting.worker-delay-ms",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "30000",
+   "label": "Intervalle du moteur d'imputation (millisecondes)"
+  },
+  {
+   "key": "accounting.posting.worker-delay-ms",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30000",
+   "label": "Intervalle du moteur d'imputation (millisecondes)"
+  },
+  {
+   "key": "accounting.provision.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Provisions : journal des dotations, reprises et reclassements"
+  },
+  {
+   "key": "accounting.provision.short-term-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4991",
+   "label": "Provisions : compte des provisions pour risques a court terme"
+  },
+  {
+   "key": "accounting.provision.short-term-expense-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "6591",
+   "label": "Provisions : compte de dotation a court terme"
+  },
+  {
+   "key": "accounting.provision.short-term-reversal-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "7591",
+   "label": "Provisions : compte de reprise a court terme"
+  },
+  {
+   "key": "accounting.purchase.analytic-axis",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Axe analytique des sections portees par les lignes d'achat (vide : ventilation par defaut des comptes)"
+  },
+  {
+   "key": "accounting.purchase.default-vat-rate",
+   "domain": "ACCOUNTING",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "18",
+   "label": "Taux de TVA propose sur une ligne d'achat sans taux (en %)"
+  },
+  {
+   "key": "accounting.purchase.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "AC",
+   "label": "Journal des achats (factures et avoirs fournisseurs)"
+  },
+  {
+   "key": "accounting.purchase.supplier-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "401",
+   "label": "Compte collectif des fournisseurs"
+  },
+  {
+   "key": "accounting.purchase.vat-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4452",
+   "label": "TVA recuperable sur achats"
+  },
+  {
+   "key": "accounting.purchase.vat-account-fixed-assets",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4451",
+   "label": "TVA recuperable sur immobilisations (comptes de classe 2)"
+  },
+  {
+   "key": "accounting.purchase.vat-account-services",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4454",
+   "label": "TVA recuperable sur services exterieurs (comptes 62 et 63)"
+  },
+  {
+   "key": "accounting.purchase.withholding-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "447",
+   "label": "Compte des retenues a la source operees sur les fournisseurs"
+  },
+  {
+   "key": "accounting.receivable.adjustment",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "MONTHLY",
+   "label": "Creances : rythme de l'ajustement des depreciations (MONTHLY ou CLOSING_ONLY)"
+  },
+  {
+   "key": "accounting.receivable.auto-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "365",
+   "label": "Creances : retard en jours au-dela duquel le classement en douteux est automatique"
+  },
+  {
+   "key": "accounting.receivable.cheque-rejected-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "15",
+   "label": "Creances : jours apres le rejet d'un cheque non regularise avant proposition de classement"
+  },
+  {
+   "key": "accounting.receivable.contagion",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Creances : proposer le classement des autres factures echues du client classe douteux"
+  },
+  {
+   "key": "accounting.receivable.cron",
+   "domain": "ACCOUNTING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 15 4 * * *",
+   "label": "Creances a risque : planification du traitement de nuit (propositions, pertes, ajustement, controles)"
+  },
+  {
+   "key": "accounting.receivable.deposit-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "165",
+   "label": "Creances : compte des cautions recues deduites de la base de depreciation"
+  },
+  {
+   "key": "accounting.receivable.disputed-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4161",
+   "label": "Creances : compte des creances litigieuses"
+  },
+  {
+   "key": "accounting.receivable.disputed-allowance-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4911",
+   "label": "Creances : compte de depreciation des creances litigieuses"
+  },
+  {
+   "key": "accounting.receivable.doubtful-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4162",
+   "label": "Creances : compte des creances douteuses"
+  },
+  {
+   "key": "accounting.receivable.doubtful-allowance-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4912",
+   "label": "Creances : compte de depreciation des creances douteuses"
+  },
+  {
+   "key": "accounting.receivable.expense-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "6594",
+   "label": "Creances : compte de dotation aux depreciations"
+  },
+  {
+   "key": "accounting.receivable.grid",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "91-180:25,181-365:50,366+:100",
+   "label": "Creances : grille statistique de depreciation (jours de retard : taux en %)"
+  },
+  {
+   "key": "accounting.receivable.guarantee-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4191",
+   "label": "Creances : compte des garanties deduites de la base (portefeuille du client)"
+  },
+  {
+   "key": "accounting.receivable.individual-threshold",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "500000",
+   "label": "Creances : reste du HT au-dela duquel la methode individuelle est attendue (XAF)"
+  },
+  {
+   "key": "accounting.receivable.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Creances : journal des reclassements, depreciations et pertes"
+  },
+  {
+   "key": "accounting.receivable.loss-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "6511",
+   "label": "Creances : compte des pertes sur creances clients"
+  },
+  {
+   "key": "accounting.receivable.recovery-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "758",
+   "label": "Creances : compte de recuperation sur creances passees en perte"
+  },
+  {
+   "key": "accounting.receivable.release",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "IMMEDIATE",
+   "label": "Creances : reprise de la depreciation a l'encaissement (IMMEDIATE ou NEXT_ADJUSTMENT)"
+  },
+  {
+   "key": "accounting.receivable.reversal-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "7594",
+   "label": "Creances : compte de reprise des depreciations"
+  },
+  {
+   "key": "accounting.receivable.suspended-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Creances : jours de suspension d'un abonnement pour impaye avant proposition de classement"
+  },
+  {
+   "key": "accounting.receivable.trigger-days",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "90",
+   "label": "Creances : retard en jours au-dela duquel le classement en douteux est propose"
+  },
+  {
+   "key": "accounting.receivable.writeoff-direction-threshold",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "100000",
+   "label": "Creances : perte TTC au-dela de laquelle la direction valide (XAF)"
+  },
+  {
+   "key": "accounting.receivable.writeoff-vat-recovery",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Creances : recuperer la TVA collectee sur une creance passee en perte"
+  },
+  {
+   "key": "accounting.replay-until",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Reprise : les faits dates avant ce jour produisent des brouillards a valider en bloc (vide : pas de reprise)"
+  },
+  {
+   "key": "accounting.revenue.deferral",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "MONTHLY",
+   "label": "Produits constates d'avance : MONTHLY, YEAR_END ou NONE"
+  },
+  {
+   "key": "accounting.revenue.deferred-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "477",
+   "label": "Compte des produits constates d'avance"
+  },
+  {
+   "key": "accounting.rounding.max-difference",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1",
+   "label": "Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)"
+  },
+  {
+   "key": "accounting.sales.client-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "411",
+   "label": "Compte collectif des clients"
+  },
+  {
+   "key": "accounting.sales.deposit-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4191",
+   "label": "Compte des acomptes recus des clients (factures d'acompte, soldé par la facture finale)"
+  },
+  {
+   "key": "accounting.sales.deposit-retention-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "758",
+   "label": "Compte de produit d'une caution retenue (dégâts, impayés)"
+  },
+  {
+   "key": "accounting.sales.disbursement-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4718",
+   "label": "Compte des débours refacturés aux clients (frais avancés pour leur compte, hors TVA et hors chiffre d'affaires)"
+  },
+  {
+   "key": "accounting.sales.discount-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "709",
+   "label": "Compte des remises accordees sur facture"
+  },
+  {
+   "key": "accounting.sales.extra-tax-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4431",
+   "label": "Compte du centime additionnel facture"
+  },
+  {
+   "key": "accounting.sales.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "VT",
+   "label": "Journal des factures et avoirs"
+  },
+  {
+   "key": "accounting.sales.payment-delay-minutes",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Delai avant comptabilisation d'un paiement, le temps de son imputation sur les factures (minutes)"
+  },
+  {
+   "key": "accounting.sales.security-deposit-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "165",
+   "label": "Compte des dépôts et cautionnements reçus des clients (cautions facturées)"
+  },
+  {
+   "key": "accounting.sales.unallocated-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4719",
+   "label": "Compte de liaison des encaissements non imputes et du portefeuille"
+  },
+  {
+   "key": "accounting.sales.vat-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4431",
+   "label": "Compte de TVA facturee"
+  },
+  {
+   "key": "accounting.start-date",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "2026-01-01",
+   "label": "Date de bascule : les faits anterieurs ne sont comptabilises que par la reprise"
+  },
+  {
+   "key": "accounting.tax.corporate-rate",
+   "domain": "ACCOUNTING",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "28",
+   "label": "Taux de l'impot sur le resultat (en %) ; a valider par l'expert-comptable"
+  },
+  {
+   "key": "accounting.tax.expense-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "891",
+   "label": "Compte de charge de l'impot sur le resultat"
+  },
+  {
+   "key": "accounting.tax.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Journal de l'ecriture d'impot sur le resultat"
+  },
+  {
+   "key": "accounting.tax.minimum-rate",
+   "domain": "ACCOUNTING",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "1",
+   "label": "Minimum de perception sur le chiffre d'affaires (en %) ; a valider par l'expert-comptable"
+  },
+  {
+   "key": "accounting.tax.opening-loss",
+   "domain": "ACCOUNTING",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Deficits reportables a l'ouverture du premier exercice suivi"
+  },
+  {
+   "key": "accounting.tax.payable-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "441",
+   "label": "Compte de dette de l'impot sur le resultat"
+  },
+  {
+   "key": "accounting.unbalanced-entry.blocks-period-close",
+   "domain": "ACCOUNTING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Un ecart non regularise bloque le verrouillage de la periode"
+  },
+  {
+   "key": "accounting.unbalanced-entry.policy",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "HOLD",
+   "label": "Piece desequilibree : HOLD (attente), SUSPENSE_ACCOUNT (compte d'attente) ou ACCEPT"
+  },
+  {
+   "key": "accounting.unbalanced-entry.suspense-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4718",
+   "label": "Compte d'attente d'equilibrage"
+  },
+  {
+   "key": "accounting.unbalanced-entry.suspense-max-difference",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Difference maximale passee en compte d'attente (0 : sans limite)"
+  },
+  {
+   "key": "accounting.vat.chargeability",
+   "domain": "ACCOUNTING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "INVOICE",
+   "label": "Exigibilite de la TVA facturee : INVOICE (a la facture, regime des debits) ou PAYMENT (a l'encaissement)"
+  },
+  {
+   "key": "accounting.vat.collected-accounts",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4431,4432",
+   "label": "Comptes de TVA facturee repris dans la declaration"
+  },
+  {
+   "key": "accounting.vat.credit-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4449",
+   "label": "Compte du credit de TVA a reporter"
+  },
+  {
+   "key": "accounting.vat.deductible-accounts",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4451,4452,4454",
+   "label": "Comptes de TVA recuperable repris dans la declaration"
+  },
+  {
+   "key": "accounting.vat.deduction-prorata",
+   "domain": "ACCOUNTING",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "100",
+   "label": "Prorata de deduction de la TVA recuperable, en pourcentage (100 : tout est deductible)"
+  },
+  {
+   "key": "accounting.vat.due-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4441",
+   "label": "Compte de la TVA due a l'Etat"
+  },
+  {
+   "key": "accounting.vat.extra-tax-code",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "CA",
+   "label": "Code de taxe du centime additionnel sur les ecritures"
+  },
+  {
+   "key": "accounting.vat.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OD",
+   "label": "Journal de la piece de liquidation de la TVA"
+  },
+  {
+   "key": "accounting.vat.non-deductible-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "658",
+   "label": "Compte de charge de la TVA non deductible (prorata) a la liquidation"
+  },
+  {
+   "key": "accounting.vat.pending-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4438",
+   "label": "Compte d'attente de la TVA facturee non encore exigible (regime des encaissements)"
+  },
+  {
+   "key": "accounting.wallet.admin-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "471",
+   "label": "Contrepartie des ajustements administratifs de portefeuille"
+  },
+  {
+   "key": "accounting.wallet.fee-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "706",
+   "label": "Compte des frais de transfert entre portefeuilles"
+  },
+  {
+   "key": "accounting.wallet.journal",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "PF",
+   "label": "Journal du portefeuille electronique"
+  },
+  {
+   "key": "accounting.wallet.promotion-account",
+   "domain": "ACCOUNTING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "658",
+   "label": "Compte des credits promotionnels et remises en argent"
+  },
+  {
+   "key": "app.admin-access-url",
+   "domain": "ENVIRONMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "https://admin.elleaose.com",
+   "label": "Adresse de l'administration"
+  },
+  {
+   "key": "app.api-base-url",
+   "domain": "ENVIRONMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "http://localhost:8080",
+   "label": "Adresse de l'API"
+  },
+  {
+   "key": "app.company.machine-code",
+   "domain": "ENVIRONMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "00000",
+   "label": "Code machine de l'exploitant"
+  },
+  {
+   "key": "app.contract.signing-token-hours",
+   "domain": "CONTRACTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "72",
+   "label": "Validité du lien de signature (heures)"
+  },
+  {
+   "key": "app.contract.worker.enabled",
+   "domain": "CONTRACTS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Traitement des contrats actif"
+  },
+  {
+   "key": "app.contract.worker.fixed-delay-ms",
+   "domain": "CONTRACTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence du traitement des contrats (ms)"
+  },
+  {
+   "key": "app.dev-mode",
+   "domain": "ENVIRONMENT",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Mode développement"
+  },
+  {
+   "key": "app.document.default-expiry-years",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Expiration par défaut d'un document (années)"
+  },
+  {
+   "key": "app.document.retention.cron",
+   "domain": "DOCUMENTS",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 30 2 * * *",
+   "label": "Planification de la rétention des documents"
+  },
+  {
+   "key": "app.document.retention.enabled",
+   "domain": "DOCUMENTS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Rétention des documents active"
+  },
+  {
+   "key": "app.document.storage.minio.access-key",
+   "domain": "DOCUMENTS",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Clé d'accès du stockage"
+  },
+  {
+   "key": "app.document.storage.minio.bucket",
+   "domain": "DOCUMENTS",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "bokati-documents",
+   "label": "Compartiment de stockage"
+  },
+  {
+   "key": "app.document.storage.minio.endpoint",
+   "domain": "DOCUMENTS",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "http://localhost:9000",
+   "label": "Adresse du stockage"
+  },
+  {
+   "key": "app.document.storage.minio.region",
+   "domain": "DOCUMENTS",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Région du stockage"
+  },
+  {
+   "key": "app.document.storage.minio.secret-key",
+   "domain": "DOCUMENTS",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Clé secrète du stockage"
+  },
+  {
+   "key": "app.document.storage.provider",
+   "domain": "DOCUMENTS",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "filesystem",
+   "label": "Fournisseur de stockage"
+  },
+  {
+   "key": "app.document.storage.root-path",
+   "domain": "DOCUMENTS",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "storage/documents",
+   "label": "Dossier racine du stockage"
+  },
+  {
+   "key": "app.document.worker.enabled",
+   "domain": "DOCUMENTS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Traitement des documents actif"
+  },
+  {
+   "key": "app.document.worker.fixed-delay-ms",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence du traitement des documents (ms)"
+  },
+  {
+   "key": "app.documents.preview-token.secret",
+   "domain": "DOCUMENTS",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Secret des liens d'aperçu"
+  },
+  {
+   "key": "app.documents.preview-token.ttl-seconds",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300",
+   "label": "Validité d'un lien d'aperçu (secondes)"
+  },
+  {
+   "key": "app.documents.public-preview-enabled",
+   "domain": "DOCUMENTS",
+   "type": "BOOLEAN",
+   "effect": "RESTART",
+   "default": "true",
+   "label": "Aperçu public des documents"
+  },
+  {
+   "key": "app.error.verbose",
+   "domain": "ENVIRONMENT",
+   "type": "BOOLEAN",
+   "effect": "RESTART",
+   "default": "false",
+   "label": "Erreurs détaillées"
+  },
+  {
+   "key": "app.event.notification-email",
+   "domain": "EVENTS",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "coworkspace@elleaose.com",
+   "label": "Adresse de notification des événements"
+  },
+  {
+   "key": "app.event.opening-code",
+   "domain": "EVENTS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "OUVERTURE",
+   "label": "Code de l'événement d'ouverture"
+  },
+  {
+   "key": "app.frontend-url",
+   "domain": "ENVIRONMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "https://elleaose.com",
+   "label": "Adresse du portail"
+  },
+  {
+   "key": "app.ged.filing.batch-size",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1000",
+   "label": "Documents rangés par passage du classement GED"
+  },
+  {
+   "key": "app.ged.filing.enabled",
+   "domain": "DOCUMENTS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Classement automatique de la GED actif"
+  },
+  {
+   "key": "app.ged.filing.fixed-delay-ms",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence du classement GED (ms)"
+  },
+  {
+   "key": "app.ged.filing.initial-delay-ms",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "120000",
+   "label": "Délai avant le premier classement GED (ms)"
+  },
+  {
+   "key": "app.ged.quota.total-bytes",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Quota d'espace de toute la GED en octets (0 : aucun)"
+  },
+  {
+   "key": "app.ged.text.batch-size",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "20",
+   "label": "Fichiers GED lus par passage"
+  },
+  {
+   "key": "app.ged.text.enabled",
+   "domain": "DOCUMENTS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Lecture du texte des fichiers GED (recherche) active"
+  },
+  {
+   "key": "app.ged.text.fixed-delay-ms",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence de lecture des fichiers GED (ms)"
+  },
+  {
+   "key": "app.ged.text.initial-delay-ms",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "180000",
+   "label": "Délai avant la première lecture des fichiers GED (ms)"
+  },
+  {
+   "key": "app.ged.text.max-chars",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300000",
+   "label": "Caractères gardés au plus, par fichier GED"
+  },
+  {
+   "key": "app.ged.text.max-ocr-pages",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Pages lues par OCR au plus, par fichier GED"
+  },
+  {
+   "key": "app.ged.text.ocr-data-path",
+   "domain": "DOCUMENTS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Dossier des langues Tesseract (tessdata) pour la GED"
+  },
+  {
+   "key": "app.ged.text.ocr-enabled",
+   "domain": "DOCUMENTS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "OCR des scans et images de la GED"
+  },
+  {
+   "key": "app.ged.text.ocr-language",
+   "domain": "DOCUMENTS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "fra+eng",
+   "label": "Langues de l'OCR de la GED (Tesseract)"
+  },
+  {
+   "key": "app.ged.trash.purge-cron",
+   "domain": "DOCUMENTS",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 15 3 * * *",
+   "label": "Heure du vidage de la corbeille GED"
+  },
+  {
+   "key": "app.ged.trash.purge-enabled",
+   "domain": "DOCUMENTS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Vidage automatique de la corbeille GED"
+  },
+  {
+   "key": "app.ged.trash.retention-days",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Jours en corbeille GED avant destruction"
+  },
+  {
+   "key": "app.kyc.identity.document-types",
+   "domain": "DOCUMENTS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "ID_CARD,NATIONAL_ID,PASSPORT,DRIVERS_LICENSE,RESIDENCE_PERMIT,REPRESENTATIVE_ID",
+   "label": "Pièces KYC : morceaux de code des types de pièces d'identité analysés au dépôt (séparés par des virgules)"
+  },
+  {
+   "key": "app.kyc.identity.enabled",
+   "domain": "DOCUMENTS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Pièces KYC : analyse « pièce d'identité » au dépôt (contour, format, MRZ, visage avec OpenCV), avertissement seulement"
+  },
+  {
+   "key": "app.kyc.identity.engine",
+   "domain": "DOCUMENTS",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "JAVA",
+   "label": "Pièces KYC : moteur d'analyse des pièces d'identité, JAVA (défaut, sans bibliothèque native) ou OPENCV (visage, plus de mémoire)"
+  },
+  {
+   "key": "app.kyc.quality.blur-threshold",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "100",
+   "label": "Pièces KYC : seuil de netteté (variance du laplacien) sous lequel l'image est signalée floue"
+  },
+  {
+   "key": "app.kyc.quality.enabled",
+   "domain": "DOCUMENTS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Pièces KYC : contrôle de qualité d'image au dépôt"
+  },
+  {
+   "key": "app.kyc.quality.min-side-px",
+   "domain": "DOCUMENTS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600",
+   "label": "Pièces KYC : plus petit côté minimal de l'image (pixels)"
+  },
+  {
+   "key": "app.locale",
+   "domain": "LOCALE",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "fr_FR",
+   "label": "Langue de la plateforme"
+  },
+  {
+   "key": "app.outbox.worker.batch-size",
+   "domain": "OUTBOX",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "25",
+   "label": "Taille de lot de la boîte d'envoi"
+  },
+  {
+   "key": "app.outbox.worker.enabled",
+   "domain": "OUTBOX",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Boîte d'envoi active"
+  },
+  {
+   "key": "app.outbox.worker.fixed-delay-ms",
+   "domain": "OUTBOX",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "2000",
+   "label": "Cadence de la boîte d'envoi (ms)"
+  },
+  {
+   "key": "app.phone.default-country",
+   "domain": "LOCALE",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "CG",
+   "label": "Pays par défaut des téléphones"
+  },
+  {
+   "key": "app.phone.default-dial-code",
+   "domain": "LOCALE",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "+242",
+   "label": "Indicatif par défaut"
+  },
+  {
+   "key": "app.phone.keep-trunk-zero",
+   "domain": "LOCALE",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "CG,GA,CI,IT",
+   "label": "Pays qui gardent le zéro initial"
+  },
+  {
+   "key": "app.portal.kyc-grace-period-days",
+   "domain": "PORTAL",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "7",
+   "label": "Grâce KYC du portail (jours)"
+  },
+  {
+   "key": "app.referral.share-url-template",
+   "domain": "ENVIRONMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "https://elleaose.com/inscription?parrain={code}",
+   "label": "Adresse d'un lien de parrainage ({code} remplacé par le code)"
+  },
+  {
+   "key": "app.resources.booking-horizon-days",
+   "domain": "RESOURCES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "90",
+   "label": "Ressources : horizon de réservation, en jours (créneaux ouverts jusque-là)"
+  },
+  {
+   "key": "app.resources.holidays.hours",
+   "domain": "RESOURCES",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "NORMAL",
+   "label": "Ressources : horaires des jours fériés (NORMAL = semaine type, CLOSED = fermé, ou plages HH:mm-HH:mm séparées par des virgules)"
+  },
+  {
+   "key": "app.resources.holidays.national",
+   "domain": "RESOURCES",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Ressources : jours fériés nationaux du Congo calculés (créneaux, prix, calendrier)"
+  },
+  {
+   "key": "app.resources.ical.public-feed-enabled",
+   "domain": "RESOURCES",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Ressources : flux iCalendar public par lien à jeton (« Occupé » et « Fermé » seulement)"
+  },
+  {
+   "key": "app.resources.peak-hours",
+   "domain": "RESOURCES",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "09:00-12:00,14:00-17:00",
+   "label": "Ressources : heures pleines du lundi au vendredi, pour le pilotage (plages HH:mm-HH:mm séparées par des virgules)"
+  },
+  {
+   "key": "app.resources.pricing.day-hours",
+   "domain": "RESOURCES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "10",
+   "label": "Ressources : durée d'une journée facturée, en heures (décision D2 : 10)"
+  },
+  {
+   "key": "app.resources.pricing.half-day-hours",
+   "domain": "RESOURCES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Ressources : durée d'une demi-journée facturée, en heures (décision D2 : 5)"
+  },
+  {
+   "key": "app.security.bootstrap.secret",
+   "domain": "SECURITY",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Secret d'initialisation"
+  },
+  {
+   "key": "app.security.cors.allowed-origins",
+   "domain": "SECURITY",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "*",
+   "label": "Origines autorisées"
+  },
+  {
+   "key": "app.security.failed-login.lock-minutes",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Durée du verrouillage après trop d'échecs de connexion (minutes, 0 : jusqu'au déverrouillage manuel)"
+  },
+  {
+   "key": "app.security.failed-login.max-attempts",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Essais de connexion avant blocage"
+  },
+  {
+   "key": "app.security.jwt.access-token-expiration-ms",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Durée d'un jeton d'accès (ms)"
+  },
+  {
+   "key": "app.security.jwt.refresh-reuse-grace-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Grâce de réutilisation du jeton de rafraîchissement (secondes)"
+  },
+  {
+   "key": "app.security.jwt.refresh-token-expiration-ms",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "604800000",
+   "label": "Durée d'un jeton de rafraîchissement (ms)"
+  },
+  {
+   "key": "app.security.jwt.secret",
+   "domain": "SECURITY",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Secret des jetons"
+  },
+  {
+   "key": "app.security.jwt.verification-token-expiration-ms",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Durée d'un jeton de vérification (ms)"
+  },
+  {
+   "key": "app.security.one-time-token.expiration-ms",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Durée d'un jeton à usage unique (ms)"
+  },
+  {
+   "key": "app.security.password-reset.expiration-ms",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Durée d'un lien de mot de passe oublié (ms)"
+  },
+  {
+   "key": "app.security.rate-limit.admin.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600",
+   "label": "Plafond de requêtes · administration"
+  },
+  {
+   "key": "app.security.rate-limit.admin.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60",
+   "label": "Fenêtre · administration (secondes)"
+  },
+  {
+   "key": "app.security.rate-limit.callback.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "120",
+   "label": "Plafond de requêtes · rappels des opérateurs"
+  },
+  {
+   "key": "app.security.rate-limit.callback.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60",
+   "label": "Fenêtre · rappels des opérateurs (secondes)"
+  },
+  {
+   "key": "app.security.rate-limit.checkin.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "120",
+   "label": "Plafond de requêtes · check-in"
+  },
+  {
+   "key": "app.security.rate-limit.checkin.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60",
+   "label": "Fenêtre · check-in (secondes)"
+  },
+  {
+   "key": "app.security.rate-limit.default.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300",
+   "label": "Plafond de requêtes · par défaut"
+  },
+  {
+   "key": "app.security.rate-limit.default.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60",
+   "label": "Fenêtre · par défaut (secondes)"
+  },
+  {
+   "key": "app.security.rate-limit.enabled",
+   "domain": "SECURITY",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Plafonds de requêtes actifs"
+  },
+  {
+   "key": "app.security.rate-limit.login.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Plafond de requêtes · connexion"
+  },
+  {
+   "key": "app.security.rate-limit.login.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60",
+   "label": "Fenêtre · connexion (secondes)"
+  },
+  {
+   "key": "app.security.rate-limit.otp.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3",
+   "label": "Plafond de requêtes · codes à usage unique"
+  },
+  {
+   "key": "app.security.rate-limit.otp.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600",
+   "label": "Fenêtre · codes à usage unique (secondes)"
+  },
+  {
+   "key": "app.security.rate-limit.public-write.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "10",
+   "label": "Plafond de requêtes · formulaires publics"
+  },
+  {
+   "key": "app.security.rate-limit.public-write.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600",
+   "label": "Fenêtre · formulaires publics (secondes)"
+  },
+  {
+   "key": "app.security.rate-limit.register.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Plafond de requêtes · inscription"
+  },
+  {
+   "key": "app.security.rate-limit.register.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600",
+   "label": "Fenêtre · inscription (secondes)"
+  },
+  {
+   "key": "app.security.rate-limit.trusted-proxy-count",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1",
+   "label": "Nombre de relais de confiance"
+  },
+  {
+   "key": "app.security.rate-limit.upload.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Plafond de requêtes · envois de fichiers"
+  },
+  {
+   "key": "app.security.rate-limit.upload.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600",
+   "label": "Fenêtre · envois de fichiers (secondes)"
+  },
+  {
+   "key": "app.security.rate-limit.verify.max-requests",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60",
+   "label": "Plafond de requêtes · vérification"
+  },
+  {
+   "key": "app.security.rate-limit.verify.window-seconds",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600",
+   "label": "Fenêtre · vérification (secondes)"
+  },
+  {
+   "key": "app.security.registration.blocked-domains",
+   "domain": "SECURITY",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Domaines d'e-mail bloqués à l'inscription"
+  },
+  {
+   "key": "app.security.registration.dns-timeout-ms",
+   "domain": "SECURITY",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3000",
+   "label": "Délai de vérification DNS (ms)"
+  },
+  {
+   "key": "app.security.registration.mx-check-enabled",
+   "domain": "SECURITY",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Vérification du domaine d'e-mail"
+  },
+  {
+   "key": "app.security.token-hash.secret",
+   "domain": "SECURITY",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Secret d'empreinte des jetons"
+  },
+  {
+   "key": "app.time-zone",
+   "domain": "LOCALE",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "Africa/Lagos",
+   "label": "Fuseau horaire"
+  },
+  {
+   "key": "app.verify-base-url",
+   "domain": "ENVIRONMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "https://api.elleaose.com",
+   "label": "Adresse de vérification"
+  },
+  {
+   "key": "approval.escalation-hours",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "72",
+   "label": "Heures d'attente d'un niveau avant escalade au supérieur du décideur"
+  },
+  {
+   "key": "approval.reminder-hours",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "24",
+   "label": "Heures d'attente d'un niveau avant rappel aux décideurs (puis à chaque intervalle)"
+  },
+  {
+   "key": "approval.worker-cron",
+   "domain": "PAYMENT",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 8-18 * * *",
+   "label": "Planification des rappels et escalades des centres d'approbation"
+  },
+  {
+   "key": "billing.catalog.reference-lists.strict",
+   "domain": "BILLING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Catalogue : refuser une famille, sous-famille, unité ou taxe absente des listes (sinon elle est ajoutée à la liste, et un code de taxe inconnu est gardé tel quel)"
+  },
+  {
+   "key": "billing.collection.plan-approval-months",
+   "domain": "BILLING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3",
+   "label": "Recouvrement : au-delà de ce nombre de mois, un plan de règlement demande le droit d'approbation de la facturation (responsable N+1)"
+  },
+  {
+   "key": "billing.deal.auto-create",
+   "domain": "BILLING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Affaires : le premier devis d'un client sans affaire ouverte en crée une (sinon il rejoint son unique affaire ouverte)"
+  },
+  {
+   "key": "billing.discount.override-mode",
+   "domain": "BILLING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "APPROVAL",
+   "label": "Remise ou prix hors limites : APPROVAL (demande au responsable N+1 par le centre d'approbation, l'émission attend son accord) ou PERMISSION (droit de dérogation et motif, sans circuit)"
+  },
+  {
+   "key": "billing.invoice.equivalent-currencies",
+   "domain": "BILLING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "USD,EUR",
+   "label": "Facturation : devises dont l'équivalent figure sur les factures (codes séparés par des virgules ; vide : aucune)"
+  },
+  {
+   "key": "billing.quote.revision-validity-days",
+   "domain": "BILLING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Devis : jours de validité garantis après une révision (la date de validité est prolongée si besoin)"
+  },
+  {
+   "key": "billing.stock.issue-on",
+   "domain": "BILLING",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "INVOICE",
+   "label": "Sortie de stock des articles vendus : INVOICE (à l'émission de la facture), DELIVERY (à la livraison de chaque bon de livraison, la facture ne sort plus rien) ou NONE (aucune sortie automatique)"
+  },
+  {
+   "key": "bokati.audit.alerts.channels",
+   "domain": "AUDIT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "APP,EMAIL,WHATSAPP",
+   "label": "Canaux des alertes du centre d'audit (APP, EMAIL, WHATSAPP, séparés par des virgules)"
+  },
+  {
+   "key": "bokati.audit.alerts.email-failures",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Alerte : courriels en échec dans l'heure (0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.email-recipients",
+   "domain": "AUDIT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Courriels des administrateurs qui reçoivent les alertes (séparés par des virgules)"
+  },
+  {
+   "key": "bokati.audit.alerts.error-rate-percent",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Alerte : taux d'erreurs serveur sur 5 minutes (%, 0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.failed-logins",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "20",
+   "label": "Alerte : échecs de connexion en 15 minutes (0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.locked-accounts",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3",
+   "label": "Alerte : comptes verrouillés dans l'heure (0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.outbox-dead",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1",
+   "label": "Alerte : messages abandonnés de la boîte d'envoi dans l'heure (0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.outbox-wait-minutes",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "15",
+   "label": "Alerte : attente du plus ancien message de la boîte d'envoi (minutes, 0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.p95-ms",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3000",
+   "label": "Alerte : durée sous laquelle répondent 95 % des requêtes sur 15 minutes (ms, 0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.pawapay-failures",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3",
+   "label": "Alerte : rappels PawaPay en échec dans l'heure (0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.server-errors",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "10",
+   "label": "Alerte : erreurs serveur en 15 minutes (0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.task-failures",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3",
+   "label": "Alerte : échecs consécutifs d'une tâche planifiée (0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.whatsapp-failures",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Alerte : messages WhatsApp refusés ou non remis dans l'heure (0 : coupée)"
+  },
+  {
+   "key": "bokati.audit.alerts.whatsapp-recipients",
+   "domain": "AUDIT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Numéros WhatsApp qui reçoivent les alertes (séparés par des virgules)"
+  },
+  {
+   "key": "bokati.audit.export.max-rows",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "10000",
+   "label": "Lignes au plus dans un export CSV du journal des actions"
+  },
+  {
+   "key": "bokati.audit.retention.actions-days",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1825",
+   "label": "Conservation du journal des actions (jours, 0 : sans limite)"
+  },
+  {
+   "key": "bokati.audit.retention.alerts-days",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "365",
+   "label": "Conservation des alertes fermées (jours, 0 : sans limite)"
+  },
+  {
+   "key": "bokati.audit.retention.errors-days",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "90",
+   "label": "Conservation des erreurs serveur (jours, 0 : sans limite)"
+  },
+  {
+   "key": "bokati.audit.retention.jobs-days",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "90",
+   "label": "Conservation des exécutions de tâches gardées une par une (jours, 0 : sans limite)"
+  },
+  {
+   "key": "bokati.audit.retention.requests-days",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Conservation des requêtes lentes ou en erreur gardées une par une (jours, 0 : sans limite)"
+  },
+  {
+   "key": "bokati.audit.retention.security-days",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "365",
+   "label": "Conservation des événements de sécurité (jours, 0 : sans limite)"
+  },
+  {
+   "key": "bokati.audit.retention.traffic-hours-days",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "395",
+   "label": "Conservation du trafic par heure (jours, 0 : sans limite)"
+  },
+  {
+   "key": "bokati.audit.retention.traffic-minutes-days",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "7",
+   "label": "Conservation du trafic par minute (jours, 0 : sans limite)"
+  },
+  {
+   "key": "bokati.audit.traffic.slow-ms",
+   "domain": "AUDIT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "2000",
+   "label": "Durée à partir de laquelle une requête est gardée une par une comme lente (ms)"
+  },
+  {
+   "key": "bokati.billing.default-currency",
+   "domain": "BILLING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "XAF",
+   "label": "Devise par défaut"
+  },
+  {
+   "key": "bokati.billing.dunning.batch-size",
+   "domain": "BILLING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "200",
+   "label": "Taille de lot des relances"
+  },
+  {
+   "key": "bokati.billing.dunning.cron",
+   "domain": "BILLING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 30 8 * * *",
+   "label": "Planification des relances"
+  },
+  {
+   "key": "bokati.billing.dunning.handover-email",
+   "domain": "BILLING",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Adresse de reprise des impayés"
+  },
+  {
+   "key": "bokati.billing.workers.annual-closure-cron",
+   "domain": "BILLING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 1 1 1 *",
+   "label": "Planification de la clôture annuelle"
+  },
+  {
+   "key": "bokati.billing.workers.daily-closure-cron",
+   "domain": "BILLING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 30 23 * * *",
+   "label": "Planification de la clôture journalière"
+  },
+  {
+   "key": "bokati.billing.workers.fiscal-integrity-cron",
+   "domain": "BILLING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 2 * * *",
+   "label": "Planification du contrôle d'intégrité fiscale"
+  },
+  {
+   "key": "bokati.billing.workers.monthly-closure-cron",
+   "domain": "BILLING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 15 0 1 * *",
+   "label": "Planification de la clôture mensuelle"
+  },
+  {
+   "key": "bokati.billing.workers.overdue-delay-ms",
+   "domain": "BILLING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence du suivi des factures échues (ms)"
+  },
+  {
+   "key": "bokati.billing.workers.payment-reminder-cooldown-days",
+   "domain": "BILLING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "7",
+   "label": "Intervalle entre deux rappels (jours)"
+  },
+  {
+   "key": "bokati.billing.workers.payment-reminder-cron",
+   "domain": "BILLING",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 8 * * *",
+   "label": "Planification des rappels de paiement"
+  },
+  {
+   "key": "bokati.billing.workers.payment-reminder-max",
+   "domain": "BILLING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3",
+   "label": "Nombre maximum de rappels"
+  },
+  {
+   "key": "bokati.billing.workers.quote-expiry-delay-ms",
+   "domain": "BILLING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence du passage en expiré des devis échus (ms)"
+  },
+  {
+   "key": "bokati.billing.workers.schedule-overdue-delay-ms",
+   "domain": "BILLING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence du suivi des échéanciers (ms)"
+  },
+  {
+   "key": "bokati.booking.expiry.worker-delay-ms",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Réservations : intervalle de la tâche d'expiration (options et réservations non réglées), en millisecondes"
+  },
+  {
+   "key": "bokati.booking.lifecycle.worker-delay-ms",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence du suivi des réservations (ms)"
+  },
+  {
+   "key": "bokati.booking.no-show.worker-delay-ms",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence du suivi des absences (ms)"
+  },
+  {
+   "key": "bokati.booking.staff.max-backdate-days",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "31",
+   "label": "Rétroaction d'une réservation de l'équipe (jours)"
+  },
+  {
+   "key": "bokati.booking.virtual-room.base-url",
+   "domain": "BOOKING",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "https://meet.jit.si",
+   "label": "Adresse des salles virtuelles"
+  },
+  {
+   "key": "bokati.booking.waitlist.offer-ttl-minutes",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Durée d'une offre de liste d'attente (minutes)"
+  },
+  {
+   "key": "bokati.booking.waitlist.worker-delay-ms",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300000",
+   "label": "Cadence de la liste d'attente (ms)"
+  },
+  {
+   "key": "bokati.booking.wallet.hold-grace-minutes",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60",
+   "label": "Grâce de retenue sur portefeuille (minutes)"
+  },
+  {
+   "key": "bokati.booking.wallet.settlement-delay-minutes",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1",
+   "label": "Délai de règlement sur portefeuille (minutes)"
+  },
+  {
+   "key": "bokati.booking.wallet.worker-delay-ms",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "15000",
+   "label": "Cadence des retenues de réservation (ms)"
+  },
+  {
+   "key": "bokati.cash.assignment.enforced",
+   "domain": "PAYMENT",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Ouverture de session reservee aux personnes affectees a la caisse"
+  },
+  {
+   "key": "bokati.cash.forced-close.contest-days",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3",
+   "label": "Delai de contestation d'une cloture d'office (jours)"
+  },
+  {
+   "key": "bokati.cash.refund.max-cash-amount",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Remboursement en especes au-dela duquel le virement est impose (0 : sans limite)"
+  },
+  {
+   "key": "bokati.cash.reversal.cashier-max-amount",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "50000",
+   "label": "Plafond d'une contre-passation par le caissier seul"
+  },
+  {
+   "key": "bokati.cash.reversal.cashier-minutes",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "15",
+   "label": "Delai pendant lequel le caissier contre-passe seul (minutes)"
+  },
+  {
+   "key": "bokati.cash.staff-worker-cron",
+   "domain": "PAYMENT",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 10 * * * *",
+   "label": "Planification du suivi des absences et des sessions trop longues"
+  },
+  {
+   "key": "bokati.cash.transfer.max-transit-hours",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "2",
+   "label": "Transit maximal d'un transfert de caisse avant alerte (heures)"
+  },
+  {
+   "key": "bokati.cash.variance.investigation-days",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Echeance de revue d'un ecart mis en recherche (jours)"
+  },
+  {
+   "key": "bokati.cash.visa.expiry-hours",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "24",
+   "label": "Delai du second visa d'une operation de caisse (heures)"
+  },
+  {
+   "key": "bokati.company.wallet.approval-expiry-delay-ms",
+   "domain": "COMPANIES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600000",
+   "label": "Cadence d'expiration des validations (ms)"
+  },
+  {
+   "key": "bokati.company.wallet.approval-hours",
+   "domain": "COMPANIES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "48",
+   "label": "Délai de validation d'une dépense (heures)"
+  },
+  {
+   "key": "bokati.company.wallet.currency",
+   "domain": "COMPANIES",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "XAF",
+   "label": "Devise du portefeuille d'organisation"
+  },
+  {
+   "key": "bokati.compliance.alert-email",
+   "domain": "COMPLIANCE",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Adresse(s) prévenue(s) chaque jour des dossiers de conformité hors délai (séparées par des virgules)"
+  },
+  {
+   "key": "bokati.compliance.case.due-hours.critical",
+   "domain": "COMPLIANCE",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "24",
+   "label": "Délai d'un dossier critique (heures)"
+  },
+  {
+   "key": "bokati.compliance.case.due-hours.high",
+   "domain": "COMPLIANCE",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "72",
+   "label": "Délai d'un dossier élevé (heures)"
+  },
+  {
+   "key": "bokati.compliance.case.due-hours.low",
+   "domain": "COMPLIANCE",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "336",
+   "label": "Délai d'un dossier faible (heures)"
+  },
+  {
+   "key": "bokati.compliance.case.due-hours.medium",
+   "domain": "COMPLIANCE",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "168",
+   "label": "Délai d'un dossier moyen (heures)"
+  },
+  {
+   "key": "bokati.compliance.identity.cron",
+   "domain": "COMPLIANCE",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 50 3 * * *",
+   "label": "Planification du contrôle d'identité"
+  },
+  {
+   "key": "bokati.compliance.identity.exposure-threshold",
+   "domain": "COMPLIANCE",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1000000",
+   "label": "Seuil d'exposition"
+  },
+  {
+   "key": "bokati.compliance.identity.review-days",
+   "domain": "COMPLIANCE",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "365",
+   "label": "Revue d'identité (jours)"
+  },
+  {
+   "key": "bokati.compliance.overdue.cron",
+   "domain": "COMPLIANCE",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 8 * * *",
+   "label": "Planification du suivi des dossiers en retard"
+  },
+  {
+   "key": "bokati.compliance.screening.cron",
+   "domain": "COMPLIANCE",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 40 3 * * *",
+   "label": "Planification du filtrage"
+  },
+  {
+   "key": "bokati.compliance.screening.recheck-days",
+   "domain": "COMPLIANCE",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "180",
+   "label": "Nouveau filtrage (jours)"
+  },
+  {
+   "key": "bokati.crm.dormant-cron",
+   "domain": "CRM",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 8 * * MON-FRI",
+   "label": "Planification du suivi des clients dormants"
+  },
+  {
+   "key": "bokati.crm.dormant-threshold-days",
+   "domain": "CRM",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "7",
+   "label": "Client dormant après (jours)"
+  },
+  {
+   "key": "bokati.domiciliation.administration-email",
+   "domain": "DOMICILIATION",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Adresse de l'administration à notifier"
+  },
+  {
+   "key": "bokati.domiciliation.certificate-validity-days",
+   "domain": "DOMICILIATION",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "365",
+   "label": "Validité de l'attestation (jours)"
+  },
+  {
+   "key": "bokati.domiciliation.expiry-cron",
+   "domain": "DOMICILIATION",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 40 7 * * *",
+   "label": "Planification des expirations"
+  },
+  {
+   "key": "bokati.domiciliation.kyc-level-required",
+   "domain": "DOMICILIATION",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "2",
+   "label": "Niveau KYC exigé"
+  },
+  {
+   "key": "bokati.domiciliation.mail-cron",
+   "domain": "DOMICILIATION",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 30 7 * * *",
+   "label": "Planification du suivi du courrier"
+  },
+  {
+   "key": "bokati.domiciliation.mail.storage-days",
+   "domain": "DOMICILIATION",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Garde du courrier (jours)"
+  },
+  {
+   "key": "bokati.domiciliation.notify-administration-on-termination",
+   "domain": "DOMICILIATION",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Notifier l'administration à la résiliation"
+  },
+  {
+   "key": "bokati.domiciliation.reminder-cron",
+   "domain": "DOMICILIATION",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 20 7 * * *",
+   "label": "Planification des rappels"
+  },
+  {
+   "key": "bokati.domiciliation.renewal-reminder-days",
+   "domain": "DOMICILIATION",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Rappel avant renouvellement (jours)"
+  },
+  {
+   "key": "bokati.domiciliation.retention-years",
+   "domain": "DOMICILIATION",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "10",
+   "label": "Conservation (années)"
+  },
+  {
+   "key": "bokati.email.dedup.business-window-seconds",
+   "domain": "NOTIFICATIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "86400",
+   "label": "Anti-doublon métier (secondes)"
+  },
+  {
+   "key": "bokati.email.dedup.enabled",
+   "domain": "NOTIFICATIONS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Anti-doublon d'e-mails actif"
+  },
+  {
+   "key": "bokati.email.dedup.generic-window-seconds",
+   "domain": "NOTIFICATIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600",
+   "label": "Anti-doublon générique (secondes)"
+  },
+  {
+   "key": "bokati.graph-api.rate-limit.limit-for-period",
+   "domain": "GRAPH_API",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "25",
+   "label": "Requêtes par période"
+  },
+  {
+   "key": "bokati.graph-api.rate-limit.limit-refresh-period-ms",
+   "domain": "GRAPH_API",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Durée d'une période (ms)"
+  },
+  {
+   "key": "bokati.graph-api.rate-limit.timeout-ms",
+   "domain": "GRAPH_API",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30000",
+   "label": "Délai d'attente (ms)"
+  },
+  {
+   "key": "bokati.mail.requeue.after-seconds",
+   "domain": "NOTIFICATIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "120",
+   "label": "Renvoi d'un e-mail bloqué après (secondes)"
+  },
+  {
+   "key": "bokati.mail.requeue.delay-ms",
+   "domain": "NOTIFICATIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence des renvois d'e-mails (ms)"
+  },
+  {
+   "key": "bokati.marketplace.payment-window-minutes",
+   "domain": "MARKETPLACE",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Délai de paiement d'une commande (minutes)"
+  },
+  {
+   "key": "bokati.marketplace.sync-delay-ms",
+   "domain": "MARKETPLACE",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence de suivi des commandes (ms)"
+  },
+  {
+   "key": "bokati.marketplace.sync-initial-delay-ms",
+   "domain": "MARKETPLACE",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "60000",
+   "label": "Attente avant le premier suivi (ms)"
+  },
+  {
+   "key": "bokati.notification.worker.batch-size",
+   "domain": "NOTIFICATIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "25",
+   "label": "Taille de lot des notifications"
+  },
+  {
+   "key": "bokati.notification.worker.delay-ms",
+   "domain": "NOTIFICATIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30000",
+   "label": "Cadence des notifications (ms)"
+  },
+  {
+   "key": "bokati.notification.worker.enabled",
+   "domain": "NOTIFICATIONS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Envoi des notifications actif"
+  },
+  {
+   "key": "bokati.pass.alert.cron",
+   "domain": "PASSES",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 8 * * *",
+   "label": "Planification des alertes de pass"
+  },
+  {
+   "key": "bokati.pass.alert.expiring-days",
+   "domain": "PASSES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "7",
+   "label": "Alerte avant expiration (jours)"
+  },
+  {
+   "key": "bokati.pass.alert.low-balance-ratio",
+   "domain": "PASSES",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "0.2",
+   "label": "Alerte de solde bas (part restante)"
+  },
+  {
+   "key": "bokati.pass.alert.unused-days",
+   "domain": "PASSES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "14",
+   "label": "Alerte de non-usage (jours)"
+  },
+  {
+   "key": "bokati.pass.credential.rotation-minutes",
+   "domain": "PASSES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "15",
+   "label": "Rotation du code d'accès (minutes)"
+  },
+  {
+   "key": "bokati.pass.workers.renewal-delay-ms",
+   "domain": "PASSES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Cadence des renouvellements de pass (ms)"
+  },
+  {
+   "key": "bokati.payment.cash-declaration.desk-email",
+   "domain": "PAYMENT",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Adresse de l'accueil pour les espèces"
+  },
+  {
+   "key": "bokati.payment.cash-declaration.expiry-delay-ms",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Cadence d'expiration des déclarations (ms)"
+  },
+  {
+   "key": "bokati.payment.cash-declaration.validity-hours",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "4",
+   "label": "Validité d'une déclaration d'espèces (heures)"
+  },
+  {
+   "key": "bokati.payment.cash-register.alert-cooldown-hours",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "6",
+   "label": "Intervalle entre deux alertes de caisse (heures)"
+  },
+  {
+   "key": "bokati.payment.cash-session.auto-limit",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "10000000",
+   "label": "Plafond d'une session automatique"
+  },
+  {
+   "key": "bokati.payment.cash-session.closing-report.enabled",
+   "domain": "PAYMENT",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Rapport de clôture de caisse actif"
+  },
+  {
+   "key": "bokati.payment.cash-session.month-end-cron",
+   "domain": "PAYMENT",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 5 0 * * *",
+   "label": "Planification de la clôture de fin de mois"
+  },
+  {
+   "key": "bokati.payment.cash-session.supervisor-email",
+   "domain": "PAYMENT",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "supportela@elleaose.com",
+   "label": "Adresse du superviseur de caisse"
+  },
+  {
+   "key": "bokati.payment.duplicate-window-seconds",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Paiements : délai (secondes) pendant lequel un paiement identique (même mode, montant, auteur) est rendu au lieu d'être enregistré deux fois ; 0 coupe le contrôle"
+  },
+  {
+   "key": "bokati.payment.pawaypay.enabled-providers",
+   "domain": "PAYMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Opérateurs mobile money actifs"
+  },
+  {
+   "key": "bokati.payment.pawaypay.operator-prefixes",
+   "domain": "PAYMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Préfixes des opérateurs"
+  },
+  {
+   "key": "bokati.payment.pawaypay.polling-delay-ms",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence de lecture de l'opérateur (ms)"
+  },
+  {
+   "key": "bokati.payment.pawaypay.reconciliation-cron",
+   "domain": "PAYMENT",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 6 * * *",
+   "label": "Planification du rapprochement mobile money"
+  },
+  {
+   "key": "bokati.payment.self-service.confirmation-email",
+   "domain": "PAYMENT",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Adresse de confirmation du libre-service"
+  },
+  {
+   "key": "bokati.payment.workers.expiry-alert-delay-ms",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1800000",
+   "label": "Cadence des alertes d'expiration (ms)"
+  },
+  {
+   "key": "bokati.payment.workers.intent-expiry-delay-ms",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300000",
+   "label": "Cadence d'expiration des intentions de paiement (ms)"
+  },
+  {
+   "key": "bokati.payment.workers.wallet-hold-expiry-delay-ms",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300000",
+   "label": "Cadence d'expiration des retenues (ms)"
+  },
+  {
+   "key": "bokati.payment.workers.wallet-reconciliation-cron",
+   "domain": "PAYMENT",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 15 3 * * *",
+   "label": "Planification du rapprochement des portefeuilles"
+  },
+  {
+   "key": "bokati.payment.workers.wallet-reconciliation-enabled",
+   "domain": "PAYMENT",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Rapprochement des portefeuilles actif"
+  },
+  {
+   "key": "bokati.promotion.coupon.expiry-worker-delay-ms",
+   "domain": "PROMOTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "120000",
+   "label": "Cadence d'expiration des coupons (ms)"
+  },
+  {
+   "key": "bokati.promotion.coupon.reservation-minutes",
+   "domain": "PROMOTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Réservation d'un coupon (minutes)"
+  },
+  {
+   "key": "bokati.promotion.referral.tenure-cron",
+   "domain": "PROMOTIONS",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 30 2 * * *",
+   "label": "Planification du suivi du parrainage"
+  },
+  {
+   "key": "bokati.resource.availability.generation.saturday-hours",
+   "domain": "RESOURCES",
+   "type": "TIME_RANGE",
+   "effect": "LIVE",
+   "default": "08:00-12:00",
+   "label": "Horaires du samedi"
+  },
+  {
+   "key": "bokati.resource.availability.generation.sunday-hours",
+   "domain": "RESOURCES",
+   "type": "TIME_RANGE",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Horaires du dimanche"
+  },
+  {
+   "key": "bokati.resource.availability.generation.weekday-hours",
+   "domain": "RESOURCES",
+   "type": "TIME_RANGE",
+   "effect": "LIVE",
+   "default": "08:00-18:00",
+   "label": "Horaires de semaine"
+  },
+  {
+   "key": "bokati.resource.availability.generation.weekday-subscriber-hours",
+   "domain": "RESOURCES",
+   "type": "TIME_RANGE",
+   "effect": "LIVE",
+   "default": "18:00-22:00",
+   "label": "Horaires de semaine réservés aux abonnés"
+  },
+  {
+   "key": "bokati.resource.availability.subscriber-hours-from",
+   "domain": "RESOURCES",
+   "type": "TIME",
+   "effect": "LIVE",
+   "default": "18:00",
+   "label": "Début de la plage réservée aux abonnés"
+  },
+  {
+   "key": "bokati.resource.bulk-max-resources",
+   "domain": "RESOURCES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "20",
+   "label": "Ressources par action groupée"
+  },
+  {
+   "key": "bokati.resource.workers.monthly-availability-cron",
+   "domain": "RESOURCES",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 3 * * *",
+   "label": "Planification de l'ouverture des créneaux jusqu'à l'horizon (chaque jour)"
+  },
+  {
+   "key": "bokati.resource.workers.monthly-availability-enabled",
+   "domain": "RESOURCES",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Ouverture automatique du mois active"
+  },
+  {
+   "key": "bokati.resource.workers.monthly-availability-initial-delay-ms",
+   "domain": "RESOURCES",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "120000",
+   "label": "Attente avant l'ouverture du mois (ms)"
+  },
+  {
+   "key": "bokati.resource.workers.slot-capacity-delay-ms",
+   "domain": "RESOURCES",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence de recalcul des capacités (ms)"
+  },
+  {
+   "key": "bokati.resource.workers.slot-capacity-enabled",
+   "domain": "RESOURCES",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Recalcul des capacités actif"
+  },
+  {
+   "key": "bokati.resource.workers.slot-capacity-initial-delay-ms",
+   "domain": "RESOURCES",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "60000",
+   "label": "Attente avant le recalcul des capacités (ms)"
+  },
+  {
+   "key": "bokati.subscription.kpi.workspace-type-codes",
+   "domain": "SUBSCRIPTIONS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Types d'espace des indicateurs"
+  },
+  {
+   "key": "bokati.subscription.workers.addon-expiry-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Cadence d'expiration des options (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.cancellation-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Cadence des clôtures (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.change-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Cadence des changements planifiés (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.contract-catch-up-initial-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "120000",
+   "label": "Attente avant le rattrapage des contrats (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.contract-repair-batch-size",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "20",
+   "label": "Taille de lot de la réparation des contrats"
+  },
+  {
+   "key": "bokati.subscription.workers.contract-repair-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence de la réparation des contrats (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.contract-repair-enabled",
+   "domain": "SUBSCRIPTIONS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Réparation des contrats active"
+  },
+  {
+   "key": "bokati.subscription.workers.contract-repair-min-age-seconds",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300",
+   "label": "Ancienneté minimale avant réparation (secondes)"
+  },
+  {
+   "key": "bokati.subscription.workers.entitlement-expiry-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600000",
+   "label": "Cadence d'expiration des droits (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.integrity-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1800000",
+   "label": "Cadence du contrôle d'intégrité (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.lifecycle-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence du cycle de vie (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.lifecycle-initial-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "120000",
+   "label": "Attente avant le cycle de vie (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.notification-dispatch-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence des avis d'abonnement (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.pass-expiry-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600000",
+   "label": "Cadence d'expiration des pass (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.promotion-expiry-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Cadence d'expiration des promotions (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.renewal-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Cadence des renouvellements (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.reservation-expiry-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300000",
+   "label": "Cadence d'expiration des retenues de droits (ms)"
+  },
+  {
+   "key": "bokati.subscription.workers.rollover-delay-ms",
+   "domain": "SUBSCRIPTIONS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "900000",
+   "label": "Cadence des reports de droits (ms)"
+  },
+  {
+   "key": "bokati.support.admin-email",
+   "domain": "SUPPORT",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "supportela@elleaose.com",
+   "label": "Adresse de l'administration"
+  },
+  {
+   "key": "bokati.support.auto-close-check-delay-ms",
+   "domain": "SUPPORT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence de fermeture automatique (ms)"
+  },
+  {
+   "key": "bokati.support.auto-close-delay-days",
+   "domain": "SUPPORT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Fermeture automatique après (jours)"
+  },
+  {
+   "key": "bokati.support.csat-check-delay-ms",
+   "domain": "SUPPORT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence des enquêtes de satisfaction (ms)"
+  },
+  {
+   "key": "bokati.support.inbound-poll-delay-ms",
+   "domain": "SUPPORT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence de lecture de la boîte support (ms)"
+  },
+  {
+   "key": "bokati.support.manager-email",
+   "domain": "SUPPORT",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "supportela@elleaose.com",
+   "label": "Adresse du responsable"
+  },
+  {
+   "key": "bokati.support.sender-email",
+   "domain": "SUPPORT",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "supportela@elleaose.com",
+   "label": "Adresse d'envoi"
+  },
+  {
+   "key": "bokati.support.sla-check-delay-ms",
+   "domain": "SUPPORT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3600000",
+   "label": "Cadence du contrôle des délais (ms)"
+  },
+  {
+   "key": "bokati.task.booking-cleanup-default-assignee",
+   "domain": "TASKS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Assigné par défaut · remise en état"
+  },
+  {
+   "key": "bokati.task.booking-default-assignee",
+   "domain": "TASKS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Assigné par défaut · préparation"
+  },
+  {
+   "key": "bokati.task.booking-prep-hours",
+   "domain": "TASKS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "2",
+   "label": "Préparation d'une réservation (heures)"
+  },
+  {
+   "key": "bokati.task.due-soon-hours",
+   "domain": "TASKS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "24",
+   "label": "Échéance proche (heures)"
+  },
+  {
+   "key": "bokati.task.inventory-default-assignee",
+   "domain": "TASKS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Assigné par défaut · stock"
+  },
+  {
+   "key": "bokati.task.inventory-reorder-due-hours",
+   "domain": "TASKS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "24",
+   "label": "Délai de réapprovisionnement (heures)"
+  },
+  {
+   "key": "bokati.task.reminder-cron",
+   "domain": "TASKS",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 * * * *",
+   "label": "Planification des rappels de tâches"
+  },
+  {
+   "key": "bokati.wallet.admin.four-eyes-threshold",
+   "domain": "WALLET",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "100000",
+   "label": "Seuil de double validation"
+  },
+  {
+   "key": "bokati.wallet.confirmation.expiry-delay-ms",
+   "domain": "WALLET",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "300000",
+   "label": "Cadence d'expiration des confirmations (ms)"
+  },
+  {
+   "key": "bokati.wallet.confirmation.validity-minutes",
+   "domain": "WALLET",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Validité d'une confirmation (minutes)"
+  },
+  {
+   "key": "bokati.wallet.dormancy.after-days",
+   "domain": "WALLET",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "180",
+   "label": "Dormance après (jours)"
+  },
+  {
+   "key": "bokati.wallet.dormancy.cron",
+   "domain": "WALLET",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 15 3 * * *",
+   "label": "Planification de la dormance"
+  },
+  {
+   "key": "bokati.wallet.payment-request.validity-days",
+   "domain": "WALLET",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "7",
+   "label": "Validité d'une demande de paiement (jours)"
+  },
+  {
+   "key": "bokati.wallet.risk.large-transfer-amount",
+   "domain": "WALLET",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "100000",
+   "label": "Montant d'un gros transfert"
+  },
+  {
+   "key": "bokati.wallet.transfer.confirmation-validity-minutes",
+   "domain": "WALLET",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Validité de la confirmation d'un transfert (minutes)"
+  },
+  {
+   "key": "bokati.wallet.transfer.fee-max",
+   "domain": "WALLET",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Frais de transfert maximum"
+  },
+  {
+   "key": "bokati.wallet.transfer.fee-min",
+   "domain": "WALLET",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Frais de transfert minimum"
+  },
+  {
+   "key": "bokati.wallet.transfer.fee-rate",
+   "domain": "WALLET",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "0",
+   "label": "Taux des frais de transfert"
+  },
+  {
+   "key": "bokati.wallet.transfer.fee-wallet-number",
+   "domain": "WALLET",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Portefeuille des frais"
+  },
+  {
+   "key": "bokati.wallet.treasury.alert-email",
+   "domain": "WALLET",
+   "type": "EMAIL",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Adresse des alertes de trésorerie"
+  },
+  {
+   "key": "bokati.wallet.treasury.coverage-alert-ratio",
+   "domain": "WALLET",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "1.0",
+   "label": "Seuil d'alerte de couverture"
+  },
+  {
+   "key": "bokati.wallet.treasury.variance-tolerance",
+   "domain": "WALLET",
+   "type": "DECIMAL",
+   "effect": "LIVE",
+   "default": "1",
+   "label": "Tolérance d'écart de trésorerie"
+  },
+  {
+   "key": "bokati.wallet.usage.expiry-delay-ms",
+   "domain": "WALLET",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "600000",
+   "label": "Cadence d'expiration des usages (ms)"
+  },
+  {
+   "key": "bokati.webhook.worker.batch-size",
+   "domain": "WEBHOOKS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "25",
+   "label": "Taille de lot des webhooks"
+  },
+  {
+   "key": "bokati.webhook.worker.delay-ms",
+   "domain": "WEBHOOKS",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "60000",
+   "label": "Cadence des webhooks (ms)"
+  },
+  {
+   "key": "bokati.webhook.worker.enabled",
+   "domain": "WEBHOOKS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Envoi des webhooks actif"
+  },
+  {
+   "key": "bokati.websocket.stomp.broker-url",
+   "domain": "WEBSOCKET",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Adresse du relais de messages"
+  },
+  {
+   "key": "bokati.websocket.stomp.client-login",
+   "domain": "WEBSOCKET",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Identifiant client du relais"
+  },
+  {
+   "key": "bokati.websocket.stomp.client-passcode",
+   "domain": "WEBSOCKET",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Mot de passe client du relais"
+  },
+  {
+   "key": "bokati.websocket.stomp.relay-host",
+   "domain": "WEBSOCKET",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "localhost",
+   "label": "Hôte du relais"
+  },
+  {
+   "key": "bokati.websocket.stomp.relay-port",
+   "domain": "WEBSOCKET",
+   "type": "INTEGER",
+   "effect": "RESTART",
+   "default": "61613",
+   "label": "Port du relais"
+  },
+  {
+   "key": "bokati.websocket.stomp.system-login",
+   "domain": "WEBSOCKET",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Identifiant système du relais"
+  },
+  {
+   "key": "bokati.websocket.stomp.system-passcode",
+   "domain": "WEBSOCKET",
+   "type": "SECRET",
+   "effect": "RESTART",
+   "default": "",
+   "label": "Mot de passe système du relais"
+  },
+  {
+   "key": "bokati.websocket.stomp.use-tls",
+   "domain": "WEBSOCKET",
+   "type": "BOOLEAN",
+   "effect": "RESTART",
+   "default": "false",
+   "label": "Relais chiffré"
+  },
+  {
+   "key": "bokati.websocket.stomp.virtual-host",
+   "domain": "WEBSOCKET",
+   "type": "TEXT",
+   "effect": "RESTART",
+   "default": "/",
+   "label": "Hôte virtuel du relais"
+  },
+  {
+   "key": "bokati.websocket.use-stomp-relay",
+   "domain": "WEBSOCKET",
+   "type": "BOOLEAN",
+   "effect": "RESTART",
+   "default": "false",
+   "label": "Relais de messages actif"
+  },
+  {
+   "key": "bokati.whatsapp.auto-notifications.enabled",
+   "domain": "NOTIFICATIONS",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Messages WhatsApp automatiques aux clients (réservation, abonnement, facture soldée, portefeuille)"
+  },
+  {
+   "key": "bokati.whatsapp.portal-path.bookings",
+   "domain": "NOTIFICATIONS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "client/bookings",
+   "label": "Page de l'espace client ouverte par le bouton WhatsApp : réservations"
+  },
+  {
+   "key": "bokati.whatsapp.portal-path.invoices",
+   "domain": "NOTIFICATIONS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "client/invoices",
+   "label": "Page de l'espace client ouverte par le bouton WhatsApp : factures, proformas et avoirs"
+  },
+  {
+   "key": "bokati.whatsapp.portal-path.kyc",
+   "domain": "NOTIFICATIONS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "client/kyc",
+   "label": "Page de l'espace client ouverte par le bouton WhatsApp : pièces KYC à déposer"
+  },
+  {
+   "key": "bokati.whatsapp.portal-path.quotes",
+   "domain": "NOTIFICATIONS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "client/quotes",
+   "label": "Page de l'espace client ouverte par le bouton WhatsApp : devis"
+  },
+  {
+   "key": "bokati.whatsapp.portal-path.subscriptions",
+   "domain": "NOTIFICATIONS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "client/subscriptions",
+   "label": "Page de l'espace client ouverte par le bouton WhatsApp : abonnements"
+  },
+  {
+   "key": "bokati.whatsapp.portal-path.wallet",
+   "domain": "NOTIFICATIONS",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "client/wallet",
+   "label": "Page de l'espace client ouverte par le bouton WhatsApp : portefeuille"
+  },
+  {
+   "key": "bookings.pay-on-site.max-no-shows",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "2",
+   "label": "Réservations : absences sur des rendez-vous réglés sur place avant retrait d'office de l'option (0 : jamais)"
+  },
+  {
+   "key": "bookings.pay-on-site.no-show-window-days",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "90",
+   "label": "Réservations : période, en jours, sur laquelle les absences sont comptées"
+  },
+  {
+   "key": "bookings.pay-on-site.portal-enabled",
+   "domain": "BOOKING",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Réservations : rendez-vous réglé sur place ouvert au portail pour tous les clients sans option propre"
+  },
+  {
+   "key": "bookings.payment-due.before-start-minutes",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Réservations : échéance de paiement au plus tard tant de minutes avant le début"
+  },
+  {
+   "key": "bookings.payment-due.business-hour",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "10",
+   "label": "Réservations : heure de l'échéance reportée au prochain jour ouvré"
+  },
+  {
+   "key": "bookings.payment-due.default-minutes",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "120",
+   "label": "Réservations : validité d'une réservation non réglée, en minutes"
+  },
+  {
+   "key": "bookings.payment-due.far-days",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "3",
+   "label": "Réservations : au-delà de ce nombre de jours avant le début, validité longue"
+  },
+  {
+   "key": "bookings.payment-due.far-minutes",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "1440",
+   "label": "Réservations : validité longue, en minutes"
+  },
+  {
+   "key": "bookings.payment-due.reminder-minutes",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "30",
+   "label": "Réservations : rappel au client tant de minutes avant l'échéance de paiement (0 : aucun rappel)"
+  },
+  {
+   "key": "bookings.price-adjustment.max-rate",
+   "domain": "BOOKING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "20",
+   "label": "Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST"
+  },
+  {
+   "key": "fund.advance.overdue-policy",
+   "domain": "PAYMENT",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "BLOCK",
+   "label": "Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT"
+  },
+  {
+   "key": "fund.approval.level1-max",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "50000",
+   "label": "Montant maximal valide par le seul chef de service (XAF)"
+  },
+  {
+   "key": "fund.approval.level2-max",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "500000",
+   "label": "Montant maximal valide sans la direction (XAF)"
+  },
+  {
+   "key": "fund.budget.blocking-mode",
+   "domain": "PAYMENT",
+   "type": "ENUM",
+   "effect": "LIVE",
+   "default": "EXTRA_APPROVAL",
+   "label": "Depassement d'une ligne bloquante : REFUSE (demande refusee) ou EXTRA_APPROVAL (validation budgetaire en plus)"
+  },
+  {
+   "key": "fund.budget.require-forecast-choice",
+   "domain": "PAYMENT",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "true",
+   "label": "Avec un budget actif, chaque demande cite sa prevision ou se declare non prevue"
+  },
+  {
+   "key": "fund.budget.unplanned-approval",
+   "domain": "PAYMENT",
+   "type": "BOOLEAN",
+   "effect": "LIVE",
+   "default": "false",
+   "label": "Une depense non prevue demande une validation budgetaire en plus"
+  },
+  {
+   "key": "fund.justification.days",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "7",
+   "label": "Delai de justification d'une avance apres la mission ou le decaissement (jours)"
+  },
+  {
+   "key": "fund.justification.receipt-exempt-max",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5000",
+   "label": "Montant d'une ligne de justification admis sans piece, sur attestation (XAF)"
+  },
+  {
+   "key": "fund.request.expiry-days",
+   "domain": "PAYMENT",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "15",
+   "label": "Jours apres lesquels une demande approuvee non decaissee expire"
+  },
+  {
+   "key": "fund.vat-recoverable-account",
+   "domain": "PAYMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "4452",
+   "label": "Compte de TVA recuperable des justifications d'avance"
+  },
+  {
+   "key": "fund.voucher.issuer-details",
+   "domain": "PAYMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "",
+   "label": "Mentions de l'exploitant en tete des pieces (RCCM, NIU, adresse)"
+  },
+  {
+   "key": "fund.voucher.issuer-name",
+   "domain": "PAYMENT",
+   "type": "TEXT",
+   "effect": "LIVE",
+   "default": "ELLE A OSE",
+   "label": "Raison sociale en tete des pieces comptables"
+  },
+  {
+   "key": "fund.worker-cron",
+   "domain": "PAYMENT",
+   "type": "CRON",
+   "effect": "LIVE",
+   "default": "0 0 8-18 * * *",
+   "label": "Planification des rappels et relances des demandes de fonds"
+  },
+  {
+   "key": "inventory.supplier-suggestion.limit",
+   "domain": "ACCOUNTING",
+   "type": "INTEGER",
+   "effect": "LIVE",
+   "default": "5",
+   "label": "Nombre de fournisseurs proposes par la suggestion de fournisseurs (au plus 50)"
+  }
+ ]
+}

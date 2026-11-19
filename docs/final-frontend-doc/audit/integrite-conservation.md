@@ -35,5 +35,5 @@ Le journal des actions et les événements de sécurité sont **chaînés par em
 | `jobRuns` | exécutions de tâches gardées | 90 jours |
 | `alerts` | alertes fermées | 365 jours |
 
-- Les durées sont des paramètres (`settingKey`, domaine `AUDIT`, `0` : sans limite). La purge passe chaque nuit à 3 h 30.
+- Les durées sont des paramètres (`settingKey`, domaine `AUDIT`, `0` : sans limite), ouverts par `GET /sni/api/v1/admin/settings/{settingKey}` (liste : [parametres/cles.md](../parametres/cles.md#audit)). La purge passe chaque nuit à 3 h 30.
 - `POST /sni/api/v1/admin/audit/retention/run` (journalisé) : purge immédiate ; rend `{ "actions": 0, "requests": 1204, ... }` (lignes supprimées par journal). Demander confirmation avant l'appel.

@@ -39,8 +39,15 @@ public class PlatformSettingsController {
 
     @GetMapping
     public ResponseEntity<List<PlatformSettingsAdminService.SettingView>> list(@RequestParam(required = false) SettingDomain domain,
+                                                                               @RequestParam(required = false) String q,
                                                                                Authentication authentication) {
-        return ResponseEntity.ok(service.list(domain, authentication));
+        return ResponseEntity.ok(service.list(domain, q, authentication));
+    }
+
+    /** Un parametre par sa cle : lien direct depuis un autre ecran (centre d'audit, comptabilite...). */
+    @GetMapping("/{key}")
+    public ResponseEntity<PlatformSettingsAdminService.SettingView> get(@PathVariable String key, Authentication authentication) {
+        return ResponseEntity.ok(service.get(key, authentication));
     }
 
     @PutMapping("/{key}")

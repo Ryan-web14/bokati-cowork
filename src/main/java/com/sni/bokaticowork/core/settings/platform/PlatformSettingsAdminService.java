@@ -96,6 +96,34 @@ public class PlatformSettingsAdminService {
         return views;
     }
 
+    /** Recherche dans la cle ou le libelle (sans casse), en plus du domaine. */
+    @Transactional(readOnly = true)
+    public List<SettingView> list(SettingDomain domain, String q, Authentication authentication) {
+        List<SettingView> views = list(domain, authentication);
+        if (!StringUtils.hasText(q)) {
+            return views;
+        }
+        String needle = q.trim().toLowerCase(java.util.Locale.ROOT);
+        return views.stream().filter(view -> view.key().toLowerCase(java.util.Locale.ROOT).contains(needle)
+                || (view.label() != null && view.label().toLowerCase(java.util.Locale.ROOT).contains(needle))).toList();
+    }
+
+    /**
+     * Un parametre par sa cle (lien direct depuis un autre ecran). Cle inconnue : 404 ; domaine
+     * reserve au super-administrateur : 403 avec un message lisible.
+     */
+    @Transactional(readOnly = true)
+    public SettingView get(String key, Authentication authentication) {
+        String wanted = key == null ? "" : key.trim();
+        return list(null, authentication).stream().filter(view -> view.key().equals(wanted)).findFirst().orElseThrow(() -> {
+            boolean known = PlatformSettingCatalog.find(wanted).isPresent()
+                    || provided().stream().anyMatch(setting -> setting.definition().key().equals(wanted));
+            return known
+                    ? new com.sni.bokaticowork.core.exception.customs.ForbiddenException("Paramètre réservé au super-administrateur : " + wanted)
+                    : new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Paramètre inconnu : " + wanted);
+        });
+    }
+
     @Transactional
     public SettingView update(String key, String rawValue, String reason, Authentication authentication) {
         PlatformSettingCatalog.Definition definition = editable(key, authentication);

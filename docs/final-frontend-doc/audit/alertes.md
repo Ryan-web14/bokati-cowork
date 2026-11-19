@@ -40,7 +40,7 @@ Une carte par indicateur : valeur, seuil, barre ou couleur selon `value / thresh
 | `WHATSAPP_FAILURES` | messages WhatsApp refusés ou non remis, 1 heure | 5 | `WARNING` |
 | `PAWAPAY_FAILURES` | rappels PawaPay en échec, 1 heure | 3 | `WARNING` |
 
-Les seuils se changent dans l'écran des paramètres (clé `settingKey`, domaine `AUDIT`, `SUPER_ADMIN`). Prévoir un lien « Modifier le seuil » vers ce paramètre.
+Les seuils se changent dans l'écran des paramètres (clé `settingKey`, domaine `AUDIT`, `SUPER_ADMIN`). Prévoir un lien « Modifier le seuil » vers ce paramètre : `GET /sni/api/v1/admin/settings/{settingKey}` rend sa valeur et son domaine (`AUDIT`) pour ouvrir l'écran des paramètres sur la bonne ligne, `PUT /sni/api/v1/admin/settings/{settingKey}` le modifie. Lien réservé à `ROLE_SUPER_ADMIN`.
 
 ## Alertes
 
