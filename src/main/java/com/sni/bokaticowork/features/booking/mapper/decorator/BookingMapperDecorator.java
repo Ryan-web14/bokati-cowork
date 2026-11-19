@@ -196,7 +196,8 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getCancellationReasonCode(),
                 invoiceNumber,
                 extras,
-                grandTotal
+                grandTotal,
+                Boolean.TRUE.equals(booking.getPayOnSite())
         );
     }
 

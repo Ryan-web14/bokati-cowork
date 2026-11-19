@@ -116,7 +116,8 @@ public class BookingOutboxEventProcessor implements OutboxEventProcessor {
                  BOOKING_NO_SHOW,
                  BOOKING_RESCHEDULED,
                  BOOKING_TRANSFERRED,
-                 BOOKING_RESOURCE_CHANGED -> true;
+                 BOOKING_RESOURCE_CHANGED,
+                 BOOKING_PAYMENT_REMINDER -> true;
             default -> false;
         };
     }

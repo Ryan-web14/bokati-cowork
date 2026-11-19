@@ -59,6 +59,21 @@ public class ClientPortalBookingService {
         return toDetailResponse(booking);
     }
 
+    private com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite payOnSite;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPayOnSite(com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite payOnSite) {
+        this.payOnSite = payOnSite;
+    }
+
+    /** Lot B3 : le membre peut-il prendre un rendez-vous regle sur place ? */
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access payOnSiteAccess(Member member) {
+        return payOnSite == null ? new com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access(false,
+                com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Source.GLOBAL_SETTING, null)
+                : payOnSite.access(com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType.MEMBER, member.getMemberId());
+    }
+
     @Transactional
     public ClientBookingResponse createBooking(Member member, ClientCreateBookingRequest request) {
         // Une ressource retiree du portail ne se reserve pas depuis le portail · seule sa page
@@ -67,6 +82,11 @@ public class ClientPortalBookingService {
         // Le seul chemin ou le membre reserve pour lui-meme · l'accueil et le systeme (confirmation
         // apres paiement) passent ailleurs, et ont le droit de reserver une soiree pour quiconque.
         subscriberAccess.assertMayBook(member, request.getResourceCode(), request.getStartedAt(), request.getEndedAt());
+        boolean payOnSiteWanted = Boolean.TRUE.equals(request.getPayOnSite());
+        if (payOnSiteWanted && payOnSite != null) {
+            // Lot B3 (decision D3) : option du membre posee par l'equipe, sinon reglage global.
+            payOnSite.assertPortalAllowed(com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType.MEMBER, member.getMemberId());
+        }
         CreateBookingRequest req = new CreateBookingRequest(
                 request.getResourceCode(),
                 member.getMemberId(),
@@ -93,7 +113,10 @@ public class ClientPortalBookingService {
                 null,
                 request.getParticipants(),
                 // « Pour mon organisation » · le membre doit y etre rattache, sinon refus.
-                request.getBillingCompanyCode()
+                request.getBillingCompanyCode(),
+                null,
+                null,
+                payOnSiteWanted ? Boolean.TRUE : null
         );
         return toDetailResponse(bookingService.create(req));
     }

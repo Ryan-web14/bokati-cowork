@@ -261,6 +261,36 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             """)
     List<Booking> findRepairCandidates(@Param("limit") int limit);
 
+    /** Lot B3 : absences sur des rendez-vous regles sur place depuis une date. */
+    @Query(nativeQuery = true, value = """
+            SELECT COUNT(*) FROM booking
+            WHERE deleted = false AND pay_on_site = true AND status = 'NO_SHOW'
+              AND owner_type = :ownerType AND owner_code = :ownerCode AND started_at >= :since
+            """)
+    long countPayOnSiteNoShows(@Param("ownerType") String ownerType, @Param("ownerCode") String ownerCode,
+                               @Param("since") LocalDateTime since);
+
+    /** Lot B3 : file de l'accueil, rendez-vous regles sur place encore a encaisser sur une journee. */
+    @Query(nativeQuery = true, value = """
+            SELECT * FROM booking
+            WHERE deleted = false AND pay_on_site = true AND paid_at IS NULL
+              AND status IN ('PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS')
+              AND started_at >= :from AND started_at < :to
+            ORDER BY started_at ASC
+            """)
+    List<Booking> findPayOnSiteToCollect(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    /** Lot B3 : reservations en attente de paiement dont l'echeance approche, rappel pas encore envoye. */
+    @Query(nativeQuery = true, value = """
+            SELECT * FROM booking
+            WHERE deleted = false AND status = 'PENDING_PAYMENT' AND payment_reminder_sent_at IS NULL
+              AND payment_due_at IS NOT NULL AND payment_due_at > :now AND payment_due_at <= :horizon
+            ORDER BY payment_due_at ASC
+            LIMIT :limit
+            """)
+    List<Booking> findPaymentRemindersDue(@Param("now") LocalDateTime now, @Param("horizon") LocalDateTime horizon,
+                                          @Param("limit") int limit);
+
     @Query(nativeQuery = true, value = """
             SELECT COUNT(*)
             FROM booking

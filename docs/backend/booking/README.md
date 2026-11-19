@@ -93,7 +93,7 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 
 ## Avancement
 
-**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)), **B2 fait** ([lot-b2-argent.md](lot-b2-argent.md)), couverture partielle par les heures incluses comprise. **B2b fait** ([lot-b2b-reports-options.md](lot-b2b-reports-options.md)) : aperçu de l'écart de prix, hausse confirmée puis encaissée, modifications marquées, équipe informée, politique d'annulation pour tous, options à la création. **B8 fait** ([lot-b8-messages-fuseau.md](lot-b8-messages-fuseau.md)) : messages, historique et événements en français, heure de l'application partout dans les réservations et les ressources. **B7 fait** le 19/11 ([lot-b7-listes-recherche-reponse.md](lot-b7-listes-recherche-reponse.md)), après le socle L0 : `GET /bookings/reference`, motifs en listes, recherche unique du titulaire, réponse complète, listes allégées, tri, politiques et dérogations modifiables, réparation réelle.
+**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)), **B2 fait** ([lot-b2-argent.md](lot-b2-argent.md)), couverture partielle par les heures incluses comprise. **B2b fait** ([lot-b2b-reports-options.md](lot-b2b-reports-options.md)) : aperçu de l'écart de prix, hausse confirmée puis encaissée, modifications marquées, équipe informée, politique d'annulation pour tous, options à la création. **B8 fait** ([lot-b8-messages-fuseau.md](lot-b8-messages-fuseau.md)) : messages, historique et événements en français, heure de l'application partout dans les réservations et les ressources. **B7 fait** le 19/11 ([lot-b7-listes-recherche-reponse.md](lot-b7-listes-recherche-reponse.md)), après le socle L0 : `GET /bookings/reference`, motifs en listes, recherche unique du titulaire, réponse complète, listes allégées, tri, politiques et dérogations modifiables, réparation réelle. **B3 fait** le 19/11 ([lot-b3-regle-sur-place.md](lot-b3-regle-sur-place.md)) : rendez-vous réglé sur place, option par client et réglage global, retrait d'office après absences, rappel avant l'échéance, équipe prévenue à l'expiration, file de l'accueil.
 
 ### Reste à faire (19/11/2026)
 
@@ -101,14 +101,13 @@ Ordre retenu : L0 (socle commun des listes de choix, **fait le 19/11**, [lot-l0-
 
 | Lot | Ce qu'il apporte | Écarts encore ouverts réglés |
 | --- | --- | --- |
-| B3 | Rendez-vous sans paiement, réglé sur place | demande 2 |
 | B4 | Prix manuel avec motif, plafond et approbation ; tarif préférentiel | demande 3 |
 | B5 | Prise de rendez-vous au téléphone, appelant noté en prospect CRM | demande 4 |
 | B6 | Rappels automatiques, courriel des réservations en attente, liste d'attente refaite | 6, Bn-15 à Bn-17, rappels de l'écart 5 |
 | B9a à B9g | Rappels et venue, planning et séries, fiabilité et acompte, invitations, entreprises (budget, relevé groupé, forfait d'heures), remplissage, suivi (tableau de bord, avis, agenda, rapport par client) | |
 | B11 | Doc frontend booking, portail et ressource ; tests ; backfill KYC | reste ressources |
 
-La doc frontend [booking](../../final-frontend-doc/booking/README.md) décrit le comportement actuel (lots B0, B1, B2, B2b, B7, B8, B10) et signale « lot Bx à venir » ce qui manque.
+La doc frontend [booking](../../final-frontend-doc/booking/README.md) décrit le comportement actuel (lots B0, B1, B2, B2b, B3, B7, B8, B10) et signale « lot Bx à venir » ce qui manque.
 
 ## Lots proposés
 

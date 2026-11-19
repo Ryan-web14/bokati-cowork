@@ -87,6 +87,8 @@ public record BookingResponse(
         /** Supplements (services, equipements, participants, caution, depassement, non-presentation), hors ressource. */
         BigDecimal extrasAmount,
         /** {@code totalAmount} (ressource, remises deduites) plus {@code extrasAmount}. */
-        BigDecimal grandTotal
+        BigDecimal grandTotal,
+        /** Lot B3 : rendez-vous sans paiement, regle sur place. */
+        Boolean payOnSite
 ) {
 }

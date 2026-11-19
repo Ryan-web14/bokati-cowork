@@ -36,5 +36,7 @@ public enum BookingEventType {
     /** Lot B7 : participant ajoute (avant : journalise BOOKING_CREATED). */
     BOOKING_PARTICIPANT_ADDED,
     /** Lot B7 : participant retire. */
-    BOOKING_PARTICIPANT_REMOVED
+    BOOKING_PARTICIPANT_REMOVED,
+    /** Lot B3 : rappel au client avant l'echeance de paiement. */
+    BOOKING_PAYMENT_REMINDER
 }

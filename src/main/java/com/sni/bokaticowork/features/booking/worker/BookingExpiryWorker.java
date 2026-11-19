@@ -36,6 +36,11 @@ public class BookingExpiryWorker implements SchedulingConfigurer {
             if (holds > 0 || bookings > 0) {
                 log.info("Expiration : {} blocage(s), {} reservation(s) non reglee(s) a l'echeance", holds, bookings);
             }
+            // Lot B3 : rappel avant l'echeance de paiement.
+            int reminders = bookingService.remindPaymentsDue(100);
+            if (reminders > 0) {
+                log.info("Rappel de reglement : {} reservation(s)", reminders);
+            }
         } catch (Exception ex) {
             log.error("BookingExpiryWorker : {}", ex.getMessage(), ex);
         }

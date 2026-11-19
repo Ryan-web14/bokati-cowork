@@ -50,6 +50,12 @@ public class ClientBookingController {
         return ResponseEntity.ok(clientPortalBookingService.listBookings(member, status, from, to, pageable));
     }
 
+    /** Lot B3 : le rendez-vous regle sur place est-il ouvert a ce membre (et pourquoi) ? */
+    @GetMapping("/pay-on-site")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access> payOnSite() {
+        return ResponseEntity.ok(clientPortalBookingService.payOnSiteAccess(clientContextService.getAuthenticatedMember()));
+    }
+
     @GetMapping("/{bookingNumber}")
     public ResponseEntity<ClientBookingResponse> getBooking(@PathVariable String bookingNumber) {
         Member member = clientContextService.getAuthenticatedMember();

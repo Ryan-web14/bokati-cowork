@@ -507,6 +507,22 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/bookings/pay-on-site",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java",
+   "handler": "payOnSite",
+   "declaredIn": "ClientBookingController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access>"
+  },
+  {
+   "methods": [
     "DELETE"
    ],
    "path": "/sni/api/v1/client/bookings/{bookingNumber}",
@@ -6561,6 +6577,9 @@
     },
     "billingCompanyCode": {
      "type": "string"
+    },
+    "payOnSite": {
+     "type": "boolean"
     }
    }
   },
@@ -6661,6 +6680,24 @@
      ]
     },
     "billingCompanyCode": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingPayOnSite.Access": {
+   "type": "object",
+   "properties": {
+    "allowed": {
+     "type": "boolean"
+    },
+    "source": {
+     "type": "string",
+     "enum": [
+      "CLIENT_OPTION",
+      "GLOBAL_SETTING"
+     ]
+    },
+    "reason": {
      "type": "string"
     }
    }
@@ -12432,6 +12469,7 @@
   "ClientCreateBookingRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCreateBookingRequest",
   "BookingAvailabilityResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse",
   "ClientCheckAvailabilityRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCheckAvailabilityRequest",
+  "BookingPayOnSite.Access": "com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite.Access",
   "ClientCancelBookingRequest": "com.sni.bokaticowork.features.portal.booking.dto.request.ClientCancelBookingRequest",
   "BookingOperations.EndReportResponse": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportResponse",
   "BookingOperations.EndReportRequest": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.EndReportRequest",

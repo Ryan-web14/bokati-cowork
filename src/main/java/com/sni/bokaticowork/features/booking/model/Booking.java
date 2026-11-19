@@ -149,6 +149,15 @@ public class Booking {
     @Column(name = "rejection_reason_code", length = 60)
     private String rejectionReasonCode;
 
+    /** Lot B3 : rendez-vous sans paiement, regle sur place (DIRECT, en attente de paiement jusqu'a l'echeance). */
+    @lombok.Builder.Default
+    @Column(name = "pay_on_site", nullable = false)
+    private Boolean payOnSite = Boolean.FALSE;
+
+    /** Lot B3 : rappel avant l'echeance de paiement deja envoye. */
+    @Column(name = "payment_reminder_sent_at")
+    private Instant paymentReminderSentAt;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

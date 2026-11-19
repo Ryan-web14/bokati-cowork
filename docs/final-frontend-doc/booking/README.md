@@ -1,6 +1,6 @@
 # booking : fonctionnement
 
-> Rédigé d'après le code, à jour des lots B0, B1, B2, B2b, B7, B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code, à jour des lots B0, B1, B2, B2b, B3, B7, B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -72,7 +72,7 @@ Une réservation `PENDING_PAYMENT` reçoit une échéance de paiement (lot B1) :
 | 24 h si le créneau est à plus de 3 jours | `bookings.payment-due.far-days`, `bookings.payment-due.far-minutes` |
 | Échéance un samedi, un dimanche ou un jour férié : prochain jour ouvré à 10:00 | `bookings.payment-due.business-hour` |
 
-À l'échéance, sans règlement, la réservation passe `EXPIRED`. L'échéance est dans la réponse (`paymentDueAt`) ; le rappel avant échéance arrive avec le lot B6.
+À l'échéance, sans règlement, la réservation passe `EXPIRED` et l'équipe reçoit l'alerte en direct `BOOKING_EXPIRED` (module `BOOKING`). L'échéance est dans la réponse (`paymentDueAt`). Un courriel de rappel part au client 30 minutes avant (`bookings.payment-due.reminder-minutes`), une fois.
 
 Liste d'attente (`BookingWaitlistStatus`) : `WAITING` à l'inscription ; `OFFERED` quand le worker trouve la plage libre (offre de 30 minutes, réglage `bokati.booking.waitlist.offer-ttl-minutes`, 5 minimum) ; `EXPIRED` à échéance de l'offre ; `CANCELLED` par `PATCH /bookings/waitlist/{id}/cancel` ; `BOOKED` jamais atteint (liste d'attente refaite au lot B6 à venir).
 
@@ -110,6 +110,7 @@ Les mêmes champs servent à la vérification, au blocage, à la création et à
    - `billingCompanyCode` : organisation pour le compte de laquelle le membre réserve (doit lui être rattachée), ou `NONE` ;
    - `participants`, `notes`, `metadataJson` (texte JSON libre) ;
    - `options` : `[{ "kind": "SERVICE" | "AMENITY", "code": "...", "quantity": 1 }]`, services du catalogue et équipements optionnels ajoutés dès la création, sur la même facture (lot B2b) ;
+   - `payOnSite: true` (lot B3) : rendez-vous sans paiement, réglé sur place ; paiement `DIRECT` seulement (`400 PAY_ON_SITE_DIRECT_ONLY`). Toujours permis à l'équipe ;
    - `channel` (équipe seulement) : `PHONE`, `DESK`, `EMAIL`, `WHATSAPP`. Sans lui, le serveur note `TEAM` (back-office) ou `PORTAL` (espace client). L'auteur (`createdBy`) est lu dans la session. Les deux sont dans la réponse.
 3. Réponse `201` : la réservation. Selon le cas, `status` vaut :
    - `CONFIRMED` (cas courant : abonnement, pass, portefeuille, ou `DIRECT` saisi par l'équipe sur un début déjà passé) ;
@@ -342,3 +343,13 @@ Détail : [lot B8](../../backend/booking/lot-b8-messages-fuseau.md).
 - `sort` appliqué ; politiques et dérogations modifiables et désactivables ; `POST /bookings/repair` répare vraiment (`{ inspected, repaired, failed }`).
 
 Détail : [lot B7](../../backend/booking/lot-b7-listes-recherche-reponse.md).
+
+## Rendez-vous réglé sur place (lot B3, 19/11/2026)
+
+- Création avec `payOnSite: true` (paiement `DIRECT`) : créneau retenu jusqu'à l'échéance, facture émise pour l'encaissement, rappel au client avant l'échéance, puis `EXPIRED` et alerte `BOOKING_EXPIRED` à l'équipe. La réponse porte `payOnSite` : afficher un badge « À régler sur place ».
+- Portail : `GET /client/bookings/pay-on-site` → `{ allowed, source, reason }` ; ne proposer « Régler sur place » que si `allowed`. Sinon `409 PAY_ON_SITE_NOT_ALLOWED`.
+- Équipe : écran « Règlement sur place » par client : `GET /bookings/pay-on-site/clients`, `GET|PUT /bookings/pay-on-site/clients/{ownerType}/{ownerCode}` (`{ enabled, reason }`). Une option retirée d'office après trop d'absences a `revokedAutomatically: true`.
+- Accueil : `GET /bookings/pay-on-site/due?date=` liste les rendez-vous réglés sur place à encaisser ce jour-là ; encaisser à la caisse sur la facture (`invoiceNumber` de la fiche).
+- Réglages : `bookings.pay-on-site.portal-enabled` (coupé), `bookings.pay-on-site.max-no-shows` (2), `bookings.pay-on-site.no-show-window-days` (90), `bookings.payment-due.reminder-minutes` (30).
+
+Détail : [lot B3](../../backend/booking/lot-b3-regle-sur-place.md).

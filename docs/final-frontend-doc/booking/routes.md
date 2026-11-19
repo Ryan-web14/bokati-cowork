@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-82 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+86 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -64,6 +64,10 @@
 | POST | `/sni/api/v1/bookings/{number}/end-report` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-end-report) |
 | GET | `/sni/api/v1/bookings/{number}/usage-rules` | BOOKING:READ | [BookingOperationsController](routes/BookingOperationsController.md#r-get-sni-api-v1-bookings-number-usage-rules) |
 | POST | `/sni/api/v1/bookings/{number}/usage-rules/accept` | BOOKING:CREATE | [BookingOperationsController](routes/BookingOperationsController.md#r-post-sni-api-v1-bookings-number-usage-rules-accept) |
+| GET | `/sni/api/v1/bookings/pay-on-site/clients` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-clients) |
+| GET | `/sni/api/v1/bookings/pay-on-site/clients/{ownerType}/{ownerCode}` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-clients-ownertype-ownercode) |
+| PUT | `/sni/api/v1/bookings/pay-on-site/clients/{ownerType}/{ownerCode}` | BOOKING:UPDATE | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-put-sni-api-v1-bookings-pay-on-site-clients-ownertype-ownercode) |
+| GET | `/sni/api/v1/bookings/pay-on-site/due` | BOOKING:READ | [BookingPayOnSiteController](routes/BookingPayOnSiteController.md#r-get-sni-api-v1-bookings-pay-on-site-due) |
 | GET | `/sni/api/v1/bookings/lookup/owners` | BOOKING:READ | [BookingReferenceController](routes/BookingReferenceController.md#r-get-sni-api-v1-bookings-lookup-owners) |
 | GET | `/sni/api/v1/bookings/reference` | BOOKING:READ | [BookingReferenceController](routes/BookingReferenceController.md#r-get-sni-api-v1-bookings-reference) |
 | GET | `/sni/api/v1/bookings/waitlist` | BOOKING:READ | [BookingWaitlistController](routes/BookingWaitlistController.md#r-get-sni-api-v1-bookings-waitlist) |

@@ -255,6 +255,7 @@ public class BookingEmailNotifier {
             case BOOKING_CHECKED_OUT -> "Check-out réservation " + booking.getBookingNumber();
             case BOOKING_COMPLETED  -> "Réservation terminée " + booking.getBookingNumber();
             case BOOKING_NO_SHOW    -> "Absence réservation " + booking.getBookingNumber();
+            case BOOKING_PAYMENT_REMINDER -> "À régler avant l'échéance : réservation " + booking.getBookingNumber();
             default -> "Mise à jour réservation " + booking.getBookingNumber();
         };
     }
@@ -281,6 +282,7 @@ public class BookingEmailNotifier {
             case BOOKING_CHECKED_OUT -> "Check-out";
             case BOOKING_COMPLETED  -> "Terminé";
             case BOOKING_NO_SHOW    -> "Absence";
+            case BOOKING_PAYMENT_REMINDER -> "Règlement";
             default -> "Réservation";
         };
     }
@@ -293,6 +295,7 @@ public class BookingEmailNotifier {
             case BOOKING_CHECKED_OUT -> "Check-out enregistré";
             case BOOKING_COMPLETED  -> "Réservation terminée";
             case BOOKING_NO_SHOW    -> "Absence enregistrée";
+            case BOOKING_PAYMENT_REMINDER -> "Règlement attendu";
             default -> "Mise à jour réservation";
         };
     }
@@ -305,6 +308,7 @@ public class BookingEmailNotifier {
             case BOOKING_CHECKED_OUT -> "La sortie a été confirmée";
             case BOOKING_COMPLETED  -> "Le créneau réservé est clôturé";
             case BOOKING_NO_SHOW    -> "La réservation a été marquée comme absence";
+            case BOOKING_PAYMENT_REMINDER -> "Sans règlement à l'échéance, le créneau sera libéré";
             default -> "Une mise à jour a été enregistrée";
         };
     }
@@ -318,6 +322,10 @@ public class BookingEmailNotifier {
             case BOOKING_CHECKED_OUT -> "Le check-out de la réservation " + n + " a été enregistré.";
             case BOOKING_COMPLETED  -> "Votre réservation " + n + " est maintenant terminée.";
             case BOOKING_NO_SHOW    -> "Votre réservation " + n + " a été marquée comme absence.";
+            case BOOKING_PAYMENT_REMINDER -> "Votre réservation " + n + " n'est pas encore réglée. Réglez-la avant le "
+                    + (booking.getPaymentDueAt() == null ? "début" : formatDate(booking.getPaymentDueAt()))
+                    + (Boolean.TRUE.equals(booking.getPayOnSite()) ? ", en ligne ou à l'accueil" : "")
+                    + " : sans règlement, le créneau sera libéré.";
             default -> "Une mise à jour a été enregistrée sur votre réservation " + n + ".";
         };
     }

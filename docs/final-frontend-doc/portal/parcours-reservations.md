@@ -35,6 +35,7 @@ Code : `src/main/java/com/sni/bokaticowork/features/portal/resource/`, `booking/
    - `paymentMode` (obligatoire) : `DIRECT` (à régler par un moyen classique), `WALLET` (fonds bloqués tout de suite sur le portefeuille du membre, réservation confirmée aussitôt), `SUBSCRIPTION` ou `PASS` (consomme un droit, rien à payer) ;
    - `notes`, `participants` (liste de `{ memberCode, name, email, phone, role }`), `billingCompanyCode` ;
    - `idempotencyKey` (dans le **corps**) : générer une clé par clic sur « Réserver », la garder pour les nouvelles tentatives.
+   - `payOnSite: true` (lot B3) : rendez-vous sans paiement, réglé sur place, avec `paymentMode: DIRECT`. Proposer ce choix seulement si `GET /sni/api/v1/client/bookings/pay-on-site` rend `allowed: true` (option posée par l'équipe, ou réglage global) ; sinon `409 PAY_ON_SITE_NOT_ALLOWED`. Le créneau est retenu jusqu'à l'échéance (`paymentDueAt`), un courriel de rappel part avant, puis la réservation expire sans règlement. Trop d'absences sur ces rendez-vous retirent l'option.
 2. Réponse `201` : la réservation (`bookingNumber`, `status`, `paymentMode`, `paymentStatus`, `paymentStatusLabel`, `totalAmount`, `currency`, `checkInToken`, `checkInQrValue`, `virtualMeetingUrl`, `subscriptionNumber` ou `passNumber` consommé).
 3. Selon le statut :
    - `CONFIRMED` : afficher le QR d'arrivée (`checkInQrValue`) ;

@@ -266,6 +266,13 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getChannel() == null) {
             booking.setChannel(currentChannel());
         }
+        // Lot B3 : rendez-vous sans paiement, regle sur place (paiement direct seulement).
+        if (Boolean.TRUE.equals(request.payOnSite())) {
+            if (request.paymentMode() != BookingPaymentMode.DIRECT) {
+                throw BadRequestException.coded("PAY_ON_SITE_DIRECT_ONLY", "Un rendez-vous réglé sur place se prend en paiement direct (DIRECT)");
+            }
+            booking.setPayOnSite(true);
+        }
 
         // Lot R1 : prix du moteur unique, avec le contexte du titulaire (segment, plan, canal), comme le devis.
         BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity,
@@ -1087,6 +1094,14 @@ public class BookingServiceImpl implements BookingService {
         if (bookingExtras != null) {
             bookingExtras.onNoShow(booking);
         }
+        // Lot B3 : trop d'absences sur des rendez-vous regles sur place, option retiree d'office.
+        if (payOnSite != null) {
+            try {
+                payOnSite.onNoShow(booking);
+            } catch (RuntimeException ex) {
+                log.warn("Option de reglement sur place de {} non revue : {}", booking.getOwnerCode(), ex.getMessage());
+            }
+        }
         writeHistory(booking, from, BookingStatus.NO_SHOW, changedBy(request), reason(request, "Absence"));
         eventWriter.write(booking, BookingEventType.BOOKING_NO_SHOW, "Réservation marquée absente", "La réservation a été marquée absente", null,
                 emailRequested(request));
@@ -1413,6 +1428,7 @@ public class BookingServiceImpl implements BookingService {
             bookingOperations.cancelTasks(booking);
         }
         writeHistory(booking, BookingStatus.PENDING_PAYMENT, BookingStatus.EXPIRED, "SYSTEM", "Échéance de paiement passée");
+        alertExpired(booking);
         eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Réservation expirée",
                 "Non réglée à l'échéance : créneau rendu", null, true);
         try {
@@ -1420,6 +1436,60 @@ public class BookingServiceImpl implements BookingService {
         } catch (Exception ex) {
             log.warn("Facture de la reservation expiree {} non annulee : {}", booking.getBookingNumber(), ex.getMessage());
         }
+    }
+
+    private com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite payOnSite;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPayOnSite(@org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.booking.service.support.BookingPayOnSite payOnSite) {
+        this.payOnSite = payOnSite;
+    }
+
+    /** Lot B3 (decision D2) : l'equipe est prevenue qu'un rendez-vous non regle a ete libere. */
+    private void alertExpired(Booking booking) {
+        if (adminNotifier == null) {
+            return;
+        }
+        try {
+            String title = "Réservation " + booking.getBookingNumber() + " libérée faute de règlement";
+            String message = (Boolean.TRUE.equals(booking.getPayOnSite()) ? "Rendez-vous réglé sur place non honoré" : "Paiement non reçu")
+                    + " à l'échéance : " + booking.getResource().getCode() + ", " + booking.getStartedAt() + ", " + booking.getContactName();
+            String payload = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of(
+                    "bookingNumber", booking.getBookingNumber(), "payOnSite", Boolean.TRUE.equals(booking.getPayOnSite()),
+                    "resourceCode", booking.getResource().getCode()));
+            adminNotifier.broadcastAlert("BOOKING_EXPIRED", "BOOKING", title, message, "WARNING", payload);
+        } catch (Exception ex) {
+            log.warn("Alerte d'expiration de {} non envoyee : {}", booking.getBookingNumber(), ex.getMessage());
+        }
+    }
+
+    static final String REMINDER_MINUTES_KEY = "bookings.payment-due.reminder-minutes";
+
+    /**
+     * Lot B3 (decision D2) : rappel au client (courriel) quand l'echeance de paiement approche
+     * ({@code bookings.payment-due.reminder-minutes}, 30 par defaut ; 0 coupe le rappel). Un seul
+     * rappel par reservation.
+     */
+    @Override
+    public int remindPaymentsDue(int limit) {
+        int minutes = platformSettings == null ? 30 : platformSettings.integer(REMINDER_MINUTES_KEY, 30);
+        if (minutes <= 0) {
+            return 0;
+        }
+        LocalDateTime now = com.sni.bokaticowork.core.utils.time.AppTime.now();
+        int sent = 0;
+        for (Booking booking : bookingRepository.findPaymentRemindersDue(now, now.plusMinutes(minutes), Math.max(1, limit))) {
+            try {
+                booking.setPaymentReminderSentAt(Instant.now());
+                bookingRepository.save(booking);
+                eventWriter.write(booking, BookingEventType.BOOKING_PAYMENT_REMINDER, "Rappel de règlement",
+                        "Échéance de paiement le " + booking.getPaymentDueAt(), null, true);
+                sent++;
+            } catch (RuntimeException ex) {
+                log.warn("Rappel de reglement de {} non envoye : {}", booking.getBookingNumber(), ex.getMessage());
+            }
+        }
+        return sent;
     }
 
     @Override

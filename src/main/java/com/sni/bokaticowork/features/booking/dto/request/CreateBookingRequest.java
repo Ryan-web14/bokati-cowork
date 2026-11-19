@@ -53,7 +53,12 @@ public record CreateBookingRequest(
         /** Lot B2b : canal (PHONE, DESK, EMAIL, WHATSAPP pour l'equipe) ; vide : deduit de l'appel. */
         com.sni.bokaticowork.features.booking.enums.BookingChannel channel,
         /** Lot B2b : options prises avec la reservation (services du catalogue, equipements optionnels). */
-        @Valid List<BookingOptionRequest> options
+        @Valid List<BookingOptionRequest> options,
+        /**
+         * Lot B3 : rendez-vous sans paiement, regle sur place. Mode {@code DIRECT} seulement ; le
+         * creneau est retenu jusqu'a l'echeance de paiement, puis rendu sans reglement.
+         */
+        Boolean payOnSite
 ) {
         @com.fasterxml.jackson.annotation.JsonCreator
         public CreateBookingRequest {
@@ -70,7 +75,22 @@ public record CreateBookingRequest(
                 this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
                         contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
                         confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, billingCompanyCode,
-                        null, null);
+                        null, null, null);
+        }
+
+        /** Forme du lot B2b, sans rendez-vous regle sur place. */
+        public CreateBookingRequest(String resourceCode, String memberId, String customerId, String businessCode,
+                                    String email, String phone, Boolean walkIn, String contactName, String contactEmail,
+                                    String contactPhone, String idempotencyKey, String holdNumber, LocalDateTime startedAt,
+                                    LocalDateTime endedAt, Integer quantity, BookingPaymentMode paymentMode,
+                                    Boolean confirmImmediately, Boolean sendEmail, String notes, String metadataJson,
+                                    ResourceBookingUnit bookingUnit, List<BookingParticipantRequest> participants,
+                                    String billingCompanyCode, com.sni.bokaticowork.features.booking.enums.BookingChannel channel,
+                                    List<BookingOptionRequest> options) {
+                this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
+                        contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
+                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, billingCompanyCode,
+                        channel, options, null);
         }
 
         /** Sans organisation choisie · la facture suit le mode du rattachement du membre. */
@@ -82,7 +102,7 @@ public record CreateBookingRequest(
                                     ResourceBookingUnit bookingUnit, List<BookingParticipantRequest> participants) {
                 this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
                         contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
-                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, null, null, null);
+                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, null, null, null, null);
         }
 
         public BookingIdentityLookup identityLookup() {

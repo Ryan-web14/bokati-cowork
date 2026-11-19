@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [portal](../README.md) · 7 route(s).
+Module [portal](../README.md) · 8 route(s).
 
 ## Routes
 
@@ -47,6 +47,14 @@ Module [portal](../README.md) · 7 route(s).
 - Réponse : `ClientBookingResponse`
 - Modèles : [ClientBookingResponse](#m-ClientBookingResponse), [ClientCreateBookingRequest](#m-ClientCreateBookingRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `createBooking`
+
+<a id="r-get-sni-api-v1-client-bookings-pay-on-site"></a>
+### GET /sni/api/v1/client/bookings/pay-on-site
+
+- Accès : membre connecté au portail (`ROLE_MEMBER` et accès portail activé)
+- Réponse : `BookingPayOnSite.Access`
+- Modèles : [BookingPayOnSite.Access](#m-BookingPayOnSite-Access)
+- Code : `src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingController.java`, méthode `payOnSite`
 
 <a id="r-delete-sni-api-v1-client-bookings-bookingnumber"></a>
 ### DELETE /sni/api/v1/client/bookings/{bookingNumber}
@@ -176,6 +184,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `idempotencyKey` | texte |  |  |
 | `participants` | [BookingParticipantRequest](#m-BookingParticipantRequest)[] |  |  |
 | `billingCompanyCode` | texte |  |  |
+| `payOnSite` | booléen |  |  |
 
 <a id="m-BookingAvailabilityResponse"></a>
 #### BookingAvailabilityResponse
@@ -208,6 +217,15 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `quantity` | entier |  | min `1` |
 | `paymentMode` | enum : `DIRECT`, `WALLET`, `SUBSCRIPTION`, `PASS` |  |  |
 | `billingCompanyCode` | texte |  |  |
+
+<a id="m-BookingPayOnSite-Access"></a>
+#### BookingPayOnSite.Access
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `allowed` | booléen |  |  |
+| `source` | enum : `CLIENT_OPTION`, `GLOBAL_SETTING` |  |  |
+| `reason` | texte |  |  |
 
 <a id="m-ClientCancelBookingRequest"></a>
 #### ClientCancelBookingRequest

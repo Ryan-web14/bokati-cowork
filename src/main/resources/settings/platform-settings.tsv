@@ -509,11 +509,15 @@ bokati.whatsapp.portal-path.kyc	NOTIFICATIONS	TEXT	LIVE	client/kyc	Page de l'esp
 bokati.whatsapp.portal-path.quotes	NOTIFICATIONS	TEXT	LIVE	client/quotes	Page de l'espace client ouverte par le bouton WhatsApp : devis
 bokati.whatsapp.portal-path.subscriptions	NOTIFICATIONS	TEXT	LIVE	client/subscriptions	Page de l'espace client ouverte par le bouton WhatsApp : abonnements
 bokati.whatsapp.portal-path.wallet	NOTIFICATIONS	TEXT	LIVE	client/wallet	Page de l'espace client ouverte par le bouton WhatsApp : portefeuille
+bookings.pay-on-site.max-no-shows	BOOKING	INTEGER	LIVE	2	Réservations : absences sur des rendez-vous réglés sur place avant retrait d'office de l'option (0 : jamais)
+bookings.pay-on-site.no-show-window-days	BOOKING	INTEGER	LIVE	90	Réservations : période, en jours, sur laquelle les absences sont comptées
+bookings.pay-on-site.portal-enabled	BOOKING	BOOLEAN	LIVE	false	Réservations : rendez-vous réglé sur place ouvert au portail pour tous les clients sans option propre
 bookings.payment-due.before-start-minutes	BOOKING	INTEGER	LIVE	30	Réservations : échéance de paiement au plus tard tant de minutes avant le début
 bookings.payment-due.business-hour	BOOKING	INTEGER	LIVE	10	Réservations : heure de l'échéance reportée au prochain jour ouvré
 bookings.payment-due.default-minutes	BOOKING	INTEGER	LIVE	120	Réservations : validité d'une réservation non réglée, en minutes
 bookings.payment-due.far-days	BOOKING	INTEGER	LIVE	3	Réservations : au-delà de ce nombre de jours avant le début, validité longue
 bookings.payment-due.far-minutes	BOOKING	INTEGER	LIVE	1440	Réservations : validité longue, en minutes
+bookings.payment-due.reminder-minutes	BOOKING	INTEGER	LIVE	30	Réservations : rappel au client tant de minutes avant l'échéance de paiement (0 : aucun rappel)
 fund.advance.overdue-policy	PAYMENT	ENUM	LIVE	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
 fund.approval.level1-max	PAYMENT	INTEGER	LIVE	50000	Montant maximal valide par le seul chef de service (XAF)
 fund.approval.level2-max	PAYMENT	INTEGER	LIVE	500000	Montant maximal valide sans la direction (XAF)

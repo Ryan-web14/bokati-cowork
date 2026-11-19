@@ -240,6 +240,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `invoiceNumber` | texte |  |  |
 | `extrasAmount` | nombre décimal |  |  |
 | `grandTotal` | nombre décimal |  |  |
+| `payOnSite` | booléen |  |  |
 
 <a id="m-BookingLineResponse"></a>
 #### BookingLineResponse

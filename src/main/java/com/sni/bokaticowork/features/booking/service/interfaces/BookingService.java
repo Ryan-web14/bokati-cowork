@@ -53,6 +53,11 @@ public interface BookingService {
     /** Lot B1 : reservations non reglees a l'echeance passees en EXPIRED ; rend leur nombre. */
     int expireUnpaid(int limit);
 
+    /** Lot B3 (decision D2) : rappel au client avant l'echeance de paiement ; rend le nombre de rappels envoyes. */
+    default int remindPaymentsDue(int limit) {
+        return 0;
+    }
+
     /** Lot B1 (ecart 2) : reglement recu pour une reservation (paiement solde). */
     void markPaid(String bookingNumber);
 

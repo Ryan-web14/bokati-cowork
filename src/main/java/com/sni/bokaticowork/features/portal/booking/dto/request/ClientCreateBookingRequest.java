@@ -41,4 +41,10 @@ public class ClientCreateBookingRequest {
      * Vide : pour lui-meme (ou pour son organisation si son lien est en mode automatique).
      */
     private String billingCompanyCode;
+
+    /**
+     * Lot B3 : rendez-vous sans paiement, regle sur place (paiement direct). Permis seulement si
+     * l'option est ouverte a ce membre ({@code GET /client/bookings/pay-on-site}).
+     */
+    private Boolean payOnSite;
 }
