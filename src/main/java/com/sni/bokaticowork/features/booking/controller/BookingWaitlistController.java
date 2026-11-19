@@ -25,9 +25,32 @@ public class BookingWaitlistController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.join(request));
     }
 
+    /**
+     * Lot B6 : liste filtree et paginee (statut, ressource, titulaire), la plus ancienne d'abord.
+     * Sans {@code status} : tous les etats.
+     */
     @GetMapping
-    public ResponseEntity<List<BookingWaitlistEntryResponse>> list(@RequestParam(required = false) BookingWaitlistStatus status) {
-        return ResponseEntity.ok(service.list(status));
+    public ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<BookingWaitlistEntryResponse>> list(
+            @RequestParam(required = false) BookingWaitlistStatus status,
+            @RequestParam(required = false) String resourceCode,
+            @RequestParam(required = false) com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType ownerType,
+            @RequestParam(required = false) String ownerCode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(service.search(status, resourceCode, ownerType, ownerCode,
+                org.springframework.data.domain.PageRequest.of(page, size)));
+    }
+
+    /** Lot B6 : l'equipe accepte l'offre pour le client ; la reservation est creee. */
+    @PostMapping("/{id}/accept")
+    public ResponseEntity<BookingWaitlistEntryResponse> accept(@PathVariable Long id) {
+        return ResponseEntity.ok(service.accept(id));
+    }
+
+    /** Lot B6 : l'offre est declinee ; la place passe a l'inscription suivante. */
+    @PostMapping("/{id}/decline")
+    public ResponseEntity<BookingWaitlistEntryResponse> decline(@PathVariable Long id) {
+        return ResponseEntity.ok(service.decline(id));
     }
 
     @PatchMapping("/{id}/cancel")

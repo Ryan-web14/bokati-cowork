@@ -23,4 +23,24 @@ public interface BookingNotificationOutboxRepository extends JpaRepository<Booki
             LIMIT :limit
             """)
     List<BookingNotificationOutbox> findDue(@Param("now") Instant now, @Param("limit") int limit);
+
+    /** Lot B6 : reservations confirmees qui commencent dans la fenetre des rappels, avec un courriel de contact. */
+    @Query(nativeQuery = true, value = """
+            SELECT b.booking_number
+            FROM booking b
+            WHERE b.deleted = false AND b.status = 'CONFIRMED'
+              AND b.contact_email IS NOT NULL AND b.contact_email <> ''
+              AND b.started_at > :from AND b.started_at <= :to
+            ORDER BY b.started_at ASC
+            LIMIT :limit
+            """)
+    List<String> findBookingsToRemind(@Param("from") java.time.LocalDateTime from, @Param("to") java.time.LocalDateTime to,
+                                      @Param("limit") int limit);
+
+    /** Lot B6 : un rappel est-il deja prevu a cette heure pour cette reservation ? */
+    @Query(nativeQuery = true, value = """
+            SELECT EXISTS (SELECT 1 FROM booking_notification_outbox
+                           WHERE booking_id = :bookingId AND notification_type = 'REMINDER' AND scheduled_at = :scheduledAt)
+            """)
+    boolean existsReminder(@Param("bookingId") Long bookingId, @Param("scheduledAt") Instant scheduledAt);
 }

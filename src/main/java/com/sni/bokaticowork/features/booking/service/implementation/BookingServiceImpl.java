@@ -375,10 +375,14 @@ public class BookingServiceImpl implements BookingService {
             booking = progressStaffBooking(booking, staffActor);
         } else if (approval) {
             writeHistory(booking, BookingStatus.DRAFT, BookingStatus.PENDING_APPROVAL, null, "Approbation requise");
-            eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Réservation en attente d'approbation", "La réservation demande une approbation", null);
+            // Lot B6 (ecart Bn-17) : le client est prevenu que sa demande attend l'approbation.
+            eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Réservation en attente d'approbation", "La réservation demande une approbation", null,
+                    !Boolean.FALSE.equals(request.sendEmail()));
         } else if (awaitsPayment) {
             writeHistory(booking, BookingStatus.DRAFT, BookingStatus.PENDING_PAYMENT, null, "En attente de paiement");
-            eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Réservation en attente de paiement", "Réservation en attente de paiement avant confirmation", null);
+            // Lot B6 (ecart Bn-17) : courriel avec le montant et l'echeance de paiement.
+            eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Réservation en attente de paiement", "Réservation en attente de paiement avant confirmation", null,
+                    !Boolean.FALSE.equals(request.sendEmail()));
             booking.setBillableNumber(billableBridge.ensureBillableItem(booking));
             bookingRepository.save(booking);
         } else if (request.confirmImmediately() == null || request.confirmImmediately()) {

@@ -693,6 +693,132 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/bookings/waitlist",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingWaitlistController.java",
+   "handler": "mine",
+   "declaredIn": "ClientBookingWaitlistController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.booking.enums.BookingWaitlistStatus"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "20",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/bookings/waitlist",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingWaitlistController.java",
+   "handler": "join",
+   "declaredIn": "ClientBookingWaitlistController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingWaitlistController.JoinRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/client/bookings/waitlist/{id}",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingWaitlistController.java",
+   "handler": "cancel",
+   "declaredIn": "ClientBookingWaitlistController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/bookings/waitlist/{id}/accept",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingWaitlistController.java",
+   "handler": "accept",
+   "declaredIn": "ClientBookingWaitlistController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/bookings/waitlist/{id}/decline",
+   "package": "features.portal.booking.controller",
+   "controller": "ClientBookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/portal/booking/controller/ClientBookingWaitlistController.java",
+   "handler": "decline",
+   "declaredIn": "ClientBookingWaitlistController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/client/catalog/passes/purchase",
@@ -6899,6 +7025,133 @@
     }
    }
   },
+  "BookingWaitlistEntryResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "contactName": {
+     "type": "string"
+    },
+    "contactEmail": {
+     "type": "string"
+    },
+    "contactPhone": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "WAITING",
+      "OFFERED",
+      "BOOKED",
+      "CANCELLED",
+      "EXPIRED"
+     ]
+    },
+    "offeredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "alternatives": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse"
+     }
+    },
+    "bookingNumber": {
+     "type": "string"
+    },
+    "notifiedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ClientBookingWaitlistController.JoinRequest": {
+   "required": [
+    "endedAt",
+    "paymentMode",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    }
+   }
+  },
   "PassResponse": {
    "type": "object",
    "properties": {
@@ -10784,6 +11037,35 @@
     }
    }
   },
+  "BookingSuggestionResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
   "ClientPlanSummaryResponse.HighlightedBenefit": {
    "type": "object",
    "properties": {
@@ -12386,6 +12668,13 @@
    "NO_SHOW",
    "EXPIRED"
   ],
+  "BookingWaitlistStatus": [
+   "WAITING",
+   "OFFERED",
+   "BOOKED",
+   "CANCELLED",
+   "EXPIRED"
+  ],
   "PlanType": [
    "MEMBERSHIP",
    "COWORKING_ACCESS",
@@ -12476,6 +12765,9 @@
   "BookingOperations.UsageRulesView": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.UsageRulesView",
   "ResourceOperations.IncidentResponse": "com.sni.bokaticowork.features.ressource.service.support.ResourceOperations.IncidentResponse",
   "ResourceOperations.IncidentRequest": "com.sni.bokaticowork.features.ressource.service.support.ResourceOperations.IncidentRequest",
+  "BookingWaitlistEntryResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse",
+  "BookingWaitlistStatus": "com.sni.bokaticowork.features.booking.enums.BookingWaitlistStatus",
+  "ClientBookingWaitlistController.JoinRequest": "com.sni.bokaticowork.features.portal.booking.controller.ClientBookingWaitlistController.JoinRequest",
   "PassResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PassResponse",
   "ClientPurchasePassRequest": "com.sni.bokaticowork.features.portal.subscription.dto.request.ClientPurchasePassRequest",
   "ClientPlanSummaryResponse": "com.sni.bokaticowork.features.portal.subscription.dto.response.ClientPlanSummaryResponse",
@@ -12590,6 +12882,7 @@
   "BookingParticipantRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest",
   "BookingAvailabilityResponse.OccupiedRange": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange",
   "BookingOperations.ChecklistAnswer": "com.sni.bokaticowork.features.booking.service.support.BookingOperations.ChecklistAnswer",
+  "BookingSuggestionResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse",
   "ClientPlanSummaryResponse.HighlightedBenefit": "com.sni.bokaticowork.features.portal.subscription.dto.response.ClientPlanSummaryResponse.HighlightedBenefit",
   "PlanPriceResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PlanPriceResponse",
   "PlanBenefitResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.PlanBenefitResponse",

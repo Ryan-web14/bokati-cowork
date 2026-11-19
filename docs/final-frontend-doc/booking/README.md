@@ -1,6 +1,6 @@
 # booking : fonctionnement
 
-> Rédigé d'après le code, à jour des lots B0 à B5, B7, B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
+> Rédigé d'après le code, à jour des lots B0 à B8 et B10 (19/11/2026). Ce qui n'est pas encore fait est signalé « lot Bx à venir ». Routes exactes, droits et champs JSON : [routes.md](routes.md) et `routes/`. Règles communes : [README racine](../README.md).
 
 ## En bref
 
@@ -74,7 +74,7 @@ Une réservation `PENDING_PAYMENT` reçoit une échéance de paiement (lot B1) :
 
 À l'échéance, sans règlement, la réservation passe `EXPIRED` et l'équipe reçoit l'alerte en direct `BOOKING_EXPIRED` (module `BOOKING`). L'échéance est dans la réponse (`paymentDueAt`). Un courriel de rappel part au client 30 minutes avant (`bookings.payment-due.reminder-minutes`), une fois.
 
-Liste d'attente (`BookingWaitlistStatus`) : `WAITING` à l'inscription ; `OFFERED` quand le worker trouve la plage libre (offre de 30 minutes, réglage `bokati.booking.waitlist.offer-ttl-minutes`, 5 minimum) ; `EXPIRED` à échéance de l'offre ; `CANCELLED` par `PATCH /bookings/waitlist/{id}/cancel` ; `BOOKED` jamais atteint (liste d'attente refaite au lot B6 à venir).
+Liste d'attente (`BookingWaitlistStatus`) : `WAITING` à l'inscription ; `OFFERED` quand le worker trouve la plage libre (offre de 30 minutes, réglage `bokati.booking.waitlist.offer-ttl-minutes`, 5 minimum) ; `EXPIRED` à échéance de l'offre ; `CANCELLED` par `PATCH /bookings/waitlist/{id}/cancel` ; `BOOKED` quand l'offre est acceptée (la réservation est créée, `bookingNumber`).
 
 ## Parcours
 
@@ -212,8 +212,11 @@ Détail : [ressource/fonctions/exploitation.md](../ressource/fonctions/exploitat
 ### Liste d'attente
 
 1. Inscrire : `POST /sni/api/v1/bookings/waitlist` avec `resourceCode`, `identityLookup` (**objet imbriqué** : `{ "memberId": "...", ... }`), `startedAt` et `endedAt` dans le futur, `quantity`, `paymentMode`. Réponse `201` avec `alternatives` (fenêtres libres proches).
-2. Suivre : `GET /sni/api/v1/bookings/waitlist?status=OFFERED` (défaut `WAITING`). Une entrée `OFFERED` signifie que la plage est redevenue libre jusqu'à `expiresAt` : **personne n'est prévenu**, l'équipe doit contacter la personne et créer la réservation elle-même (notification et réservation à l'acceptation au lot B6 à venir).
-3. Annuler : `PATCH /sni/api/v1/bookings/waitlist/{id}/cancel`.
+2. Suivre : `GET /sni/api/v1/bookings/waitlist?status=&resourceCode=&ownerType=&ownerCode=&page=0&size=20` : **page** `{ data, pageable }` (lot B6), tous états sans `status`, la plus ancienne d'abord.
+3. Offre (lot B6) : quand la place se libère vraiment (capacité, fermetures, politique), la plus ancienne inscription du créneau passe `OFFERED` pour 30 minutes (`expiresAt`) et son contact reçoit un courriel (`notifiedAt`). Une seule offre à la fois par créneau ; refusée ou échue, la place passe à la suivante.
+4. Accepter pour le client : `POST /sni/api/v1/bookings/waitlist/{id}/accept` crée la réservation (mêmes règles qu'une réservation) ; réponse avec `status: BOOKED` et `bookingNumber`. Offre échue : `409 WAITLIST_OFFER_EXPIRED` ; pas d'offre : `409 WAITLIST_OFFER_NOT_OPEN`.
+5. Refuser : `POST .../{id}/decline`. Annuler l'inscription : `PATCH .../{id}/cancel`.
+6. Une inscription dont le créneau est passé expire d'elle-même.
 
 ### Quotas et approbation par public
 
@@ -285,7 +288,7 @@ Quotas du public : `maxActiveBookings` compte les réservations `CONFIRMED`, `IN
 - Réponse complète (lot B7) : `createdBy`, `channel`, `holdNumber`, `recurrenceGroupNumber`, `paymentDueAt`, `paidAt`, `checkedInAt`, `checkedOutAt`, `approvedBy`, `approvedAt`, `rejectedBy`, `rejectedAt`, `rejectionReason`, `rejectionReasonCode`, `cancellationReason`, `cancellationReasonCode`, `invoiceNumber` (fiche seulement), `extrasAmount` (services, équipements, participants, caution, dépassement, non-présentation), `grandTotal` (`totalAmount` + `extrasAmount` : le montant à afficher comme total). Depuis B2b : `modificationCount`, `lastModifiedAt`, `lastModification`.
 - Listes déroulantes de l'écran : `GET /bookings/reference` en un appel (valeurs fixes, motifs d'annulation et de refus, grille d'annulation générale), voir [listes-de-choix](../listes-de-choix/README.md).
 - Ne pas envoyer de fuseau dans les dates de plage ; arrondir les heures saisies sur la durée de créneau de la ressource (`slotDurationMinutes` de la ressource).
-- Un rappel (`POST /bookings/{bookingNumber}/notifications/reminder?minutesBefore=30`) est seulement mis en file : il ne part que si quelqu'un appelle `POST /bookings/notifications/dispatch-due`. Si l'écran propose le rappel, prévoir aussi ce déclenchement (rappels automatiques au lot B6 à venir).
+- Rappels automatiques (lot B6) : la veille et 2 h avant le début (`bookings.reminders.offsets-minutes`), par courriel, pour toute réservation confirmée avec un courriel de contact ; rien à déclencher. Un rappel en plus : `POST /bookings/{bookingNumber}/notifications/reminder?minutesBefore=30` (`400 RAPPEL_SANS_COURRIEL` sans courriel, `409` si la réservation n'est pas confirmée).
 - Afficher `checkInQrValue` comme image ; le contenu du QR est l'adresse de la page de scan publique, utilisable par la borne d'accueil.
 - Alerte en direct `BOOKING_MODIFIED` (module `BOOKING`) sur le canal des alertes admin à chaque report ou changement de ressource ; les autres notifications dans l'application passent par le module `notification`.
 
@@ -294,7 +297,8 @@ Quotas du public : `maxActiveBookings` compte les réservations `CONFIRMED`, `IN
 - **Cycle de vie** (`BookingNoShowWorker`, toutes les 60 s, `bokati.booking.lifecycle.worker-delay-ms`), par lots de 200, une réservation à la fois : passe en `IN_PROGRESS` les réservations pointées d'avance dont l'heure est venue ; marque `NO_SHOW` celles dont la fin est passée sans pointage ni démarrage ; clôt `COMPLETED` celles dont la fin est passée après pointage ou démarrage. Ces transitions automatiques n'envoient **aucun courriel** (donc pas de lien de satisfaction).
 - **Règlement des portefeuilles** (`BookingWalletSettlementWorker`, toutes les 15 s) : un blocage de plus d'une minute (`bokati.booking.wallet.settlement-delay-minutes`) devient un débit sur la facture de la réservation ; il est rendu si la réservation est annulée ou refusée, ou si la facture est déjà soldée. Un blocage orphelin expire au bout d'une heure de grâce (`WalletHoldExpiryWorker`, module `payment`).
 - **Expiration** (`BookingExpiryWorker`, toutes les minutes, `bokati.booking.expiry.worker-delay-ms`, lot B1) : expire les blocages échus (capacité rendue) et passe `EXPIRED` les réservations non réglées à l'échéance (créneau rendu, facture annulée, tâches annulées, client prévenu).
-- **Liste d'attente** (`BookingWaitlistWorker`, toutes les 5 minutes) : expire les offres échues, puis passe en `OFFERED` les entrées dont la plage n'a plus de réservation active. Aucune notification.
+- **Liste d'attente** (`BookingWaitlistWorker`, toutes les 5 minutes) : expire les offres échues et les inscriptions passées, puis propose la place libérée à la plus ancienne inscription du créneau, avec un courriel.
+- **Rappels** (`BookingReminderWorker`, toutes les 5 minutes) : prévoit et envoie les rappels (la veille, 2 h avant) ; un rappel d'une réservation qui n'est plus active est annulé.
 - **Confirmation après paiement** (module `payment`) : quand l'intention de paiement d'une réservation `DRAFT` ou `PENDING_PAYMENT` est entièrement réglée, la réservation est confirmée et marquée réglée, courriel compris ; l'historique note l'acteur `SYSTEM` et le motif « Confirmation automatique suite au paiement … ». Un paiement retourné défait la confirmation : créneau gardé avec une nouvelle échéance, règlement effacé, blocage de portefeuille rendu.
 - **Annulations système** : facture de la réservation annulée, paiement remboursé, ou annonce de paiement en espèces expirée sans encaissement (réservation encore en attente, sa facture est annulée avec elle) : la réservation passe `CANCELLED`, sans contrôle de politique.
 - **Remboursement en échec** : tâche « Remboursement à traiter » (priorité haute, 24 h) et événement sur la réservation (lot B2).
@@ -305,15 +309,9 @@ Quotas du public : `maxActiveBookings` compte les réservations `CONFIRMED`, `IN
 - **Ticket support** automatique quand un titulaire dépasse son quota mensuel d'absences.
 - **Facture** : émise et envoyée à la création pour un `DIRECT` en attente, sinon à la confirmation. Non vérifié : émission d'une facture à montant nul pour les réservations couvertes par un droit.
 
-## Écarts encore ouverts
+## Écarts relevés
 
-Les écarts relevés dans la première version de cette page sont réglés (lots B0, B1, B2, B2b, B7, B8), sauf ceux-ci, prévus au plan :
-
-| Écart | Lot prévu |
-| --- | --- |
-| Liste d'attente : aucune notification à l'offre, `BOOKED` jamais posé, promotion sans regard à la capacité, type `BUSINESS` au lieu de `BUSINESS_ENTITY` dans les alternatives | B6 |
-| Rappels mis en file sans envoi automatique ; rappel avant échéance de paiement ; pas de courriel à la création en attente de paiement ou d'approbation | B6 |
-| Liste d'attente non paginée | B6 |
+Les écarts relevés dans la première version de cette page sont réglés (lots B0 à B8). Il n'en reste aucun d'ouvert ; la suite du plan ajoute des fonctions (lots B9a à B9g).
 
 Plan complet et suivi : [plan booking](../../backend/booking/README.md).
 
@@ -376,3 +374,11 @@ Détail : [lot B4](../../backend/booking/lot-b4-ajustement-prix.md).
 - Confirmation au client : courriel au contact (`contactEmail`) comme toute réservation.
 
 Détail : [lot B5](../../backend/booking/lot-b5-telephone.md).
+
+## Rappels, courriels en attente, liste d'attente (lot B6, 19/11/2026)
+
+- Rappels automatiques par courriel la veille et 2 h avant (réglages `bookings.reminders.enabled`, `bookings.reminders.offsets-minutes`) ; plus aucun rappel pour une réservation annulée.
+- Réservation en attente de paiement ou d'approbation : courriel au contact dès la création, avec l'échéance de paiement.
+- Liste d'attente : voir [Liste d'attente](#liste-dattente) ; portail : [portal/parcours-reservations.md](../portal/parcours-reservations.md#liste-dattente).
+
+Détail : [lot B6](../../backend/booking/lot-b6-notifications-attente.md).

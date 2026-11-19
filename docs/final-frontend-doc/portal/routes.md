@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-208 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+213 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -34,6 +34,11 @@
 | GET | `/sni/api/v1/client/bookings/{number}/usage-rules` | membre | [ClientBookingOperationsController](routes/ClientBookingOperationsController.md#r-get-sni-api-v1-client-bookings-number-usage-rules) |
 | POST | `/sni/api/v1/client/bookings/{number}/usage-rules/accept` | membre | [ClientBookingOperationsController](routes/ClientBookingOperationsController.md#r-post-sni-api-v1-client-bookings-number-usage-rules-accept) |
 | POST | `/sni/api/v1/client/resource-incidents` | membre | [ClientBookingOperationsController](routes/ClientBookingOperationsController.md#r-post-sni-api-v1-client-resource-incidents) |
+| GET | `/sni/api/v1/client/bookings/waitlist` | membre | [ClientBookingWaitlistController](routes/ClientBookingWaitlistController.md#r-get-sni-api-v1-client-bookings-waitlist) |
+| POST | `/sni/api/v1/client/bookings/waitlist` | membre | [ClientBookingWaitlistController](routes/ClientBookingWaitlistController.md#r-post-sni-api-v1-client-bookings-waitlist) |
+| DELETE | `/sni/api/v1/client/bookings/waitlist/{id}` | membre | [ClientBookingWaitlistController](routes/ClientBookingWaitlistController.md#r-delete-sni-api-v1-client-bookings-waitlist-id) |
+| POST | `/sni/api/v1/client/bookings/waitlist/{id}/accept` | membre | [ClientBookingWaitlistController](routes/ClientBookingWaitlistController.md#r-post-sni-api-v1-client-bookings-waitlist-id-accept) |
+| POST | `/sni/api/v1/client/bookings/waitlist/{id}/decline` | membre | [ClientBookingWaitlistController](routes/ClientBookingWaitlistController.md#r-post-sni-api-v1-client-bookings-waitlist-id-decline) |
 | POST | `/sni/api/v1/client/catalog/passes/purchase` | membre | [ClientCatalogController](routes/ClientCatalogController.md#r-post-sni-api-v1-client-catalog-passes-purchase) |
 | GET | `/sni/api/v1/client/catalog/plans` | public | [ClientCatalogController](routes/ClientCatalogController.md#r-get-sni-api-v1-client-catalog-plans) |
 | GET | `/sni/api/v1/client/catalog/plans/{planCode}` | public | [ClientCatalogController](routes/ClientCatalogController.md#r-get-sni-api-v1-client-catalog-plans-plancode) |

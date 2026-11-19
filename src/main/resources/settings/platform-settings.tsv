@@ -343,6 +343,7 @@ bokati.billing.workers.schedule-overdue-delay-ms	BILLING	INTEGER	LIVE	3600000	Ca
 bokati.booking.expiry.worker-delay-ms	BOOKING	INTEGER	LIVE	60000	Réservations : intervalle de la tâche d'expiration (options et réservations non réglées), en millisecondes
 bokati.booking.lifecycle.worker-delay-ms	BOOKING	INTEGER	LIVE	60000	Cadence du suivi des réservations (ms)
 bokati.booking.no-show.worker-delay-ms	BOOKING	INTEGER	LIVE	60000	Cadence du suivi des absences (ms)
+bokati.booking.reminders.worker-delay-ms	BOOKING	INTEGER	LIVE	300000	Réservations : intervalle de la tâche des rappels automatiques, en millisecondes
 bokati.booking.staff.max-backdate-days	BOOKING	INTEGER	LIVE	31	Rétroaction d'une réservation de l'équipe (jours)
 bokati.booking.virtual-room.base-url	BOOKING	TEXT	LIVE	https://meet.jit.si	Adresse des salles virtuelles
 bokati.booking.waitlist.offer-ttl-minutes	BOOKING	INTEGER	LIVE	30	Durée d'une offre de liste d'attente (minutes)
@@ -519,6 +520,8 @@ bookings.payment-due.far-days	BOOKING	INTEGER	LIVE	3	Réservations : au-delà de
 bookings.payment-due.far-minutes	BOOKING	INTEGER	LIVE	1440	Réservations : validité longue, en minutes
 bookings.payment-due.reminder-minutes	BOOKING	INTEGER	LIVE	30	Réservations : rappel au client tant de minutes avant l'échéance de paiement (0 : aucun rappel)
 bookings.price-adjustment.max-rate	BOOKING	INTEGER	LIVE	20	Réservations : remise manuelle maximale (%) sans approbation, pour le titulaire du droit BOOKING:PRICE_ADJUST
+bookings.reminders.enabled	BOOKING	BOOLEAN	LIVE	true	Réservations : rappels automatiques par courriel avant le début
+bookings.reminders.offsets-minutes	BOOKING	TEXT	LIVE	1440,120	Réservations : délais des rappels avant le début, en minutes, séparés par des virgules (la veille et 2 h avant)
 fund.advance.overdue-policy	PAYMENT	ENUM	LIVE	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
 fund.approval.level1-max	PAYMENT	INTEGER	LIVE	50000	Montant maximal valide par le seul chef de service (XAF)
 fund.approval.level2-max	PAYMENT	INTEGER	LIVE	500000	Montant maximal valide sans la direction (XAF)

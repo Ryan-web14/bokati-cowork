@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-87 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+89 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -75,7 +75,9 @@
 | POST | `/sni/api/v1/bookings/waitlist` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist) |
 | POST | `/sni/api/v1/bookings/waitlist/expire-offers` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist-expire-offers) |
 | POST | `/sni/api/v1/bookings/waitlist/promote-available` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist-promote-available) |
+| POST | `/sni/api/v1/bookings/waitlist/{id}/accept` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist-id-accept) |
 | PATCH | `/sni/api/v1/bookings/waitlist/{id}/cancel` | BOOKING:CANCEL | [BookingWaitlistController](routes/BookingWaitlistController.md#r-patch-sni-api-v1-bookings-waitlist-id-cancel) |
+| POST | `/sni/api/v1/bookings/waitlist/{id}/decline` | BOOKING:CREATE | [BookingWaitlistController](routes/BookingWaitlistController.md#r-post-sni-api-v1-bookings-waitlist-id-decline) |
 | POST | `/sni/api/v1/public/bookings/check-in/scan` | public | [PublicBookingController](routes/PublicBookingController.md#r-post-sni-api-v1-public-bookings-check-in-scan) |
 | GET | `/sni/api/v1/public/bookings/check-in/scan/{checkInToken}` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-check-in-scan-checkintoken) |
 | GET | `/sni/api/v1/public/bookings/check-in/scanner-setup` | public | [PublicBookingController](routes/PublicBookingController.md#r-get-sni-api-v1-public-bookings-check-in-scanner-setup) |

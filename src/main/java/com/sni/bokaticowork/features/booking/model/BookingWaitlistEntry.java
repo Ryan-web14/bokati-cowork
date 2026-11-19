@@ -73,6 +73,14 @@ public class BookingWaitlistEntry {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
+    /** Lot B6 : reservation creee a l'acceptation de l'offre. */
+    @Column(name = "booking_number", length = 120)
+    private String bookingNumber;
+
+    /** Lot B6 : courriel d'offre envoye. */
+    @Column(name = "notified_at")
+    private Instant notifiedAt;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

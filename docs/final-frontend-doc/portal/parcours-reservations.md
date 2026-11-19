@@ -50,6 +50,17 @@ Les transitions et délais (expiration d'une réservation non payée, libératio
 2. Le serveur retrouve la facture de la réservation et crée une annonce `AWAITING_CONFIRMATION` valable 4 heures par défaut (`bokati.payment.cash-declaration.validity-hours`). Le créneau est tenu jusqu'à l'échéance de l'annonce ; passé ce délai sans encaissement à la caisse, l'annonce expire et la réservation est rendue (worker toutes les 15 minutes).
 3. Afficher `declarationNumber`, le montant et l'échéance. Suivi et annulation : [parcours-facturation-paiements.md](parcours-facturation-paiements.md#annoncer-un-paiement-en-espèces).
 
+### Liste d'attente
+
+Lot B6. Quand un créneau est pris (`available: false`), proposer « M'inscrire en liste d'attente » :
+
+1. `POST /sni/api/v1/client/bookings/waitlist` avec `{ resourceCode, startedAt, endedAt, quantity, paymentMode }` : réponse `201`, `status: WAITING`, et `alternatives` (créneaux libres proches).
+2. Mes inscriptions : `GET /sni/api/v1/client/bookings/waitlist?status=` (page `{ data, pageable }`).
+3. Quand une place se libère, l'inscription passe `OFFERED` jusqu'à `expiresAt` (30 minutes) et le membre reçoit un courriel. Afficher « Une place vous attend jusqu'à … » avec deux boutons :
+   - Accepter : `POST .../waitlist/{id}/accept` crée la réservation (réponse `status: BOOKED`, `bookingNumber` : ouvrir la réservation) ;
+   - Décliner : `POST .../waitlist/{id}/decline`.
+4. Se désinscrire : `DELETE .../waitlist/{id}`. Une offre échue : `409 WAITLIST_OFFER_EXPIRED`.
+
 ### Consulter et annuler ses réservations
 
 1. Liste : `GET /sni/api/v1/client/bookings?status=...&from=...&to=...` (dates-heures, page, tri `startedAt` décroissant).

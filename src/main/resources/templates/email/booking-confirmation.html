@@ -192,6 +192,7 @@
         </table>
         <div class="note note-wait" th:if="${awaitingPayment}">
           Tant que le paiement n'est pas reçu, la réservation n'est pas confirmée. Vous pouvez régler depuis « Voir ma réservation ».
+          <span th:if="${paymentDueLabel != null}">À régler avant le <strong th:text="${paymentDueLabel}">date</strong> : sans paiement, le créneau sera libéré.</span>
         </div>
       </th:block>
 

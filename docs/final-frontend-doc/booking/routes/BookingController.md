@@ -671,6 +671,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `priceAdjustmentBy` | texte |  |  |
 | `priceAdjustmentStatus` | texte |  |  |
 | `priceAdjustmentApprovalNumber` | texte |  |  |
+| `leadNumber` | texte |  |  |
+| `callNote` | texte |  |  |
 
 <a id="m-SubscriberType"></a>
 #### SubscriberType
@@ -714,6 +716,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `options` | [BookingOptionRequest](#m-BookingOptionRequest)[] |  |  |
 | `payOnSite` | booléen |  |  |
 | `priceAdjustment` | [BookingPriceAdjustmentRequest](#m-BookingPriceAdjustmentRequest) |  |  |
+| `caller` | [BookingCallerRequest](#m-BookingCallerRequest) |  |  |
 
 <a id="m-BookingBatchResponse-Summary"></a>
 #### BookingBatchResponse.Summary
@@ -1053,7 +1056,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `eventNumber` | texte |  |  |
 | `bookingNumber` | texte |  |  |
-| `eventType` | enum : `BOOKING_CREATED`, `BOOKING_HOLD_CREATED`, `BOOKING_HOLD_EXPIRED`, `BOOKING_CONFIRMED`, `BOOKING_APPROVED`, `BOOKING_REJECTED`, `BOOKING_STARTED`, `BOOKING_CHECKED_IN`, `BOOKING_CHECKED_OUT`, `BOOKING_COMPLETED`, `BOOKING_CANCELLED`, `BOOKING_NO_SHOW`, `RESOURCE_RESERVED`, `RESOURCE_RELEASED`, `ENTITLEMENT_RESERVED`, `ENTITLEMENT_CONSUMED`, `ENTITLEMENT_RELEASED`, `USAGE_RECORDED`, `EMAIL_QUEUED`, `EMAIL_SENT`, `EMAIL_FAILED`, `REPAIR_APPLIED`, `QUOTA_OVERRIDE_APPLIED`, `BOOKING_RESCHEDULED`, `BOOKING_PRICE_ADJUSTED`, `BOOKING_TRANSFERRED`, `BOOKING_RESOURCE_CHANGED`, `USAGE_RULES_ACCEPTED`, `END_REPORT_RECORDED`, `BOOKING_PARTICIPANT_ADDED`, `BOOKING_PARTICIPANT_REMOVED`, `BOOKING_PAYMENT_REMINDER` |  |  |
+| `eventType` | enum : `BOOKING_CREATED`, `BOOKING_HOLD_CREATED`, `BOOKING_HOLD_EXPIRED`, `BOOKING_CONFIRMED`, `BOOKING_APPROVED`, `BOOKING_REJECTED`, `BOOKING_STARTED`, `BOOKING_CHECKED_IN`, `BOOKING_CHECKED_OUT`, `BOOKING_COMPLETED`, `BOOKING_CANCELLED`, `BOOKING_NO_SHOW`, `RESOURCE_RESERVED`, `RESOURCE_RELEASED`, `ENTITLEMENT_RESERVED`, `ENTITLEMENT_CONSUMED`, `ENTITLEMENT_RELEASED`, `USAGE_RECORDED`, `EMAIL_QUEUED`, `EMAIL_SENT`, `EMAIL_FAILED`, `REPAIR_APPLIED`, `QUOTA_OVERRIDE_APPLIED`, `BOOKING_RESCHEDULED`, `BOOKING_PRICE_ADJUSTED`, `BOOKING_TRANSFERRED`, `BOOKING_RESOURCE_CHANGED`, `USAGE_RULES_ACCEPTED`, `END_REPORT_RECORDED`, `BOOKING_PARTICIPANT_ADDED`, `BOOKING_PARTICIPANT_REMOVED`, `BOOKING_PAYMENT_REMINDER`, `BOOKING_PHONE_CALL`, `BOOKING_LEAD_CONVERTED` |  |  |
 | `title` | texte |  |  |
 | `description` | texte |  |  |
 | `payloadJson` | texte |  |  |
@@ -1154,6 +1157,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `kind` | texte |  |  |
 | `code` | texte |  |  |
 | `quantity` | entier |  |  |
+
+<a id="m-BookingCallerRequest"></a>
+#### BookingCallerRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `fullName` | texte |  | longueur min `0`, longueur max `160` |
+| `phone` | texte |  | longueur min `0`, longueur max `40` |
+| `email` | string (email) |  | longueur min `0`, longueur max `160` |
+| `company` | texte |  | longueur min `0`, longueur max `160` |
+| `callNote` | texte |  | longueur min `0`, longueur max `1000` |
+| `leadNumber` | texte |  | longueur min `0`, longueur max `80` |
+| `createLead` | booléen |  |  |
 
 <a id="m-BookingBatchResponse-BatchInvoice"></a>
 #### BookingBatchResponse.BatchInvoice

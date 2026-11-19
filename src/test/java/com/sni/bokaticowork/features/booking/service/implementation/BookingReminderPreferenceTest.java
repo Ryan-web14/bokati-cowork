@@ -48,7 +48,7 @@ class BookingReminderPreferenceTest {
     @Test
     @DisplayName("Rappel coupe par le membre : non envoye, annule, sans compter comme un echec")
     void reminderCutByMember() {
-        Booking booking = Booking.builder().bookingNumber("BKG-1").build();
+        Booking booking = Booking.builder().bookingNumber("BKG-1").status(com.sni.bokaticowork.features.booking.enums.BookingStatus.CONFIRMED).build();
         BookingNotificationOutbox notification = reminder(booking);
         when(outboxRepository.findDue(any(), anyInt())).thenReturn(List.of(notification));
         when(preferences.allows(booking, EventType.BOOKING_REMINDER, NotificationChannel.EMAIL)).thenReturn(false);
@@ -63,7 +63,7 @@ class BookingReminderPreferenceTest {
     @Test
     @DisplayName("Sans preference contraire, le rappel part")
     void reminderSentByDefault() {
-        Booking booking = Booking.builder().bookingNumber("BKG-1").build();
+        Booking booking = Booking.builder().bookingNumber("BKG-1").status(com.sni.bokaticowork.features.booking.enums.BookingStatus.CONFIRMED).build();
         BookingNotificationOutbox notification = reminder(booking);
         when(outboxRepository.findDue(any(), anyInt())).thenReturn(List.of(notification));
         when(preferences.allows(booking, EventType.BOOKING_REMINDER, NotificationChannel.EMAIL)).thenReturn(true);

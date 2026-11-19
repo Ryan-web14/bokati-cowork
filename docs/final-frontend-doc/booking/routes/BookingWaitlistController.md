@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 5 route(s).
+Module [booking](../README.md) · 7 route(s).
 
 ## Routes
 
@@ -10,13 +10,18 @@ Module [booking](../README.md) · 5 route(s).
 ### GET /sni/api/v1/bookings/waitlist
 
 - Accès : back-office : rôle d'administration et droit `BOOKING:READ`
-- Réponse : `List<BookingWaitlistEntryResponse>`
-- Modèles : [BookingWaitlistEntryResponse](#m-BookingWaitlistEntryResponse), [BookingWaitlistStatus](#m-BookingWaitlistStatus)
+- Réponse : `PaginatedResponse<BookingWaitlistEntryResponse>`
+- Modèles : [PaginatedResponse](#m-PaginatedResponse), [BookingWaitlistEntryResponse](#m-BookingWaitlistEntryResponse), [BookingWaitlistStatus](#m-BookingWaitlistStatus), [SubscriberType](#m-SubscriberType)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java`, méthode `list`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `status` | requête | `BookingWaitlistStatus` |  |  |
+| `resourceCode` | requête | `String` |  |  |
+| `ownerType` | requête | `SubscriberType` |  |  |
+| `ownerCode` | requête | `String` |  |  |
+| `page` | requête | `int` |  | 0 |
+| `size` | requête | `int` |  | 20 |
 
 <a id="r-post-sni-api-v1-bookings-waitlist"></a>
 ### POST /sni/api/v1/bookings/waitlist
@@ -49,6 +54,18 @@ Module [booking](../README.md) · 5 route(s).
 | --- | --- | --- | --- | --- |
 | `limit` | requête | `int` |  | 100 |
 
+<a id="r-post-sni-api-v1-bookings-waitlist-id-accept"></a>
+### POST /sni/api/v1/bookings/waitlist/{id}/accept
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:CREATE`
+- Réponse : `BookingWaitlistEntryResponse`
+- Modèles : [BookingWaitlistEntryResponse](#m-BookingWaitlistEntryResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java`, méthode `accept`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+
 <a id="r-patch-sni-api-v1-bookings-waitlist-id-cancel"></a>
 ### PATCH /sni/api/v1/bookings/waitlist/{id}/cancel
 
@@ -56,6 +73,18 @@ Module [booking](../README.md) · 5 route(s).
 - Réponse : `BookingWaitlistEntryResponse`
 - Modèles : [BookingWaitlistEntryResponse](#m-BookingWaitlistEntryResponse)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java`, méthode `cancel`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+
+<a id="r-post-sni-api-v1-bookings-waitlist-id-decline"></a>
+### POST /sni/api/v1/bookings/waitlist/{id}/decline
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:CREATE`
+- Réponse : `BookingWaitlistEntryResponse`
+- Modèles : [BookingWaitlistEntryResponse](#m-BookingWaitlistEntryResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java`, méthode `decline`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -87,11 +116,18 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
 | `alternatives` | [BookingSuggestionResponse](#m-BookingSuggestionResponse)[] |  |  |
+| `bookingNumber` | texte |  |  |
+| `notifiedAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-BookingWaitlistStatus"></a>
 #### BookingWaitlistStatus
 
 Énumération : `WAITING`, `OFFERED`, `BOOKED`, `CANCELLED`, `EXPIRED`
+
+<a id="m-SubscriberType"></a>
+#### SubscriberType
+
+Énumération : `MEMBER`, `CUSTOMER`, `BUSINESS_ENTITY`
 
 <a id="m-JoinBookingWaitlistRequest"></a>
 #### JoinBookingWaitlistRequest

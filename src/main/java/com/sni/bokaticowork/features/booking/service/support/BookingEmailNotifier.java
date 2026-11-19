@@ -184,6 +184,8 @@ public class BookingEmailNotifier {
         boolean awaitingPayment = !awaitingApproval && paymentStatus == BookingPaymentStatus.PENDING;
         ctx.setVariable("awaitingApproval",   awaitingApproval);
         ctx.setVariable("awaitingPayment",    awaitingPayment);
+        // Lot B6 (ecart Bn-17) : echeance de paiement dans le courriel d'une reservation en attente.
+        ctx.setVariable("paymentDueLabel", awaitingPayment && booking.getPaymentDueAt() != null ? formatDate(booking.getPaymentDueAt()) : null);
         ctx.setVariable("covered",            paymentStatus == BookingPaymentStatus.COVERED);
         ctx.setVariable("paymentStatusLabel", paymentStatus.getLabel());
         ctx.setVariable("headline", awaitingApproval ? "Demande de réservation reçue"

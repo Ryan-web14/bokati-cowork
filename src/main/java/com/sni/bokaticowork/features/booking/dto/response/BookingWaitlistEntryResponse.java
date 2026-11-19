@@ -25,6 +25,10 @@ public record BookingWaitlistEntryResponse(
         Instant offeredAt,
         Instant expiresAt,
         Instant createdAt,
-        List<BookingSuggestionResponse> alternatives
+        List<BookingSuggestionResponse> alternatives,
+        /** Lot B6 : reservation creee a l'acceptation. */
+        String bookingNumber,
+        /** Lot B6 : courriel d'offre envoye au contact. */
+        Instant notifiedAt
 ) {
 }

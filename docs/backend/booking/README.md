@@ -27,8 +27,8 @@
 | 2 | `PATCH /confirm` confirme un `PENDING_PAYMENT` sans paiement, statut de paiement « PAID » | **Réglé (B1)** | BSI:398-401, 803-806 ; `BookingPaymentStatus.java:61` |
 | 3 | Déplacement : créneaux jamais réservés libérés, conflit sans capacité, ni politique ni alignement ni date passée | **Réglé (B1)** | BSI:682, 692-697, 1084-1094 ; `BookingRepository.java:71-86` |
 | 4 | Réservations en attente sans créneau retenu ; paiement reçu puis confirmation échouée sans bruit | **Réglé (B1)** | `BookingRepository.java:77` ; BSI:814-818 ; `PaymentTransactionWorkflowProcessor.java:310-320` |
-| 5 | Aucune tâche d'expiration des blocages ni d'envoi des rappels ; un blocage expiré casse la confirmation après paiement | **Réglé (B1)** pour les options et l'expiration ; rappels au lot B6 | `BookingHoldServiceImpl.java:99-108` ; `BookingNotificationServiceImpl.java:63-85` ; BSI:1039-1041 |
-| 6 | Liste d'attente : aucune notification à l'offre, `BOOKED` jamais posé, capacité ignorée, `BUSINESS` au lieu de `BUSINESS_ENTITY` | confirmé | `BookingWaitlistServiceImpl.java:98-131` |
+| 5 | Aucune tâche d'expiration des blocages ni d'envoi des rappels ; un blocage expiré casse la confirmation après paiement | **Réglé (B1)** pour les options et l'expiration ; rappels réglés au lot B6 | `BookingHoldServiceImpl.java:99-108` ; `BookingNotificationServiceImpl.java:63-85` ; BSI:1039-1041 |
+| 6 | Liste d'attente : aucune notification à l'offre, `BOOKED` jamais posé, capacité ignorée, `BUSINESS` au lieu de `BUSINESS_ENTITY` | **Réglé (B6)** | `BookingWaitlistServiceImpl.java:98-131` |
 | 7 | `POST /bookings/repair` ne répare rien, requête contradictoire | **Réglé (B7)** | `BookingRepairServiceImpl.java:21-25` ; `BookingRepository.java:224-227` |
 | 8 | Satisfaction publique sans jeton (GET qui écrit) | **Réglé (B0)** | `PublicBookingController.java:233-244` |
 | 9 | Statut `EXPIRED` jamais atteint | **Réglé (B1)** | `BookingStatus.java:13` |
@@ -63,9 +63,9 @@
 | **Blocages, créneaux, tâches** | | |
 | Bn-13 | **Réglé (B1)** Blocage d'un non-membre jamais confirmable (nouveau code invité à chaque appel) ; coordonnées du blocage perdues | `BookingIdentityResolver.java:139-147` ; BSI:1042 |
 | Bn-14 | **Réglé (B1)** Blocage : durée sans borne (même négative), rejeu d'idempotence qui rend le blocage d'un autre, un seul blocage par plage quelle que soit la capacité, blocages expirés qui retiennent la capacité | `BookingHoldServiceImpl.java:47-85` |
-| Bn-15 | Liste d'attente : 100 premières entrées sans filtre de date, entrées passées offertes, toutes les entrées d'un créneau offertes ensemble | `BookingWaitlistEntryRepository` |
-| Bn-16 | Rappels envoyés aussi pour des réservations annulées, en anglais ; `200` avec 0 sans courriel | `BookingNotificationServiceImpl.java:47-85` |
-| Bn-17 | Aucun courriel à la création en attente de paiement ou d'approbation : pas d'instructions de paiement | BSI:284-297 ; `BookingEventWriter.java:21-23` |
+| Bn-15 | **Réglé (B6)** Liste d'attente : 100 premières entrées sans filtre de date, entrées passées offertes, toutes les entrées d'un créneau offertes ensemble | `BookingWaitlistEntryRepository` |
+| Bn-16 | **Réglé (B6)** Rappels envoyés aussi pour des réservations annulées, en anglais ; `200` avec 0 sans courriel | `BookingNotificationServiceImpl.java:47-85` |
+| Bn-17 | **Réglé (B6)** Aucun courriel à la création en attente de paiement ou d'approbation : pas d'instructions de paiement | BSI:284-297 ; `BookingEventWriter.java:21-23` |
 | **Sécurité et traçabilité** | | |
 | Bn-18 | **Réglé (B0)** « Qui a fait » lu dans le corps de la requête (`changedBy`, `actor`, `approvedBy`, `rejectedBy`) ; pas de `createdBy` | BSI:407, 440, 1291-1293 |
 | Bn-19 | **Réglé (B0)** Codes de photos (état des lieux, incidents) non contrôlés | `ClientBookingOperationsController.java:52-59` ; `BookingOperations.java:230-238` |
@@ -76,7 +76,7 @@
 | Bn-23 | **Réglé (B1)** Les réservations en attente de paiement échappent au quota : un membre empile des réservations impayées | `BookingRepository.java:186` |
 | **Performances** | | |
 | Bn-24 | **Réglé (B7)** Par ligne de liste : deux requêtes, chargements paresseux et rendu d'un QR en PNG | `BookingMapperDecorator.java:81-134` |
-| Bn-25 | **En partie (B7)** : politiques et dérogations filtrables, historique et événements bornés par réservation ; liste d'attente au lot B6. Listes non paginées (attente, historique, événements, politiques, dérogations), moteur de suggestion par entrée d'attente | `BookingWaitlistServiceImpl.java:82-87` |
+| Bn-25 | **En partie (B7)** : politiques et dérogations filtrables, historique et événements bornés par réservation ; liste d'attente paginée au lot B6 : **Réglé**. Listes non paginées (attente, historique, événements, politiques, dérogations), moteur de suggestion par entrée d'attente | `BookingWaitlistServiceImpl.java:82-87` |
 | **Fuseau** | | |
 | Bn-26 | Dépassement calculé en heure de Brazzaville, le reste en heure du serveur ; `app.time-zone` jamais appliqué par défaut : un serveur en UTC facture une heure de dépassement à chaque départ | `BookingExtras.java:75, 252` ; `ApplicationConfig.java:37` · **Réglé (B8)** |
 | **Contradiction** | | |
@@ -93,7 +93,7 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 
 ## Avancement
 
-**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)), **B2 fait** ([lot-b2-argent.md](lot-b2-argent.md)), couverture partielle par les heures incluses comprise. **B2b fait** ([lot-b2b-reports-options.md](lot-b2b-reports-options.md)) : aperçu de l'écart de prix, hausse confirmée puis encaissée, modifications marquées, équipe informée, politique d'annulation pour tous, options à la création. **B8 fait** ([lot-b8-messages-fuseau.md](lot-b8-messages-fuseau.md)) : messages, historique et événements en français, heure de l'application partout dans les réservations et les ressources. **B7 fait** le 19/11 ([lot-b7-listes-recherche-reponse.md](lot-b7-listes-recherche-reponse.md)), après le socle L0 : `GET /bookings/reference`, motifs en listes, recherche unique du titulaire, réponse complète, listes allégées, tri, politiques et dérogations modifiables, réparation réelle. **B3 fait** le 19/11 ([lot-b3-regle-sur-place.md](lot-b3-regle-sur-place.md)) : rendez-vous réglé sur place, option par client et réglage global, retrait d'office après absences, rappel avant l'échéance, équipe prévenue à l'expiration, file de l'accueil. **B4 fait** le 19/11 ([lot-b4-ajustement-prix.md](lot-b4-ajustement-prix.md)) : ajustement manuel du prix avec motif, plafond par droit, approbation au-delà, trace sur la réservation et la facture. **B5 fait** le 19/11 ([lot-b5-telephone.md](lot-b5-telephone.md)) : rendez-vous pris au téléphone, note d'appel, appelant inconnu en prospect du CRM (source téléphone), converti à la venue ou au paiement.
+**B0 fait** ([lot-b0-securite-tracabilite.md](lot-b0-securite-tracabilite.md)), **B10 fait** ([lot-b10-visibilite-prix-clients.md](lot-b10-visibilite-prix-clients.md)), avancé à la demande, avec les prix au cas par cas pour un ou plusieurs clients. **B1 fait** ([lot-b1-creneaux-cycle-de-vie.md](lot-b1-creneaux-cycle-de-vie.md)), **B2 fait** ([lot-b2-argent.md](lot-b2-argent.md)), couverture partielle par les heures incluses comprise. **B2b fait** ([lot-b2b-reports-options.md](lot-b2b-reports-options.md)) : aperçu de l'écart de prix, hausse confirmée puis encaissée, modifications marquées, équipe informée, politique d'annulation pour tous, options à la création. **B8 fait** ([lot-b8-messages-fuseau.md](lot-b8-messages-fuseau.md)) : messages, historique et événements en français, heure de l'application partout dans les réservations et les ressources. **B7 fait** le 19/11 ([lot-b7-listes-recherche-reponse.md](lot-b7-listes-recherche-reponse.md)), après le socle L0 : `GET /bookings/reference`, motifs en listes, recherche unique du titulaire, réponse complète, listes allégées, tri, politiques et dérogations modifiables, réparation réelle. **B3 fait** le 19/11 ([lot-b3-regle-sur-place.md](lot-b3-regle-sur-place.md)) : rendez-vous réglé sur place, option par client et réglage global, retrait d'office après absences, rappel avant l'échéance, équipe prévenue à l'expiration, file de l'accueil. **B4 fait** le 19/11 ([lot-b4-ajustement-prix.md](lot-b4-ajustement-prix.md)) : ajustement manuel du prix avec motif, plafond par droit, approbation au-delà, trace sur la réservation et la facture. **B5 fait** le 19/11 ([lot-b5-telephone.md](lot-b5-telephone.md)) : rendez-vous pris au téléphone, note d'appel, appelant inconnu en prospect du CRM (source téléphone), converti à la venue ou au paiement. **B6 fait** le 19/11 ([lot-b6-notifications-attente.md](lot-b6-notifications-attente.md)) : rappels automatiques (la veille et 2 h avant), courriel des réservations en attente avec l'échéance, liste d'attente refaite (offre à une seule inscription, courriel, acceptation qui crée la réservation, portail, pagination).
 
 ### Reste à faire (19/11/2026)
 
@@ -101,11 +101,10 @@ Ordre retenu : L0 (socle commun des listes de choix, **fait le 19/11**, [lot-l0-
 
 | Lot | Ce qu'il apporte | Écarts encore ouverts réglés |
 | --- | --- | --- |
-| B6 | Rappels automatiques, courriel des réservations en attente, liste d'attente refaite | 6, Bn-15 à Bn-17, rappels de l'écart 5 |
 | B9a à B9g | Rappels et venue, planning et séries, fiabilité et acompte, invitations, entreprises (budget, relevé groupé, forfait d'heures), remplissage, suivi (tableau de bord, avis, agenda, rapport par client) | |
 | B11 | Doc frontend booking, portail et ressource ; tests ; backfill KYC | reste ressources |
 
-La doc frontend [booking](../../final-frontend-doc/booking/README.md) décrit le comportement actuel (lots B0, B1, B2, B2b, B3, B4, B5, B7, B8, B10) et signale « lot Bx à venir » ce qui manque.
+La doc frontend [booking](../../final-frontend-doc/booking/README.md) décrit le comportement actuel (lots B0 à B8, B10) et signale « lot Bx à venir » ce qui manque.
 
 ## Lots proposés
 

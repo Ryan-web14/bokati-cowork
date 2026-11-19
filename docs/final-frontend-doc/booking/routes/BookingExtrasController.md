@@ -249,6 +249,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `priceAdjustmentBy` | texte |  |  |
 | `priceAdjustmentStatus` | texte |  |  |
 | `priceAdjustmentApprovalNumber` | texte |  |  |
+| `leadNumber` | texte |  |  |
+| `callNote` | texte |  |  |
 
 <a id="m-BookingLineResponse"></a>
 #### BookingLineResponse

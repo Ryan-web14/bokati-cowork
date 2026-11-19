@@ -1745,9 +1745,41 @@
      "name": "status",
      "required": false,
      "type": "com.sni.bokaticowork.features.booking.enums.BookingWaitlistStatus"
+    },
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "20",
+     "type": "int"
     }
    ],
-   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>>"
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>>"
   },
   {
    "methods": [
@@ -1822,6 +1854,30 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/waitlist/{id}/accept",
+   "package": "features.booking.controller",
+   "controller": "BookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java",
+   "handler": "accept",
+   "declaredIn": "BookingWaitlistController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>"
+  },
+  {
+   "methods": [
     "PATCH"
    ],
    "path": "/sni/api/v1/bookings/waitlist/{id}/cancel",
@@ -1833,6 +1889,30 @@
    "access": {
     "kind": "admin",
     "permission": "BOOKING:CANCEL"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/waitlist/{id}/decline",
+   "package": "features.booking.controller",
+   "controller": "BookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java",
+   "handler": "decline",
+   "declaredIn": "BookingWaitlistController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
    },
    "params": [
     {
@@ -2620,6 +2700,12 @@
     },
     "priceAdjustmentApprovalNumber": {
      "type": "string"
+    },
+    "leadNumber": {
+     "type": "string"
+    },
+    "callNote": {
+     "type": "string"
     }
    }
   },
@@ -2746,6 +2832,9 @@
     },
     "priceAdjustment": {
      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.request.BookingPriceAdjustmentRequest"
+    },
+    "caller": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.request.BookingCallerRequest"
     }
    }
   },
@@ -3706,7 +3795,9 @@
       "END_REPORT_RECORDED",
       "BOOKING_PARTICIPANT_ADDED",
       "BOOKING_PARTICIPANT_REMOVED",
-      "BOOKING_PAYMENT_REMINDER"
+      "BOOKING_PAYMENT_REMINDER",
+      "BOOKING_PHONE_CALL",
+      "BOOKING_LEAD_CONVERTED"
      ]
     },
     "title": {
@@ -4316,6 +4407,13 @@
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse"
      }
+    },
+    "bookingNumber": {
+     "type": "string"
+    },
+    "notifiedAt": {
+     "type": "string",
+     "format": "date-time"
     }
    }
   },
@@ -4601,6 +4699,45 @@
     "quantity": {
      "type": "integer",
      "format": "int32"
+    }
+   }
+  },
+  "BookingCallerRequest": {
+   "type": "object",
+   "properties": {
+    "fullName": {
+     "maxLength": 160,
+     "minLength": 0,
+     "type": "string"
+    },
+    "phone": {
+     "maxLength": 40,
+     "minLength": 0,
+     "type": "string"
+    },
+    "email": {
+     "maxLength": 160,
+     "minLength": 0,
+     "type": "string",
+     "format": "email"
+    },
+    "company": {
+     "maxLength": 160,
+     "minLength": 0,
+     "type": "string"
+    },
+    "callNote": {
+     "maxLength": 1000,
+     "minLength": 0,
+     "type": "string"
+    },
+    "leadNumber": {
+     "maxLength": 80,
+     "minLength": 0,
+     "type": "string"
+    },
+    "createLead": {
+     "type": "boolean"
     }
    }
   },
@@ -5032,6 +5169,7 @@
   "ResourceAnalytics.AppliedPrice": "com.sni.bokaticowork.features.booking.service.support.ResourceAnalytics.AppliedPrice",
   "BookingLineResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingLineResponse",
   "BookingOptionRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingOptionRequest",
+  "BookingCallerRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingCallerRequest",
   "BookingBatchResponse.BatchInvoice": "com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse.BatchInvoice",
   "CreateBookingBatchRequest.Line": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchRequest.Line",
   "BookingAvailabilityResponse.OccupiedRange": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse.OccupiedRange",
