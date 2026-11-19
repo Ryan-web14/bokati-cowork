@@ -89,6 +89,11 @@ class InvoiceChangeB14Test {
         assertThat(submission.getValue().center()).isEqualTo("BILLING");
         assertThat(submission.getValue().requestType()).isEqualTo("INVOICE_CHANGE");
         assertThat(submission.getValue().amount()).isEqualByComparingTo("94400");
+        // Contenu de detailsJson documente pour l'ecran d'approbation (approval/facturation.md).
+        assertThat(submission.getValue().subjectType()).isEqualTo("BILLING_DOCUMENT");
+        assertThat(submission.getValue().subjectRef()).isEqualTo("INV-7");
+        assertThat(submission.getValue().detailsJson()).contains("\"invoiceNumber\":\"INV-7\"", "\"totalBefore\":118000",
+                "\"totalAfter\":94400", "\"difference\":-23600", "\"reason\":\"Remise accordée\"", "\"changes\":{");
         verify(billing, never()).update(anyString(), any());
         verify(billing, never()).applyInvoiceVersion(any(), any(), any(), any(), any());
     }

@@ -19,6 +19,8 @@ Toutes les routes sont du back-office, sous `/sni/api/v1/approvals`. La caisse g
 | Délégation (`DelegationView`) | `id` | Délégation datée d'un décideur à un autre (absence, intérim) |
 | Hiérarchie (`HierarchyNode`) | `userCode` | Chaque collaborateur et son supérieur direct (N+1) |
 
+> Facturation : contenu de `subjectRef` et de `detailsJson`, et bouton « Ouvrir le document » : [facturation.md](facturation.md).
+
 ## Statuts
 
 Demande : `PENDING` (en attente), `APPROVED`, `REJECTED`, `RETURNED` (renvoyée pour correction), `CANCELLED` (retirée ou remplacée par une nouvelle soumission).

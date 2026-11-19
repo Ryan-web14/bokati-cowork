@@ -180,14 +180,21 @@ public class DiscountApprovalService {
 
     private String details(BillingDocument document, List<BillingDiscountGuard.DiscountViolation> blocking, String reason) {
         Map<String, Object> details = new LinkedHashMap<>();
+        // Contenu documente dans docs/final-frontend-doc/approval/facturation.md.
         details.put("documentNumber", document.getDocumentNumber());
         details.put("documentType", document.getDocumentType() == null ? null : document.getDocumentType().name());
         details.put("customer", document.getCustomerName());
+        details.put("currency", document.getCurrency());
+        details.put("totalAmount", document.getTotalAmount());
         details.put("reason", reason.trim());
         details.put("violations", blocking.stream().map(violation -> {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("type", violation.type());
+            item.put("severity", violation.severity());
             item.put("itemCode", violation.itemCode());
+            item.put("lineDescription", violation.lineDescription());
+            item.put("observed", violation.observed());
+            item.put("limit", violation.limit());
             item.put("message", violation.message());
             return item;
         }).toList());

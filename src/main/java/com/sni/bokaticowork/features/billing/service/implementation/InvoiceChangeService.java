@@ -95,11 +95,22 @@ public class InvoiceChangeService {
         }
         change = changes.save(change);
         Map<String, Object> details = new LinkedHashMap<>();
+        // Contenu documente dans docs/final-frontend-doc/approval/facturation.md : l'ecran d'approbation
+        // affiche la demande sans autre appel, et ouvre la facture par subjectRef.
         details.put("invoiceNumber", invoice.getDocumentNumber());
+        details.put("documentType", invoice.getDocumentType() == null ? null : invoice.getDocumentType().name());
+        details.put("customer", invoice.getCustomerName());
+        details.put("currency", invoice.getCurrency());
         details.put("totalBefore", invoice.getTotalAmount());
         details.put("totalAfter", after);
+        details.put("difference", after == null || invoice.getTotalAmount() == null ? null : after.subtract(invoice.getTotalAmount()));
         details.put("reason", change.getReason());
         details.put("sealed", Boolean.TRUE.equals(invoice.getLocked()));
+        details.put("changeRequestId", change.getId() == null ? null : String.valueOf(change.getId()));
+        details.put("requestedBy", change.getRequestedBy());
+        details.put("requestedByName", change.getRequestedByName());
+        details.put("discountOverrideReason", change.getDiscountOverride());
+        details.put("changes", request.changes());
         ApprovalRequest approval = approvals.submit(new ApprovalDtos.Submission(CENTER, TYPE, "BILLING_DOCUMENT", invoice.getDocumentNumber(),
                 "Modification de la facture " + invoice.getDocumentNumber() + " : " + change.getReason(), after, invoice.getCurrency(),
                 null, write(details), null, null));
