@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [analytics](../README.md) · 10 route(s).
+Module [analytics](../README.md) · 11 route(s).
 
 ## Routes
 
@@ -19,6 +19,19 @@ Module [analytics](../README.md) · 10 route(s).
 | `fromDate` | requête | `String` | oui |  |
 | `toDate` | requête | `String` |  |  |
 | `compareWithPrevious` | requête | `boolean` |  | false |
+
+<a id="r-get-sni-api-v1-analytics-dashboard"></a>
+### GET /sni/api/v1/analytics/dashboard
+
+- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Réponse : `AnalyticsOverviewResponse`
+- Modèles : [AnalyticsOverviewResponse](#m-AnalyticsOverviewResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java`, méthode `dashboard`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `fromDate` | requête | `String` |  |  |
+| `toDate` | requête | `String` |  |  |
 
 <a id="r-get-sni-api-v1-analytics-live"></a>
 ### GET /sni/api/v1/analytics/live
@@ -154,6 +167,22 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `bookings` | [AnalyticsComparisonResponse.Variation](#m-AnalyticsComparisonResponse-Variation) |  |  |
 | `activeSubscriptions` | [AnalyticsComparisonResponse.Variation](#m-AnalyticsComparisonResponse-Variation) |  |  |
 
+<a id="m-AnalyticsOverviewResponse"></a>
+#### AnalyticsOverviewResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `generatedAt` | date-heure ISO 8601 UTC |  |  |
+| `fromDate` | date AAAA-MM-JJ |  |  |
+| `toDate` | date AAAA-MM-JJ |  |  |
+| `financial` | [AnalyticsOverviewResponse.FinancialMetrics](#m-AnalyticsOverviewResponse-FinancialMetrics) |  |  |
+| `payment` | [AnalyticsOverviewResponse.PaymentMetrics](#m-AnalyticsOverviewResponse-PaymentMetrics) |  |  |
+| `wallet` | [AnalyticsOverviewResponse.WalletMetrics](#m-AnalyticsOverviewResponse-WalletMetrics) |  |  |
+| `booking` | [AnalyticsOverviewResponse.BookingMetrics](#m-AnalyticsOverviewResponse-BookingMetrics) |  |  |
+| `subscription` | [AnalyticsOverviewResponse.SubscriptionMetrics](#m-AnalyticsOverviewResponse-SubscriptionMetrics) |  |  |
+| `customer` | [AnalyticsOverviewResponse.CustomerMetrics](#m-AnalyticsOverviewResponse-CustomerMetrics) |  |  |
+| `inventory` | [AnalyticsOverviewResponse.InventoryMetrics](#m-AnalyticsOverviewResponse-InventoryMetrics) |  |  |
+
 <a id="m-AnalyticsLiveResponse"></a>
 #### AnalyticsLiveResponse
 
@@ -177,22 +206,6 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `noShowToday` | entier int64 (texte au-delà de 2^53) |  |  |
 | `checkInsToday` | entier int64 (texte au-delà de 2^53) |  |  |
 | `newMembersToday` | entier int64 (texte au-delà de 2^53) |  |  |
-
-<a id="m-AnalyticsOverviewResponse"></a>
-#### AnalyticsOverviewResponse
-
-| Champ | Type | Requis | Contraintes |
-| --- | --- | --- | --- |
-| `generatedAt` | date-heure ISO 8601 UTC |  |  |
-| `fromDate` | date AAAA-MM-JJ |  |  |
-| `toDate` | date AAAA-MM-JJ |  |  |
-| `financial` | [AnalyticsOverviewResponse.FinancialMetrics](#m-AnalyticsOverviewResponse-FinancialMetrics) |  |  |
-| `payment` | [AnalyticsOverviewResponse.PaymentMetrics](#m-AnalyticsOverviewResponse-PaymentMetrics) |  |  |
-| `wallet` | [AnalyticsOverviewResponse.WalletMetrics](#m-AnalyticsOverviewResponse-WalletMetrics) |  |  |
-| `booking` | [AnalyticsOverviewResponse.BookingMetrics](#m-AnalyticsOverviewResponse-BookingMetrics) |  |  |
-| `subscription` | [AnalyticsOverviewResponse.SubscriptionMetrics](#m-AnalyticsOverviewResponse-SubscriptionMetrics) |  |  |
-| `customer` | [AnalyticsOverviewResponse.CustomerMetrics](#m-AnalyticsOverviewResponse-CustomerMetrics) |  |  |
-| `inventory` | [AnalyticsOverviewResponse.InventoryMetrics](#m-AnalyticsOverviewResponse-InventoryMetrics) |  |  |
 
 <a id="m-TopOwnerResponse"></a>
 #### TopOwnerResponse

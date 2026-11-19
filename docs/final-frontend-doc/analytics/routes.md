@@ -2,11 +2,12 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-10 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+11 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
 | GET | `/sni/api/v1/analytics/comparison` | REPORT:VIEW | [AnalyticsController](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-comparison) |
+| GET | `/sni/api/v1/analytics/dashboard` | REPORT:VIEW | [AnalyticsController](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-dashboard) |
 | GET | `/sni/api/v1/analytics/live` | REPORT:VIEW | [AnalyticsController](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-live) |
 | GET | `/sni/api/v1/analytics/overview` | REPORT:VIEW | [AnalyticsController](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-overview) |
 | GET | `/sni/api/v1/analytics/top-owners` | REPORT:VIEW | [AnalyticsController](routes/AnalyticsController.md#r-get-sni-api-v1-analytics-top-owners) |

@@ -334,6 +334,18 @@ class AdminApiAuthorizationManagerTest {
     }
 
     @Test
+    void shouldOpenTheChoiceListsToTheWholeTeamButGuardTheirChanges() {
+        // Lot L0 : un formulaire lit ses listes sans droit d'administration ; les modifier en demande un.
+        List<String> agent = List.of("ROLE_OPERATIONS_AGENT");
+        assertThat(granted(agent, "GET", BASE + "/reference/enums")).isTrue();
+        assertThat(granted(agent, "GET", BASE + "/reference-lists/BANK")).isTrue();
+        assertThat(granted(agent, "GET", BASE + "/lookup/users")).isTrue();
+        assertThat(granted(agent, "PUT", BASE + "/reference-lists/BANK")).isFalse();
+        assertThat(requiredPermissionFor("POST", BASE + "/reference-lists/BANK/values")).isEqualTo("SYSTEM:REFERENCE_LISTS");
+        assertThat(granted(List.of("ROLE_MEMBER"), "GET", BASE + "/reference/enums")).isFalse();
+    }
+
+    @Test
     void shouldStillDenyAnAuthenticatedUserWithoutAnyAdminRealmRole() {
         assertThat(granted(List.of("ROLE_MEMBER"), "DELETE", BASE + "/billing/documents/INV-001")).isFalse();
     }

@@ -6,7 +6,7 @@ import com.sni.bokaticowork.features.payment.enums.CashRegisterStatus;
 import com.sni.bokaticowork.features.payment.enums.CashRegisterType;
 import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.features.payment.model.CashRegisterAssignment;
-import com.sni.bokaticowork.features.payment.repository.CashReferenceValueRepository;
+import com.sni.bokaticowork.core.reference.repository.ReferenceValueRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterAssignmentRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterRepository;
 import com.sni.bokaticowork.support.PostgresIntegrationTestBase;
@@ -26,7 +26,7 @@ class CashRegisterReferentialC1IT extends PostgresIntegrationTestBase {
 
     @Autowired private CashRegisterRepository registerRepository;
     @Autowired private CashRegisterAssignmentRepository assignmentRepository;
-    @Autowired private CashReferenceValueRepository referenceRepository;
+    @Autowired private ReferenceValueRepository referenceRepository;
 
     @Test
     @DisplayName("Une caisse se cree avec son type et son statut ; une caisse automatique est typee comme telle")

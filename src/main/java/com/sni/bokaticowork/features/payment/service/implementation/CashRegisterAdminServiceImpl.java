@@ -36,11 +36,11 @@ import com.sni.bokaticowork.features.payment.model.CashRegisterAssignment;
 import com.sni.bokaticowork.features.payment.model.CashRegisterDevice;
 import com.sni.bokaticowork.features.payment.model.CashRegisterHistory;
 import com.sni.bokaticowork.features.payment.model.CashRegisterSchedule;
-import com.sni.bokaticowork.features.payment.model.CashReferenceValue;
+import com.sni.bokaticowork.core.reference.model.ReferenceValue;
 import com.sni.bokaticowork.features.payment.model.CashResponsibilityTransfer;
 import com.sni.bokaticowork.features.payment.model.CashSession;
 import com.sni.bokaticowork.features.payment.repository.CashMovementRepository;
-import com.sni.bokaticowork.features.payment.repository.CashReferenceValueRepository;
+import com.sni.bokaticowork.core.reference.repository.ReferenceValueRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterAssignmentRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterDeviceRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterHistoryRepository;
@@ -98,7 +98,7 @@ public class CashRegisterAdminServiceImpl implements CashRegisterAdminService {
     private final CashRegisterScheduleRepository scheduleRepository;
     private final CashRegisterDeviceRepository deviceRepository;
     private final CashResponsibilityTransferRepository transferRepository;
-    private final CashReferenceValueRepository referenceRepository;
+    private final ReferenceValueRepository referenceRepository;
     private final CashReferenceLists referenceLists;
     private final CashRegisterAccessGuard accessGuard;
     private final CashActorResolver actors;
@@ -680,7 +680,7 @@ public class CashRegisterAdminServiceImpl implements CashRegisterAdminService {
     @Transactional(readOnly = true)
     public Map<String, List<CashReferenceValueResponse>> referenceLists(boolean includeInactive) {
         Map<String, List<CashReferenceValueResponse>> lists = new LinkedHashMap<>();
-        for (CashReferenceValue value : referenceRepository.findAllByOrderByListCodeAscSortOrderAscLabelAsc()) {
+        for (ReferenceValue value : referenceRepository.findAllByOrderByListCodeAscSortOrderAscLabelAsc()) {
             if (includeInactive || Boolean.TRUE.equals(value.getActive())) {
                 lists.computeIfAbsent(value.getListCode(), key -> new ArrayList<>()).add(toResponse(value));
             }
@@ -705,15 +705,15 @@ public class CashRegisterAdminServiceImpl implements CashRegisterAdminService {
     public List<CashReferenceValueResponse> replaceReferenceList(String listCode, List<CashReferenceValueRequest> values) {
         String list = listCodeOf(listCode);
         String actor = actors.resolve(null);
-        Map<String, CashReferenceValue> existing = referenceRepository.findByListCodeOrderBySortOrderAscLabelAsc(list).stream()
-                .collect(Collectors.toMap(CashReferenceValue::getCode, Function.identity(), (first, second) -> first, LinkedHashMap::new));
-        List<CashReferenceValue> saved = new ArrayList<>();
+        Map<String, ReferenceValue> existing = referenceRepository.findByListCodeOrderBySortOrderAscLabelAsc(list).stream()
+                .collect(Collectors.toMap(ReferenceValue::getCode, Function.identity(), (first, second) -> first, LinkedHashMap::new));
+        List<ReferenceValue> saved = new ArrayList<>();
         int order = 10;
         for (CashReferenceValueRequest request : values == null ? List.<CashReferenceValueRequest>of() : values) {
             String code = request.code().trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9_]", "_");
-            CashReferenceValue value = existing.remove(code);
+            ReferenceValue value = existing.remove(code);
             if (value == null) {
-                value = CashReferenceValue.builder().listCode(list).code(code).systemValue(false).build();
+                value = ReferenceValue.builder().listCode(list).code(code).systemValue(false).build();
             }
             value.setLabel(request.label().trim());
             value.setSortOrder(request.sortOrder() == null ? order : request.sortOrder());
@@ -723,7 +723,7 @@ public class CashRegisterAdminServiceImpl implements CashRegisterAdminService {
             saved.add(value);
             order += 10;
         }
-        for (CashReferenceValue removed : existing.values()) {
+        for (ReferenceValue removed : existing.values()) {
             removed.setActive(false);
             removed.setUpdatedBy(actor);
             saved.add(removed);
@@ -940,7 +940,7 @@ public class CashRegisterAdminServiceImpl implements CashRegisterAdminService {
                 transfer.getIncomingSignedBy(), transfer.getIncomingSignedAt(), transfer.getCreatedBy(), transfer.getCreatedAt());
     }
 
-    private CashReferenceValueResponse toResponse(CashReferenceValue value) {
+    private CashReferenceValueResponse toResponse(ReferenceValue value) {
         return new CashReferenceValueResponse(value.getListCode(), value.getCode(), value.getLabel(), value.getSortOrder(),
                 value.getActive(), value.getRequiresText(), value.getSystemValue(), value.getUsageCount());
     }

@@ -42,6 +42,36 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/analytics/dashboard",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "dashboard",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/analytics/live",
    "package": "features.analytics.controller",
    "controller": "AnalyticsController",
@@ -358,6 +388,44 @@
     }
    }
   },
+  "AnalyticsOverviewResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "financial": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.FinancialMetrics"
+    },
+    "payment": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.PaymentMetrics"
+    },
+    "wallet": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.WalletMetrics"
+    },
+    "booking": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.BookingMetrics"
+    },
+    "subscription": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.SubscriptionMetrics"
+    },
+    "customer": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.CustomerMetrics"
+    },
+    "inventory": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.InventoryMetrics"
+    }
+   }
+  },
   "AnalyticsLiveResponse": {
    "type": "object",
    "properties": {
@@ -429,44 +497,6 @@
     "newMembersToday": {
      "type": "integer",
      "format": "int64"
-    }
-   }
-  },
-  "AnalyticsOverviewResponse": {
-   "type": "object",
-   "properties": {
-    "generatedAt": {
-     "type": "string",
-     "format": "date-time"
-    },
-    "fromDate": {
-     "type": "string",
-     "format": "date"
-    },
-    "toDate": {
-     "type": "string",
-     "format": "date"
-    },
-    "financial": {
-     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.FinancialMetrics"
-    },
-    "payment": {
-     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.PaymentMetrics"
-    },
-    "wallet": {
-     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.WalletMetrics"
-    },
-    "booking": {
-     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.BookingMetrics"
-    },
-    "subscription": {
-     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.SubscriptionMetrics"
-    },
-    "customer": {
-     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.CustomerMetrics"
-    },
-    "inventory": {
-     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.InventoryMetrics"
     }
    }
   },
@@ -842,8 +872,8 @@
  "enums": {},
  "names": {
   "AnalyticsComparisonResponse": "com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse",
-  "AnalyticsLiveResponse": "com.sni.bokaticowork.features.analytics.dto.AnalyticsLiveResponse",
   "AnalyticsOverviewResponse": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse",
+  "AnalyticsLiveResponse": "com.sni.bokaticowork.features.analytics.dto.AnalyticsLiveResponse",
   "TopOwnerResponse": "com.sni.bokaticowork.features.analytics.dto.TopOwnerResponse",
   "TopResourceResponse": "com.sni.bokaticowork.features.analytics.dto.TopResourceResponse",
   "BookingTrendResponse": "com.sni.bokaticowork.features.analytics.dto.BookingTrendResponse",

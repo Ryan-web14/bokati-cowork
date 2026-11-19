@@ -60,6 +60,10 @@ Un seul jeu de briques dans `core/reference`, que chaque module branche :
 | **Acteur** | Lu dans la session partout ; les champs `createdBy`, `changedBy`… des requêtes sont ignorés | Traçabilité fiable. |
 | **Listes** | Pagination (`PaginatedResponse`), `q` et filtres sur toute liste d'écran | |
 
+## Avancement
+
+**L0 fait** le 19/11/2026 ([lot-l0-socle.md](lot-l0-socle.md)) : registre des valeurs fixes, listes de l'administrateur au socle (listes de la caisse reprises), convention des recherches de choix, motifs, acteur de la session. L1 à L4 : à la demande.
+
 ## Lots proposés
 
 | Lot | Contenu |

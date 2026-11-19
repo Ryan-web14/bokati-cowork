@@ -1,29 +1,34 @@
-package com.sni.bokaticowork.features.payment.model;
+package com.sni.bokaticowork.core.reference.model;
 
 import com.sni.bokaticowork.core.annotation.IdGeneration;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalTime;
 
 /**
- * Valeur d'une liste preenregistree (motifs, banques, types de piece...).
+ * Valeur d'une liste de l'administrateur (socle des listes de choix, lot L0) : motifs, banques,
+ * types de piece, canaux... Promue depuis les valeurs de reference de la caisse (table
+ * {@code cash_reference_value} renommee {@code reference_value}).
  *
- * <p>La valeur {@code OTHER} (« Autre, preciser ») exige un texte ; la desactiver retire le texte
- * libre de la liste.</p>
+ * <p>La valeur {@code OTHER} (« Autre, preciser ») exige un texte. Une valeur n'est jamais
+ * supprimee : desactivee, elle garde son libelle pour les enregistrements qui la citent.</p>
  */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Data
 @Entity
-@Table(name = "cash_reference_value")
-public class CashReferenceValue {
+@Table(name = "reference_value")
+public class ReferenceValue {
     @Id
     @IdGeneration
     @Column(name = "id")
@@ -50,9 +55,15 @@ public class CashReferenceValue {
     @Column(name = "requires_text", nullable = false)
     private Boolean requiresText = Boolean.FALSE;
 
+    /** Valeur livree avec l'application : desactivable, jamais renommee en code. */
     @Builder.Default
     @Column(name = "system_value", nullable = false)
     private Boolean systemValue = Boolean.FALSE;
+
+    /** Ajoutee d'elle-meme par une saisie libre dans une liste souple, a relire par l'administrateur. */
+    @Builder.Default
+    @Column(name = "auto_added", nullable = false)
+    private Boolean autoAdded = Boolean.FALSE;
 
     @Builder.Default
     @Column(name = "usage_count", nullable = false)

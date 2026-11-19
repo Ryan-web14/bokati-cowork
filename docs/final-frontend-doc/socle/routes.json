@@ -1242,6 +1242,51 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/lookup/users",
+   "package": "core.reference.lookup",
+   "controller": "LookupController",
+   "source": "src/main/java/com/sni/bokaticowork/core/reference/lookup/LookupController.java",
+   "handler": "users",
+   "declaredIn": "LookupController",
+   "access": {
+    "kind": "admin",
+    "permission": "STAFF"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "20",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.reference.lookup.LookupItem>>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/admin/maintenance/members/purge-batch",
@@ -1540,6 +1585,209 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.audit.ops.OperationsService.TaskRun>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reference-lists",
+   "package": "core.reference.controller",
+   "controller": "ReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/core/reference/controller/ReferenceController.java",
+   "handler": "lists",
+   "declaredIn": "ReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "STAFF"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "module",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ListSummary>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reference-lists/{listCode}",
+   "package": "core.reference.controller",
+   "controller": "ReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/core/reference/controller/ReferenceController.java",
+   "handler": "values",
+   "declaredIn": "ReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "STAFF"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "listCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.reference.dto.ReferenceDtos.Value>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/reference-lists/{listCode}",
+   "package": "core.reference.controller",
+   "controller": "ReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/core/reference/controller/ReferenceController.java",
+   "handler": "updateList",
+   "declaredIn": "ReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:REFERENCE_LISTS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ListPatch",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "listCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ListSummary>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/reference-lists/{listCode}",
+   "package": "core.reference.controller",
+   "controller": "ReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/core/reference/controller/ReferenceController.java",
+   "handler": "replace",
+   "declaredIn": "ReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:REFERENCE_LISTS"
+   },
+   "body": {
+    "type": "List<com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ValueRequest>",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "listCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.reference.dto.ReferenceDtos.Value>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/reference-lists/{listCode}/values",
+   "package": "core.reference.controller",
+   "controller": "ReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/core/reference/controller/ReferenceController.java",
+   "handler": "add",
+   "declaredIn": "ReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:REFERENCE_LISTS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ValueRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "listCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.reference.dto.ReferenceDtos.Value>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/reference-lists/{listCode}/values/{code}",
+   "package": "core.reference.controller",
+   "controller": "ReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/core/reference/controller/ReferenceController.java",
+   "handler": "update",
+   "declaredIn": "ReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:REFERENCE_LISTS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ValuePatch",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "listCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.reference.dto.ReferenceDtos.Value>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reference/enums",
+   "package": "core.reference.controller",
+   "controller": "ReferenceController",
+   "source": "src/main/java/com/sni/bokaticowork/core/reference/controller/ReferenceController.java",
+   "handler": "enums",
+   "declaredIn": "ReferenceController",
+   "access": {
+    "kind": "admin",
+    "permission": "STAFF"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "module",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "group",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.reference.dto.ReferenceDtos.EnumGroup>>"
   },
   {
    "methods": [
@@ -2743,6 +2991,26 @@
     }
    }
   },
+  "LookupItem": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "hint": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
   "MemberPurgeService.BatchPurgeReport": {
    "type": "object",
    "properties": {
@@ -2976,6 +3244,167 @@
     },
     "instance": {
      "type": "string"
+    }
+   }
+  },
+  "ReferenceDtos.ListSummary": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "module": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "strict": {
+     "type": "boolean"
+    },
+    "valueCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "activeValueCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "autoAddedCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "usageCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "otherUsageCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "ReferenceDtos.Value": {
+   "type": "object",
+   "properties": {
+    "listCode": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "requiresText": {
+     "type": "boolean"
+    },
+    "systemValue": {
+     "type": "boolean"
+    },
+    "autoAdded": {
+     "type": "boolean"
+    },
+    "usageCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "ReferenceDtos.ListPatch": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "maxLength": 160,
+     "minLength": 0,
+     "type": "string"
+    },
+    "description": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "strict": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ReferenceDtos.ValueRequest": {
+   "required": [
+    "code",
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "maxLength": 60,
+     "minLength": 0,
+     "type": "string"
+    },
+    "label": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "requiresText": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ReferenceDtos.ValuePatch": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "requiresText": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ReferenceDtos.EnumGroup": {
+   "type": "object",
+   "properties": {
+    "module": {
+     "type": "string"
+    },
+    "group": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "values": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.reference.dto.ReferenceDtos.EnumValue"
+     }
     }
    }
   },
@@ -3469,6 +3898,27 @@
     }
    }
   },
+  "ReferenceDtos.EnumValue": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "order": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "selectable": {
+     "type": "boolean"
+    }
+   }
+  },
   "AuditIntegrity.Break": {
    "type": "object",
    "properties": {
@@ -3581,6 +4031,7 @@
   "CurrencyRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.CurrencyRequest",
   "EmailDeliveryResponse": "com.sni.bokaticowork.core.communication.mailService.dto.response.EmailDeliveryResponse",
   "EmailDeliveryStatus": "com.sni.bokaticowork.core.communication.mailService.enums.EmailDeliveryStatus",
+  "LookupItem": "com.sni.bokaticowork.core.reference.lookup.LookupItem",
   "MemberPurgeService.BatchPurgeReport": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.BatchPurgeReport",
   "MemberPurgeController.BatchPurgeRequest": "com.sni.bokaticowork.core.maintenance.MemberPurgeController.BatchPurgeRequest",
   "MemberPurgeService.MemberCandidate": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.MemberCandidate",
@@ -3588,6 +4039,12 @@
   "OperationsService.AppError": "com.sni.bokaticowork.core.audit.ops.OperationsService.AppError",
   "OperationsService.TaskStatus": "com.sni.bokaticowork.core.audit.ops.OperationsService.TaskStatus",
   "OperationsService.TaskRun": "com.sni.bokaticowork.core.audit.ops.OperationsService.TaskRun",
+  "ReferenceDtos.ListSummary": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ListSummary",
+  "ReferenceDtos.Value": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.Value",
+  "ReferenceDtos.ListPatch": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ListPatch",
+  "ReferenceDtos.ValueRequest": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ValueRequest",
+  "ReferenceDtos.ValuePatch": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.ValuePatch",
+  "ReferenceDtos.EnumGroup": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.EnumGroup",
   "AuditIntegrity.Report": "com.sni.bokaticowork.core.audit.retention.AuditIntegrity.Report",
   "AuditRetention.TargetView": "com.sni.bokaticowork.core.audit.retention.AuditRetention.TargetView",
   "SecurityAuditService.EventView": "com.sni.bokaticowork.core.audit.security.SecurityAuditService.EventView",
@@ -3601,6 +4058,7 @@
   "WhatsAppService.TemplateRequest": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppService.TemplateRequest",
   "WhatsAppMessageSender.Result": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppMessageSender.Result",
   "WhatsAppController.TestRequest": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppController.TestRequest",
+  "ReferenceDtos.EnumValue": "com.sni.bokaticowork.core.reference.dto.ReferenceDtos.EnumValue",
   "AuditIntegrity.Break": "com.sni.bokaticowork.core.audit.retention.AuditIntegrity.Break",
   "TimelineService.Entry": "com.sni.bokaticowork.core.audit.timeline.TimelineService.Entry",
   "WhatsAppService.Button": "com.sni.bokaticowork.core.communication.whatsapp.WhatsAppService.Button"

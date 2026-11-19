@@ -141,8 +141,10 @@ public class TimelineService {
         if (branches.isEmpty()) {
             return new Page(List.of(), null);
         }
-        String sql = String.join("\nUNION ALL\n", branches)
-                + "\nORDER BY occurred_at DESC, source DESC, ref_id DESC LIMIT " + (size + 1);
+        // Le tri final porte sur une sous-requete nommee : avec une seule source, la forme
+        // « (SELECT ... ORDER BY ... LIMIT n) ORDER BY ... » etait refusee par PostgreSQL
+        // (multiple ORDER BY clauses not allowed).
+        String sql = timelineSql(branches, size);
         List<Entry> rows = jdbc.query(sql, (rs, i) -> new Entry(rs.getTimestamp("occurred_at").toInstant(),
                 rs.getString("source"), rs.getString("ref_id"), rs.getString("kind"), rs.getString("actor"),
                 rs.getString("entity_type"), rs.getString("entity_code"), rs.getString("summary"), rs.getString("request_id"),
@@ -263,6 +265,11 @@ public class TimelineService {
             }
         }
         return String.join(" AND ", conditions);
+    }
+
+    static String timelineSql(List<String> branches, int size) {
+        return "SELECT * FROM (\n" + String.join("\nUNION ALL\n", branches) + "\n) AS timeline"
+                + "\nORDER BY occurred_at DESC, source DESC, ref_id DESC LIMIT " + (size + 1);
     }
 
     private static String text(String expression) {

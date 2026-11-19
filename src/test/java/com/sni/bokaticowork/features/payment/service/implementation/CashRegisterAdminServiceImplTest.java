@@ -21,7 +21,7 @@ import com.sni.bokaticowork.features.payment.model.CashRegisterHistory;
 import com.sni.bokaticowork.features.payment.model.CashResponsibilityTransfer;
 import com.sni.bokaticowork.features.payment.model.CashSession;
 import com.sni.bokaticowork.features.payment.repository.CashMovementRepository;
-import com.sni.bokaticowork.features.payment.repository.CashReferenceValueRepository;
+import com.sni.bokaticowork.core.reference.repository.ReferenceValueRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterAssignmentRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterDeviceRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterHistoryRepository;
@@ -80,7 +80,7 @@ class CashRegisterAdminServiceImplTest {
     @Mock private CashRegisterScheduleRepository scheduleRepository;
     @Mock private CashRegisterDeviceRepository deviceRepository;
     @Mock private CashResponsibilityTransferRepository transferRepository;
-    @Mock private CashReferenceValueRepository referenceRepository;
+    @Mock private ReferenceValueRepository referenceRepository;
     @Mock private CashReferenceLists referenceLists;
     @Mock private CashRegisterAccessGuard accessGuard;
     @Mock private CashEmailNotifier emailNotifier;

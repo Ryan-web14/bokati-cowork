@@ -22,7 +22,7 @@ Méthode conseillée pour un agent : lire ce fichier, puis le `README.md` du mod
 - **Généré depuis le code** : `MODULES.md`, `<module>/routes.md`, `<module>/routes/*.md`, `<module>/routes.json`. Chemins, verbes, droits exigés, paramètres et champs JSON y sont exacts au moment de la génération. Ne pas les modifier à la main : voir [Régénérer](#régénérer).
 - **Rédigé** : ce fichier et les `<module>/README.md`, écrits en lisant les contrôleurs et les services.
 
-Les modules suivent les paquets du code : `features/<module>` pour les modules métier, `securite` pour `security/` (connexion, comptes, rôles), `parametres` pour `core/settings`, `socle` pour le reste de `core/` (audit, adresses, pays, devises, maintenance, file d'événements, courriels). Deux dossiers rédigés regroupent des écrans dont les routes sont générées ailleurs : `modeles` (modèles de documents et de courriels) et `audit` (centre d'audit, routes dans `socle`).
+Les modules suivent les paquets du code : `features/<module>` pour les modules métier, `securite` pour `security/` (connexion, comptes, rôles), `parametres` pour `core/settings`, `socle` pour le reste de `core/` (audit, adresses, pays, devises, maintenance, file d'événements, courriels). Trois dossiers rédigés regroupent des écrans dont les routes sont générées ailleurs : `modeles` (modèles de documents et de courriels), `audit` (centre d'audit, routes dans `socle`) et `listes-de-choix` (valeurs fixes, listes de l'administrateur, recherches de choix, routes dans `socle`). **Tout champ à valeurs connues du serveur se remplit par une liste déroulante alimentée par le serveur** : voir [listes-de-choix](listes-de-choix/README.md).
 
 ## Adresse de l'API
 

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-73 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+81 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -47,6 +47,7 @@
 | GET | `/sni/api/v1/admin/email-deliveries` | SYSTEM:SETTINGS | [EmailDeliveryController](routes/EmailDeliveryController.md#r-get-sni-api-v1-admin-email-deliveries) |
 | GET | `/sni/api/v1/admin/email-deliveries/{emailNumber}` | SYSTEM:SETTINGS | [EmailDeliveryController](routes/EmailDeliveryController.md#r-get-sni-api-v1-admin-email-deliveries-emailnumber) |
 | PATCH | `/sni/api/v1/admin/email-deliveries/{emailNumber}/retry` | SYSTEM:SETTINGS | [EmailDeliveryController](routes/EmailDeliveryController.md#r-patch-sni-api-v1-admin-email-deliveries-emailnumber-retry) |
+| GET | `/sni/api/v1/lookup/users` | STAFF | [LookupController](routes/LookupController.md#r-get-sni-api-v1-lookup-users) |
 | POST | `/sni/api/v1/admin/maintenance/members/purge-batch` | SYSTEM:SETTINGS | [MemberPurgeController](routes/MemberPurgeController.md#r-post-sni-api-v1-admin-maintenance-members-purge-batch) |
 | GET | `/sni/api/v1/admin/maintenance/members/purge-candidates` | ADMIN:ACCESS | [MemberPurgeController](routes/MemberPurgeController.md#r-get-sni-api-v1-admin-maintenance-members-purge-candidates) |
 | DELETE | `/sni/api/v1/admin/maintenance/members/{memberCode}` | SYSTEM:SETTINGS | [MemberPurgeController](routes/MemberPurgeController.md#r-delete-sni-api-v1-admin-maintenance-members-membercode) |
@@ -56,6 +57,13 @@
 | GET | `/sni/api/v1/admin/audit/health` | SYSTEM:AUDIT | [OperationsController](routes/OperationsController.md#r-get-sni-api-v1-admin-audit-health) |
 | GET | `/sni/api/v1/admin/audit/jobs` | SYSTEM:AUDIT | [OperationsController](routes/OperationsController.md#r-get-sni-api-v1-admin-audit-jobs) |
 | GET | `/sni/api/v1/admin/audit/jobs/runs` | SYSTEM:AUDIT | [OperationsController](routes/OperationsController.md#r-get-sni-api-v1-admin-audit-jobs-runs) |
+| GET | `/sni/api/v1/reference-lists` | STAFF | [ReferenceController](routes/ReferenceController.md#r-get-sni-api-v1-reference-lists) |
+| GET | `/sni/api/v1/reference-lists/{listCode}` | STAFF | [ReferenceController](routes/ReferenceController.md#r-get-sni-api-v1-reference-lists-listcode) |
+| PATCH | `/sni/api/v1/reference-lists/{listCode}` | SYSTEM:REFERENCE_LISTS | [ReferenceController](routes/ReferenceController.md#r-patch-sni-api-v1-reference-lists-listcode) |
+| PUT | `/sni/api/v1/reference-lists/{listCode}` | SYSTEM:REFERENCE_LISTS | [ReferenceController](routes/ReferenceController.md#r-put-sni-api-v1-reference-lists-listcode) |
+| POST | `/sni/api/v1/reference-lists/{listCode}/values` | SYSTEM:REFERENCE_LISTS | [ReferenceController](routes/ReferenceController.md#r-post-sni-api-v1-reference-lists-listcode-values) |
+| PATCH | `/sni/api/v1/reference-lists/{listCode}/values/{code}` | SYSTEM:REFERENCE_LISTS | [ReferenceController](routes/ReferenceController.md#r-patch-sni-api-v1-reference-lists-listcode-values-code) |
+| GET | `/sni/api/v1/reference/enums` | STAFF | [ReferenceController](routes/ReferenceController.md#r-get-sni-api-v1-reference-enums) |
 | GET | `/sni/api/v1/admin/audit/integrity` | SYSTEM:AUDIT | [RetentionController](routes/RetentionController.md#r-get-sni-api-v1-admin-audit-integrity) |
 | GET | `/sni/api/v1/admin/audit/retention` | SYSTEM:AUDIT | [RetentionController](routes/RetentionController.md#r-get-sni-api-v1-admin-audit-retention) |
 | POST | `/sni/api/v1/admin/audit/retention/run` | SYSTEM:AUDIT | [RetentionController](routes/RetentionController.md#r-post-sni-api-v1-admin-audit-retention-run) |

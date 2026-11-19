@@ -97,7 +97,7 @@ Listes de choix, recherches et automatisations du module : voir [constat des lis
 
 ### Reste à faire (19/11/2026)
 
-Ordre retenu : **L0** (socle commun des listes de choix, [listes-de-choix](../listes-de-choix/README.md)), puis :
+Ordre retenu : L0 (socle commun des listes de choix, **fait le 19/11**, [lot-l0-socle.md](../listes-de-choix/lot-l0-socle.md)), puis :
 
 | Lot | Ce qu'il apporte | Écarts encore ouverts réglés |
 | --- | --- | --- |

@@ -67,6 +67,10 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         }
 
         String requiredPermission = resolvePermission(request);
+        if (ANY_STAFF.equals(requiredPermission)) {
+            // Lot L0 : listes de choix et recherches de choix, ouvertes a toute l'equipe.
+            return new AuthorizationDecision(true);
+        }
         if (!StringUtils.hasText(requiredPermission)) {
             boolean granted = has(authorities, "ADMIN:ACCESS") || has(authorities, "ADMIN_ACCESS");
             if (!granted) {
@@ -322,6 +326,14 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         String path = normalizePath(request.getRequestURI());
         String method = request.getMethod();
 
+        // Socle des listes de choix (lot L0) : lire une liste, une valeur fixe ou une recherche de
+        // choix sert un formulaire ; seule la modification d'une liste demande un droit.
+        if (path.startsWith("/reference/") || path.startsWith("/lookup/")) {
+            return HttpMethod.GET.matches(method) ? ANY_STAFF : permission("SYSTEM", "REFERENCE_LISTS");
+        }
+        if (path.equals("/reference-lists") || path.startsWith("/reference-lists/")) {
+            return HttpMethod.GET.matches(method) ? ANY_STAFF : permission("SYSTEM", "REFERENCE_LISTS");
+        }
         if (path.startsWith("/admin/users")) {
             return permission("SYSTEM", "USERS");
         }
@@ -584,6 +596,9 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
 
     /** DOCUMENT:REVIEW ou n'importe quel DOCUMENT:REVIEW_<ESPACE> (lot KG0). */
     static final String ANY_DOCUMENT_REVIEW = "DOCUMENT:REVIEW*";
+
+    /** Toute personne de l'equipe (role du realm d'administration), sans droit particulier (lot L0). */
+    static final String ANY_STAFF = "STAFF";
 
     private static boolean endsWithAny(String path, String... suffixes) {
         String trimmed = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
