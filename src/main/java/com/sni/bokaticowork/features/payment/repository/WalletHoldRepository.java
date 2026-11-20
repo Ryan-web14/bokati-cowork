@@ -34,6 +34,14 @@ public interface WalletHoldRepository extends JpaRepository<WalletHold, Long> {
                           @Param("sourceCode") String sourceCode,
                           Pageable pageable);
 
+    /** Retenues en cours d'un portefeuille, les plus recentes d'abord (requete derivee). */
+    List<WalletHold> findAllByWalletAndStatusOrderByCreatedAtDesc(com.sni.bokaticowork.features.payment.model.WalletAccount wallet,
+                                                                  com.sni.bokaticowork.features.payment.enums.WalletHoldStatus status);
+
+    // La requete native ci-dessous appartient a l'expiration : la methode des retenues d'un
+    // portefeuille avait ete inseree entre elles, l'expiration devenait une requete derivee
+    // (chaine refusee pour l'enumeration, tache en erreur en production) et la liste d'un
+    // portefeuille recevait la requete d'expiration.
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM wallet_hold
@@ -41,10 +49,6 @@ public interface WalletHoldRepository extends JpaRepository<WalletHold, Long> {
               AND expires_at IS NOT NULL
               AND expires_at <= :expiresAt
             """)
-    /** Retenues en cours d'un portefeuille, les plus recentes d'abord. */
-    List<WalletHold> findAllByWalletAndStatusOrderByCreatedAtDesc(com.sni.bokaticowork.features.payment.model.WalletAccount wallet,
-                                                                  com.sni.bokaticowork.features.payment.enums.WalletHoldStatus status);
-
     List<WalletHold> findAllByStatusAndExpiresAtLessThanEqual(@Param("status") String status,
                                                               @Param("expiresAt") Instant expiresAt);
 
