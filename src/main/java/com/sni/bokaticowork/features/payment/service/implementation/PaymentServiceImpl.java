@@ -993,7 +993,16 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentIntent pendingIntent(String intentNumber) {
         PaymentIntent intent = serviceIntent(intentNumber);
         if (intent.getStatus() != PaymentIntentStatus.PENDING && intent.getStatus() != PaymentIntentStatus.PROCESSING) {
-            throw new BadRequestException("Cette intention de paiement n'est pas payable");
+            // Le refus dit pourquoi et quoi faire (avant : « n'est pas payable », sans le statut).
+            String why = switch (intent.getStatus()) {
+                case SUCCEEDED -> "elle est déjà payée";
+                case EXPIRED -> "elle a expiré";
+                case CANCELLED -> "elle a été annulée";
+                case REFUNDED, PARTIALLY_REFUNDED -> "elle a été payée puis remboursée";
+                default -> "son statut est " + intent.getStatus();
+            };
+            throw BadRequestException.coded("PAYMENT_INTENT_NOT_PAYABLE", "L'intention " + intent.getIntentNumber() + " ne peut plus être encaissée : "
+                    + why + (intent.getStatus() == PaymentIntentStatus.SUCCEEDED ? "." : ". Créez une nouvelle intention de paiement pour encaisser."));
         }
         if (intent.getExpiresAt() != null && intent.getExpiresAt().isBefore(Instant.now())) {
             // L'expiration est ecrite dans sa propre transaction : ecrite ici, elle etait annulee
