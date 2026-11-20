@@ -168,4 +168,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     /** Le client qui porte ce profil legal (entreprise cliente creee par /companies). */
     Optional<Customer> findFirstByBusinessEntity_IdAndTypeAndDeletedFalse(Long businessEntityId,
             com.sni.bokaticowork.features.client.customer.enums.CustomerType type);
+
+    /** Fiche client entreprise rattachee a une entite par son code (20/11/2026, avoirs vers l'entreprise). */
+    Optional<Customer> findFirstByBusinessEntity_CodeIgnoreCaseAndTypeAndDeletedFalse(String businessEntityCode,
+                                                                                    com.sni.bokaticowork.features.client.customer.enums.CustomerType type);
 }

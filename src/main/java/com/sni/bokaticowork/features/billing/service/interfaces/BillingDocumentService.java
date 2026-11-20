@@ -159,7 +159,8 @@ public interface BillingDocumentService {
     BillingDocumentResponse validate(String documentNumber);
 
     /**
-     * Applique un avoir validé (SEFC) sur n'importe quelle facture du même client.
+     * Applique un avoir validé (SEFC) sur n'importe quelle facture du même client, ou de l'entreprise
+     * à laquelle ce client (membre ou fiche client) est rattaché.
      * L'avoir doit être VALIDATED (locked). L'avoir est marqué ISSUED après application.
      */
     BillingDocumentResponse applyCreditNoteToInvoice(String creditNoteNumber, String targetInvoiceNumber);
