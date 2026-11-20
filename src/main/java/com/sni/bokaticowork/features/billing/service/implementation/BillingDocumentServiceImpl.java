@@ -2923,8 +2923,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (BillingLifecycleSupport.creditNoteConsumed(creditNote)) {
             throw new BadRequestException("L'avoir " + creditNoteNumber + " a déjà été consommé");
         }
-        if (!creditNote.getCustomerCode().equals(targetInvoice.getCustomerCode())) {
-            throw new BadRequestException("L'avoir et la facture cible doivent appartenir au même client");
+        boolean sameCustomer = creditNote.getCustomerCode().equals(targetInvoice.getCustomerCode());
+        boolean companyOfHolder = !sameCustomer && holderBelongsToCompany(creditNote, targetInvoice);
+        if (!sameCustomer && !companyOfHolder) {
+            throw BadRequestException.coded("AVOIR_AUTRE_CLIENT", "L'avoir " + creditNoteNumber + " (" + creditNote.getCustomerCode()
+                    + ") ne peut s'imputer que sur une facture du même client, ou de l'entreprise à laquelle ce client est rattaché ; "
+                    + targetInvoiceNumber + " est facturée à " + targetInvoice.getCustomerCode());
         }
         if (targetInvoice.getDocumentType() != BillingDocumentType.INVOICE) {
             throw new BadRequestException("La cible doit être une facture");
@@ -2938,12 +2942,58 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         fiscalAuditService.log(FiscalAuditService.CREDIT_NOTE_APPLIED,
                 "BILLING_DOCUMENT", creditNoteNumber,
                 creditNote.getOriginalDocumentNumber(),
-                "applied_to=" + targetInvoiceNumber + "|amount=" + creditNote.getTotalAmount().toPlainString());
+                "applied_to=" + targetInvoiceNumber + "|amount=" + creditNote.getTotalAmount().toPlainString()
+                        + (companyOfHolder ? "|company=" + targetInvoice.getCustomerCode() : ""));
         eventWriter.write(savedCreditNote, "CREDIT_NOTE_APPLIED_TO_INVOICE",
                 java.util.Map.of("targetInvoiceNumber", targetInvoiceNumber,
-                                 "amount", creditNote.getTotalAmount().toPlainString()));
+                                 "amount", creditNote.getTotalAmount().toPlainString(),
+                                 "targetCustomerCode", String.valueOf(targetInvoice.getCustomerCode()),
+                                 "companyOfHolder", String.valueOf(companyOfHolder)));
 
         return mapper.toResponse(savedCreditNote);
+    }
+
+    private com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository companyLinks;
+    private com.sni.bokaticowork.features.client.customer.repository.CustomerRepository customersForCompanies;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCompanyLinks(com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository companyLinks,
+                         com.sni.bokaticowork.features.client.customer.repository.CustomerRepository customersForCompanies) {
+        this.companyLinks = companyLinks;
+        this.customersForCompanies = customersForCompanies;
+    }
+
+    /**
+     * L'avoir d'un membre ou d'un client rattache a une entreprise peut s'imputer sur une facture de
+     * cette entreprise (20/11/2026). Membre : rattachement actif a l'entreprise. Fiche client
+     * individuelle : liee a la meme entite d'entreprise. La facture cible est a la fiche client
+     * de l'entreprise (CUS-COM-...) ou a son entite (BUSINESS_ENTITY).
+     */
+    boolean holderBelongsToCompany(BillingDocument creditNote, BillingDocument targetInvoice) {
+        if (companyLinks == null || customersForCompanies == null || creditNote.getCustomerCode() == null || targetInvoice.getCustomerCode() == null) {
+            return false;
+        }
+        String targetType = String.valueOf(targetInvoice.getCustomerType()).toUpperCase();
+        String targetCode = targetInvoice.getCustomerCode().trim();
+        var company = ("BUSINESS_ENTITY".equals(targetType) || "BUSINESS".equals(targetType))
+                ? customersForCompanies.findFirstByBusinessEntity_CodeIgnoreCaseAndTypeAndDeletedFalse(targetCode,
+                        com.sni.bokaticowork.features.client.customer.enums.CustomerType.COMPANY)
+                : customersForCompanies.findByCustomerId(targetCode);
+        if (company.isEmpty() || company.get().getType() != com.sni.bokaticowork.features.client.customer.enums.CustomerType.COMPANY) {
+            return false;
+        }
+        String holderType = String.valueOf(creditNote.getCustomerType()).toUpperCase();
+        String holderCode = creditNote.getCustomerCode().trim();
+        if ("MEMBER".equals(holderType)) {
+            return companyLinks.findActiveCompanyCodes(holderCode).stream().anyMatch(code -> code.equalsIgnoreCase(company.get().getCustomerId()));
+        }
+        if ("CUSTOMER".equals(holderType)) {
+            var holder = customersForCompanies.findByCustomerId(holderCode).orElse(null);
+            return holder != null && holder.getBusinessEntity() != null && company.get().getBusinessEntity() != null
+                    && holder.getBusinessEntity().getCode() != null
+                    && holder.getBusinessEntity().getCode().equalsIgnoreCase(company.get().getBusinessEntity().getCode());
+        }
+        return false;
     }
 
     @Override
