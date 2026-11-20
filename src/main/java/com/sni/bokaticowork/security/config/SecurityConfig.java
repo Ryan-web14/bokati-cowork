@@ -175,7 +175,16 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/ws/**", webSocket);
         source.registerCorsConfiguration("/**", config);
-        return source;
+        // Pages servies par le serveur lui-meme (reinitialisation du mot de passe, creation du
+        // super-administrateur) : leur formulaire poste vers la meme adresse. Avec leur politique
+        // de referent no-referrer, le navigateur envoie « Origin: null », que CORS refusait
+        // (« Invalid CORS request »). Ce ne sont pas des appels d'une autre origine : CORS ne s'y
+        // applique pas, le formulaire est protege par son jeton CSRF a double cookie.
+        return request -> serverRenderedForm(request.getRequestURI()) ? null : source.getCorsConfiguration(request);
+    }
+
+    static boolean serverRenderedForm(String uri) {
+        return uri != null && (uri.contains("/auth/password-reset/form") || uri.contains("/auth/super-admin-setup/form"));
     }
 
     @Bean
