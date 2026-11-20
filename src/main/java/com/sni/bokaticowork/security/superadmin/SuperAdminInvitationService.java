@@ -171,9 +171,14 @@ public class SuperAdminInvitationService {
         }
         String html = "<p>Bonjour,</p><p>Un lien à usage unique a été généré à votre connexion pour créer un compte super-administrateur ELLE A OSE.</p>"
                 + "<p><a href=\"" + url + "\">Créer le super-administrateur</a></p>"
-                + "<p>Ce lien expire dans 30 minutes et ne sert qu'une fois. Si vous n'êtes pas à l'origine de cette connexion, changez votre mot de passe.</p>";
+                + "<p>Ce lien expire dans 30 minutes et ne sert qu'une fois. Une nouvelle connexion du compte le remplace : utilisez toujours le courriel le plus récent. Si vous n'êtes pas à l'origine de cette connexion, changez votre mot de passe.</p>";
         try {
-            emailSender.sendHtmlEmail(to, "Création du super-administrateur", html, EmailPriority.CRITICAL);
+            // Sujet date a la minute : chaque connexion remplace le lien, et l'anti-doublon des courriels
+            // (meme destinataire, meme sujet, une heure) bloquait les suivants, laissant en boite des
+            // liens deja remplaces.
+            String at = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Brazzaville"))
+                    .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+            emailSender.sendHtmlEmail(to, "Création du super-administrateur : lien du " + at, html, EmailPriority.CRITICAL);
         } catch (Exception ex) {
             log.warn("Courriel d'invitation super-administrateur non envoye : {}", ex.getMessage());
         }

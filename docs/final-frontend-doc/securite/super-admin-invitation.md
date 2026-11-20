@@ -13,7 +13,7 @@ Un `ADMIN` ne peut pas modifier son propre rôle ni donner des droits qu'il n'a 
 
 ## Règles
 
-- Le lien vaut 30 minutes et ne sert qu'une fois. Une nouvelle connexion du compte invité en génère un autre (l'ancien ne vaut plus) tant que l'invitation n'a pas servi.
+- Le lien vaut 30 minutes et ne sert qu'une fois. Chaque courriel porte l'heure du lien dans son sujet : n'utiliser que le plus récent. Une nouvelle connexion du compte invité en génère un autre (l'ancien ne vaut plus) tant que l'invitation n'a pas servi.
 - Seule l'empreinte SHA-256 du jeton est gardée en base (`super_admin_invitation`).
 - Une fois utilisée, l'invitation est close : plus aucun lien, plus de champ `superAdminSetupUrl` à la connexion.
 - L'adresse du nouveau compte ne doit pas déjà exister ; le mot de passe suit la règle habituelle.
