@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-357 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+361 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -21,6 +21,8 @@
 | DELETE | `/sni/api/v1/accounting/entries/{reference}` | ACCOUNTING_ENTRY:CREATE | [AccountingController](routes/AccountingController.md#r-delete-sni-api-v1-accounting-entries-reference) |
 | GET | `/sni/api/v1/accounting/entries/{reference}` | ACCOUNTING_REPORT:READ | [AccountingController](routes/AccountingController.md#r-get-sni-api-v1-accounting-entries-reference) |
 | PUT | `/sni/api/v1/accounting/entries/{reference}` | ACCOUNTING_ENTRY:CREATE | [AccountingController](routes/AccountingController.md#r-put-sni-api-v1-accounting-entries-reference) |
+| POST | `/sni/api/v1/accounting/entries/{reference}/correct` | ACCOUNTING_ENTRY:REVERSE | [AccountingController](routes/AccountingController.md#r-post-sni-api-v1-accounting-entries-reference-correct) |
+| POST | `/sni/api/v1/accounting/entries/{reference}/reclassify` | ACCOUNTING_ENTRY:REVERSE | [AccountingController](routes/AccountingController.md#r-post-sni-api-v1-accounting-entries-reference-reclassify) |
 | POST | `/sni/api/v1/accounting/entries/{reference}/regularize` | ACCOUNTING_ENTRY:BALANCE | [AccountingController](routes/AccountingController.md#r-post-sni-api-v1-accounting-entries-reference-regularize) |
 | PATCH | `/sni/api/v1/accounting/entries/{reference}/reject` | ACCOUNTING_ENTRY:BALANCE | [AccountingController](routes/AccountingController.md#r-patch-sni-api-v1-accounting-entries-reference-reject) |
 | PATCH | `/sni/api/v1/accounting/entries/{reference}/reverse` | ACCOUNTING_ENTRY:REVERSE | [AccountingController](routes/AccountingController.md#r-patch-sni-api-v1-accounting-entries-reference-reverse) |
@@ -292,10 +294,12 @@
 | POST | `/sni/api/v1/accounting/posting/drafts/validate` | ACCOUNTING_POSTING:REPLAY | [PostingController](routes/PostingController.md#r-post-sni-api-v1-accounting-posting-drafts-validate) |
 | GET | `/sni/api/v1/accounting/posting/events` | ACCOUNTING_POSTING:READ | [PostingController](routes/PostingController.md#r-get-sni-api-v1-accounting-posting-events) |
 | POST | `/sni/api/v1/accounting/posting/events` | ACCOUNTING_POSTING:REPLAY | [PostingController](routes/PostingController.md#r-post-sni-api-v1-accounting-posting-events) |
+| POST | `/sni/api/v1/accounting/posting/events/repost` | ACCOUNTING_POSTING:REPLAY | [PostingController](routes/PostingController.md#r-post-sni-api-v1-accounting-posting-events-repost) |
 | GET | `/sni/api/v1/accounting/posting/events/summary` | ACCOUNTING_POSTING:READ | [PostingController](routes/PostingController.md#r-get-sni-api-v1-accounting-posting-events-summary) |
 | GET | `/sni/api/v1/accounting/posting/events/{id}` | ACCOUNTING_POSTING:READ | [PostingController](routes/PostingController.md#r-get-sni-api-v1-accounting-posting-events-id) |
 | PATCH | `/sni/api/v1/accounting/posting/events/{id}/ignore` | ACCOUNTING_POSTING:REPLAY | [PostingController](routes/PostingController.md#r-patch-sni-api-v1-accounting-posting-events-id-ignore) |
 | PATCH | `/sni/api/v1/accounting/posting/events/{id}/regenerate` | ACCOUNTING_POSTING:REPLAY | [PostingController](routes/PostingController.md#r-patch-sni-api-v1-accounting-posting-events-id-regenerate) |
+| PATCH | `/sni/api/v1/accounting/posting/events/{id}/repost` | ACCOUNTING_POSTING:REPLAY | [PostingController](routes/PostingController.md#r-patch-sni-api-v1-accounting-posting-events-id-repost) |
 | POST | `/sni/api/v1/accounting/posting/preview` | ACCOUNTING_POSTING:READ | [PostingController](routes/PostingController.md#r-post-sni-api-v1-accounting-posting-preview) |
 | GET | `/sni/api/v1/accounting/posting/resolvers` | ACCOUNTING_POSTING:READ | [PostingController](routes/PostingController.md#r-get-sni-api-v1-accounting-posting-resolvers) |
 | GET | `/sni/api/v1/accounting/posting/rules` | ACCOUNTING_POSTING:READ | [PostingController](routes/PostingController.md#r-get-sni-api-v1-accounting-posting-rules) |

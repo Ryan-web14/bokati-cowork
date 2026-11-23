@@ -125,6 +125,29 @@ public final class PostingDtos {
     public record Resolver(String name, String description) {
     }
 
+    /** Lot K1 : recomptabilisation d'un evenement (motif obligatoire ; date de la contre-passation, defaut aujourd'hui). */
+    public record RepostRequest(String reason, LocalDate date) {
+    }
+
+    /**
+     * Lot K1 : resultat d'une recomptabilisation. {@code awaitingSecondValidation} : la
+     * contre-passation attend un autre comptable, la nouvelle piece suivra.
+     */
+    public record RepostResult(Event event, String reversal, Boolean awaitingSecondValidation, String newEntry, String message) {
+    }
+
+    /** Lot K1 : recomptabilisation en lot (apercu par defaut). */
+    public record RepostBatchRequest(String ruleCode, String eventType, LocalDate from, LocalDate to, Boolean dryRun, String reason) {
+    }
+
+    public record RepostPreview(Long eventId, String eventType, String reference, LocalDate eventDate, String entryNumber, String ruleCode,
+                                Integer ruleVersion, Integer newRuleVersion, Boolean changed, List<PreviewLine> before, List<PreviewLine> after,
+                                String error) {
+    }
+
+    public record RepostBatch(List<RepostPreview> events, BatchResult result) {
+    }
+
     public record BatchResult(Integer processed, Integer succeeded, Integer failed, List<String> errors) {
     }
 }

@@ -45,6 +45,12 @@ public class AccountingEntryService {
     private static final String BALANCE = "ACCOUNTING_ENTRY:BALANCE";
     private static final EnumSet<JournalType> CLASS_NINE_JOURNALS = EnumSet.of(JournalType.OFF_BALANCE, JournalType.ANALYTIC);
     private static final EnumSet<JournalType> TREASURY_JOURNALS = EnumSet.of(JournalType.CASH, JournalType.BANK, JournalType.MOBILE_MONEY);
+    /** Lot K1 (S11) : pieces saisies par une personne, soumises a la seconde validation au-dela du seuil. */
+    private static final EnumSet<EntryOrigin> HUMAN_ORIGINS = EnumSet.of(EntryOrigin.MANUAL, EntryOrigin.CORRECTION, EntryOrigin.REVERSAL,
+            EntryOrigin.REGULARIZATION);
+    private static final com.fasterxml.jackson.databind.ObjectMapper JSON = new com.fasterxml.jackson.databind.ObjectMapper()
+            .findAndRegisterModules();
+    private static final java.time.format.DateTimeFormatter DAY = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final AccEntryRepository entryRepository;
     private final AccEntryLineRepository lineRepository;
@@ -175,6 +181,69 @@ public class AccountingEntryService {
         return entryRepository.lastValidatedDate(journalCode, fiscalYearCode, EntryNumbering.NUMBERED);
     }
 
+    /**
+     * Lot K1 (decision D3, M5) : derniere date validee d'un journal dans une periode. La chronologie
+     * stricte ne s'impose que dans le mois : un fait arrive en retard garde sa date si sa periode est
+     * ouverte, meme si le journal a deja des pieces du mois suivant.
+     */
+    public java.util.Optional<LocalDate> lastValidatedDate(String journalCode, String fiscalYearCode, String periodCode) {
+        return entryRepository.lastValidatedDateInPeriod(journalCode, fiscalYearCode, periodCode, EntryNumbering.NUMBERED);
+    }
+
+    /** Date du jour a Brazzaville (lot K1, S5 : le serveur tourne en UTC). */
+    public static LocalDate today() {
+        return LocalDate.now(PostingEngine.AccountingClock.ZONE);
+    }
+
+    /** Refus code CHRONOLOGIE_STRICTE, avec la date a retenir (lot K1 : limite a la periode). */
+    private void checkChronology(AccEntry entry, String journalCode, String what) {
+        if (!settings.strictChronology()) {
+            return;
+        }
+        lastValidatedDate(journalCode, entry.getFiscalYearCode(), entry.getPeriodCode())
+                .filter(last -> entry.getEntryDate().isBefore(last))
+                .ifPresent(last -> {
+                    // Plusieurs pieces peuvent porter la meme date ; seule une date anterieure est refusee.
+                    throw BadRequestException.coded("CHRONOLOGIE_STRICTE", what + " est datée du " + entry.getEntryDate().format(DAY)
+                            + ", avant la dernière pièce validée du journal " + journalCode + " dans la période " + entry.getPeriodCode()
+                            + " (" + last.format(DAY) + "). Plusieurs pièces peuvent avoir la même date, mais pas une date antérieure dans le même mois : "
+                            + "datez-la au " + last.format(DAY) + " ou après, ou passez le paramètre accounting.numbering.chronology à PERIOD");
+                });
+    }
+
+    /**
+     * Lot K1 : date proposee pour une correction. La date de la piece d'origine si sa periode est
+     * ouverte (les etats du mois deviennent justes), au plus tot la derniere piece du journal dans ce
+     * mois ; sinon aujourd'hui.
+     */
+    public LocalDate correctionDate(AccEntry original, String journalCode) {
+        LocalDate date = original.getEntryDate();
+        AccPeriod period;
+        try {
+            period = periods.periodFor(date, true);
+        } catch (RuntimeException closed) {
+            return today().isBefore(date) ? date : today();
+        }
+        if (settings.strictChronology()) {
+            LocalDate last = lastValidatedDate(journalCode, periods.fiscalYearOf(period).getCode(), period.getCode()).orElse(null);
+            if (last != null && date.isBefore(last)) {
+                date = last;
+            }
+        }
+        return date;
+    }
+
+    /** Lot K1 (S11) : au-dela du seuil, une piece saisie par une personne est validee par une autre. */
+    private boolean aboveSecondValidation(AccEntry entry) {
+        BigDecimal threshold = settings.secondValidationThreshold();
+        return threshold != null && entry.getTotalDebit().max(entry.getTotalCredit()).compareTo(threshold) >= 0;
+    }
+
+    private String secondValidationMessage(String what) {
+        return what + " enregistrée en brouillard : au-delà de " + plain(settings.secondValidationThreshold())
+                + " XAF, elle est validée par un autre comptable";
+    }
+
     /** Une piece en attente ou en brouillard remplacee par une piece regeneree (lot F2). */
     public void discardForRegeneration(AccEntry entry, String actor) {
         if (entry.getStatus() != EntryStatus.PENDING_BALANCE && entry.getStatus() != EntryStatus.DRAFT) {
@@ -207,6 +276,23 @@ public class AccountingEntryService {
             guardFixedAssets(request);
         }
         AccJournal journal = periods.journal(request.journalCode());
+        if (entry.getPostingEventId() != null) {
+            // Lot K1 (S4) : une piece automatique garde son journal, et la trace de ce que le schema
+            // avait produit est conservee a la premiere modification.
+            if (!journal.getCode().equalsIgnoreCase(entry.getJournalCode())) {
+                throw new BadRequestException("Le journal d'une pièce automatique vient de son schéma (" + entry.getJournalCode()
+                        + ") : corrigez le schéma puis régénérez l'événement, ou rejetez la pièce");
+            }
+            if (entry.getGeneratedLinesJson() == null) {
+                entry.setGeneratedLinesJson(snapshot(lineRepository.findByEntryIdOrderByLineNoAsc(entry.getId())));
+            }
+            entry.setManuallyChangedBy(actors.resolve("SYSTEM"));
+            entry.setManuallyChangedAt(Instant.now());
+            if (StringUtils.hasText(request.changeReason())) {
+                String reason = request.changeReason().trim();
+                entry.setChangeReason(reason.length() > 500 ? reason.substring(0, 500) : reason);
+            }
+        }
         AccPeriod period = periods.periodFor(request.entryDate(), true);
         entry.setJournalCode(journal.getCode());
         entry.setFiscalYearCode(periods.fiscalYearOf(period).getCode());
@@ -228,6 +314,11 @@ public class AccountingEntryService {
         AccEntry entry = entry(reference);
         if (entry.getStatus() != EntryStatus.DRAFT) {
             throw new BadRequestException("Seul un brouillard se supprime ; une piece en attente se rejette, une piece validee se contre-passe");
+        }
+        if (entry.getPostingEventId() != null) {
+            // Lot K1 (S3) : supprimer ce brouillard laissait l'evenement pointer vers une piece disparue.
+            throw new BadRequestException("Le brouillard " + entry.getProvisionalNumber() + " vient d'un événement comptable : rejetez-le avec un motif. "
+                    + "L'événement repasse en échec, puis se régénère ou s'écarte");
         }
         lineRepository.deleteByEntryId(entry.getId());
         entryRepository.delete(entry);
@@ -283,15 +374,25 @@ public class AccountingEntryService {
         }
         String actor = actors.resolve("SYSTEM");
         AccJournal journal = periods.journal(entry.getJournalCode());
-        if (entry.getOrigin() == EntryOrigin.MANUAL) {
-            BigDecimal threshold = settings.secondValidationThreshold();
-            if (threshold != null && entry.getTotalDebit().max(entry.getTotalCredit()).compareTo(threshold) >= 0
-                    && CashActorResolver.samePerson(actor, entry.getCreatedBy())) {
-                throw new ForbiddenException("Au-dela de " + threshold.stripTrailingZeros().toPlainString()
-                        + " XAF, une piece saisie a la main est validee par un autre comptable");
-            }
+        // Lot K1 (S11) : la seconde validation couvre aussi les contre-passations, les regularisations
+        // et les corrections (avant : la validation des saisies manuelles seulement).
+        if (HUMAN_ORIGINS.contains(entry.getOrigin()) && !PostingEngine.SYSTEM_ACTOR.equals(entry.getCreatedBy())
+                && aboveSecondValidation(entry) && CashActorResolver.samePerson(actor, entry.getCreatedBy())) {
+            throw new ForbiddenException("Au-delà de " + plain(settings.secondValidationThreshold())
+                    + " XAF, une pièce saisie, contre-passée, régularisée ou corrigée par une personne est validée par un autre comptable");
         }
-        List<String> messages = runValidation(entry, journal, actor, entry.getOrigin() == EntryOrigin.MANUAL);
+        if (entry.getStatus() == EntryStatus.DRAFT && entry.getOrigin() == EntryOrigin.REVERSAL && StringUtils.hasText(entry.getReversalOf())) {
+            AccEntry original = entry(entry.getReversalOf());
+            finalizeReversal(entry, original, journal, actor, true);
+            return toResponse(entry, List.of("Contre-passation validée sous le numéro " + entry.getEntryNumber()));
+        }
+        if (entry.getStatus() == EntryStatus.DRAFT && entry.getOrigin() == EntryOrigin.REGULARIZATION && StringUtils.hasText(entry.getRegularizationOf())) {
+            AccEntry original = entry(entry.getRegularizationOf());
+            finalizeRegularization(entry, original, journal, actor);
+            return toResponse(entry, List.of("Pièce " + original.getEntryNumber() + " régularisée par " + entry.getEntryNumber()));
+        }
+        boolean manual = entry.getOrigin() == EntryOrigin.MANUAL || entry.getOrigin() == EntryOrigin.CORRECTION;
+        List<String> messages = runValidation(entry, journal, actor, manual);
         return toResponse(entry, messages);
     }
 
@@ -304,18 +405,7 @@ public class AccountingEntryService {
         if (lines.size() < 2) {
             throw new BadRequestException("Une piece comptable a au moins deux lignes, au debit et au credit");
         }
-        if (settings.strictChronology()) {
-            entryRepository.lastValidatedDate(journal.getCode(), entry.getFiscalYearCode(), EntryNumbering.NUMBERED)
-                    .filter(last -> entry.getEntryDate().isBefore(last))
-                    .ifPresent(last -> {
-                        // Plusieurs pieces peuvent porter la meme date ; seule une date anterieure est refusee.
-                        java.time.format.DateTimeFormatter day = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                        throw BadRequestException.coded("CHRONOLOGIE_STRICTE", "La pièce " + entry.getProvisionalNumber() + " est datée du "
-                                + entry.getEntryDate().format(day) + ", avant la dernière pièce validée du journal " + journal.getCode()
-                                + " (" + last.format(day) + "). Plusieurs pièces peuvent avoir la même date, mais pas une date antérieure : "
-                                + "datez-la au " + last.format(day) + " ou après, ou passez le paramètre accounting.numbering.chronology à PERIOD");
-                    });
-        }
+        checkChronology(entry, journal.getCode(), "La pièce " + entry.getProvisionalNumber());
         List<Issue> issues = checks(entry, journal, lines, manual);
         // Lot F9 : ventilation analytique obligatoire (analytique active).
         List<String> analytic = analyticAllocator.problems(entry, lines);
@@ -407,8 +497,39 @@ public class AccountingEntryService {
             publisher.publishEvent(new com.sni.bokaticowork.features.accounting.service.support.EntryValidatedEvent(
                     entry.getPostingEventId(), entry.getProvisionalNumber(), entry.getEntryNumber()));
         }
+        if (StringUtils.hasText(entry.getCorrectionOf())) {
+            linkCorrection(entry, lines, actor);
+        }
         messages.add("Piece validee sous le numero " + entry.getEntryNumber());
         return messages;
+    }
+
+    /**
+     * Lot K1 : la piece d'origine pointe vers la piece qui la corrige. Un reclassement de toute une
+     * ligne sur un compte lettrable est lettre avec la ligne d'origine (les deux se soldent).
+     */
+    private void linkCorrection(AccEntry correction, List<AccEntryLine> lines, String actor) {
+        entryRepository.findByEntryNumber(correction.getCorrectionOf()).ifPresent(original -> {
+            original.setCorrectedBy(correction.getEntryNumber());
+            entryRepository.save(original);
+            if (!"RECLASS".equals(correction.getCorrectionKind())) {
+                return;
+            }
+            List<AccEntryLine> available = new ArrayList<>(lines);
+            for (AccEntryLine line : lineRepository.findByEntryIdOrderByLineNoAsc(original.getId())) {
+                BigDecimal amount = line.getDebit().max(line.getCredit());
+                boolean debit = line.getDebit().signum() > 0;
+                available.stream()
+                        .filter(out -> out.getAccountNumber().equals(line.getAccountNumber())
+                                && Objects.equals(out.getThirdPartyCode(), line.getThirdPartyCode())
+                                && (debit ? out.getCredit() : out.getDebit()).compareTo(amount) == 0)
+                        .findFirst()
+                        .ifPresent(out -> {
+                            available.remove(out);
+                            lettering.pairCorrection(line, out, actor);
+                        });
+            }
+        });
     }
 
     /** Controles de compte et de contrepartie (plan, section 4.6). */
@@ -510,19 +631,43 @@ public class AccountingEntryService {
                     log.setResolution("REJECTED");
                     pendingRepository.save(log);
                 });
+        if (entry.getPostingEventId() != null) {
+            // Lot K1 (S3) : l'evenement repasse en echec avec le motif, il se regenere ou s'ecarte.
+            publisher.publishEvent(new com.sni.bokaticowork.features.accounting.service.support.EntryRejectedEvent(
+                    entry.getPostingEventId(), entry.getProvisionalNumber(), reason.trim()));
+        }
         return toResponse(entry, List.of("Piece rejetee : elle reste consultable"));
     }
 
-    /** Contre-passation : piece inverse datee du jour (ou de la date donnee), liee a l'originale. */
+    /** Contre-passation demandee par une personne : piece inverse datee du jour (ou de la date donnee), liee a l'originale. */
     public AccountingResponses.Entry reverse(String reference, AccountingRequests.Reverse request) {
+        return reverse(reference, request, false);
+    }
+
+    /**
+     * Contre-passation.
+     *
+     * @param fromEngine annulation d'un fait metier par le moteur : ni seconde validation, ni retour
+     *                   vers l'evenement d'origine (l'evenement d'annulation porte la contre-passation)
+     */
+    public AccountingResponses.Entry reverse(String reference, AccountingRequests.Reverse request, boolean fromEngine) {
         AccEntry original = entry(reference);
         if (original.getStatus() != EntryStatus.VALIDATED) {
             throw new BadRequestException(original.getStatus() == EntryStatus.REVERSED
                     ? "La piece " + original.getEntryNumber() + " est deja contre-passee par " + original.getReversedByEntry()
                     : "Seule une piece validee se contre-passe");
         }
+        if (!fromEngine && !entryRepository.findByReversalOfAndStatus(original.getEntryNumber(), EntryStatus.DRAFT).isEmpty()) {
+            throw new BadRequestException("Une contre-passation de " + original.getEntryNumber()
+                    + " attend déjà la validation d'un autre comptable : validez-la ou rejetez-la");
+        }
         String actor = actors.resolve("SYSTEM");
-        LocalDate date = request.date() == null ? LocalDate.now() : request.date();
+        // Lot K1 (S5) : la date du jour est celle de Brazzaville, pas celle du serveur.
+        LocalDate date = request.date() == null ? today() : request.date();
+        if (date.isBefore(original.getEntryDate())) {
+            throw new BadRequestException("La contre-passation ne peut pas être datée avant la pièce " + original.getEntryNumber()
+                    + " (" + original.getEntryDate().format(DAY) + ")");
+        }
         AccJournal journal = periods.journal(original.getJournalCode());
         AccPeriod period = periods.periodFor(date, true);
         AccEntry reversal = entryRepository.save(AccEntry.builder()
@@ -554,14 +699,31 @@ public class AccountingEntryService {
         lineRepository.saveAll(swapped);
         reversal.setTotalDebit(original.getTotalCredit());
         reversal.setTotalCredit(original.getTotalDebit());
-        if (settings.strictChronology()) {
-            entryRepository.lastValidatedDate(journal.getCode(), reversal.getFiscalYearCode(), EntryNumbering.NUMBERED)
-                    .filter(last -> date.isBefore(last))
-                    .ifPresent(last -> {
-                        throw new BadRequestException("Le journal " + journal.getCode() + " a deja une piece au " + last
-                                + " : datez la contre-passation de ce jour ou apres");
-                    });
+        entryRepository.save(reversal);
+        if (!fromEngine && aboveSecondValidation(reversal)) {
+            // Lot K1 (S11) : une seule personne n'annule plus une piece au-dela du seuil.
+            checkChronology(reversal, journal.getCode(), "La contre-passation");
+            return toResponse(reversal, List.of(secondValidationMessage("Contre-passation")));
         }
+        finalizeReversal(reversal, original, journal, actor, !fromEngine);
+        return toResponse(reversal, List.of("Contre-passation validee sous le numero " + reversal.getEntryNumber()));
+    }
+
+    /**
+     * Numerote la contre-passation et marque la piece d'origine. {@code notify} : une piece
+     * d'evenement contre-passee hors du moteur fait passer l'evenement en {@code REVERSED} (lot K1, S1).
+     */
+    private void finalizeReversal(AccEntry reversal, AccEntry original, AccJournal journal, String actor, boolean notify) {
+        if (original.getStatus() != EntryStatus.VALIDATED) {
+            throw new BadRequestException("La pièce " + original.getEntryNumber() + " n'est plus validée ("
+                    + (original.getStatus() == EntryStatus.REVERSED ? "déjà contre-passée par " + original.getReversedByEntry() : original.getStatus())
+                    + ") : rejetez ce brouillard de contre-passation");
+        }
+        AccPeriod period = periods.periodFor(reversal.getEntryDate(), true);
+        reversal.setPeriodCode(period.getCode());
+        reversal.setFiscalYearCode(periods.fiscalYearOf(period).getCode());
+        checkChronology(reversal, journal.getCode(), "La contre-passation");
+        List<AccEntryLine> swapped = lineRepository.findByEntryIdOrderByLineNoAsc(reversal.getId());
         // Equilibree par construction : elle reprend chaque ligne en echangeant debit et credit.
         numbering.assign(reversal, journal, swapped);
         reversal.setStatus(EntryStatus.VALIDATED);
@@ -570,30 +732,39 @@ public class AccountingEntryService {
         entryRepository.save(reversal);
         original.setStatus(EntryStatus.REVERSED);
         original.setReversedByEntry(reversal.getEntryNumber());
-        original.setReversalReason(request.reason().trim());
+        original.setReversalReason(reversal.getReversalReason());
         entryRepository.save(original);
-        lettering.pairReversal(originalLines, swapped, actor);
-        return toResponse(reversal, List.of("Contre-passation validee sous le numero " + reversal.getEntryNumber()));
+        lettering.pairReversal(lineRepository.findByEntryIdOrderByLineNoAsc(original.getId()), swapped, actor);
+        if (notify && original.getPostingEventId() != null) {
+            publisher.publishEvent(new com.sni.bokaticowork.features.accounting.service.support.EntryReversedEvent(
+                    original.getPostingEventId(), original.getProvisionalNumber(), reversal.getEntryNumber(), reversal.getReversalReason()));
+        }
     }
 
     /**
      * Regularisation d'une piece acceptee desequilibree (mode ACCEPT) : une ecriture complementaire
      * apporte exactement la contrepartie manquante ; la piece d'origine perd alors son marqueur.
+     * Lot K1 (S6) : datee du jour choisi, dans une periode ouverte.
      */
     public AccountingResponses.Entry regularize(String reference, AccountingRequests.Regularize request) {
         AccEntry original = entry(reference);
         if (!Boolean.TRUE.equals(original.getAcceptedUnbalanced()) || original.getStatus() == EntryStatus.DRAFT) {
             throw new BadRequestException("La piece " + reference + " n'est pas une piece acceptee desequilibree");
         }
+        if (!entryRepository.findByRegularizationOfAndStatus(original.getEntryNumber(), EntryStatus.DRAFT).isEmpty()) {
+            throw new BadRequestException("Une régularisation de " + original.getEntryNumber()
+                    + " attend déjà la validation d'un autre comptable : validez-la ou rejetez-la");
+        }
         String actor = actors.resolve("SYSTEM");
         AccJournal journal = periods.journal(original.getJournalCode());
-        AccPeriod period = periods.periodFor(LocalDate.now(), true);
+        LocalDate date = request.date() == null ? today() : request.date();
+        AccPeriod period = periods.periodFor(date, true);
         AccEntry complement = entryRepository.save(AccEntry.builder()
                 .provisionalNumber(sequenceGenerator.next("acc_provisional_entry"))
                 .journalCode(journal.getCode())
                 .fiscalYearCode(periods.fiscalYearOf(period).getCode())
                 .periodCode(period.getCode())
-                .entryDate(LocalDate.now())
+                .entryDate(date)
                 .label(request.label().trim())
                 .origin(EntryOrigin.REGULARIZATION)
                 .status(EntryStatus.DRAFT)
@@ -601,19 +772,42 @@ public class AccountingEntryService {
                 .createdBy(actor)
                 .build());
         writeLines(complement, request.lines());
+        regularizationChecks(complement, original, journal);
+        if (aboveSecondValidation(complement)) {
+            checkChronology(complement, journal.getCode(), "La régularisation");
+            return toResponse(complement, List.of(secondValidationMessage("Régularisation")));
+        }
+        finalizeRegularization(complement, original, journal, actor);
+        return toResponse(complement, List.of("Piece " + reference + " regularisee par " + complement.getEntryNumber()));
+    }
+
+    private void regularizationChecks(AccEntry complement, AccEntry original, AccJournal journal) {
         BigDecimal complementDifference = complement.getTotalDebit().subtract(complement.getTotalCredit());
         BigDecimal originalDifference = original.getUnbalancedAmount() == null ? BigDecimal.ZERO : original.getUnbalancedAmount();
         if (complementDifference.add(originalDifference).signum() != 0) {
             throw new BadRequestException("L'ecriture complementaire doit apporter exactement " + plain(originalDifference.negate())
-                    + " XAF de difference pour solder l'ecart de la piece " + reference);
+                    + " XAF de difference pour solder l'ecart de la piece " + original.getEntryNumber());
         }
         List<AccEntryLine> lines = lineRepository.findByEntryIdOrderByLineNoAsc(complement.getId());
         checks(complement, journal, lines, true).stream().filter(issue -> issue.reason() != PendingReason.UNBALANCED).findFirst()
                 .ifPresent(issue -> {
                     throw new BadRequestException(issue.detail());
                 });
+    }
+
+    private void finalizeRegularization(AccEntry complement, AccEntry original, AccJournal journal, String actor) {
+        if (!Boolean.TRUE.equals(original.getAcceptedUnbalanced())) {
+            throw new BadRequestException("La pièce " + original.getEntryNumber() + " est déjà régularisée par " + original.getRegularizedBy()
+                    + " : rejetez ce brouillard de régularisation");
+        }
+        AccPeriod period = periods.periodFor(complement.getEntryDate(), true);
+        complement.setPeriodCode(period.getCode());
+        complement.setFiscalYearCode(periods.fiscalYearOf(period).getCode());
+        checkChronology(complement, journal.getCode(), "La régularisation");
+        regularizationChecks(complement, original, journal);
+        List<AccEntryLine> lines = lineRepository.findByEntryIdOrderByLineNoAsc(complement.getId());
         complement.setAcceptedUnbalanced(true);
-        complement.setUnbalancedAmount(complementDifference);
+        complement.setUnbalancedAmount(complement.getTotalDebit().subtract(complement.getTotalCredit()));
         numbering.assign(complement, journal, lines);
         complement.setStatus(EntryStatus.VALIDATED);
         complement.setValidatedBy(actor);
@@ -626,7 +820,182 @@ public class AccountingEntryService {
         original.setAcceptedUnbalanced(false);
         original.setRegularizedBy(complement.getEntryNumber());
         entryRepository.save(original);
-        return toResponse(complement, List.of("Piece " + reference + " regularisee par " + complement.getEntryNumber()));
+    }
+
+    // ------------------------------------------------------ corrections (lot K1)
+
+    /**
+     * Lot K1 (S2, decision D2) : reclassement. Une piece OD liee a la piece d'origine sort chaque
+     * montant du compte (ou du tiers) errone et le porte sur le bon ; la ventilation analytique suit
+     * (celle d'origine, ou celle donnee). Une ligne lettree se delettre d'abord ; une ligne reclassee
+     * en entier sur un compte lettrable est lettree avec sa sortie.
+     */
+    public AccountingResponses.Entry reclassify(String reference, AccountingRequests.Reclassify request) {
+        AccEntry original = entry(reference);
+        if (original.getStatus() != EntryStatus.VALIDATED) {
+            throw new BadRequestException(original.getStatus() == EntryStatus.REVERSED
+                    ? "La pièce " + original.getEntryNumber() + " est contre-passée par " + original.getReversedByEntry() + " : elle ne se reclasse plus"
+                    : "Seule une pièce validée se reclasse ; un brouillard ou une pièce en attente se modifie");
+        }
+        String actor = actors.resolve("SYSTEM");
+        AccJournal journal = periods.journal(settings.correctionJournal());
+        LocalDate date = request.date() == null ? correctionDate(original, journal.getCode()) : request.date();
+        if (date.isBefore(original.getEntryDate())) {
+            throw new BadRequestException("Le reclassement ne peut pas être daté avant la pièce " + original.getEntryNumber()
+                    + " (" + original.getEntryDate().format(DAY) + ")");
+        }
+        AccPeriod period = periods.periodFor(date, true);
+        Map<Integer, AccEntryLine> byNumber = lineRepository.findByEntryIdOrderByLineNoAsc(original.getId()).stream()
+                .collect(Collectors.toMap(AccEntryLine::getLineNo, Function.identity()));
+        Set<Integer> seen = new HashSet<>();
+        List<AccEntryLine> moves = new ArrayList<>();
+        for (AccountingRequests.ReclassLine move : request.lines()) {
+            AccEntryLine line = byNumber.get(move.lineNo());
+            if (line == null) {
+                throw new BadRequestException("La pièce " + original.getEntryNumber() + " n'a pas de ligne " + move.lineNo());
+            }
+            if (!seen.add(move.lineNo())) {
+                throw new BadRequestException("La ligne " + move.lineNo() + " est indiquée deux fois");
+            }
+            String number = StringUtils.hasText(move.accountNumber()) ? move.accountNumber().trim() : line.getAccountNumber();
+            AccAccount target = chart.find(number).orElseThrow(() -> new BadRequestException("Ligne " + move.lineNo()
+                    + " : le compte " + number + " n'existe pas"));
+            String thirdParty = move.thirdPartyCode() != null ? trim(move.thirdPartyCode())
+                    : target.getThirdPartyType() != null ? line.getThirdPartyCode() : null;
+            String analytic = move.analytic() != null ? AnalyticAllocator.write(move.analytic()) : line.getAnalyticJson();
+            if (target.getNumber().equals(line.getAccountNumber()) && Objects.equals(thirdParty, line.getThirdPartyCode())) {
+                throw new BadRequestException("Ligne " + move.lineNo() + " : indiquez un autre compte ou un autre tiers"
+                        + " (une ventilation analytique seule se corrige par le reclassement analytique)");
+            }
+            BigDecimal lineAmount = line.getDebit().max(line.getCredit());
+            BigDecimal amount = move.amount() == null ? lineAmount : money(move.amount());
+            if (amount.signum() <= 0 || amount.compareTo(lineAmount) > 0) {
+                throw new BadRequestException("Ligne " + move.lineNo() + " : le montant à reclasser est compris entre 0 et " + plain(lineAmount) + " XAF");
+            }
+            if (letteringLineRepository.matchedByLine(List.of(line.getId())).stream().anyMatch(row -> row[1] != null
+                    && ((BigDecimal) row[1]).signum() > 0)) {
+                throw new BadRequestException("Ligne " + move.lineNo() + " lettrée" + lettering.activeCode(line.getId()).map(code -> " (" + code + ")").orElse("")
+                        + " : délettrez-la avant de la reclasser");
+            }
+            boolean debit = line.getDebit().signum() > 0;
+            BigDecimal foreign = prorate(line.getForeignAmount(), amount, lineAmount);
+            BigDecimal taxBase = prorate(line.getTaxBase(), amount, lineAmount);
+            BigDecimal zero = BigDecimal.ZERO.setScale(4);
+            String lineReference = StringUtils.hasText(line.getReference()) ? line.getReference() : original.getEntryNumber();
+            moves.add(AccEntryLine.builder().accountNumber(line.getAccountNumber()).thirdPartyType(line.getThirdPartyType())
+                    .thirdPartyCode(line.getThirdPartyCode()).label("Reclassement : sortie du " + line.getAccountNumber() + " (ligne " + line.getLineNo() + ")")
+                    .debit(debit ? zero : amount).credit(debit ? amount : zero).currency(line.getCurrency()).foreignAmount(foreign)
+                    .rate(line.getRate()).taxCode(line.getTaxCode()).taxBase(taxBase).dueDate(line.getDueDate()).reference(lineReference)
+                    .analyticJson(line.getAnalyticJson()).build());
+            moves.add(AccEntryLine.builder().accountNumber(target.getNumber()).thirdPartyType(target.getThirdPartyType())
+                    .thirdPartyCode(thirdParty).label("Reclassement : vers le " + target.getNumber() + " (ligne " + line.getLineNo() + ")")
+                    .debit(debit ? amount : zero).credit(debit ? zero : amount).currency(line.getCurrency()).foreignAmount(foreign)
+                    .rate(line.getRate()).taxCode(line.getTaxCode()).taxBase(taxBase).dueDate(line.getDueDate()).reference(lineReference)
+                    .analyticJson(analytic).build());
+        }
+        AccEntry entry = entryRepository.save(AccEntry.builder()
+                .provisionalNumber(sequenceGenerator.next("acc_provisional_entry"))
+                .journalCode(journal.getCode())
+                .fiscalYearCode(periods.fiscalYearOf(period).getCode())
+                .periodCode(period.getCode())
+                .entryDate(date)
+                .label(truncate("Reclassement de " + original.getEntryNumber() + " : " + request.reason().trim(), 500))
+                .origin(EntryOrigin.CORRECTION)
+                .sourceType(original.getSourceType())
+                .sourceCode(original.getSourceCode())
+                .status(EntryStatus.DRAFT)
+                .correctionOf(original.getEntryNumber())
+                .correctionKind("RECLASS")
+                .changeReason(truncate(request.reason().trim(), 500))
+                .createdBy(actor)
+                .build());
+        int lineNo = 1;
+        for (AccEntryLine move : moves) {
+            move.setEntryId(entry.getId());
+            move.setLineNo(lineNo++);
+        }
+        lineRepository.saveAll(moves);
+        entry.setTotalDebit(moves.stream().map(AccEntryLine::getDebit).reduce(BigDecimal.ZERO, BigDecimal::add));
+        entry.setTotalCredit(moves.stream().map(AccEntryLine::getCredit).reduce(BigDecimal.ZERO, BigDecimal::add));
+        entryRepository.save(entry);
+        return submitCorrection(entry, journal, actor, "Reclassement");
+    }
+
+    /**
+     * Lot K1 (S2) : piece juste d'une correction de piece manuelle, liee a la piece corrigee (la
+     * contre-passation est faite par l'appelant, dans la meme transaction).
+     */
+    public AccountingResponses.Entry createCorrection(AccEntry original, AccountingRequests.Correct request, LocalDate date) {
+        if (request.lines() == null || request.lines().size() < 2) {
+            throw new BadRequestException("Indiquez les lignes de la pièce juste (au moins deux)");
+        }
+        String actor = actors.resolve("SYSTEM");
+        AccJournal journal = periods.journal(StringUtils.hasText(request.journalCode()) ? request.journalCode() : original.getJournalCode());
+        if (!Boolean.TRUE.equals(journal.getActive())) {
+            throw new BadRequestException("Le journal " + journal.getCode() + " est desactive");
+        }
+        AccPeriod period = periods.periodFor(date, true);
+        String label = StringUtils.hasText(request.label()) ? request.label().trim() : original.getLabel();
+        AccEntry entry = entryRepository.save(AccEntry.builder()
+                .provisionalNumber(sequenceGenerator.next("acc_provisional_entry"))
+                .journalCode(journal.getCode())
+                .fiscalYearCode(periods.fiscalYearOf(period).getCode())
+                .periodCode(period.getCode())
+                .entryDate(date)
+                .documentDate(original.getDocumentDate())
+                .label(truncate(label, 500))
+                .origin(EntryOrigin.CORRECTION)
+                .sourceType(original.getSourceType())
+                .sourceCode(original.getSourceCode())
+                .status(EntryStatus.DRAFT)
+                .correctionOf(original.getEntryNumber())
+                .correctionKind("CORRECTION")
+                .changeReason(truncate(request.reason().trim(), 500))
+                .createdBy(actor)
+                .build());
+        writeLines(entry, request.lines());
+        return submitCorrection(entry, journal, actor, "Pièce juste");
+    }
+
+    private AccountingResponses.Entry submitCorrection(AccEntry entry, AccJournal journal, String actor, String what) {
+        if (aboveSecondValidation(entry)) {
+            checkChronology(entry, journal.getCode(), what);
+            return toResponse(entry, List.of(secondValidationMessage(what)));
+        }
+        return toResponse(entry, runValidation(entry, journal, actor, true));
+    }
+
+    private static BigDecimal prorate(BigDecimal value, BigDecimal part, BigDecimal whole) {
+        if (value == null || whole.signum() == 0 || part.compareTo(whole) == 0) {
+            return value;
+        }
+        return value.multiply(part).divide(whole, 4, RoundingMode.HALF_UP);
+    }
+
+    private static String truncate(String value, int max) {
+        return value == null || value.length() <= max ? value : value.substring(0, max);
+    }
+
+    /** Lot K1 (S4) : lignes produites par le schema, gardees avant une modification a la main. */
+    private static String snapshot(List<AccEntryLine> lines) {
+        List<AccountingResponses.GeneratedLine> generated = lines.stream().map(line -> new AccountingResponses.GeneratedLine(line.getAccountNumber(),
+                line.getThirdPartyCode(), line.getLabel(), line.getDebit(), line.getCredit(), line.getTaxCode(), line.getReference())).toList();
+        try {
+            return JSON.writeValueAsString(generated);
+        } catch (Exception exception) {
+            return null;
+        }
+    }
+
+    private static List<AccountingResponses.GeneratedLine> generatedLines(String json) {
+        if (!StringUtils.hasText(json)) {
+            return null;
+        }
+        try {
+            return List.of(JSON.readValue(json, AccountingResponses.GeneratedLine[].class));
+        } catch (Exception exception) {
+            return null;
+        }
     }
 
     // ------------------------------------------------------------- lecture
@@ -638,8 +1007,8 @@ public class AccountingEntryService {
 
     @Transactional(readOnly = true)
     public List<AccountingResponses.Entry> search(String journal, EntryStatus status, LocalDate from, LocalDate to) {
-        LocalDate start = from == null ? LocalDate.now().withDayOfMonth(1) : from;
-        LocalDate end = to == null ? LocalDate.now() : to;
+        LocalDate start = from == null ? today().withDayOfMonth(1) : from;
+        LocalDate end = to == null ? today() : to;
         return toResponses(entryRepository.search(StringUtils.hasText(journal) ? journal.trim().toUpperCase(Locale.ROOT) : null, status, start, end));
     }
 
@@ -697,7 +1066,11 @@ public class AccountingEntryService {
                 entry.getPendingReason(), entry.getPendingDetail(), entry.getTotalDebit(), entry.getTotalCredit(),
                 entry.getTotalDebit().subtract(entry.getTotalCredit()), entry.getCreatedBy(), entry.getCreatedAt(), entry.getValidatedBy(),
                 entry.getValidatedAt(), entry.getReversalOf(), entry.getReversedByEntry(), entry.getReversalReason(), entry.getRegularizationOf(),
-                entry.getRegularizedBy(), entry.getRejectedBy(), entry.getRejectionReason(), entry.getContentHash(), lineResponses, messages);
+                entry.getRegularizedBy(), entry.getRejectedBy(), entry.getRejectionReason(), entry.getContentHash(), lineResponses, messages,
+                entry.getCorrectionOf(), entry.getCorrectionKind(), entry.getCorrectedBy(), entry.getManuallyChangedBy(), entry.getManuallyChangedAt(),
+                entry.getChangeReason(), generatedLines(entry.getGeneratedLinesJson()),
+                entry.getStatus() == EntryStatus.DRAFT && HUMAN_ORIGINS.contains(entry.getOrigin()) && entry.getOrigin() != EntryOrigin.MANUAL
+                        && aboveSecondValidation(entry));
     }
 
     private Map<String, AccAccount> accounts(List<AccEntryLine> lines) {

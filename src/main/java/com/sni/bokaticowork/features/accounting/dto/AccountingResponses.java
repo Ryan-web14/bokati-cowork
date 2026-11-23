@@ -125,8 +125,32 @@ public final class AccountingResponses {
             String rejectionReason,
             String contentHash,
             List<EntryLine> lines,
-            List<String> messages
+            List<String> messages,
+            /** Lot K1 : piece corrigee par celle-ci, nature de la correction (RECLASS, CORRECTION, REPOST), piece qui la corrige. */
+            String correctionOf,
+            String correctionKind,
+            String correctedBy,
+            /** Lot K1 (S4) : modification a la main d'une piece automatique, et lignes produites par le schema avant. */
+            String manuallyChangedBy,
+            Instant manuallyChangedAt,
+            String changeReason,
+            List<GeneratedLine> generatedLines,
+            /** Lot K1 (S11) : brouillard de correction qui attend la validation d'un autre comptable. */
+            Boolean awaitingSecondValidation
     ) {
+    }
+
+    /**
+     * Lot K1 : resultat de « Corriger ». Piece manuelle : contre-passation et piece juste. Piece
+     * automatique : contre-passation, evenement recomptabilise et nouvelle piece.
+     */
+    public record Correction(Entry reversal, Entry correction, com.sni.bokaticowork.features.accounting.dto.PostingDtos.Event event,
+                             List<String> messages) {
+    }
+
+    /** Lot K1 (S4) : ligne telle que le schema l'avait produite. */
+    public record GeneratedLine(String accountNumber, String thirdPartyCode, String label, BigDecimal debit, BigDecimal credit,
+                                String taxCode, String reference) {
     }
 
     public record Lettering(

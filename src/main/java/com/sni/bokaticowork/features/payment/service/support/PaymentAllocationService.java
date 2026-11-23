@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.service.support.BillingAutoInvoiceService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
+import com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus;
 import com.sni.bokaticowork.features.payment.model.PaymentAllocation;
 import com.sni.bokaticowork.features.payment.model.PaymentIntent;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
@@ -24,6 +25,7 @@ public class PaymentAllocationService {
     private static final String RECOVERY_SOURCE = "PAYABLE_RECOVERY";
 
     private final PaymentAllocationRepository allocationRepository;
+    private final com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository transactionRepository;
     private final BillingDocumentService billingDocumentService;
     private final BillingAutoInvoiceService autoInvoiceService;
     private final ObjectMapper objectMapper;
@@ -60,15 +62,23 @@ public class PaymentAllocationService {
         return transaction.getAmount();
     }
 
+    /**
+     * Remboursement de {@code amount} sur la transaction : rouvre les factures concernees. Lot K1
+     * (A14) : la part non affectee (trop-percu, somme en attente) est remboursee d'abord, et ce que les
+     * remboursements aboutis precedents ont deja pris n'est pas repris (voir {@link RefundSplit}).
+     * Avant, chaque remboursement rouvrait les affectations depuis la premiere.
+     */
     public void reverseAllocations(PaymentTransaction transaction, BigDecimal amount) {
-        BigDecimal remaining = amount;
-        for (PaymentAllocation allocation : allocationRepository.findAllByPaymentTransactionId(transaction.getId())) {
-            if (remaining.signum() == 0) {
-                return;
-            }
-            BigDecimal reversed = allocation.getAllocatedAmount().min(remaining);
-            billingDocumentService.reversePayment(allocation.getBillingDocumentNumber(), reversed);
-            remaining = remaining.subtract(reversed);
+        java.util.List<RefundSplit.Part> allocations = allocationRepository.findAllByPaymentTransactionId(transaction.getId()).stream()
+                .map(allocation -> new RefundSplit.Part(allocation.getBillingDocumentNumber(), allocation.getAllocatedAmount()))
+                .toList();
+        BigDecimal alreadyRefunded = transactionRepository.findAllByOriginalTransactionNumber(transaction.getTransactionNumber()).stream()
+                .filter(refund -> refund.getStatus() == PaymentTransactionStatus.REFUNDED || refund.getStatus() == PaymentTransactionStatus.REVERSED)
+                .map(PaymentTransaction::getAmount)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        for (RefundSplit.Part part : RefundSplit.split(transaction.getAmount(), allocations, alreadyRefunded, amount).reopened()) {
+            billingDocumentService.reversePayment(part.documentNumber(), part.amount());
         }
     }
 

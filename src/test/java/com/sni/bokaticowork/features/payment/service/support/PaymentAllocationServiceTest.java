@@ -25,9 +25,33 @@ class PaymentAllocationServiceTest {
     private final PaymentAllocationRepository allocationRepository = mock(PaymentAllocationRepository.class);
     private final BillingDocumentService billingDocumentService = mock(BillingDocumentService.class);
     private final BillingAutoInvoiceService autoInvoiceService = mock(BillingAutoInvoiceService.class);
+    private final com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository transactionRepository =
+            mock(com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository.class);
 
     private final PaymentAllocationService service = new PaymentAllocationService(
-            allocationRepository, billingDocumentService, autoInvoiceService, new ObjectMapper());
+            allocationRepository, transactionRepository, billingDocumentService, autoInvoiceService, new ObjectMapper());
+
+    @Test
+    void refundTakesTheOverpaymentFirstAndNeverReopensTwice() {
+        // Lot K1 (A14) : 1 000 payes, 700 affectes a INV-001, 300 de trop-percu.
+        PaymentTransaction transaction = transaction(new BigDecimal("1000"), "INV-001");
+        transaction.setTransactionNumber("TXN-1");
+        PaymentAllocation allocation = PaymentAllocation.builder().paymentTransaction(transaction).billingDocumentNumber("INV-001")
+                .allocatedAmount(new BigDecimal("700")).build();
+        when(allocationRepository.findAllByPaymentTransactionId(1L)).thenReturn(java.util.List.of(allocation));
+
+        // Premier remboursement de 300 : le trop-percu, aucune facture rouverte.
+        when(transactionRepository.findAllByOriginalTransactionNumber("TXN-1")).thenReturn(java.util.List.of());
+        service.reverseAllocations(transaction, new BigDecimal("300"));
+        verify(billingDocumentService, never()).reversePayment(anyString(), any());
+
+        // Deuxieme remboursement de 200 apres le premier : rouvre 200 sur INV-001.
+        PaymentTransaction first = PaymentTransaction.builder().amount(new BigDecimal("300"))
+                .status(com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.REFUNDED).build();
+        when(transactionRepository.findAllByOriginalTransactionNumber("TXN-1")).thenReturn(java.util.List.of(first));
+        service.reverseAllocations(transaction, new BigDecimal("200"));
+        verify(billingDocumentService).reversePayment("INV-001", new BigDecimal("200"));
+    }
 
     @Test
     void shouldAllocateOnceToTheTargetInvoice() {

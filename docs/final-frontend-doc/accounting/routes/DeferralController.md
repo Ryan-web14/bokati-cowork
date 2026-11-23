@@ -542,6 +542,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `versionOrigin` | texte |  |  |
 | `replacedByDocumentNumber` | texte |  |  |
 | `depositForDocumentNumber` | texte |  |  |
+| `appliedToDocumentNumber` | texte |  |  |
+| `appliedAt` | date-heure ISO 8601 UTC |  |  |
 | `dealCode` | texte |  |  |
 | `convertedToDocumentNumber` | texte |  |  |
 | `recipientCorrectedAt` | date-heure ISO 8601 UTC |  |  |

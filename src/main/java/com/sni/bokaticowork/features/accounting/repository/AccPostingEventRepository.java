@@ -46,4 +46,7 @@ public interface AccPostingEventRepository extends JpaRepository<AccPostingEvent
     long countByStatusIn(Collection<PostingEventStatus> statuses);
 
     List<AccPostingEvent> findByReferenceOrderByIdAsc(String reference);
+
+    /** Lot K1 : evenements comptabilises par un schema (recomptabilisation en lot). */
+    List<AccPostingEvent> findByStatusAndRuleCode(com.sni.bokaticowork.features.accounting.enums.PostingEventStatus status, String ruleCode);
 }

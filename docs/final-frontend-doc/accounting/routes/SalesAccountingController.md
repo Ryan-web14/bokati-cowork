@@ -107,7 +107,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `family` | texte |  |  |
 | `eventDate` | date AAAA-MM-JJ |  |  |
 | `payload` | texte |  |  |
-| `status` | enum : `PENDING`, `POSTED`, `UNBALANCED`, `FAILED`, `IGNORED` |  |  |
+| `status` | enum : `PENDING`, `POSTED`, `UNBALANCED`, `FAILED`, `IGNORED`, `REVERSED` |  |  |
 | `replay` | booléen |  |  |
 | `failureReason` | texte |  |  |
 | `ruleCode` | texte |  |  |

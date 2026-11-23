@@ -72,10 +72,14 @@ public class SalesAccountingService implements com.sni.bokaticowork.features.acc
     public static final String PAYMENT_REFUNDED = "PAYMENT_REFUNDED";
     public static final String WALLET_ENTRY = "WALLET_ENTRY";
     public static final String CREDIT_NOTE_APPLIED = "CREDIT_NOTE_APPLIED";
+    /** Lot K1 (A13) : facture finale annulee sans avoir, l'acompte deduit redevient une avance. */
+    public static final String DEPOSIT_APPLICATION_CANCELLED = "DEPOSIT_APPLICATION_CANCELLED";
+    /** Lot K1 (A13) : nouvelle facture d'un changement de client annulee sans avoir, le reglement revient au client d'origine. */
+    public static final String RECEIVABLE_TRANSFER_CANCELLED = "RECEIVABLE_TRANSFER_CANCELLED";
     /** Lot K0 (M6) : types que ce service sait relire depuis la facturation, les paiements et le portefeuille. */
     static final Set<String> SOURCE_TYPES = Set.of(INVOICE_ISSUED, CREDIT_NOTE_ISSUED, INVOICE_CANCELLED, PAYMENT_RECEIVED, PAYMENT_REFUNDED,
             WALLET_ENTRY, CREDIT_NOTE_APPLIED, "DEPOSIT_APPLIED", "RECEIVABLE_TRANSFER", "WITHHOLDING_RECORDED", "WITHHOLDING_CANCELLED",
-            "SECURITY_DEPOSIT_MOVEMENT", "LATE_ALLOCATION", "ALLOCATION_REVERSAL");
+            "SECURITY_DEPOSIT_MOVEMENT", "LATE_ALLOCATION", "ALLOCATION_REVERSAL", DEPOSIT_APPLICATION_CANCELLED, RECEIVABLE_TRANSFER_CANCELLED);
 
     static final Set<BillingDocumentType> INVOICES = EnumSet.of(BillingDocumentType.INVOICE, BillingDocumentType.CORRECTIVE_INVOICE,
             BillingDocumentType.DEBIT_NOTE);
@@ -163,6 +167,29 @@ public class SalesAccountingService implements com.sni.bokaticowork.features.acc
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'DEPOSIT_APPLIED' AND e.reference = dp.deposit_invoice_number) "
                     + "ORDER BY dp.deducted_at LIMIT ?", String.class, batch)
                     .forEach(number -> counter.run("DEPOSIT_APPLIED", number, () -> feedDepositApplied(number)));
+        }
+        if (settings.familyEnabled("SALES")) {
+            // Lot K1 (A13) : la facture finale qui avait deduit l'acompte est annulee sans avoir : la
+            // deduction est contre-passee, l'acompte redevient une avance au 4191 (avant : piece orpheline,
+            // 4191 a zero et client crediteur au 411).
+            jdbc.queryForList("SELECT dp.deposit_invoice_number FROM billing_deposit dp JOIN billing_document d ON d.document_number = dp.deducted_on "
+                    + "WHERE d.status IN ('CANCELLED', 'VOIDED') AND dp.deposit_invoice_number IS NOT NULL "
+                    + "AND NOT EXISTS (SELECT 1 FROM billing_document c WHERE c.document_type = 'CREDIT_NOTE' AND c.original_document_number = d.document_number "
+                    + "AND c.status NOT IN ('DRAFT', 'CANCELLED') AND c.deleted_at IS NULL) "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'DEPOSIT_APPLIED' AND e.reference = dp.deposit_invoice_number) "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'DEPOSIT_APPLICATION_CANCELLED' AND e.reference = dp.deposit_invoice_number) "
+                    + "ORDER BY d.cancelled_at LIMIT ?", String.class, batch)
+                    .forEach(number -> counter.run(DEPOSIT_APPLICATION_CANCELLED, number, () -> feedDepositApplicationCancelled(number)));
+            // Lot K1 (A13) : la nouvelle facture d'un changement de client est annulee sans avoir : le
+            // transfert de reglement est contre-passe, le reglement revient au client d'origine.
+            jdbc.queryForList("SELECT DISTINCT c.new_document_number FROM billing_customer_change c JOIN billing_document d ON d.document_number = c.new_document_number "
+                    + "WHERE d.status IN ('CANCELLED', 'VOIDED') "
+                    + "AND NOT EXISTS (SELECT 1 FROM billing_document n WHERE n.document_type = 'CREDIT_NOTE' AND n.original_document_number = d.document_number "
+                    + "AND n.status NOT IN ('DRAFT', 'CANCELLED') AND n.deleted_at IS NULL) "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'RECEIVABLE_TRANSFER' AND e.reference = c.new_document_number) "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'RECEIVABLE_TRANSFER_CANCELLED' AND e.reference = c.new_document_number) "
+                    + "LIMIT ?", String.class, batch)
+                    .forEach(number -> counter.run(RECEIVABLE_TRANSFER_CANCELLED, number, () -> feedReceivableTransferCancelled(number)));
         }
         if (settings.familyEnabled("SALES")) {
             // Lot B6 : reglement transfere d'un client a l'autre lors d'un changement de client (D6).
@@ -470,6 +497,8 @@ public class SalesAccountingService implements com.sni.bokaticowork.features.acc
                 case "SECURITY_DEPOSIT_MOVEMENT" -> feedSecurityDepositMovement(reference);
                 case "LATE_ALLOCATION" -> feedLateAllocation(Long.parseLong(reference.substring("ALLOC-".length())));
                 case "ALLOCATION_REVERSAL" -> feedAllocationReversal(Long.parseLong(reference.substring("UNALLOC-".length())));
+                case DEPOSIT_APPLICATION_CANCELLED -> feedDepositApplicationCancelled(reference);
+                case RECEIVABLE_TRANSFER_CANCELLED -> feedReceivableTransferCancelled(reference);
                 default -> throw new IllegalStateException("Type " + eventType + " non relisible");
             }
         });
@@ -514,6 +543,29 @@ public class SalesAccountingService implements com.sni.bokaticowork.features.acc
         data.put("vatTransfers", paymentRegime() ? vatTransfers(finalNumber, value, false) : List.of());
         data.put("vatPendingAccount", settings.text("accounting.vat.pending-account", "4438"));
         engine.receive("DEPOSIT_APPLIED", depositInvoiceNumber, "SALES", date, json(data), replay(date));
+    }
+
+    /** Lot K1 (A13) : contre-passation de la deduction d'un acompte, la facture finale etant annulee. */
+    void feedDepositApplicationCancelled(String depositInvoiceNumber) {
+        Map<String, Object> row = jdbc.queryForMap("SELECT dp.deducted_on, d.cancelled_at FROM billing_deposit dp "
+                + "JOIN billing_document d ON d.document_number = dp.deducted_on WHERE dp.deposit_invoice_number = ?", depositInvoiceNumber);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("depositInvoiceNumber", depositInvoiceNumber);
+        data.put("_reverse", Map.of("eventType", "DEPOSIT_APPLIED", "reference", depositInvoiceNumber,
+                "reason", "Facture finale " + row.get("deducted_on") + " annulée : l'acompte redevient une avance"));
+        LocalDate date = date(row.get("cancelled_at") instanceof java.sql.Timestamp at ? at.toInstant() : Instant.now());
+        engine.receive(DEPOSIT_APPLICATION_CANCELLED, depositInvoiceNumber, "SALES", date, json(data), replay(date));
+    }
+
+    /** Lot K1 (A13) : contre-passation d'un transfert de reglement, la nouvelle facture etant annulee. */
+    void feedReceivableTransferCancelled(String newDocumentNumber) {
+        BillingDocument document = documentRepository.findByDocumentNumber(newDocumentNumber).orElseThrow();
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("documentNumber", newDocumentNumber);
+        data.put("_reverse", Map.of("eventType", "RECEIVABLE_TRANSFER", "reference", newDocumentNumber,
+                "reason", "Facture " + newDocumentNumber + " annulée : le règlement revient au client d'origine"));
+        LocalDate date = date(document.getCancelledAt() == null ? Instant.now() : document.getCancelledAt());
+        engine.receive(RECEIVABLE_TRANSFER_CANCELLED, newDocumentNumber, "SALES", date, json(data), replay(date));
     }
 
     /** Lot B6 : reglement du client d'origine reporte sur la nouvelle facture, D 411 origine / C 411 nouveau client. */
@@ -677,6 +729,24 @@ public class SalesAccountingService implements com.sni.bokaticowork.features.acc
         this.receivableRisks = receivableRisks;
     }
 
+    /**
+     * Lot K1 (A14) : montant deja rembourse sur la transaction d'origine par les remboursements
+     * aboutis avant celui-ci (ordre de leur aboutissement).
+     */
+    private BigDecimal previousRefunds(String originalNumber, PaymentTransaction current) {
+        Instant currentAt = current.getPaidAt() != null ? current.getPaidAt() : current.getCreatedAt();
+        return transactionRepository.findAllByOriginalTransactionNumber(originalNumber).stream()
+                .filter(other -> !other.getId().equals(current.getId()))
+                .filter(other -> other.getStatus() == com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.REFUNDED
+                        || other.getStatus() == com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.REVERSED)
+                .filter(other -> {
+                    Instant at = other.getPaidAt() != null ? other.getPaidAt() : other.getCreatedAt();
+                    return at != null && currentAt != null && (at.isBefore(currentAt) || at.equals(currentAt) && other.getId() < current.getId());
+                })
+                .map(other -> money(other.getAmount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     void feedTransaction(String number) {
         PaymentTransaction transaction = transactionRepository.findByTransactionNumber(number).orElseThrow();
         // Lot K0 (M6) : une relecture ne refait pas le suivi des creances deja fait a la premiere lecture.
@@ -703,6 +773,55 @@ public class SalesAccountingService implements com.sni.bokaticowork.features.acc
         List<Map<String, Object>> allocations = new ArrayList<>();
         List<Map<String, Object>> vatTransfers = new ArrayList<>();
         BigDecimal left = foreignAmount;
+        if (refund) {
+            // Lot K1 (A14) : un remboursement prend d'abord la part non affectee de la transaction
+            // d'origine (4719 : trop-percu, somme en attente), puis rouvre ses affectations, sans
+            // reprendre ce que les remboursements precedents ont deja pris. Meme regle que la
+            // facturation (RefundSplit). Avant : les affectations etaient rouvertes d'abord, et deux
+            // remboursements partiels rouvraient deux fois la meme.
+            List<com.sni.bokaticowork.features.payment.service.support.RefundSplit.Part> parts = allocationRepository
+                    .findAllByPaymentTransactionId(source.getId()).stream()
+                    .map(allocation -> new com.sni.bokaticowork.features.payment.service.support.RefundSplit.Part(
+                            allocation.getBillingDocumentNumber(), money(allocation.getAllocatedAmount())))
+                    .toList();
+            var split = com.sni.bokaticowork.features.payment.service.support.RefundSplit.split(money(source.getAmount()), parts,
+                    previousRefunds(originalNumber, transaction), foreignAmount);
+            BigDecimal amount = BigDecimal.ZERO;
+            for (var part : split.reopened()) {
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("documentNumber", part.documentNumber());
+                item.put("customerCode", documentRepository.findByDocumentNumber(part.documentNumber()).map(this::customerCode).orElse(customer));
+                BigDecimal converted = fx.apply(part.amount());
+                item.put("amount", converted);
+                String riskAccount = receivableRisks == null ? null : receivableRisks.paymentAccount(part.documentNumber());
+                if (riskAccount != null) {
+                    item.put("clientAccount", riskAccount);
+                }
+                if (fx.foreign()) {
+                    item.put("foreignAmount", part.amount());
+                }
+                allocations.add(item);
+                if (paymentRegime()) {
+                    vatTransfers.addAll(vatTransfers(part.documentNumber(), part.amount(), true));
+                }
+                amount = amount.add(converted);
+            }
+            left = split.unallocated();
+            BigDecimal unallocatedPart = fx.apply(left);
+            data.put("amount", amount.add(unallocatedPart));
+            data.put("allocations", allocations);
+            data.put("unallocated", unallocatedPart);
+            data.put("customerCode", customer);
+            data.put("vatTransfers", vatTransfers);
+            data.put("vatPendingAccount", settings.text("accounting.vat.pending-account", "4438"));
+            if (fx.foreign()) {
+                data.put("currency", fx.currency());
+                data.put("exchangeRate", fx.rate());
+                data.put("foreignAmount", foreignAmount);
+            }
+            engine.receive(PAYMENT_REFUNDED, number, "PAYMENT", date, json(data), replay(date));
+            return;
+        }
         BigDecimal amount = BigDecimal.ZERO;
         for (PaymentAllocation allocation : allocationRepository.findAllByPaymentTransactionId(source.getId())) {
             if (left.signum() <= 0) {

@@ -78,6 +78,12 @@ public class AccountingSettings {
     }
 
     /** Montant d'une piece manuelle au-dela duquel un autre comptable la valide ; nul : jamais. */
+    /** Lot K1 : journal des reclassements et des pieces justes d'une correction. */
+    public String correctionJournal() {
+        String value = settings.text("accounting.correction.journal", "OD");
+        return value == null || value.isBlank() ? "OD" : value.trim().toUpperCase(java.util.Locale.ROOT);
+    }
+
     public BigDecimal secondValidationThreshold() {
         long value = settings.number("accounting.manual-entry.second-validation-threshold", 0);
         return value <= 0 ? null : BigDecimal.valueOf(value);

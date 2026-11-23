@@ -93,6 +93,20 @@ public class PostingController {
         return ResponseEntity.ok(engine.toResponse(engine.regenerate(id)));
     }
 
+    /** Lot K1 : contre-passation, relecture des donnees a la source et nouvelle piece. */
+    @Audited(module = "ACCOUNTING", action = "POSTING_EVENT_REPOST", ressource = "acc_posting_event")
+    @PatchMapping("/events/{id}/repost")
+    public ResponseEntity<PostingDtos.RepostResult> repost(@PathVariable Long id, @RequestBody PostingDtos.RepostRequest request) {
+        return ResponseEntity.ok(engine.repost(id, request.reason(), request.date()));
+    }
+
+    /** Lot K1 : recomptabilisation en lot apres correction d'un schema (apercu par defaut). */
+    @Audited(module = "ACCOUNTING", action = "POSTING_EVENT_REPOST_BATCH", ressource = "acc_posting_event")
+    @PostMapping("/events/repost")
+    public ResponseEntity<PostingDtos.RepostBatch> repostBatch(@RequestBody PostingDtos.RepostBatchRequest request) {
+        return ResponseEntity.ok(engine.repostBatch(request));
+    }
+
     @Audited(module = "ACCOUNTING", action = "POSTING_EVENT_IGNORE", ressource = "acc_posting_event")
     @PatchMapping("/events/{id}/ignore")
     public ResponseEntity<PostingDtos.Event> ignore(@PathVariable Long id, @RequestBody PostingDtos.Reason request) {

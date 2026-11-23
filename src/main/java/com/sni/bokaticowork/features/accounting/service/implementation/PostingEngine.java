@@ -62,7 +62,10 @@ public class PostingEngine {
 
     public static final String SYSTEM_ACTOR = "SYSTEM";
     /** Evenements qui prennent les donnees relues du fait (une livraison en double d'un evenement en file ne change rien). */
-    private static final java.util.EnumSet<PostingEventStatus> OPEN = java.util.EnumSet.of(PostingEventStatus.FAILED, PostingEventStatus.UNBALANCED);
+    private static final java.util.EnumSet<PostingEventStatus> OPEN = java.util.EnumSet.of(PostingEventStatus.FAILED, PostingEventStatus.UNBALANCED,
+            PostingEventStatus.REVERSED);
+    /** Lot K1 : nombre maximal d'evenements d'une recomptabilisation en lot. */
+    private static final int REPOST_BATCH_LIMIT = 200;
 
     private final AccPostingEventRepository eventRepository;
     private final AccPostingRuleRepository ruleRepository;
@@ -194,9 +197,9 @@ public class PostingEngine {
     public AccPostingEvent regenerate(Long eventId) {
         AccPostingEvent event = event(eventId);
         if (event.getStatus() == PostingEventStatus.POSTED) {
-            throw new BadRequestException("L'evenement " + event.getReference() + " est deja comptabilise ("
+            throw new BadRequestException("L'événement " + event.getReference() + " est déjà comptabilisé ("
                     + Optional.ofNullable(event.getEntryNumber()).orElse(event.getProvisionalNumber())
-                    + ") : contre-passez la piece si elle est fausse");
+                    + ") : utilisez « Recomptabiliser » (contre-passation, relecture des données, nouvelle pièce)");
         }
         // Lot K0 (M6) : les donnees sont d'abord relues depuis le fait metier, s'il a une source.
         String refreshError = refresh(event);
@@ -305,6 +308,205 @@ public class PostingEngine {
                 });
     }
 
+    /**
+     * Lot K1 (S1) : la piece d'un evenement a ete contre-passee hors du moteur. L'evenement passe en
+     * {@code REVERSED} (avant : il restait « comptabilise » et la regeneration etait refusee) et le
+     * module source est prevenu ; il se recomptabilise ou s'ecarte.
+     */
+    @org.springframework.context.event.EventListener
+    public void onEntryReversed(com.sni.bokaticowork.features.accounting.service.support.EntryReversedEvent reversed) {
+        if (reversed.postingEventId() == null) {
+            return;
+        }
+        eventRepository.findById(reversed.postingEventId())
+                .filter(event -> event.getStatus() == PostingEventStatus.POSTED)
+                .filter(event -> reversed.provisionalNumber() != null && reversed.provisionalNumber().equals(event.getProvisionalNumber()))
+                .ifPresent(event -> {
+                    event.setStatus(PostingEventStatus.REVERSED);
+                    event.setFailureReason(truncate("Pièce " + Optional.ofNullable(event.getEntryNumber()).orElse(event.getProvisionalNumber())
+                            + " contre-passée par " + reversed.reversalNumber() + (reversed.reason() == null ? "" : " (" + reversed.reason() + ")")
+                            + " : recomptabilisez l'événement ou écartez-le"));
+                    notifyListeners(eventRepository.save(event));
+                });
+    }
+
+    /**
+     * Lot K1 (S3) : la piece d'un evenement (brouillard ou en attente) a ete rejetee. L'evenement
+     * repasse en echec avec le motif, au lieu de garder un numero qui ne mene plus nulle part.
+     */
+    @org.springframework.context.event.EventListener
+    public void onEntryRejected(com.sni.bokaticowork.features.accounting.service.support.EntryRejectedEvent rejected) {
+        if (rejected.postingEventId() == null) {
+            return;
+        }
+        eventRepository.findById(rejected.postingEventId())
+                .filter(event -> event.getStatus() != PostingEventStatus.IGNORED)
+                .filter(event -> rejected.provisionalNumber() != null && rejected.provisionalNumber().equals(event.getProvisionalNumber()))
+                .ifPresent(event -> {
+                    event.setStatus(PostingEventStatus.FAILED);
+                    event.setEntryNumber(null);
+                    event.setFailureReason(truncate("Pièce " + rejected.provisionalNumber() + " rejetée : " + rejected.reason()
+                            + ". Corrigez la source ou le schéma puis régénérez, ou écartez l'événement"));
+                    notifyListeners(eventRepository.save(event));
+                });
+    }
+
+    private static String truncate(String value) {
+        return value == null || value.length() <= 2000 ? value : value.substring(0, 2000);
+    }
+
+    /**
+     * Lot K1 (S1, M6, decision D2) : recomptabilise un evenement comptabilise dont la piece est
+     * fausse (donnee source corrigee, schema corrige). La piece est contre-passee (seconde validation
+     * au-dela du seuil), les donnees sont relues a la source, une nouvelle piece est passee, liee a
+     * l'ancienne. Un evenement deja contre-passe ({@code REVERSED}) est seulement regenere.
+     */
+    public PostingDtos.RepostResult repost(Long eventId, String reason, LocalDate date) {
+        if (!StringUtils.hasText(reason)) {
+            throw new BadRequestException("Indiquez pourquoi l'événement est recomptabilisé");
+        }
+        AccPostingEvent event = event(eventId);
+        if (event.getStatus() == PostingEventStatus.REVERSED) {
+            AccPostingEvent result = regenerate(eventId);
+            return new PostingDtos.RepostResult(toResponse(result), null, false, newEntry(result), outcome(result));
+        }
+        if (event.getStatus() != PostingEventStatus.POSTED) {
+            throw new BadRequestException("Seul un événement comptabilisé se recomptabilise ; un événement en échec ou en attente d'équilibrage se régénère");
+        }
+        if (template.read(event.getPayload()).path("_reverse").isObject()) {
+            throw new BadRequestException("Un événement d'annulation ne se recomptabilise pas : recomptabilisez le fait d'origine");
+        }
+        AccEntry entry = entryRepository.findByProvisionalNumber(event.getProvisionalNumber())
+                .orElseThrow(() -> new BadRequestException("Pièce de l'événement introuvable : " + event.getProvisionalNumber()));
+        String actor = actors.resolve(SYSTEM_ACTOR);
+        String note = "Recomptabilisation : " + reason.trim();
+        if (entry.getStatus() == EntryStatus.VALIDATED) {
+            var reversal = newTransaction.execute(status -> entries.reverse(entry.getEntryNumber(),
+                    new com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Reverse(note, date), false));
+            if (reversal.status() != EntryStatus.VALIDATED) {
+                // Seconde validation : la contre-passation attend un autre comptable ; une fois validee,
+                // l'evenement passe en REVERSED et « Recomptabiliser » le regenere.
+                return new PostingDtos.RepostResult(toResponse(event(eventId)), reversal.provisionalNumber(), true, null,
+                        String.join(" ; ", reversal.messages()) + ". Une fois validée, recomptabilisez de nouveau l'événement");
+            }
+            AccPostingEvent result = regenerate(eventId);
+            return new PostingDtos.RepostResult(toResponse(result), reversal.entryNumber(), false, newEntry(result), outcome(result));
+        }
+        // Piece encore en brouillard (journal sans validation automatique) ou deja contre-passee.
+        newTransaction.executeWithoutResult(status -> {
+            AccPostingEvent current = event(eventId);
+            current.setStatus(PostingEventStatus.REVERSED);
+            current.setFailureReason(truncate(note));
+            eventRepository.save(current);
+        });
+        AccPostingEvent result = regenerate(eventId);
+        return new PostingDtos.RepostResult(toResponse(result), entry.getStatus() == EntryStatus.REVERSED ? entry.getReversedByEntry() : null,
+                false, newEntry(result), outcome(result));
+    }
+
+    private static String newEntry(AccPostingEvent event) {
+        return event.getStatus() == PostingEventStatus.POSTED || event.getStatus() == PostingEventStatus.UNBALANCED
+                ? Optional.ofNullable(event.getEntryNumber()).orElse(event.getProvisionalNumber()) : null;
+    }
+
+    private static String outcome(AccPostingEvent event) {
+        return switch (event.getStatus()) {
+            case POSTED -> "Nouvelle pièce " + Optional.ofNullable(event.getEntryNumber()).orElse(event.getProvisionalNumber());
+            case UNBALANCED -> "Nouvelle pièce " + event.getProvisionalNumber() + " en attente d'équilibrage : " + event.getFailureReason();
+            case IGNORED -> "Aucune nouvelle pièce : " + event.getIgnoredReason();
+            default -> "Nouvelle pièce non passée : " + event.getFailureReason();
+        };
+    }
+
+    /**
+     * Lot K1 : recomptabilisation en lot apres correction d'un schema. Apercu ({@code dryRun}) : pour
+     * chaque evenement comptabilise du schema (ou du type) sur la periode, la piece actuelle et celle
+     * que le schema actif produirait sur les donnees enregistrees. Execution : seuls les evenements
+     * dont la piece change sont recomptabilises (donnees relues a la source).
+     */
+    public PostingDtos.RepostBatch repostBatch(PostingDtos.RepostBatchRequest request) {
+        if (!StringUtils.hasText(request.ruleCode()) && !StringUtils.hasText(request.eventType())) {
+            throw new BadRequestException("Indiquez le schéma ou le type d'événement à recomptabiliser");
+        }
+        boolean dryRun = !Boolean.FALSE.equals(request.dryRun());
+        if (!dryRun && !StringUtils.hasText(request.reason())) {
+            throw new BadRequestException("Indiquez pourquoi les événements sont recomptabilisés");
+        }
+        List<AccPostingEvent> found = StringUtils.hasText(request.ruleCode())
+                ? eventRepository.findByStatusAndRuleCode(PostingEventStatus.POSTED, request.ruleCode().trim().toUpperCase(Locale.ROOT))
+                : eventRepository.findByStatusAndEventType(PostingEventStatus.POSTED, request.eventType().trim().toUpperCase(Locale.ROOT));
+        List<AccPostingEvent> events = found.stream()
+                .filter(event -> !StringUtils.hasText(request.ruleCode()) || request.ruleCode().trim().equalsIgnoreCase(event.getRuleCode()))
+                .filter(event -> !StringUtils.hasText(request.eventType()) || request.eventType().trim().equalsIgnoreCase(event.getEventType()))
+                .filter(event -> request.from() == null || !event.getEventDate().isBefore(request.from()))
+                .filter(event -> request.to() == null || !event.getEventDate().isAfter(request.to()))
+                .filter(event -> !"_REVERSE".equals(event.getRuleCode()))
+                .sorted(Comparator.comparing(AccPostingEvent::getEventDate).thenComparing(AccPostingEvent::getId))
+                .limit(REPOST_BATCH_LIMIT)
+                .toList();
+        List<PostingDtos.RepostPreview> previews = new ArrayList<>();
+        for (AccPostingEvent event : events) {
+            previews.add(previewRepost(event));
+        }
+        if (dryRun) {
+            return new PostingDtos.RepostBatch(previews, null);
+        }
+        int ok = 0;
+        int processed = 0;
+        List<String> errors = new ArrayList<>();
+        for (PostingDtos.RepostPreview preview : previews) {
+            if (!Boolean.TRUE.equals(preview.changed())) {
+                continue;
+            }
+            processed++;
+            try {
+                PostingDtos.RepostResult result = repost(preview.eventId(), request.reason(), null);
+                if (Boolean.TRUE.equals(result.awaitingSecondValidation()) || result.event().status() == PostingEventStatus.POSTED) {
+                    ok++;
+                } else {
+                    errors.add(preview.reference() + " : " + result.message());
+                }
+            } catch (RuntimeException exception) {
+                errors.add(preview.reference() + " : " + readable(exception));
+            }
+        }
+        return new PostingDtos.RepostBatch(previews, new PostingDtos.BatchResult(processed, ok, processed - ok, errors));
+    }
+
+    private PostingDtos.RepostPreview previewRepost(AccPostingEvent event) {
+        List<PostingDtos.PreviewLine> before = List.of();
+        try {
+            String reference = Optional.ofNullable(event.getEntryNumber()).orElse(event.getProvisionalNumber());
+            before = entries.get(reference).lines().stream().map(line -> new PostingDtos.PreviewLine(line.accountNumber(), line.accountLabel(),
+                    true, line.thirdPartyCode(), line.label(), line.debit(), line.credit(), line.reference())).toList();
+        } catch (RuntimeException missing) {
+            // Piece introuvable : l'apercu montre seulement la piece qui serait produite.
+        }
+        try {
+            JsonNode payload = template.read(event.getPayload());
+            AccPostingRule rule = ruleFor(event.getEventType(), event.getEventDate(), payload)
+                    .orElseThrow(() -> new PostingTemplate.PostingException("Aucun schéma actif dont les conditions sont remplies"));
+            PostingTemplate.Plan plan = template.evaluate(rule, payload, false);
+            List<PostingDtos.PreviewLine> after = plan.lines().stream().map(line -> new PostingDtos.PreviewLine(line.accountNumber(), null,
+                    chart.find(line.accountNumber()).isPresent(), line.thirdPartyCode(), line.label(), AccountingEntryService.money(line.debit()),
+                    AccountingEntryService.money(line.credit()), line.reference())).toList();
+            return new PostingDtos.RepostPreview(event.getId(), event.getEventType(), event.getReference(), event.getEventDate(),
+                    Optional.ofNullable(event.getEntryNumber()).orElse(event.getProvisionalNumber()), event.getRuleCode(), event.getRuleVersion(),
+                    rule.getVersion(), !signature(before).equals(signature(after)), before, after, null);
+        } catch (RuntimeException exception) {
+            return new PostingDtos.RepostPreview(event.getId(), event.getEventType(), event.getReference(), event.getEventDate(),
+                    Optional.ofNullable(event.getEntryNumber()).orElse(event.getProvisionalNumber()), event.getRuleCode(), event.getRuleVersion(),
+                    null, false, before, List.of(), readable(exception));
+        }
+    }
+
+    /** Lignes comparees sans ordre : compte, tiers, debit, credit. */
+    private static List<String> signature(List<PostingDtos.PreviewLine> lines) {
+        return lines.stream().map(line -> line.accountNumber() + "|" + Optional.ofNullable(line.thirdPartyCode()).orElse("") + "|"
+                        + AccountingEntryService.plain(line.debit()) + "|" + AccountingEntryService.plain(line.credit()))
+                .sorted().toList();
+    }
+
     /** Ecarte un evenement (aucune ecriture) ; une piece en attente qu'il avait produite est rejetee. */
     public AccPostingEvent ignore(Long eventId, String reason) {
         if (!StringUtils.hasText(reason)) {
@@ -370,6 +572,8 @@ public class PostingEngine {
         }
         event.setAttempts(event.getAttempts() + 1);
         event.setLastAttemptAt(Instant.now());
+        // Lot K1 : piece contre-passee hors du moteur, la nouvelle piece lui sera liee.
+        String previousEntry = event.getStatus() == PostingEventStatus.REVERSED ? event.getEntryNumber() : null;
         if (!event.getReplay() && event.getEventDate().isBefore(settings.startDate())) {
             event.setStatus(PostingEventStatus.IGNORED);
             event.setIgnoredBy(SYSTEM_ACTOR);
@@ -413,10 +617,12 @@ public class PostingEngine {
             note = "Periode du " + date + " fermee : piece passee au " + period.getStartDate();
             date = period.getStartDate();
         }
-        // Ordre chronologique strict du journal : un fait arrive en retard prend la derniere date du journal.
+        // Ordre chronologique strict du journal, limite au mois (lot K1, decision D3) : un fait arrive en
+        // retard garde sa date si sa periode est ouverte ; dans son mois, il prend au plus tot la derniere
+        // date du journal. Avant, il passait sur le mois suivant (chiffre d'affaires et TVA du mauvais mois).
         if (settings.strictChronology()) {
             String fiscalYear = periods.fiscalYearOf(period).getCode();
-            Optional<LocalDate> last = entries.lastValidatedDate(journal.getCode(), fiscalYear);
+            Optional<LocalDate> last = entries.lastValidatedDate(journal.getCode(), fiscalYear, period.getCode());
             if (last.isPresent() && date.isBefore(last.get())) {
                 note = (note == null ? "" : note + " ; ") + "Fait du " + event.getEventDate() + " arrive apres une piece du "
                         + last.get() + " dans " + journal.getCode() + " : piece datee du " + last.get();
@@ -430,6 +636,16 @@ public class PostingEngine {
         AccEntry entry = entries.post(new AccountingEntryService.AutoPost(journal.getCode(), date,
                 date.equals(event.getEventDate()) ? null : event.getEventDate(), plan.label(), origin(event), event.getEventType(),
                 event.getReference(), plan.lines(), SYSTEM_ACTOR, validate, event.getId()));
+        if (previousEntry != null) {
+            entry.setCorrectionOf(previousEntry);
+            entry.setCorrectionKind("REPOST");
+            entryRepository.save(entry);
+            String current = entry.getEntryNumber() != null ? entry.getEntryNumber() : entry.getProvisionalNumber();
+            entryRepository.findByEntryNumber(previousEntry).ifPresent(old -> {
+                old.setCorrectedBy(current);
+                entryRepository.save(old);
+            });
+        }
         event.setProvisionalNumber(entry.getProvisionalNumber());
         event.setEntryNumber(entry.getEntryNumber());
         event.setShiftedNote(note);
@@ -492,7 +708,8 @@ public class PostingEngine {
             // derniere piece validee de son journal (avant : refus, et l'annulation restait en echec).
             if (settings.strictChronology()) {
                 AccPeriod reversalPeriod = periods.firstOpenOnOrAfter(date);
-                Optional<LocalDate> last = entries.lastValidatedDate(source.getJournalCode(), periods.fiscalYearOf(reversalPeriod).getCode());
+                Optional<LocalDate> last = entries.lastValidatedDate(source.getJournalCode(), periods.fiscalYearOf(reversalPeriod).getCode(),
+                        reversalPeriod.getCode());
                 if (last.isPresent() && date.isBefore(last.get())) {
                     event.setShiftedNote((event.getShiftedNote() == null ? "" : event.getShiftedNote() + " ; ") + "Annulation du "
                             + event.getEventDate() + " datee du " + last.get() + ", derniere piece du journal " + source.getJournalCode());
@@ -500,7 +717,7 @@ public class PostingEngine {
                 }
             }
             var response = entries.reverse(source.getEntryNumber(),
-                    new com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Reverse(reason, date));
+                    new com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Reverse(reason, date), true);
             AccEntry reversal = entryRepository.findByEntryNumber(response.entryNumber()).orElseThrow();
             reversal.setPostingEventId(event.getId());
             entryRepository.save(reversal);

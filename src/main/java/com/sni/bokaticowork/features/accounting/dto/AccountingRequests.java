@@ -111,15 +111,51 @@ public final class AccountingRequests {
             String sourceType,
             String sourceCode,
             @NotEmpty @Valid List<EntryLine> lines,
-            Boolean validate
+            Boolean validate,
+            /** Lot K1 (S4) : motif d'une modification d'une piece automatique, garde avec la trace. */
+            String changeReason
     ) {
+        public Entry(String journalCode, LocalDate entryDate, LocalDate documentDate, String label, String sourceType, String sourceCode,
+                     List<EntryLine> lines, Boolean validate) {
+            this(journalCode, entryDate, documentDate, label, sourceType, sourceCode, lines, validate, null);
+        }
     }
 
     public record Reverse(@NotBlank String reason, LocalDate date) {
     }
 
-    /** Ecriture complementaire qui regularise une piece acceptee desequilibree. */
-    public record Regularize(@NotBlank String label, @NotEmpty @Valid List<EntryLine> lines) {
+    /**
+     * Ecriture complementaire qui regularise une piece acceptee desequilibree. Lot K1 (S6) : date
+     * choisie (defaut : aujourd'hui), dans une periode ouverte.
+     */
+    public record Regularize(@NotBlank String label, @NotEmpty @Valid List<EntryLine> lines, LocalDate date) {
+        public Regularize(String label, List<EntryLine> lines) {
+            this(label, lines, null);
+        }
+    }
+
+    /**
+     * Lot K1 (S2) : reclassement de lignes d'une piece validee. Chaque ligne sort du compte (ou du
+     * tiers) errone et va sur le bon, dans une piece OD liee a la piece d'origine.
+     */
+    public record Reclassify(@NotBlank String reason, LocalDate date, @NotEmpty @Valid List<ReclassLine> lines) {
+    }
+
+    /**
+     * Une ligne a reclasser : numero de ligne de la piece d'origine, nouveau compte et/ou nouveau
+     * tiers, montant (defaut : toute la ligne), ventilation analytique de la nouvelle ligne (defaut :
+     * celle d'origine).
+     */
+    public record ReclassLine(@NotNull Integer lineNo, String accountNumber, String thirdPartyCode, BigDecimal amount,
+                              java.util.Map<String, String> analytic) {
+    }
+
+    /**
+     * Lot K1 (S2) : correction d'une piece validee entierement fausse, contre-passation et piece
+     * juste en une action. Piece manuelle : lignes de la piece juste obligatoires. Piece automatique
+     * sans lignes : recomptabilisation depuis l'evenement, donnees relues a la source.
+     */
+    public record Correct(@NotBlank String reason, LocalDate date, String journalCode, String label, @Valid List<EntryLine> lines) {
     }
 
     /** Une ligne a lettrer ; sans montant, tout son reste est rapproche. */

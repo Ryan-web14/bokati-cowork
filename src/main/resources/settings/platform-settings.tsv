@@ -38,6 +38,7 @@ accounting.commitment.received-account	ACCOUNTING	TEXT	LIVE	905	Compte des engag
 accounting.commitment.received-counter-account	ACCOUNTING	TEXT	LIVE	906	Compte de contrepartie des engagements recus
 accounting.confirmation.threshold	ACCOUNTING	DECIMAL	LIVE	1000000	Confirmations de solde : tout solde au-dela de ce montant est circularise
 accounting.confirmation.top-count	ACCOUNTING	INTEGER	LIVE	20	Confirmations de solde : nombre des plus gros soldes circularises
+accounting.correction.journal	ACCOUNTING	TEXT	LIVE	OD	Journal des reclassements et des pièces justes d'une correction (lot K1)
 accounting.currencies	ACCOUNTING	TEXT	LIVE	EUR,USD,GBP,CHF,CNY,JPY,CAD,ZAR	Devises suivies (taux recuperes et proposes), separees par des virgules
 accounting.deferral.analytic-axis	ACCOUNTING	TEXT	LIVE		Constatations d'avance : axe analytique des sections reprises sur les ecritures (vide : celui des achats)
 accounting.deferral.cron	ACCOUNTING	CRON	LIVE	0 0 4 * * *	Constatations d'avance : planification (echeanciers chaque nuit, fin de periode le 1er du mois)

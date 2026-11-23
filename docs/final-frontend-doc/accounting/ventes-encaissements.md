@@ -14,6 +14,8 @@ Les tables de facturation, de paiement et de portefeuille **ne sont pas modifié
 | Transaction `SUCCEEDED` (ou passée depuis en `REFUNDED`, `REVERSED`) | `PAYMENT_RECEIVED` | numéro de transaction | date de paiement |
 | Transaction de remboursement ou d'annulation (liée à l'originale) | `PAYMENT_REFUNDED` | numéro de transaction | date |
 | Écriture du portefeuille (hors retenues) | `WALLET_ENTRY` | numéro d'écriture | date |
+| Facture finale annulée sans avoir, qui avait déduit un acompte (lot K1) | `DEPOSIT_APPLICATION_CANCELLED` (contre-passation de `DEPOSIT_APPLIED` : l'acompte redevient une avance au `4191`) | numéro de la facture d'acompte | date d'annulation |
+| Nouvelle facture d'un changement de client annulée sans avoir (lot K1) | `RECEIVABLE_TRANSFER_CANCELLED` (contre-passation de `RECEIVABLE_TRANSFER` : le règlement revient au client d'origine) | numéro de la nouvelle facture | date d'annulation |
 
 Une transaction n'est transmise que `accounting.sales.payment-delay-minutes` (5) après son paiement, le temps de son imputation sur les factures.
 
@@ -26,7 +28,7 @@ L'état comptable d'un fait se lit par `GET /accounting/sales/status/{référenc
 | `SALES_INVOICE` | Journal `VT`. D `411` client TTC (référence : numéro de facture, échéance) ; D `709` remises (brut des lignes moins base taxable) ; C produit HT par ligne ; C `4431` TVA ; C centime additionnel |
 | `SALES_CREDIT_NOTE` | Inverse ; le crédit `411` porte le numéro de la facture d'origine pour se lettrer avec elle |
 | `SALES_PAYMENT` | Journal du moyen. D trésorerie du moyen ; C `411` par facture imputée (référence : numéro de facture) ; C `4719` pour le reste (rechargement, trop-perçu, paiement à affecter) |
-| `SALES_REFUND` | Inverse : D `411` par facture de la transaction d'origine, D `4719` pour le reste ; C trésorerie |
+| `SALES_REFUND` | Inverse : D `4719` pour la part non affectée de la transaction d'origine (trop-perçu, somme en attente), puis D `411` par facture rouverte ; C trésorerie. Lot K1 : la part non affectée est remboursée d'abord, et des remboursements successifs reprennent là où le précédent s'est arrêté (une facture n'est jamais rouverte deux fois). La facturation applique la même règle pour rouvrir les factures |
 | `WALLET_ENTRY` | Journal `PF`. Crédit du portefeuille : C `4191` du client ; débit : D `4191` ; contrepartie selon le type |
 
 Comptes de produit par type de ligne (`accounting.sales.account.<TYPE>`) : `PRODUCT` 701, `SUBSCRIPTION` et `PASS` 7062, `BOOKING` 7063, `WALLET` 4719, les autres 706.

@@ -27,6 +27,18 @@ public interface AccEntryRepository extends JpaRepository<com.sni.bokaticowork.f
     Optional<LocalDate> lastValidatedDate(@Param("journal") String journal, @Param("year") String year,
                                           @Param("statuses") Collection<com.sni.bokaticowork.features.accounting.enums.EntryStatus> statuses);
 
+    /** Lot K1 (D3, M5) : la chronologie stricte ne s'impose que dans la periode. */
+    @Query("SELECT MAX(e.entryDate) FROM AccEntry e WHERE e.journalCode = :journal AND e.fiscalYearCode = :year AND e.periodCode = :period AND e.status IN :statuses")
+    Optional<LocalDate> lastValidatedDateInPeriod(@Param("journal") String journal, @Param("year") String year, @Param("period") String period,
+                                                  @Param("statuses") Collection<com.sni.bokaticowork.features.accounting.enums.EntryStatus> statuses);
+
+    /** Lot K1 (S11) : brouillards qui corrigent ou contre-passent une piece (un seul a la fois). */
+    List<com.sni.bokaticowork.features.accounting.model.AccEntry> findByReversalOfAndStatus(String reversalOf,
+                                                                                        com.sni.bokaticowork.features.accounting.enums.EntryStatus status);
+
+    List<com.sni.bokaticowork.features.accounting.model.AccEntry> findByRegularizationOfAndStatus(String regularizationOf,
+                                                                                              com.sni.bokaticowork.features.accounting.enums.EntryStatus status);
+
     @Query("SELECT e FROM AccEntry e WHERE (:journal IS NULL OR e.journalCode = :journal) AND (:status IS NULL OR e.status = :status) AND e.entryDate >= :from AND e.entryDate <= :to ORDER BY e.entryDate ASC, e.id ASC")
     List<com.sni.bokaticowork.features.accounting.model.AccEntry> search(@Param("journal") String journal, @Param("status") com.sni.bokaticowork.features.accounting.enums.EntryStatus status,
                                       @Param("from") LocalDate from, @Param("to") LocalDate to);

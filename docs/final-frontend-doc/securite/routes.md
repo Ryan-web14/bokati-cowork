@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-59 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+61 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -63,5 +63,7 @@
 | GET | `/sni/api/v1/staff/me/profile` | ADMIN:ACCESS | [StaffProfileController](routes/StaffProfileController.md#r-get-sni-api-v1-staff-me-profile) |
 | DELETE | `/sni/api/v1/staff/me/signature` | ADMIN:ACCESS | [StaffProfileController](routes/StaffProfileController.md#r-delete-sni-api-v1-staff-me-signature) |
 | PUT | `/sni/api/v1/staff/me/signature` | ADMIN:ACCESS | [StaffProfileController](routes/StaffProfileController.md#r-put-sni-api-v1-staff-me-signature) |
+| GET | `/sni/api/v1/auth/super-admin-setup/form` | public | [SuperAdminSetupFormController](routes/SuperAdminSetupFormController.md#r-get-sni-api-v1-auth-super-admin-setup-form) |
+| POST | `/sni/api/v1/auth/super-admin-setup/form` | public | [SuperAdminSetupFormController](routes/SuperAdminSetupFormController.md#r-post-sni-api-v1-auth-super-admin-setup-form) |
 | POST | `/sni/api/v1/admin/provisioning/bootstrap-admin` | public | [UserProvisioningController](routes/UserProvisioningController.md#r-post-sni-api-v1-admin-provisioning-bootstrap-admin) |
 | POST | `/sni/api/v1/admin/provisioning/staff` | SYSTEM:SETTINGS | [UserProvisioningController](routes/UserProvisioningController.md#r-post-sni-api-v1-admin-provisioning-staff) |

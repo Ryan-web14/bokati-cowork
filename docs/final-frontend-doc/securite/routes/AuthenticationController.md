@@ -143,6 +143,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `refreshToken` | texte |  |  |
 | `emailVerified` | booléen |  |  |
 | `roles` | texte[] |  |  |
+| `superAdminSetupUrl` | texte |  |  |
+| `redirectUrl` | texte |  |  |
 
 <a id="m-LoginRequest"></a>
 #### LoginRequest

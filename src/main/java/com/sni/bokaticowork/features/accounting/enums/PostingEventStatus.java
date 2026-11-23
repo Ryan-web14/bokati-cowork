@@ -11,5 +11,10 @@ public enum PostingEventStatus {
     /** Echec technique : schema absent, donnee illisible, variable non resolue. */
     FAILED,
     /** Ecarte : aucun ecriture a passer (schema sans ecriture, ou decision d'un comptable). */
-    IGNORED
+    IGNORED,
+    /**
+     * Lot K1 (S1) : la piece produite a ete contre-passee hors du moteur (a la main, ou pour la
+     * recomptabiliser). L'evenement se recomptabilise (« Regenerer ») ou s'ecarte.
+     */
+    REVERSED
 }

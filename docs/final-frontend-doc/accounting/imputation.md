@@ -14,7 +14,8 @@ Fait métier (dans sa transaction)
            2. schéma actif en vigueur à la date, conditions remplies (priorité)
            3. variables résolues (comptes, tiers, journal), lignes calculées
            4. première période ouverte à partir de la date du fait (mention si report)
-           5. ordre chronologique du journal : un fait en retard prend la dernière date du journal (mention)
+           5. ordre chronologique du journal, dans le mois seulement (lot K1) : un fait en retard garde sa date
+              si sa période est ouverte ; dans son mois, il prend au plus tôt la dernière date du journal (mention)
            6. pièce validée, ou brouillard (journal sans validation automatique, ou reprise)
 ```
 
@@ -28,12 +29,19 @@ Fait métier (dans sa transaction)
 | État | Sens | Actions |
 | --- | --- | --- |
 | `PENDING` | En file | Le moteur le traitera |
-| `POSTED` | Pièce produite (validée, ou brouillard) | Une pièce fausse se contre-passe |
+| `POSTED` | Pièce produite (validée, ou brouillard) | Pièce fausse : **Recomptabiliser** (contre-passation, relecture des données, nouvelle pièce liée), ou depuis la pièce **Reclasser** / **Corriger** |
 | `UNBALANCED` | Pièce produite mais en attente d'équilibrage (déséquilibre, compte absent ou inactif, tiers manquant, contrepartie non autorisée), selon la politique du lot F1 | Corriger le paramétrage (compte, schéma), puis **Régénérer** ; ou **Écarter** |
 | `FAILED` | Échec technique : aucun schéma actif, variable non résolue, données illisibles, journal absent, période introuvable ; ou **lecture du fait impossible** (motif commençant par « Lecture du fait impossible : », données `{}`), par exemple taux de change manquant, paiement en espèces sans session, facture incohérente | Corriger (à la source pour une lecture impossible), puis **Régénérer** ; activer un schéma remet en file les échecs de son type |
 | `IGNORED` | Aucune écriture : schéma « sans écriture », fait antérieur à la bascule, ou écarté par un comptable (motif) | Aucune |
+| `REVERSED` | Lot K1 : la pièce a été contre-passée hors du moteur (à la main, ou recomptabilisation dont la contre-passation attendait une seconde validation). Motif dans `failureReason` | **Recomptabiliser** (ou **Régénérer**) pour passer la pièce juste ; **Écarter** si le fait ne doit plus rien produire |
 
-**Régénérer** relit d'abord les données du fait à la source (facture, avoir, paiement, portefeuille, caisse, depuis le lot K0) : une correction faite dans la facturation passe dans la pièce. Puis la pièce en attente est rejetée (suivi `REGENERATED`) et une nouvelle est calculée avec les schémas et le plan du moment. Si la relecture échoue, l'événement reste `FAILED` avec le nouveau motif. Un événement `POSTED` ne se régénère pas.
+**Régénérer** relit d'abord les données du fait à la source (facture, avoir, paiement, portefeuille, caisse, depuis le lot K0) : une correction faite dans la facturation passe dans la pièce. Puis la pièce en attente est rejetée (suivi `REGENERATED`) et une nouvelle est calculée avec les schémas et le plan du moment. Si la relecture échoue, l'événement reste `FAILED` avec le nouveau motif. Un événement `POSTED` ne se régénère pas : il se **recomptabilise**.
+
+Depuis le lot K1 :
+- **Recomptabiliser** (`PATCH /events/{id}/repost`, motif, date de contre-passation facultative) : la pièce validée est contre-passée, les données sont relues à la source, une nouvelle pièce est passée. La nouvelle pièce porte `correctionOf` (ancienne pièce) et `correctionKind = REPOST` ; l'ancienne porte `correctedBy`. Au-delà du seuil de seconde validation, la contre-passation reste en brouillard (`awaitingSecondValidation = true` dans la réponse) : une fois validée par un autre comptable, l'événement passe `REVERSED` et **Recomptabiliser** termine. Un événement d'annulation (`_REVERSE`) ne se recomptabilise pas.
+- **Recomptabiliser en lot** après correction d'un schéma (`POST /events/repost`) : `{ruleCode | eventType, from, to, dryRun, reason}`. Par défaut c'est un aperçu (`dryRun` absent ou `true`) : pour chaque événement comptabilisé (200 au plus), la pièce actuelle (`before`), celle que le schéma actif produirait sur les données enregistrées (`after`) et `changed`. Avec `dryRun: false` et un motif, seuls les événements dont la pièce change sont recomptabilisés ; `result` donne le bilan. Montrer l'aperçu, puis demander confirmation.
+- Contre-passer à la main une pièce automatique fait passer son événement `REVERSED` (avant : il restait `POSTED`).
+- Rejeter une pièce automatique (brouillard ou en attente) fait repasser son événement `FAILED` avec « Pièce … rejetée : motif » ; un brouillard d'événement ne se supprime plus, il se rejette.
 
 Depuis le lot K0 :
 - une pièce en attente complétée et validée à la main fait passer son événement `POSTED` (numéro définitif renseigné) ;
@@ -69,7 +77,7 @@ Depuis le lot K0 :
 
 - `side` : `DEBIT` ou `CREDIT`.
 - `amount` : chemin, nombre, ou somme (`totalTtc - discount`, `a + b`). Une ligne à montant nul est omise. Avec `signed`, un montant négatif passe de l'autre côté ; sans, il est refusé.
-- `foreach` : la ligne est répétée pour chaque élément du tableau ; les chemins cherchent d'abord dans l'élément, puis dans l'événement (`event.x` force l'événement).
+- `foreach` : la ligne est répétée pour chaque élément du tableau. Le montant se lit dans l'élément seulement (lot K0 ; `event.x` pour l'événement) ; les autres chemins cherchent d'abord dans l'élément, puis dans l'événement (`event.x` force l'événement).
 - `when` : conditions propres à la ligne (même syntaxe).
 - Variables : `{chemin}` (minuscule) lit l'événement ; `{NOM}` ou `{NOM:argument}` (majuscules) appelle un résolveur. L'argument est un chemin de l'événement, ou à défaut sa valeur littérale (`{SETTING:accounting.unbalanced-entry.suspense-account}`).
 
@@ -101,6 +109,8 @@ Préfixe `/api/v1/accounting/posting`. Écritures auditées (module `ACCOUNTING`
 | `GET /events/summary` | Compteurs par état, comptabilité active, date de bascule, familles coupées | `ACCOUNTING_POSTING:READ` |
 | `GET /events/{id}` | Détail avec les données reçues | `ACCOUNTING_POSTING:READ` |
 | `PATCH /events/{id}/regenerate` | Régénérer | `ACCOUNTING_POSTING:REPLAY` |
+| `PATCH /events/{id}/repost` | Recomptabiliser (lot K1) : `{reason, date}` | `ACCOUNTING_POSTING:REPLAY` |
+| `POST /events/repost` | Recomptabiliser en lot, aperçu par défaut (lot K1) | `ACCOUNTING_POSTING:REPLAY` |
 | `PATCH /events/{id}/ignore` | Écarter (motif) | `ACCOUNTING_POSTING:REPLAY` |
 | `POST /events` | Soumettre un événement à la main (test de bout en bout, reprise ponctuelle) | `ACCOUNTING_POSTING:REPLAY` |
 | `POST /run` | Traiter la file tout de suite | `ACCOUNTING_POSTING:REPLAY` |
@@ -119,7 +129,8 @@ Rôles : `SUPER_ADMIN` et `ADMIN` ont les trois droits ; `FINANCE` lit, régén�
 
 ## Pour le frontend
 
-- **Écran des écritures automatiques** : bandeau avec `GET /events/summary` (comptabilité active ou non, date de bascule, familles coupées, compteurs). Onglets par état ; `FAILED` et `UNBALANCED` d'abord, avec le motif (`failureReason`), le schéma appliqué, la pièce produite (lien vers `/accounting/entries/{provisionalNumber}`), la mention de report (`shiftedNote`). Actions : Régénérer, Écarter (motif), voir les données reçues (`payload`).
+- **Écran des écritures automatiques** : bandeau avec `GET /events/summary` (comptabilité active ou non, date de bascule, familles coupées, compteurs). Onglets par état ; `FAILED` et `UNBALANCED` d'abord, avec le motif (`failureReason`), le schéma appliqué, la pièce produite (lien vers `/accounting/entries/{provisionalNumber}`), la mention de report (`shiftedNote`). Actions : Régénérer, Écarter (motif), voir les données reçues (`payload`). Onglet `REVERSED` (lot K1) avec **Recomptabiliser** ; sur un événement `POSTED`, **Recomptabiliser** demande un motif et affiche le `message` de la réponse (nouvelle pièce, ou contre-passation en attente d'un autre comptable).
+- **Recomptabilisation en lot** (lot K1) : depuis la fiche d'un schéma corrigé, bouton « Recomptabiliser les pièces de ce schéma » : aperçu (`POST /events/repost` sans `dryRun`) en tableau avant / après, lignes `changed` mises en avant, erreurs (`error`) ; confirmation avec motif (`dryRun: false`) ; bilan.
 - **Éditeur de schémas** : liste par famille et type ; fiche avec conditions, journal, libellé, grille des lignes (sens, compte ou variable, montant, tiers, référence, répétition, condition, signé) ; liste des résolveurs pour l'aide à la saisie ; zone d'exemple JSON. Bouton **Aperçu** qui appelle `POST /preview` avec le schéma en cours d'édition : lignes calculées, comptes inconnus signalés (`accountExists`), totaux, équilibre, avertissements, erreur. Bouton **Activer**, dont le refus donne la liste des problèmes. Historique des versions.
 - **Reprise** : liste des brouillards issus des événements (`GET /accounting/entries?status=DRAFT`), filtre par journal, bouton « Valider jusqu'au… » (`POST /drafts/validate`), compte rendu des échecs.
 
@@ -131,3 +142,4 @@ Rôles : `SUPER_ADMIN` et `ADMIN` ont les trois droits ; `FINANCE` lit, régén�
   - `PostingOutcomeListener` : les modules sources (caisse, ventes) sont prévenus du résultat dans la transaction du moteur et reportent l'état comptable sur le fait d'origine.
 - **Lot F4** : registre interrogé par référence (`GET /accounting/sales/status/{référence}`) ; les faits de vente, d'encaissement et de portefeuille sont transmis par anti-jointure sur ce registre.
 - **Lot F9** : une ligne de schéma accepte `"analytic": {"AXE": "{variable}"}` ; une valeur vide est ignorée.
+- **Lot K1** : statut `REVERSED`, recomptabilisation (unitaire et en lot), chronologie stricte limitée au mois, contre-passation à la main et rejet d'une pièce automatique reportés sur l'événement. Reclasser et Corriger : [socle.md](socle.md#corrections).

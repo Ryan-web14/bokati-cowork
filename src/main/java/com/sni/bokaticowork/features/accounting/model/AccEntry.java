@@ -160,6 +160,32 @@ public class AccEntry {
         updatedAt = Instant.now();
     }
 
+    /** Lot K1 : piece corrigee par celle-ci (reclassement, correction, recomptabilisation). */
+    @Column(name = "correction_of", length = 60)
+    private String correctionOf;
+
+    /** Lot K1 : RECLASS, CORRECTION ou REPOST. */
+    @Column(name = "correction_kind", length = 20)
+    private String correctionKind;
+
+    /** Lot K1 : derniere piece qui corrige celle-ci. */
+    @Column(name = "corrected_by", length = 60)
+    private String correctedBy;
+
+    /** Lot K1 (S4) : lignes telles que le schema les avait produites, gardees a la premiere modification a la main. */
+    @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
+    @Column(name = "generated_lines_json", columnDefinition = "jsonb")
+    private String generatedLinesJson;
+
+    @Column(name = "manually_changed_by", length = 180)
+    private String manuallyChangedBy;
+
+    @Column(name = "manually_changed_at")
+    private Instant manuallyChangedAt;
+
+    @Column(name = "change_reason", length = 500)
+    private String changeReason;
+
     /** Code de flux du tableau des flux de tresorerie, saisi sur la piece ; a defaut, celui de son schema (complements F12). */
     @Column(name = "cash_flow_code", length = 4)
     private String cashFlowCode;

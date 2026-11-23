@@ -40,8 +40,8 @@ Détail : [ecarts.md](ecarts.md), 85 écarts avec fichier, ligne, effet et lot.
 
 | Lot | Contenu | Écarts |
 |---|---|---|
-| K0 | Écritures automatiques justes et file qui ne se bloque pas | A1 à A14, M1 à M4, M7 |
-| K1 | Corriger une pièce mal placée : reclasser, corriger, recomptabiliser ; contre-passation sûre | M5, M6, S1 à S6, S11 |
+| K0 | Écritures automatiques justes et file qui ne se bloque pas | A1 à A12, M1 à M4, M6, M7 · fait, voir [lot-k0.md](lot-k0.md) |
+| K1 | Corriger une pièce mal placée : reclasser, corriger, recomptabiliser ; contre-passation sûre ; fait tardif dans son mois ; annulations et remboursements | M5, S1 à S6, S11, A13, A14 (M6 fait en K0) · fait, voir [lot-k1.md](lot-k1.md) |
 | K2 | Saisie guidée : avertissements non bloquants, propositions de contrepartie et de TVA, messages en français avec l'action à mener | S7 à S10 |
 | K3 | Propositions traçables : motif lisible, score, rejet durable, péremption ; créances, banque, lettrage, estimations, immobilisations, budget, fiscalité | P1 à P17 |
 | K4 | Recommandations : tableau des anomalies permanent, clôture complète, notifications dans l'application | P18, R1 à R9 |

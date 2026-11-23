@@ -17,5 +17,7 @@ public enum EntryOrigin {
     /** Contre-passation. */
     REVERSAL,
     /** Regularisation. */
-    REGULARIZATION
+    REGULARIZATION,
+    /** Lot K1 : reclassement ou piece juste d'une correction, liee a la piece corrigee. */
+    CORRECTION
 }

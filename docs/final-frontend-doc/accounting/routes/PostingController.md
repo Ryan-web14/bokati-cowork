@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [accounting](../README.md) · 15 route(s).
+Module [accounting](../README.md) · 17 route(s).
 
 ## Routes
 
@@ -44,6 +44,15 @@ Module [accounting](../README.md) · 15 route(s).
 - Modèles : [PostingDtos.Event](#m-PostingDtos-Event), [PostingDtos.SubmitEvent](#m-PostingDtos-SubmitEvent)
 - Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/PostingController.java`, méthode `submit`
 
+<a id="r-post-sni-api-v1-accounting-posting-events-repost"></a>
+### POST /sni/api/v1/accounting/posting/events/repost
+
+- Accès : back-office : rôle d'administration et droit `ACCOUNTING_POSTING:REPLAY`
+- Corps JSON (obligatoire) : `PostingDtos.RepostBatchRequest`
+- Réponse : `PostingDtos.RepostBatch`
+- Modèles : [PostingDtos.RepostBatch](#m-PostingDtos-RepostBatch), [PostingDtos.RepostBatchRequest](#m-PostingDtos-RepostBatchRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/PostingController.java`, méthode `repostBatch`
+
 <a id="r-get-sni-api-v1-accounting-posting-events-summary"></a>
 ### GET /sni/api/v1/accounting/posting/events/summary
 
@@ -84,6 +93,19 @@ Module [accounting](../README.md) · 15 route(s).
 - Réponse : `PostingDtos.Event`
 - Modèles : [PostingDtos.Event](#m-PostingDtos-Event)
 - Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/PostingController.java`, méthode `regenerate`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `id` | chemin | `Long` (code identifiant ou nombre) | oui |  |
+
+<a id="r-patch-sni-api-v1-accounting-posting-events-id-repost"></a>
+### PATCH /sni/api/v1/accounting/posting/events/{id}/repost
+
+- Accès : back-office : rôle d'administration et droit `ACCOUNTING_POSTING:REPLAY`
+- Corps JSON (obligatoire) : `PostingDtos.RepostRequest`
+- Réponse : `PostingDtos.RepostResult`
+- Modèles : [PostingDtos.RepostResult](#m-PostingDtos-RepostResult), [PostingDtos.RepostRequest](#m-PostingDtos-RepostRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/PostingController.java`, méthode `repost`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -196,7 +218,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `family` | texte |  |  |
 | `eventDate` | date AAAA-MM-JJ |  |  |
 | `payload` | texte |  |  |
-| `status` | enum : `PENDING`, `POSTED`, `UNBALANCED`, `FAILED`, `IGNORED` |  |  |
+| `status` | enum : `PENDING`, `POSTED`, `UNBALANCED`, `FAILED`, `IGNORED`, `REVERSED` |  |  |
 | `replay` | booléen |  |  |
 | `failureReason` | texte |  |  |
 | `ruleCode` | texte |  |  |
@@ -214,7 +236,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 <a id="m-PostingEventStatus"></a>
 #### PostingEventStatus
 
-Énumération : `PENDING`, `POSTED`, `UNBALANCED`, `FAILED`, `IGNORED`
+Énumération : `PENDING`, `POSTED`, `UNBALANCED`, `FAILED`, `IGNORED`, `REVERSED`
 
 <a id="m-PostingDtos-SubmitEvent"></a>
 #### PostingDtos.SubmitEvent
@@ -227,6 +249,26 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `eventDate` | date AAAA-MM-JJ |  |  |
 | `payload` | objet libre |  |  |
 | `replay` | booléen |  |  |
+
+<a id="m-PostingDtos-RepostBatch"></a>
+#### PostingDtos.RepostBatch
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `events` | [PostingDtos.RepostPreview](#m-PostingDtos-RepostPreview)[] |  |  |
+| `result` | [PostingDtos.BatchResult](#m-PostingDtos-BatchResult) |  |  |
+
+<a id="m-PostingDtos-RepostBatchRequest"></a>
+#### PostingDtos.RepostBatchRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `ruleCode` | texte |  |  |
+| `eventType` | texte |  |  |
+| `from` | date AAAA-MM-JJ |  |  |
+| `to` | date AAAA-MM-JJ |  |  |
+| `dryRun` | booléen |  |  |
+| `reason` | texte |  |  |
 
 <a id="m-PostingDtos-EventSummary"></a>
 #### PostingDtos.EventSummary
@@ -244,6 +286,25 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `reason` | texte |  |  |
+
+<a id="m-PostingDtos-RepostResult"></a>
+#### PostingDtos.RepostResult
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `event` | [PostingDtos.Event](#m-PostingDtos-Event) |  |  |
+| `reversal` | texte |  |  |
+| `awaitingSecondValidation` | booléen |  |  |
+| `newEntry` | texte |  |  |
+| `message` | texte |  |  |
+
+<a id="m-PostingDtos-RepostRequest"></a>
+#### PostingDtos.RepostRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `reason` | texte |  |  |
+| `date` | date AAAA-MM-JJ |  |  |
 
 <a id="m-PostingDtos-Preview"></a>
 #### PostingDtos.Preview
@@ -325,6 +386,24 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `noEntry` | booléen |  |  |
 | `samplePayload` | objet libre |  |  |
 | `effectiveFrom` | date AAAA-MM-JJ |  |  |
+
+<a id="m-PostingDtos-RepostPreview"></a>
+#### PostingDtos.RepostPreview
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `eventId` | code identifiant (texte) |  |  |
+| `eventType` | texte |  |  |
+| `reference` | texte |  |  |
+| `eventDate` | date AAAA-MM-JJ |  |  |
+| `entryNumber` | texte |  |  |
+| `ruleCode` | texte |  |  |
+| `ruleVersion` | entier |  |  |
+| `newRuleVersion` | entier |  |  |
+| `changed` | booléen |  |  |
+| `before` | [PostingDtos.PreviewLine](#m-PostingDtos-PreviewLine)[] |  |  |
+| `after` | [PostingDtos.PreviewLine](#m-PostingDtos-PreviewLine)[] |  |  |
+| `error` | texte |  |  |
 
 <a id="m-PostingDtos-PreviewLine"></a>
 #### PostingDtos.PreviewLine

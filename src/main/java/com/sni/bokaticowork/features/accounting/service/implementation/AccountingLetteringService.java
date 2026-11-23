@@ -378,6 +378,30 @@ public class AccountingLetteringService {
         }
     }
 
+    /**
+     * Lot K1 (S2) : un reclassement de toute une ligne sur un compte lettrable : la ligne d'origine
+     * et sa sortie se soldent, elles sont lettrees ensemble.
+     */
+    public void pairCorrection(AccEntryLine original, AccEntryLine counter, String actor) {
+        AccAccount account = chart.find(original.getAccountNumber()).orElse(null);
+        if (account == null || !Boolean.TRUE.equals(account.getReconcilable())) {
+            return;
+        }
+        BigDecimal value = amount(original);
+        AccLettering lettering = letteringRepository.save(AccLettering.builder()
+                .code(nextCode(account.getNumber(), original.getThirdPartyCode()))
+                .accountNumber(account.getNumber())
+                .thirdPartyCode(original.getThirdPartyCode())
+                .kind(LetteringKind.AUTO_REFERENCE)
+                .status(LetteringStatus.COMPLETE)
+                .totalDebit(value)
+                .totalCredit(value)
+                .letteredBy(actor)
+                .build());
+        letteringLineRepository.save(AccLetteringLine.builder().letteringId(lettering.getId()).entryLineId(original.getId()).matchedAmount(value).build());
+        letteringLineRepository.save(AccLetteringLine.builder().letteringId(lettering.getId()).entryLineId(counter.getId()).matchedAmount(value).build());
+    }
+
     /** Code du lettrage actif d'une ligne (le plus recent). */
     @Transactional(readOnly = true)
     public Optional<String> activeCode(Long lineId) {

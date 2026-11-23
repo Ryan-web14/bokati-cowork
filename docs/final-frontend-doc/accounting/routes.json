@@ -395,6 +395,62 @@
    "methods": [
     "POST"
    ],
+   "path": "/sni/api/v1/accounting/entries/{reference}/correct",
+   "package": "features.accounting.controller",
+   "controller": "AccountingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingController.java",
+   "handler": "correct",
+   "declaredIn": "AccountingController",
+   "access": {
+    "kind": "admin",
+    "permission": "ACCOUNTING_ENTRY:REVERSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Correct",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "reference",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.accounting.dto.AccountingResponses.Correction>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/accounting/entries/{reference}/reclassify",
+   "package": "features.accounting.controller",
+   "controller": "AccountingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingController.java",
+   "handler": "reclassify",
+   "declaredIn": "AccountingController",
+   "access": {
+    "kind": "admin",
+    "permission": "ACCOUNTING_ENTRY:REVERSE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Reclassify",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "reference",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.accounting.dto.AccountingResponses.Entry>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
    "path": "/sni/api/v1/accounting/entries/{reference}/regularize",
    "package": "features.accounting.controller",
    "controller": "AccountingController",
@@ -7562,6 +7618,27 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/accounting/posting/events/repost",
+   "package": "features.accounting.controller",
+   "controller": "PostingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/accounting/controller/PostingController.java",
+   "handler": "repostBatch",
+   "declaredIn": "PostingController",
+   "access": {
+    "kind": "admin",
+    "permission": "ACCOUNTING_POSTING:REPLAY"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostBatchRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostBatch>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/accounting/posting/events/summary",
@@ -7652,6 +7729,34 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.accounting.dto.PostingDtos.Event>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/accounting/posting/events/{id}/repost",
+   "package": "features.accounting.controller",
+   "controller": "PostingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/accounting/controller/PostingController.java",
+   "handler": "repost",
+   "declaredIn": "PostingController",
+   "access": {
+    "kind": "admin",
+    "permission": "ACCOUNTING_POSTING:REPLAY"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostResult>"
   },
   {
    "methods": [
@@ -9597,7 +9702,8 @@
       "CLOSING",
       "OPENING",
       "REVERSAL",
-      "REGULARIZATION"
+      "REGULARIZATION",
+      "CORRECTION"
      ]
     },
     "sourceType": {
@@ -9693,6 +9799,34 @@
      "items": {
       "type": "string"
      }
+    },
+    "correctionOf": {
+     "type": "string"
+    },
+    "correctionKind": {
+     "type": "string"
+    },
+    "correctedBy": {
+     "type": "string"
+    },
+    "manuallyChangedBy": {
+     "type": "string"
+    },
+    "manuallyChangedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "changeReason": {
+     "type": "string"
+    },
+    "generatedLines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.AccountingResponses.GeneratedLine"
+     }
+    },
+    "awaitingSecondValidation": {
+     "type": "boolean"
     }
    }
   },
@@ -9736,6 +9870,81 @@
     },
     "validate": {
      "type": "boolean"
+    },
+    "changeReason": {
+     "type": "string"
+    }
+   }
+  },
+  "AccountingResponses.Correction": {
+   "type": "object",
+   "properties": {
+    "reversal": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.AccountingResponses.Entry"
+    },
+    "correction": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.AccountingResponses.Entry"
+    },
+    "event": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.PostingDtos.Event"
+    },
+    "messages": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "AccountingRequests.Correct": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "journalCode": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.AccountingRequests.EntryLine"
+     }
+    }
+   }
+  },
+  "AccountingRequests.Reclassify": {
+   "required": [
+    "lines",
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "lines": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.AccountingRequests.ReclassLine"
+     }
     }
    }
   },
@@ -9756,6 +9965,10 @@
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.AccountingRequests.EntryLine"
      }
+    },
+    "date": {
+     "type": "string",
+     "format": "date"
     }
    }
   },
@@ -16328,7 +16541,8 @@
       "POSTED",
       "UNBALANCED",
       "FAILED",
-      "IGNORED"
+      "IGNORED",
+      "REVERSED"
      ]
     },
     "replay": {
@@ -16407,6 +16621,45 @@
     }
    }
   },
+  "PostingDtos.RepostBatch": {
+   "type": "object",
+   "properties": {
+    "events": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostPreview"
+     }
+    },
+    "result": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.PostingDtos.BatchResult"
+    }
+   }
+  },
+  "PostingDtos.RepostBatchRequest": {
+   "type": "object",
+   "properties": {
+    "ruleCode": {
+     "type": "string"
+    },
+    "eventType": {
+     "type": "string"
+    },
+    "from": {
+     "type": "string",
+     "format": "date"
+    },
+    "to": {
+     "type": "string",
+     "format": "date"
+    },
+    "dryRun": {
+     "type": "boolean"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
   "PostingDtos.EventSummary": {
    "type": "object",
    "properties": {
@@ -16437,6 +16690,38 @@
    "properties": {
     "reason": {
      "type": "string"
+    }
+   }
+  },
+  "PostingDtos.RepostResult": {
+   "type": "object",
+   "properties": {
+    "event": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.PostingDtos.Event"
+    },
+    "reversal": {
+     "type": "string"
+    },
+    "awaitingSecondValidation": {
+     "type": "boolean"
+    },
+    "newEntry": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   }
+  },
+  "PostingDtos.RepostRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "type": "string"
+    },
+    "date": {
+     "type": "string",
+     "format": "date"
     }
    }
   },
@@ -18090,6 +18375,32 @@
     }
    }
   },
+  "AccountingResponses.GeneratedLine": {
+   "type": "object",
+   "properties": {
+    "accountNumber": {
+     "type": "string"
+    },
+    "thirdPartyCode": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "debit": {
+     "type": "number"
+    },
+    "credit": {
+     "type": "number"
+    },
+    "taxCode": {
+     "type": "string"
+    },
+    "reference": {
+     "type": "string"
+    }
+   }
+  },
   "AccountingRequests.EntryLine": {
    "required": [
     "accountNumber"
@@ -18133,6 +18444,33 @@
     },
     "reference": {
      "type": "string"
+    },
+    "analytic": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "AccountingRequests.ReclassLine": {
+   "required": [
+    "lineNo"
+   ],
+   "type": "object",
+   "properties": {
+    "lineNo": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "accountNumber": {
+     "type": "string"
+    },
+    "thirdPartyCode": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
     },
     "analytic": {
      "type": "object",
@@ -19075,6 +19413,13 @@
     "depositForDocumentNumber": {
      "type": "string"
     },
+    "appliedToDocumentNumber": {
+     "type": "string"
+    },
+    "appliedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
     "dealCode": {
      "type": "string"
     },
@@ -19560,6 +19905,57 @@
     },
     "value": {
      "type": "number"
+    }
+   }
+  },
+  "PostingDtos.RepostPreview": {
+   "type": "object",
+   "properties": {
+    "eventId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "eventType": {
+     "type": "string"
+    },
+    "reference": {
+     "type": "string"
+    },
+    "eventDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "entryNumber": {
+     "type": "string"
+    },
+    "ruleCode": {
+     "type": "string"
+    },
+    "ruleVersion": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "newRuleVersion": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "changed": {
+     "type": "boolean"
+    },
+    "before": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.PostingDtos.PreviewLine"
+     }
+    },
+    "after": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.accounting.dto.PostingDtos.PreviewLine"
+     }
+    },
+    "error": {
+     "type": "string"
     }
    }
   },
@@ -20114,7 +20510,8 @@
    "POSTED",
    "UNBALANCED",
    "FAILED",
-   "IGNORED"
+   "IGNORED",
+   "REVERSED"
   ]
  },
  "names": {
@@ -20128,6 +20525,9 @@
   "AccountingResponses.Entry": "com.sni.bokaticowork.features.accounting.dto.AccountingResponses.Entry",
   "EntryStatus": "com.sni.bokaticowork.features.accounting.enums.EntryStatus",
   "AccountingRequests.Entry": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Entry",
+  "AccountingResponses.Correction": "com.sni.bokaticowork.features.accounting.dto.AccountingResponses.Correction",
+  "AccountingRequests.Correct": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Correct",
+  "AccountingRequests.Reclassify": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Reclassify",
   "AccountingRequests.Regularize": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Regularize",
   "AccountingRequests.Reverse": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Reverse",
   "AccountingResponses.FiscalYear": "com.sni.bokaticowork.features.accounting.dto.AccountingResponses.FiscalYear",
@@ -20310,8 +20710,12 @@
   "PostingDtos.Event": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.Event",
   "PostingEventStatus": "com.sni.bokaticowork.features.accounting.enums.PostingEventStatus",
   "PostingDtos.SubmitEvent": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.SubmitEvent",
+  "PostingDtos.RepostBatch": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostBatch",
+  "PostingDtos.RepostBatchRequest": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostBatchRequest",
   "PostingDtos.EventSummary": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.EventSummary",
   "PostingDtos.Reason": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.Reason",
+  "PostingDtos.RepostResult": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostResult",
+  "PostingDtos.RepostRequest": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostRequest",
   "PostingDtos.Preview": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.Preview",
   "PostingDtos.PreviewRequest": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.PreviewRequest",
   "PostingDtos.Resolver": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.Resolver",
@@ -20356,7 +20760,9 @@
   "AccVatReturn": "com.sni.bokaticowork.features.accounting.model.AccVatReturn",
   "VatService.Detail": "com.sni.bokaticowork.features.accounting.service.implementation.VatService.Detail",
   "AccountingResponses.EntryLine": "com.sni.bokaticowork.features.accounting.dto.AccountingResponses.EntryLine",
+  "AccountingResponses.GeneratedLine": "com.sni.bokaticowork.features.accounting.dto.AccountingResponses.GeneratedLine",
   "AccountingRequests.EntryLine": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.EntryLine",
+  "AccountingRequests.ReclassLine": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.ReclassLine",
   "AccountingRequests.LetterLine": "com.sni.bokaticowork.features.accounting.dto.AccountingRequests.LetterLine",
   "AccountingResponses.LedgerAccount": "com.sni.bokaticowork.features.accounting.dto.AccountingResponses.LedgerAccount",
   "AccountingResponses.TrialBalanceLine": "com.sni.bokaticowork.features.accounting.dto.AccountingResponses.TrialBalanceLine",
@@ -20391,6 +20797,7 @@
   "FixedAssetInventoryScan": "com.sni.bokaticowork.features.accounting.model.FixedAssetInventoryScan",
   "FixedAssetPlan": "com.sni.bokaticowork.features.accounting.model.FixedAssetPlan",
   "ManagementReportService.Amount": "com.sni.bokaticowork.features.accounting.service.implementation.ManagementReportService.Amount",
+  "PostingDtos.RepostPreview": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.RepostPreview",
   "PostingDtos.PreviewLine": "com.sni.bokaticowork.features.accounting.dto.PostingDtos.PreviewLine",
   "ReceivableRiskService.ImpairmentLine": "com.sni.bokaticowork.features.accounting.service.implementation.ReceivableRiskService.ImpairmentLine",
   "AccRiskValuation": "com.sni.bokaticowork.features.accounting.model.AccRiskValuation",

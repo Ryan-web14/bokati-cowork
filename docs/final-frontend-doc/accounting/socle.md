@@ -30,9 +30,9 @@ Contrat exact de chaque route (paramètres, corps, réponse, champs JSON) : [rou
 - Une pièce a au moins deux lignes ; une ligne porte un débit **ou** un crédit, positif.
 - Saisie manuelle : `POST /accounting/entries` crée un brouillard (numéro provisoire `BR-AAAAMM-0000001`) ; `validate: true` le valide aussitôt.
 - Validation : période ouverte, comptes existants et actifs, tiers obligatoire sur un compte de tiers, comptes autorisés par le journal, ligne sur le compte de trésorerie pour un journal de trésorerie, comptes de classe 9 seulement dans `HB` et `CAG`.
-- Chronologie stricte (`accounting.numbering.chronology = STRICT`) : une pièce ne peut pas être datée avant la dernière pièce validée du même journal ; **plusieurs pièces peuvent porter la même date**. Refus : `400 CHRONOLOGIE_STRICTE`, message avec la date de la pièce et celle de la dernière pièce validée (« datez-la au … ou après »). Afficher le message et proposer de corriger la date. `PERIOD` relâche la règle à la période.
+- Chronologie stricte (`accounting.numbering.chronology = STRICT`) : **dans un même mois**, une pièce ne peut pas être datée avant la dernière pièce validée du même journal ; **plusieurs pièces peuvent porter la même date**. Depuis le lot K1 (décision D3), une pièce d'un mois encore ouvert est acceptée même si le journal a déjà des pièces du mois suivant (avant : refus). Refus : `400 CHRONOLOGIE_STRICTE`, message avec la date de la pièce, la période et la dernière pièce validée du mois (« datez-la au … ou après »). Afficher le message et proposer de corriger la date. `PERIOD` relâche la règle. Avec une numérotation annuelle (défaut), une pièce de mars passée après des pièces d'avril prend le numéro suivant du journal : pour des numéros dans l'ordre des dates de chaque mois, choisir la remise à zéro par période (`numberingReset = PERIOD`) sur le journal.
 - Numéro définitif `JOURNAL-EXERCICE-000001` (largeur `accounting.numbering.width`), attribué à la validation, sans trou, compteur verrouillé ; chaque pièce porte une empreinte SHA-256 chaînée à la précédente du journal.
-- Au-delà de `accounting.manual-entry.second-validation-threshold` XAF (0 = jamais), une pièce manuelle est validée par un autre comptable que son auteur.
+- Au-delà de `accounting.manual-entry.second-validation-threshold` XAF (0 = jamais), une pièce manuelle est validée par un autre comptable que son auteur. Depuis le lot K1, la règle couvre aussi les contre-passations, les régularisations, les reclassements et les corrections : au-delà du seuil, ils sont enregistrés en brouillard (`awaitingSecondValidation = true`, message « … validée par un autre comptable ») et validés par `PATCH /entries/{ref}/validate` par une autre personne (`403` pour l'auteur). Tant qu'une contre-passation ou une régularisation attend, une seconde demande sur la même pièce est refusée.
 
 ### Pièce déséquilibrée : politique `accounting.unbalanced-entry.policy`
 
@@ -46,9 +46,44 @@ Un autre problème que le déséquilibre (compte absent ou inactif sur une pièc
 
 ### Corrections
 
-- Brouillard : modifié ou supprimé librement.
+Ce qu'il faut faire quand une écriture est mal placée (revue comptable, lot K1) :
+
+| Situation | Action | Route |
+| --- | --- | --- |
+| Brouillard ou pièce en attente | Modifier, ou rejeter (motif) | `PUT /entries/{ref}`, `PATCH /entries/{ref}/reject` |
+| Pièce validée, mauvais compte ou mauvais tiers sur une ou plusieurs lignes | **Reclasser** : pièce OD liée qui sort le montant du mauvais compte et le porte sur le bon | `POST /entries/{ref}/reclassify` |
+| Pièce validée saisie à la main, entièrement fausse | **Corriger** : contre-passation et pièce juste en une action, liées | `POST /entries/{ref}/correct` avec `lines` |
+| Pièce automatique fausse (donnée source ou schéma) | Corriger la source ou le schéma, puis **Corriger** sans lignes (ou **Recomptabiliser** depuis l'événement) : contre-passation, relecture, nouvelle pièce | `POST /entries/{ref}/correct`, `PATCH /posting/events/{id}/repost` |
+| Beaucoup de pièces d'un schéma faux | Recomptabiliser en lot (aperçu avant) | `POST /posting/events/repost` |
+| Analytique seule fausse | Reclassement analytique | voir [analytique.md](analytique.md) |
+
+- Brouillard saisi à la main : modifié ou supprimé librement. **Brouillard produit par un événement** : il ne se supprime pas (refus), il se rejette ; l'événement repasse alors en échec.
 - Pièce en attente : complétée (`PUT`, puis validation automatique) ou rejetée (`/reject`, motif).
-- Pièce validée : **jamais modifiée ni supprimée**. Elle se contre-passe (`/reverse`, motif, date) : pièce inverse dans le même journal, les deux sont liées et leurs lignes de tiers lettrées ensemble.
+- **Pièce automatique modifiée à la main** (lot K1) : son journal ne change pas (refus : corriger le schéma) ; à la première modification, les lignes produites par le schéma sont gardées (`generatedLines`), avec l'auteur (`manuallyChangedBy`), la date (`manuallyChangedAt`) et le motif facultatif `changeReason` du corps. Afficher « modifiée à la main » et un comparatif avec `generatedLines`.
+- Pièce validée : **jamais modifiée ni supprimée**. Elle se contre-passe (`/reverse`, motif, date ; défaut : aujourd'hui à Brazzaville, jamais avant la pièce d'origine) : pièce inverse dans le même journal, les deux sont liées et leurs lignes de tiers lettrées ensemble. Contre-passer une pièce automatique fait passer son événement `REVERSED`, à recomptabiliser ou écarter.
+- Régularisation d'une pièce acceptée déséquilibrée : `date` facultative dans le corps (défaut aujourd'hui), dans une période ouverte.
+
+#### Reclasser (`POST /entries/{ref}/reclassify`)
+
+Corps : `{"reason": "…", "date": "2026-03-31", "lines": [{"lineNo": 2, "accountNumber": "6053", "thirdPartyCode": null, "amount": 50000, "analytic": {"STRUCTURE": "ENTRETIEN"}}]}`.
+
+- `lineNo` : ligne de la pièce d'origine ; `accountNumber` et/ou `thirdPartyCode` : nouvelle imputation (au moins l'un des deux change) ; `amount` : partie à reclasser (défaut : toute la ligne) ; `analytic` : ventilation de la nouvelle ligne (défaut : celle d'origine).
+- Journal : `accounting.correction.journal` (défaut `OD`). Date par défaut : celle de la pièce d'origine si son mois est ouvert (au plus tôt la dernière pièce du journal ce mois-là), sinon aujourd'hui ; jamais avant la pièce d'origine.
+- Pour chaque ligne : une sortie (sens inverse, ancien compte et tiers, analytique d'origine) et une entrée (même sens, nouveau compte). Libellés « Reclassement : sortie du … (ligne n) », « Reclassement : vers le … ».
+- Une ligne lettrée est refusée (« délettrez-la avant de la reclasser »). Une ligne reclassée en entier sur un compte lettrable est lettrée avec sa sortie.
+- Réponse : la pièce de reclassement (`origin = CORRECTION`, `correctionKind = RECLASS`, `correctionOf`) ; la pièce d'origine porte `correctedBy`.
+
+#### Corriger (`POST /entries/{ref}/correct`)
+
+Corps : `{"reason": "…", "date": null, "journalCode": null, "label": null, "lines": [ … ]}`.
+
+- Pièce saisie à la main : `lines` obligatoires (pièce juste) ; contre-passation et pièce juste à la même date (défaut : comme pour un reclassement) ; journal de la pièce juste : `journalCode` ou celui d'origine.
+- Pièce automatique : **sans lignes** (refus sinon) ; l'événement est recomptabilisé avec les données relues à la source.
+- Réponse `Correction` : `reversal`, `correction` (pièce juste ou nouvelle pièce automatique, `correctionOf`), `event` (pièce automatique), `messages`.
+
+#### Écran
+
+Sur une pièce validée : boutons **Reclasser** (choisir les lignes, nouveau compte ou tiers, montant, analytique), **Corriger** (pièce manuelle : grille de la pièce juste préremplie avec l'originale ; pièce automatique : motif seul) et **Contre-passer**. Afficher les liens `correctionOf`, `correctedBy`, `reversalOf`, `reversedByEntry`. Liste des brouillards `awaitingSecondValidation` pour les valideurs.
 
 ### Garanties de la base (déclencheurs)
 
@@ -84,7 +119,7 @@ Préfixe `/api/v1/accounting`. Toutes les écritures passent par le journal d'au
 | `POST /journals` / `PATCH /journals/{code}` | `ACCOUNTING_JOURNAL:CREATE` / `MANAGE` |
 | `POST /entries`, `PUT /entries/{ref}`, `DELETE /entries/{ref}` | `ACCOUNTING_ENTRY:CREATE` |
 | `PATCH /entries/{ref}/validate` | `ACCOUNTING_ENTRY:VALIDATE` |
-| `PATCH /entries/{ref}/reverse` | `ACCOUNTING_ENTRY:REVERSE` |
+| `PATCH /entries/{ref}/reverse`, `POST /entries/{ref}/reclassify`, `POST /entries/{ref}/correct` | `ACCOUNTING_ENTRY:REVERSE` |
 | `PATCH /entries/{ref}/reject`, `POST /entries/{ref}/regularize` | `ACCOUNTING_ENTRY:BALANCE` |
 | `POST /lettering` / `PATCH /lettering/{id}/unletter` | `ACCOUNTING_LETTERING:MANUAL` / `UNLETTER` |
 
@@ -97,6 +132,7 @@ Rôles : `SUPER_ADMIN` et `ADMIN` ont tout. `FINANCE` a tout sauf `ACCOUNTING_AC
 | `accounting.enabled` | `false` |
 | `accounting.analytic.enabled` | `false` |
 | `accounting.unbalanced-entry.policy` | `HOLD` |
+| `accounting.correction.journal` (lot K1) | `OD` |
 | `accounting.unbalanced-entry.suspense-account` | `4718` |
 | `accounting.unbalanced-entry.suspense-max-difference` | `0` (sans limite) |
 | `accounting.unbalanced-entry.blocks-period-close` | `true` |

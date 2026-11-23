@@ -236,7 +236,8 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         }
         if (path.startsWith("/accounting/entries")) {
             if (path.endsWith("/validate")) return permission("ACCOUNTING_ENTRY", "VALIDATE");
-            if (path.endsWith("/reverse")) return permission("ACCOUNTING_ENTRY", "REVERSE");
+            // Lot K1 : reclasser et corriger une piece validee relevent du droit de contre-passer.
+            if (path.endsWith("/reverse") || path.endsWith("/reclassify") || path.endsWith("/correct")) return permission("ACCOUNTING_ENTRY", "REVERSE");
             if (path.endsWith("/reject") || path.endsWith("/regularize")) return permission("ACCOUNTING_ENTRY", "BALANCE");
             return permission("ACCOUNTING_ENTRY", "CREATE");
         }

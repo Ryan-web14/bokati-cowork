@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [accounting](../README.md) · 37 route(s).
+Module [accounting](../README.md) · 39 route(s).
 
 ## Routes
 
@@ -178,6 +178,32 @@ Module [accounting](../README.md) · 37 route(s).
 - Réponse : `AccountingResponses.Entry`
 - Modèles : [AccountingResponses.Entry](#m-AccountingResponses-Entry), [AccountingRequests.Entry](#m-AccountingRequests-Entry)
 - Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingController.java`, méthode `update`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `reference` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-accounting-entries-reference-correct"></a>
+### POST /sni/api/v1/accounting/entries/{reference}/correct
+
+- Accès : back-office : rôle d'administration et droit `ACCOUNTING_ENTRY:REVERSE`
+- Corps JSON (obligatoire) : `AccountingRequests.Correct`
+- Réponse : `AccountingResponses.Correction`
+- Modèles : [AccountingResponses.Correction](#m-AccountingResponses-Correction), [AccountingRequests.Correct](#m-AccountingRequests-Correct)
+- Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingController.java`, méthode `correct`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `reference` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-accounting-entries-reference-reclassify"></a>
+### POST /sni/api/v1/accounting/entries/{reference}/reclassify
+
+- Accès : back-office : rôle d'administration et droit `ACCOUNTING_ENTRY:REVERSE`
+- Corps JSON (obligatoire) : `AccountingRequests.Reclassify`
+- Réponse : `AccountingResponses.Entry`
+- Modèles : [AccountingResponses.Entry](#m-AccountingResponses-Entry), [AccountingRequests.Reclassify](#m-AccountingRequests-Reclassify)
+- Code : `src/main/java/com/sni/bokaticowork/features/accounting/controller/AccountingController.java`, méthode `reclassify`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -557,7 +583,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `originalDate` | date AAAA-MM-JJ |  |  |
 | `documentDate` | date AAAA-MM-JJ |  |  |
 | `label` | texte |  |  |
-| `origin` | enum : `MANUAL`, `CASH`, `PLATFORM`, `IMPORT`, `CLOSING`, `OPENING`, `REVERSAL`, `REGULARIZATION` |  |  |
+| `origin` | enum : `MANUAL`, `CASH`, `PLATFORM`, `IMPORT`, `CLOSING`, `OPENING`, `REVERSAL`, `REGULARIZATION`, `CORRECTION` |  |  |
 | `sourceType` | texte |  |  |
 | `sourceCode` | texte |  |  |
 | `status` | enum : `DRAFT`, `PENDING_BALANCE`, `VALIDATED`, `REVERSED`, `REJECTED` |  |  |
@@ -582,6 +608,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `contentHash` | texte |  |  |
 | `lines` | [AccountingResponses.EntryLine](#m-AccountingResponses-EntryLine)[] |  |  |
 | `messages` | texte[] |  |  |
+| `correctionOf` | texte |  |  |
+| `correctionKind` | texte |  |  |
+| `correctedBy` | texte |  |  |
+| `manuallyChangedBy` | texte |  |  |
+| `manuallyChangedAt` | date-heure ISO 8601 UTC |  |  |
+| `changeReason` | texte |  |  |
+| `generatedLines` | [AccountingResponses.GeneratedLine](#m-AccountingResponses-GeneratedLine)[] |  |  |
+| `awaitingSecondValidation` | booléen |  |  |
 
 <a id="m-EntryStatus"></a>
 #### EntryStatus
@@ -601,6 +635,37 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `sourceCode` | texte |  |  |
 | `lines` | [AccountingRequests.EntryLine](#m-AccountingRequests-EntryLine)[] | oui | éléments min `1` |
 | `validate` | booléen |  |  |
+| `changeReason` | texte |  |  |
+
+<a id="m-AccountingResponses-Correction"></a>
+#### AccountingResponses.Correction
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `reversal` | [AccountingResponses.Entry](#m-AccountingResponses-Entry) |  |  |
+| `correction` | [AccountingResponses.Entry](#m-AccountingResponses-Entry) |  |  |
+| `event` | [PostingDtos.Event](#m-PostingDtos-Event) |  |  |
+| `messages` | texte[] |  |  |
+
+<a id="m-AccountingRequests-Correct"></a>
+#### AccountingRequests.Correct
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `reason` | texte | oui | longueur min `1` |
+| `date` | date AAAA-MM-JJ |  |  |
+| `journalCode` | texte |  |  |
+| `label` | texte |  |  |
+| `lines` | [AccountingRequests.EntryLine](#m-AccountingRequests-EntryLine)[] |  |  |
+
+<a id="m-AccountingRequests-Reclassify"></a>
+#### AccountingRequests.Reclassify
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `reason` | texte | oui | longueur min `1` |
+| `date` | date AAAA-MM-JJ |  |  |
+| `lines` | [AccountingRequests.ReclassLine](#m-AccountingRequests-ReclassLine)[] | oui | éléments min `1` |
 
 <a id="m-AccountingRequests-Regularize"></a>
 #### AccountingRequests.Regularize
@@ -609,6 +674,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `label` | texte | oui | longueur min `1` |
 | `lines` | [AccountingRequests.EntryLine](#m-AccountingRequests-EntryLine)[] | oui | éléments min `1` |
+| `date` | date AAAA-MM-JJ |  |  |
 
 <a id="m-AccountingRequests-Reverse"></a>
 #### AccountingRequests.Reverse
@@ -827,6 +893,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `letteringCode` | texte |  |  |
 | `letteredAmount` | nombre décimal |  |  |
 
+<a id="m-AccountingResponses-GeneratedLine"></a>
+#### AccountingResponses.GeneratedLine
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `accountNumber` | texte |  |  |
+| `thirdPartyCode` | texte |  |  |
+| `label` | texte |  |  |
+| `debit` | nombre décimal |  |  |
+| `credit` | nombre décimal |  |  |
+| `taxCode` | texte |  |  |
+| `reference` | texte |  |  |
+
 <a id="m-AccountingRequests-EntryLine"></a>
 #### AccountingRequests.EntryLine
 
@@ -844,6 +923,43 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `taxBase` | nombre décimal |  |  |
 | `dueDate` | date AAAA-MM-JJ |  |  |
 | `reference` | texte |  |  |
+| `analytic` | objet { clé : texte } |  |  |
+
+<a id="m-PostingDtos-Event"></a>
+#### PostingDtos.Event
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `id` | code identifiant (texte) |  |  |
+| `eventType` | texte |  |  |
+| `reference` | texte |  |  |
+| `family` | texte |  |  |
+| `eventDate` | date AAAA-MM-JJ |  |  |
+| `payload` | texte |  |  |
+| `status` | enum : `PENDING`, `POSTED`, `UNBALANCED`, `FAILED`, `IGNORED`, `REVERSED` |  |  |
+| `replay` | booléen |  |  |
+| `failureReason` | texte |  |  |
+| `ruleCode` | texte |  |  |
+| `ruleVersion` | entier |  |  |
+| `entryNumber` | texte |  |  |
+| `provisionalNumber` | texte |  |  |
+| `shiftedNote` | texte |  |  |
+| `attempts` | entier |  |  |
+| `lastAttemptAt` | date-heure ISO 8601 UTC |  |  |
+| `postedAt` | date-heure ISO 8601 UTC |  |  |
+| `ignoredBy` | texte |  |  |
+| `ignoredReason` | texte |  |  |
+| `createdAt` | date-heure ISO 8601 UTC |  |  |
+
+<a id="m-AccountingRequests-ReclassLine"></a>
+#### AccountingRequests.ReclassLine
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `lineNo` | entier | oui |  |
+| `accountNumber` | texte |  |  |
+| `thirdPartyCode` | texte |  |  |
+| `amount` | nombre décimal |  |  |
 | `analytic` | objet { clé : texte } |  |  |
 
 <a id="m-AccountingRequests-LetterLine"></a>

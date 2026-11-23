@@ -24,6 +24,7 @@ public class AccountingController {
     private final AccountingChartService chart;
     private final AccountingPeriodService periods;
     private final AccountingEntryService entries;
+    private final EntryCorrectionService corrections;
     private final AccountingLetteringService lettering;
     private final AccountingReportService reports;
 
@@ -196,6 +197,22 @@ public class AccountingController {
     public ResponseEntity<AccountingResponses.Entry> regularize(@PathVariable String reference,
                                                                 @Valid @RequestBody AccountingRequests.Regularize request) {
         return ResponseEntity.ok(entries.regularize(reference, request));
+    }
+
+    /** Lot K1 (S2) : reclassement de lignes d'une piece validee (piece OD liee). */
+    @Audited(module = "ACCOUNTING", action = "ENTRY_RECLASSIFY", ressource = "acc_entry")
+    @PostMapping("/entries/{reference}/reclassify")
+    public ResponseEntity<AccountingResponses.Entry> reclassify(@PathVariable String reference,
+                                                                @Valid @RequestBody AccountingRequests.Reclassify request) {
+        return ResponseEntity.ok(entries.reclassify(reference, request));
+    }
+
+    /** Lot K1 (S2) : correction d'une piece validee (contre-passation et piece juste, ou recomptabilisation). */
+    @Audited(module = "ACCOUNTING", action = "ENTRY_CORRECT", ressource = "acc_entry")
+    @PostMapping("/entries/{reference}/correct")
+    public ResponseEntity<AccountingResponses.Correction> correct(@PathVariable String reference,
+                                                                  @Valid @RequestBody AccountingRequests.Correct request) {
+        return ResponseEntity.ok(corrections.correct(reference, request));
     }
 
     // --------------------------------------------------------------- lettrage
