@@ -47,6 +47,38 @@ Détail : [ecarts.md](ecarts.md), 85 écarts avec fichier, ligne, effet et lot.
 | K4 | Recommandations : tableau des anomalies permanent, clôture complète, notifications dans l'application | P18, R1 à R9 |
 | K5 | Analytique | N1 à N18 |
 | K6 | Points de norme arbitrés par l'expert-comptable, puis appliqués | X1 à X8 |
+| K7 | Achats et dépenses guidés pour les non-comptables, lecture OCR, déduction automatique de l'écriture, mode expert | voir plus bas |
+
+## K7 : achats guidés, OCR, déduction automatique, mode expert (demande du 23/11/2026)
+
+### Mode simple (par défaut, pour les non-comptables)
+
+On saisit une **opération courante**, jamais une écriture : achat chez un fournisseur, reçu de restaurant, carburant, course ou transport, fournitures, facture d'eau, d'électricité ou de téléphone, loyer, réparation, abonnement, frais bancaires, note de frais. Chaque type porte sa règle de déduction :
+
+- compte de charge depuis la nature d'opération (déjà reliée aux catégories de fournisseurs) ;
+- TVA récupérable ou non selon le type (restauration, réception, cadeaux, carburant de tourisme : règle à confirmer par l'expert-comptable) ;
+- fournisseur reconnu par son NIU, son nom ou son téléphone ; fournisseur occasionnel sinon ;
+- contrepartie selon le moyen de paiement : caisse, banque, mobile money, à payer (401) ;
+- immobilisation proposée au-dessus du seuil ;
+- section analytique proposée (règles, fournisseur, ressource).
+
+L'utilisateur voit la pièce qui sera passée, expliquée en phrases (« la dépense va en 6053 Fournitures d'entretien, la TVA n'est pas récupérable sur un reçu de restaurant »), puis confirme.
+
+### Recommandations à l'enregistrement
+
+Doublon probable (même fournisseur, montant, date ou référence) ; pièce justificative absente ; reçu non normalisé ou sans NIU (TVA non déductible, retenue à la source éventuelle) ; paiement en espèces au-delà du plafond ; montant au-dessus du seuil d'immobilisation passé en charge ; dépassement de budget de la section ; facture d'un fournisseur sans commande alors qu'une commande validée existe ; avance fournisseur (4091) à imputer.
+
+### Lecture OCR et déduction
+
+Photo ou PDF d'un reçu ou d'une facture, lu par Tesseract (déjà présent pour le KYC et la GED) : fournisseur (nom, NIU, téléphone), date, numéro, montants HT, TVA, TTC, moyen de paiement. Chaque champ arrive avec un indice de confiance ; les champs douteux sont signalés à vérifier. Le document lu est classé dans la GED et lié à la pièce.
+
+### Mode expert
+
+Droit dédié. L'utilisateur choisit lui-même comment passer l'écriture : comptes, TVA, journal, lignes modifiables à partir de la proposition ; il peut enregistrer sa façon de faire comme **modèle** réutilisable pour ce type d'opération ou ce fournisseur. La proposition automatique reste affichée à côté, et l'écart est tracé.
+
+### Tout ce qui peut devenir automatique
+
+Inventaire à faire en début de K7 : paiements fournisseurs, frais et agios bancaires depuis les relevés, échéances d'emprunt, liquidation de TVA, paie, refacturations de débours ; pour chacun, écriture automatique en mode simple, modifiable en mode expert.
 
 ## Décisions (23/11/2026)
 
