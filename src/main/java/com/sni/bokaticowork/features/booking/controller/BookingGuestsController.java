@@ -27,6 +27,8 @@ public class BookingGuestsController {
     private final com.sni.bokaticowork.features.booking.service.support.BookingFilling filling;
     private final com.sni.bokaticowork.features.ressource.service.interfaces.ResourceService resources;
     private final com.sni.bokaticowork.features.ressource.service.interfaces.ResourcePricingRuleService pricing;
+    /** La reponse lit la ressource et l'espace (chargement paresseux) : elle se construit dans la transaction. */
+    private final org.springframework.transaction.support.TransactionTemplate transaction;
 
     /** Invite (ou relance) un participant par courriel ; {@code sent} vaut 0 sans courriel. */
     @PostMapping("/{bookingNumber}/participants/{participantId}/invite")
@@ -43,7 +45,7 @@ public class BookingGuestsController {
     /** Pointage d'un invite a l'accueil. */
     @PatchMapping("/{bookingNumber}/participants/{participantId}/check-in")
     public ResponseEntity<BookingParticipantResponse> checkIn(@PathVariable String bookingNumber, @PathVariable Long participantId) {
-        return ResponseEntity.ok(mapper.toResponse(guests.checkIn(bookingNumber, participantId)));
+        return ResponseEntity.ok(transaction.execute(status -> mapper.toResponse(guests.checkIn(bookingNumber, participantId))));
     }
 
     public record ExtendRequest(@jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(1440) int minutes,
@@ -74,6 +76,6 @@ public class BookingGuestsController {
     /** Disposition de la salle, demandes speciales, notes internes, etiquettes ; seuls les champs donnes changent. */
     @PatchMapping("/{bookingNumber}/details")
     public ResponseEntity<BookingResponse> details(@PathVariable String bookingNumber, @RequestBody BookingGuests.Details details) {
-        return ResponseEntity.ok(mapper.toResponse(guests.updateDetails(bookingNumber, details)));
+        return ResponseEntity.ok(transaction.execute(status -> mapper.toResponse(guests.updateDetails(bookingNumber, details))));
     }
 }
