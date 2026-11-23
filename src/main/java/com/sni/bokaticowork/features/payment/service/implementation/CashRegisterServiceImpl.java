@@ -58,6 +58,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     private static final String CASH_CURRENCY = "XAF";
     private static final String SYSTEM_ACTOR = "SYSTEM";
+    /** Code de la caisse par defaut creee par le systeme. */
+    public static final String DEFAULT_REGISTER_CODE = "CSR-DEFAULT";
+    /** Une session de la caisse par defaut dure un mois : pas d'alerte de duree avant. */
+    private static final int DEFAULT_REGISTER_SESSION_HOURS = 31 * 24;
     private static final String PAYMENT_TRANSACTION_REFERENCE = "PAYMENT_TRANSACTION";
     private static final String AUTO_BUSINESS_CODE = "BIZ-AUTO-PAYMENT";
     private static final String AUTO_LOCATION_CODE = "AUTO";
@@ -270,10 +274,13 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashRegister register = register(request.registerCode());
         assertManualEntryAllowed(register);
         String openedBy = actors.resolve(request.openedBy());
+        // Un administrateur ou un super-administrateur ouvre sans validation : ni affectation, ni
+        // poste, ni motif hors horaires, ni confirmation de l'ecart d'ouverture.
+        boolean admin = actors.isAdmin();
         // Caisse active, personne affectee, poste autorise, horaires (lot C1).
         com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.OpeningClearance clearance =
                 accessGuard.assertCanOpen(register, openedBy, request.deviceCode(),
-                        request.outOfHoursReasonCode(), request.outOfHoursReasonText());
+                        request.outOfHoursReasonCode(), request.outOfHoursReasonText(), admin);
         sessionRepository.findBlockingSessionByCashRegisterId(register.getId())
                 .ifPresent(session -> {
                     throw new BadRequestException("La caisse a déjà une session en cours");
@@ -290,7 +297,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         BigDecimal expectedOpening = register.getLastCountAt() == null ? null
                 : money(register.getLastCountAmount() == null ? BigDecimal.ZERO : register.getLastCountAmount());
         BigDecimal openingVariance = expectedOpening == null ? BigDecimal.ZERO.setScale(4) : counted.subtract(expectedOpening);
-        if (openingVariance.signum() != 0 && request.openingCount() == null
+        if (!admin && openingVariance.signum() != 0 && request.openingCount() == null
                 && Boolean.TRUE.equals(register.getCountLinesRequired())) {
             throw new BadRequestException("Le fonds differe du dernier comptage de la caisse ("
                     + expectedOpening.stripTrailingZeros().toPlainString() + " XAF) : saisissez le billetage d'ouverture");
@@ -298,16 +305,21 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashSession session = sessionRepository.save(CashSession.builder()
                 .sessionNumber(sequenceGenerator.next("cash_session"))
                 .cashRegister(register)
-                .status(openingVariance.signum() == 0 ? CashSessionStatus.OPEN : CashSessionStatus.OPENING)
+                .status(admin || openingVariance.signum() == 0 ? CashSessionStatus.OPEN : CashSessionStatus.OPENING)
                 .openedBy(openedBy)
                 .openingAmount(counted)
                 .expectedOpeningAmount(expectedOpening)
                 .openingVariance(openingVariance)
                 .openedFromDevice(clearance.deviceCode())
                 .outOfHoursReason(clearance.outOfHoursReason())
+                .openingChecksWaivedBy(admin ? openedBy : null)
                 .build());
         if (request.openingCount() != null) {
             lifecycle.recordOpeningCount(session, request.openingCount(), expectedOpening);
+        }
+        if (admin) {
+            lifecycle.recordAdminOpeningVariance(session, request.openingCount() == null ? null
+                    : request.openingCount().varianceReasonText());
         }
         if (session.getOpeningAmount().signum() > 0) {
             saveMovement(session, CashMovementType.OPENING_FLOAT, session.getOpeningAmount(), CashDocumentType.CASH_VOUCHER,
@@ -1029,6 +1041,89 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         finalized(session.getSessionNumber(), true, cause, next.getSessionNumber());
         eventPublisher.publishEvent(new com.sni.bokaticowork.features.payment.service.support.CashSessionClosedEvent(session.getSessionNumber()));
         return mapper.toCashSessionResponse(next);
+    }
+
+    // ------------------------------------------------------------ caisse par defaut
+
+    @Override
+    public CashRegisterResponse ensureDefaultRegister() {
+        CashRegister register = defaultRegister();
+        if (Boolean.TRUE.equals(register.getActive())) {
+            defaultSession(register);
+        }
+        return mapper.toCashRegisterResponse(register);
+    }
+
+    @Override
+    public String defaultSessionNumber() {
+        CashRegister register = defaultRegister();
+        if (!Boolean.TRUE.equals(register.getActive())) {
+            throw new BadRequestException("La caisse par defaut " + register.getRegisterCode()
+                    + " n'est pas active : indiquez la session de caisse du paiement");
+        }
+        return defaultSession(register).getSessionNumber();
+    }
+
+    /**
+     * La caisse par defaut : creee par le systeme, elle accepte tous les moyens de paiement. Ce
+     * n'est pas une caisse automatique : un administrateur peut y compter, y sortir des especes ou
+     * la remettre en banque. Sa session est tenue par le systeme et renouvelee chaque fin de mois
+     * avec report du solde (politique {@code CARRY_OVER}).
+     */
+    private CashRegister defaultRegister() {
+        return registerRepository.findFirstByDefaultRegisterTrue()
+                .orElseGet(() -> registerRepository.findByRegisterCode(DEFAULT_REGISTER_CODE)
+                        .map(existing -> {
+                            existing.setDefaultRegister(true);
+                            return registerRepository.save(existing);
+                        })
+                        .orElseGet(() -> registerRepository.save(CashRegister.builder()
+                                .registerCode(DEFAULT_REGISTER_CODE)
+                                .name("Caisse par défaut")
+                                .locationCode("DEFAULT")
+                                .businessEntityCode(AUTO_BUSINESS_CODE)
+                                .deviceCode("DEV-DEFAULT")
+                                .active(true)
+                                .cashControlEnabled(true)
+                                .systemManaged(false)
+                                .defaultRegister(true)
+                                .registerType(com.sni.bokaticowork.features.payment.enums.CashRegisterType.MAIN)
+                                .status(com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE)
+                                .monthEndPolicy(com.sni.bokaticowork.features.payment.enums.CashMonthEndPolicy.CARRY_OVER)
+                                .blindClose(false)
+                                .countLinesRequired(false)
+                                .maxSessionHours(DEFAULT_REGISTER_SESSION_HOURS)
+                                .notCountedAlertDays(31)
+                                .build())));
+    }
+
+    private CashSession defaultSession(CashRegister register) {
+        registerRepository.lockById(register.getId());
+        java.util.Optional<CashSession> live = sessionRepository.findBlockingSessionByCashRegisterId(register.getId());
+        if (live.isPresent()) {
+            CashSession session = live.get();
+            if (session.getStatus() != CashSessionStatus.OPEN) {
+                throw new BadRequestException("La session " + session.getSessionNumber() + " de la caisse par defaut est "
+                        + session.getStatus() + " : levez la suspension ou indiquez la session de caisse du paiement");
+            }
+            return session;
+        }
+        BigDecimal opening = money(register.getLastCountAmount() == null ? BigDecimal.ZERO : register.getLastCountAmount());
+        CashSession session = sessionRepository.save(CashSession.builder()
+                .sessionNumber(sequenceGenerator.next("cash_session"))
+                .cashRegister(register)
+                .status(CashSessionStatus.OPEN)
+                .openedBy(SYSTEM_ACTOR)
+                .openingAmount(opening)
+                .expectedOpeningAmount(opening)
+                .openingVariance(BigDecimal.ZERO.setScale(4))
+                .build());
+        if (opening.signum() > 0) {
+            saveMovement(session, CashMovementType.OPENING_FLOAT, opening, CashDocumentType.CASH_VOUCHER,
+                    session.getSessionNumber(), "OPENING_FLOAT", "CASH_SESSION", session.getSessionNumber(),
+                    "INTERNAL", register.getBusinessEntityCode(), register.getName(), "Fonds du dernier comptage", SYSTEM_ACTOR, null);
+        }
+        return session;
     }
 
     /** La session est close pour de bon · le rapport part apres validation en base. */

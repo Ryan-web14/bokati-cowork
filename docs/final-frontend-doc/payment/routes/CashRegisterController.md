@@ -349,6 +349,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `parentRegisterCode` | texte |  |  |
 | `lastCountAt` | date-heure ISO 8601 UTC |  |  |
 | `lastCountAmount` | nombre décimal |  |  |
+| `defaultRegister` | booléen |  |  |
 
 <a id="m-CreateCashRegisterRequest"></a>
 #### CreateCashRegisterRequest
@@ -536,6 +537,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `handoverNumber` | texte |  |  |
 | `outOfHoursReason` | texte |  |  |
 | `expectedHidden` | booléen |  |  |
+| `openingChecksWaivedBy` | texte |  |  |
 
 <a id="m-CashSessionStatus"></a>
 #### CashSessionStatus

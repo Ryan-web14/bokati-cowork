@@ -531,6 +531,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `handoverNumber` | texte |  |  |
 | `outOfHoursReason` | texte |  |  |
 | `expectedHidden` | booléen |  |  |
+| `openingChecksWaivedBy` | texte |  |  |
 
 <a id="m-CashCountResponse-Line"></a>
 #### CashCountResponse.Line

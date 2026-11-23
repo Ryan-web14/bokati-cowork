@@ -40,6 +40,10 @@ import java.util.Optional;
  *       session ; tant qu'aucun ne l'est, un poste inconnu est simplement propose.</li>
  *   <li>Hors des horaires d'ouverture, un motif choisi dans la liste est exige.</li>
  * </ul>
+ *
+ * <p>Un administrateur ou un super-administrateur ouvre sans ces validations : ni affectation, ni
+ * poste autorise, ni motif hors horaires (l'ouverture hors horaires est seulement notee). La caisse
+ * doit toujours etre active, et un coffre n'a toujours pas de session.</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -86,6 +90,12 @@ public class CashRegisterAccessGuard {
 
     public OpeningClearance assertCanOpen(CashRegister register, String actor, String deviceCode,
                                           String outOfHoursReasonCode, String outOfHoursReasonText) {
+        return assertCanOpen(register, actor, deviceCode, outOfHoursReasonCode, outOfHoursReasonText, false);
+    }
+
+    /** Hors administrateur : quand {@code admin} est vrai, seules l'activite de la caisse et l'absence d'un coffre sont controlees. */
+    public OpeningClearance assertCanOpen(CashRegister register, String actor, String deviceCode,
+                                          String outOfHoursReasonCode, String outOfHoursReasonText, boolean admin) {
         if (register.getStatus() == CashRegisterStatus.SUSPENDED) {
             throw new BadRequestException("La caisse " + register.getRegisterCode() + " est suspendue"
                     + (StringUtils.hasText(register.getStatusReason()) ? " (" + register.getStatusReason() + ")" : "")
@@ -98,6 +108,16 @@ public class CashRegisterAccessGuard {
             throw new BadRequestException("Un coffre n'a pas de session : ses mouvements sont des transferts internes");
         }
         Instant now = clock.instant();
+        if (admin) {
+            String device = StringUtils.hasText(deviceCode) ? deviceCode.trim() : null;
+            String outOfHours = null;
+            if (!withinSchedule(register.getRegisterCode(), now)) {
+                outOfHours = StringUtils.hasText(outOfHoursReasonCode)
+                        ? referenceLists.describe(CashReferenceLists.OUT_OF_HOURS_REASON, outOfHoursReasonCode, outOfHoursReasonText)
+                        : "Ouverture hors horaires par un administrateur";
+            }
+            return new OpeningClearance(device, outOfHours, effectiveAssignment(register.getRegisterCode(), actor, now).orElse(null));
+        }
         currentAbsence(actor, now).ifPresent(absence -> {
             throw new ForbiddenException("Vous etes declare absent (" + absence.getAbsenceNumber()
                     + ") : vous ne pouvez pas ouvrir de session pendant votre absence");

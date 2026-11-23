@@ -455,7 +455,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `receivedBy` | texte |  |  |
-| `cashSessionNumber` | texte | oui |  |
+| `cashSessionNumber` | texte |  |  |
 | `amount` | nombre décimal |  |  |
 | `providerReference` | texte |  |  |
 | `metadataJson` | texte |  |  |

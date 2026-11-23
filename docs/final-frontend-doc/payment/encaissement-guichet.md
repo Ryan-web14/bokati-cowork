@@ -65,7 +65,7 @@ Sur une intention, `PATCH /sni/api/v1/payments/intents/{intentNumber}/cash` :
 { "receivedBy": "caisse@sni-cg.com", "cashSessionNumber": "CSS-...", "tenderedAmount": 20000 }
 ```
 
-Sur une facture, `POST /sni/api/v1/billing/invoices/{documentNumber}/pay` (le règlement direct existant), avec `"paymentMethod": "CASH"`, `cashSessionNumber` (obligatoire en espèces) et `tenderedAmount`.
+Sur une facture, `POST /sni/api/v1/billing/invoices/{documentNumber}/pay` (le règlement direct existant), avec `"paymentMethod": "CASH"`, `cashSessionNumber` et `tenderedAmount`. Sans `cashSessionNumber`, l'encaissement va à la caisse par défaut `CSR-DEFAULT` (23/11/2026, voir [parcours des caisses](parcours-caisses.md)).
 
 La transaction renvoyée porte `tenderedAmount` et `changeAmount`. Le reçu imprime « Montant remis » et « Monnaie rendue ».
 
@@ -87,7 +87,7 @@ Le mobile money **de la plateforme** (`MOBILE_MONEY`) reste réservé à la rout
 
 Une même référence déjà encaissée pour le même moyen (et la même banque pour un chèque, le même opérateur pour le mobile money) est refusée : `409 CONFLICT`, message « Le chèque 0012345 est déjà enregistré ».
 
-`cashSessionNumber` est facultatif : s'il est donné, la session doit être ouverte et ne pas être une caisse automatique. Le paiement est alors rattaché au guichet, **sans entrer dans le compte des espèces** (voir le résumé de session plus bas).
+`cashSessionNumber` est facultatif : s'il est donné, la session doit être ouverte et ne pas être une caisse automatique. Le paiement est alors rattaché au guichet, **sans entrer dans le compte des espèces** (voir le résumé de session plus bas). Absent, il est rattaché à la session de la caisse par défaut `CSR-DEFAULT` (23/11/2026).
 
 ### Sur une intention
 

@@ -367,6 +367,38 @@ class CashSessionLifecycleServiceImplTest {
     }
 
     @Test
+    @DisplayName("Un administrateur confirme l'ouverture d'une session dont il n'est pas le caissier ; un autre utilisateur non")
+    void adminConfirmsAnyOpening() {
+        session.setStatus(CashSessionStatus.OPENING);
+        session.setOpeningVariance(new BigDecimal("-1000"));
+        loggedInAs("autre@elleaose.com");
+        assertThatThrownBy(() -> service.confirmOpening("CSS-1", new CashReasonRequest("CHANGE_ERROR", null, null)))
+                .isInstanceOf(com.sni.bokaticowork.core.exception.customs.ForbiddenException.class);
+
+        loggedInAs("admin@elleaose.com", "ROLE_ADMIN");
+        service.confirmOpening("CSS-1", new CashReasonRequest("CHANGE_ERROR", null, null));
+
+        assertThat(session.getStatus()).isEqualTo(CashSessionStatus.OPEN);
+        assertThat(reviews).anySatisfy(review -> assertThat(review.getKind()).isEqualTo(CashVarianceKind.OPENING));
+    }
+
+    @Test
+    @DisplayName("Ouverture par un administrateur avec un ecart : l'ecart part en revue, sans confirmation")
+    void adminOpeningVarianceGoesToReview() {
+        session.setOpeningVariance(new BigDecimal("500"));
+
+        service.recordAdminOpeningVariance(session, null);
+
+        assertThat(session.getStatus()).isEqualTo(CashSessionStatus.OPEN);
+        assertThat(session.getOpeningVarianceReason()).contains("administrateur");
+        assertThat(reviews).singleElement().satisfies(review -> {
+            assertThat(review.getKind()).isEqualTo(CashVarianceKind.OPENING);
+            assertThat(review.getStatus()).isEqualTo(CashVarianceStatus.PENDING);
+        });
+        verify(emailNotifier).notifySupervisor(anyString(), anyString(), eq("CSS-1"), anyString());
+    }
+
+    @Test
     @DisplayName("La tolerance en pourcentage s'ajoute a la tolerance en montant")
     void tolerancePercent() {
         CashRegister percent = CashRegister.builder().countTolerance(BigDecimal.ZERO).countTolerancePercent(new BigDecimal("1")).build();

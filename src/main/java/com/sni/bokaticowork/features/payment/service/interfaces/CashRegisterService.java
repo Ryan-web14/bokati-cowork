@@ -43,6 +43,18 @@ public interface CashRegisterService {
     CashSessionResponse closeForMonthEnd(String sessionNumber);
 
     /**
+     * Cree au besoin la caisse par defaut et lui ouvre une session tenue par le systeme. Appele au
+     * demarrage ; sans effet si tout existe deja.
+     */
+    CashRegisterResponse ensureDefaultRegister();
+
+    /**
+     * Session ouverte de la caisse par defaut, qui recoit les paiements saisis sans session de
+     * caisse ; ouverte au besoin.
+     */
+    String defaultSessionNumber();
+
+    /**
      * Ouvre la session de l'entrant d'une passation, avec le montant retenu comme fonds (lot C2).
      * Appele par le cycle de vie des sessions, jamais directement par une route.
      */

@@ -7839,6 +7839,9 @@
     },
     "lastCountAmount": {
      "type": "number"
+    },
+    "defaultRegister": {
+     "type": "boolean"
     }
    }
   },
@@ -8192,6 +8195,9 @@
     },
     "expectedHidden": {
      "type": "boolean"
+    },
+    "openingChecksWaivedBy": {
+     "type": "string"
     }
    }
   },
@@ -11100,9 +11106,6 @@
    }
   },
   "RegisterCashPaymentRequest": {
-   "required": [
-    "cashSessionNumber"
-   ],
    "type": "object",
    "properties": {
     "receivedBy": {

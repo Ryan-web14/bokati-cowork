@@ -45,6 +45,15 @@ public class CashRegister {
     private Boolean systemManaged = Boolean.FALSE;
 
     /**
+     * Caisse par defaut, creee par le systeme : elle recoit les paiements saisis sans session de
+     * caisse. Une seule caisse la porte. Sa session, tenue par le systeme, est close et renouvelee
+     * chaque fin de mois avec report du solde.
+     */
+    @Column(name = "default_register", nullable = false)
+    @Builder.Default
+    private Boolean defaultRegister = Boolean.FALSE;
+
+    /**
      * Unique moyen de paiement admis sur cette caisse · nul si elle les accepte tous.
      *
      * <p>C'est ce qui fait de {@code CSR-AUTO-WALLET} une caisse de portefeuille et rien d'autre :

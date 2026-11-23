@@ -70,7 +70,8 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 cashRegister.getStatus(),
                 cashRegister.getParentRegisterCode(),
                 cashRegister.getLastCountAt(),
-                cashRegister.getLastCountAmount()
+                cashRegister.getLastCountAmount(),
+                Boolean.TRUE.equals(cashRegister.getDefaultRegister())
         );
     }
 
@@ -117,7 +118,8 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 cashSession.getForcedClose(),
                 cashSession.getHandoverNumber(),
                 cashSession.getOutOfHoursReason(),
-                hidden
+                hidden,
+                cashSession.getOpeningChecksWaivedBy()
         );
     }
 

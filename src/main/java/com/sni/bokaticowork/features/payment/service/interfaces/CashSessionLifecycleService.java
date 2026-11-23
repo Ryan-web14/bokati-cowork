@@ -29,6 +29,12 @@ public interface CashSessionLifecycleService {
 
     CashSessionStepResponse confirmOpening(String sessionNumber, CashReasonRequest request);
 
+    /**
+     * Ecart d'ouverture d'une session ouverte par un administrateur : la session est deja ouverte,
+     * l'ecart part en revue et le responsable est prevenu, sans etape de confirmation.
+     */
+    void recordAdminOpeningVariance(CashSession session, String reason);
+
     CashSessionStepResponse pause(String sessionNumber);
 
     CashSessionStepResponse resume(String sessionNumber, ResumeCashSessionRequest request);

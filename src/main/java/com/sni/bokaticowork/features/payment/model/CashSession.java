@@ -39,6 +39,13 @@ public class CashSession {
     @Column(name = "out_of_hours_reason", length = 500)
     private String outOfHoursReason;
 
+    /**
+     * Administrateur qui a ouvert la session sans les controles d'ouverture (affectation, poste,
+     * horaires, confirmation de l'ecart d'ouverture) ; vide pour une ouverture ordinaire.
+     */
+    @Column(name = "opening_checks_waived_by", length = 255)
+    private String openingChecksWaivedBy;
+
     // ---- Cycle de vie complet (lot C2) ----
 
     /** Fonds attendu a l'ouverture : le dernier comptage de la caisse. */

@@ -89,7 +89,7 @@ class CashCorrectionsC0Test {
 
     private void loggedInAs(String email) {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                email, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
+                email, null, List.of(new SimpleGrantedAuthority("ROLE_CASHIER"))));
     }
 
     @Test
@@ -102,12 +102,12 @@ class CashCorrectionsC0Test {
         when(sessionRepository.findBlockingSessionByOpenedBy(anyString())).thenReturn(Optional.empty());
         when(sequenceGenerator.next(anyString())).thenReturn("CSS-1");
         when(sessionRepository.save(any(CashSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(accessGuard.assertCanOpen(any(), anyString(), any(), any(), any()))
+        when(accessGuard.assertCanOpen(any(), anyString(), any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean()))
                 .thenReturn(new com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.OpeningClearance(null, null, null));
 
         service.openSession(new OpenCashSessionRequest("CSR-1", "quelquun.dautre@elleaose.com", BigDecimal.ZERO));
 
-        verify(accessGuard).assertCanOpen(register, "caissier@elleaose.com", null, null, null);
+        verify(accessGuard).assertCanOpen(register, "caissier@elleaose.com", null, null, null, false);
 
         ArgumentCaptor<CashSession> saved = ArgumentCaptor.forClass(CashSession.class);
         verify(sessionRepository).save(saved.capture());
@@ -141,7 +141,7 @@ class CashCorrectionsC0Test {
         when(sessionRepository.findBlockingSessionByOpenedBy(anyString())).thenReturn(Optional.empty());
         when(sequenceGenerator.next(anyString())).thenReturn("CSS-2");
         when(sessionRepository.save(any(CashSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(accessGuard.assertCanOpen(any(), anyString(), any(), any(), any()))
+        when(accessGuard.assertCanOpen(any(), anyString(), any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean()))
                 .thenReturn(new com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.OpeningClearance(null, null, null));
         storeMovements();
 

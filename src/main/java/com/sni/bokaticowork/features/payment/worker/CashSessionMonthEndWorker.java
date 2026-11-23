@@ -25,6 +25,9 @@ import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
  * en cours : le 1er au matin, celles du mois ecoule ; un passage manque (serveur arrete) est
  * rattrape au suivant. Une session a la fois, chacune dans sa propre transaction · un echec
  * n'arrete pas les autres. Un seul passage par jour, meme a plusieurs instances.</p>
+ *
+ * <p>La caisse par defaut (creee par le systeme) suit la politique de report : sa session est close
+ * au montant attendu et une nouvelle est ouverte par le systeme avec ce solde.</p>
  */
 @Slf4j
 @Component
@@ -78,6 +81,12 @@ public class CashSessionMonthEndWorker implements SchedulingConfigurer {
                     failed++;
                     log.error("Caisse · session {} non close en fin de mois : {}", sessionNumber, ex.getMessage(), ex);
                 }
+            }
+            // La caisse par defaut a toujours une session ouverte, meme si aucune n'etait a clore.
+            try {
+                cashRegisterService.ensureDefaultRegister();
+            } catch (RuntimeException ex) {
+                log.error("Caisse par defaut · session non rouverte : {}", ex.getMessage(), ex);
             }
             jobRuns.finish(JOB, runKey, closed + " session(s) close(s) et renouvelee(s), " + failed + " en echec");
         } catch (RuntimeException ex) {

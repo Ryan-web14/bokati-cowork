@@ -300,16 +300,13 @@ public class PaymentServiceImpl implements PaymentService {
         if (!StringUtils.hasText(cashier)) {
             throw new BadRequestException("Impossible d'identifier l'encaisseur du paiement en especes");
         }
+        // Sans session indiquee, le paiement va a la caisse par defaut.
+        String cashSession = sessionOrDefault(request.cashSessionNumber());
         PaymentTransaction transaction = saveSucceededTransaction(intent, PaymentMethod.CASH, "CASH", request.providerReference(), cashier, request.metadataJson(), paymentAmount,
                 builder -> builder.tenderedAmount(cash.tenderedAmount())
                         .changeAmount(cash.changeAmount())
-                        .cashSessionNumber(trim(request.cashSessionNumber())));
-        if (StringUtils.hasText(request.cashSessionNumber())) {
-            cashRegisterService.recordPayment(request.cashSessionNumber(), transaction.getAmount(), transaction.getTransactionNumber(), cashier);
-        }
-        else{
-            throw new BadRequestException("La session de caisse est obligatoire pour un paiement en espèces");
-        }
+                        .cashSessionNumber(cashSession));
+        cashRegisterService.recordPayment(cashSession, transaction.getAmount(), transaction.getTransactionNumber(), cashier);
         reconcileIntent(intent);
         creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), cashier);
         publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
@@ -329,12 +326,16 @@ public class PaymentServiceImpl implements PaymentService {
         String sessionNumber = trim(request.cashSessionNumber());
         if (sessionNumber != null) {
             cashRegisterService.assertCounterSessionOpen(sessionNumber);
+        } else {
+            // Sans session indiquee, le paiement est rattache a la caisse par defaut.
+            sessionNumber = sessionOrDefault(null);
         }
+        String attachedSession = sessionNumber;
         BigDecimal paymentAmount = requestedIntentAmount(request.amount(), intent);
         String receivedBy = StringUtils.hasText(paymentOrigin.currentActor()) ? paymentOrigin.currentActor() : request.receivedBy();
         PaymentTransaction transaction = saveSucceededTransaction(intent, details.method(), details.provider(),
                 details.reference(), receivedBy, request.metadataJson(), paymentAmount,
-                builder -> applyManualDetails(builder, details).cashSessionNumber(sessionNumber));
+                builder -> applyManualDetails(builder, details).cashSessionNumber(attachedSession));
         reconcileIntent(intent);
         creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), receivedBy);
         publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
@@ -555,9 +556,6 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BadRequestException("Un mobile money saisi au guichet est un MOBILE_MONEY_OFFLINE (avec l'opérateur et la référence) ;"
                     + " le mobile money de la plateforme passe par une intention (PATCH /payments/intents/{intentNumber}/mobile-money)");
         }
-        if (request.paymentMethod() == PaymentMethod.CASH && !StringUtils.hasText(request.cashSessionNumber())) {
-            throw new BadRequestException("La session de caisse est obligatoire pour un paiement en espèces");
-        }
         // Le client peut tendre plus que le du · on encaisse le du et on rend la difference.
         CashChange cash = request.paymentMethod() == PaymentMethod.CASH
                 ? CashChange.compute(document.getBalanceDue(), request.amount(), request.tenderedAmount())
@@ -639,7 +637,8 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentTransaction processPayment(PaymentIntent intent, PayInvoiceRequest request, BillingDocument document,
                                               CashChange cash, ManualPaymentDetailsSupport.ManualPaymentDetails manual) {
         if (manual != null) {
-            String sessionNumber = trim(request.cashSessionNumber());
+            // Sans session indiquee, le paiement est rattache a la caisse par defaut.
+            String sessionNumber = sessionOrDefault(request.cashSessionNumber());
             return saveSucceededTransaction(intent, manual.method(), manual.provider(), manual.reference(),
                     actorOr(request.processedBy()), request.metadataJson(), intent.getAmount(),
                     builder -> applyManualDetails(builder, manual).cashSessionNumber(sessionNumber));
@@ -667,21 +666,27 @@ public class PaymentServiceImpl implements PaymentService {
                 if (!"XAF".equalsIgnoreCase(intent.getCurrency())) {
                     throw new BadRequestException("Les paiements en espèces ne sont autorisés qu'en XAF");
                 }
+                // Sans session indiquee, le paiement va a la caisse par defaut.
+                String cashSession = sessionOrDefault(request.cashSessionNumber());
                 PaymentTransaction cashTxn = saveSucceededTransaction(intent, PaymentMethod.CASH, "CASH",
                         request.providerReference(), actorOr(request.processedBy()), request.metadataJson(), intent.getAmount(),
                         builder -> builder.tenderedAmount(cash == null ? null : cash.tenderedAmount())
                                 .changeAmount(cash == null ? null : cash.changeAmount())
-                                .cashSessionNumber(trim(request.cashSessionNumber())));
-                if (StringUtils.hasText(request.cashSessionNumber())) {
-                    cashRegisterService.recordPayment(request.cashSessionNumber(), cashTxn.getAmount(),
-                            cashTxn.getTransactionNumber(), actorOr(request.processedBy()));
-                }
+                                .cashSessionNumber(cashSession));
+                cashRegisterService.recordPayment(cashSession, cashTxn.getAmount(),
+                        cashTxn.getTransactionNumber(), actorOr(request.processedBy()));
                 yield cashTxn;
             }
             default -> saveSucceededTransaction(intent, request.paymentMethod(),
                     request.paymentMethod().name(), request.providerReference(),
                     actorOr(request.processedBy()), request.metadataJson());
         };
+    }
+
+    /** La session indiquee, ou a defaut la session ouverte de la caisse par defaut. */
+    private String sessionOrDefault(String requested) {
+        String session = trim(requested);
+        return session != null ? session : cashRegisterService.defaultSessionNumber();
     }
 
     private String resolveMemberProcessing(String processedBy) {

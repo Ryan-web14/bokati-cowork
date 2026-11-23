@@ -10,6 +10,7 @@ Ce fichier couvre les caisses physiques (espèces, en XAF), leurs sessions, leur
 | --- | --- | --- |
 | Caisse (`CashRegister`) | `registerCode` (ex. `CSR-...`, généré) | Un tiroir-caisse. Porte `active`, `maxCashAmount` (plafond, sert seulement aux alertes), `managerEmail` (destinataire des rapports et alertes), `systemManaged`, `restrictedToMethod`. |
 | Caisse automatique | `CSR-AUTO-WALLET`, `CSR-AUTO-MOBILE-MONEY` | Créée et tenue par le serveur pour journaliser les paiements portefeuille et mobile money réussis. `systemManaged = true` : **aucune saisie humaine n'y est acceptée** (`CashRegisterServiceImpl.java:685`). Elle apparaît dans les listes comme les autres. |
+| Caisse par défaut (23/11/2026) | `CSR-DEFAULT`, `defaultRegister = true` | Créée par le serveur au démarrage. Elle reçoit **les paiements saisis sans `cashSessionNumber`** (espèces, chèque, virement, mobile money hors plateforme). Ce n'est pas une caisse automatique (`systemManaged = false`) : un administrateur peut y compter, y sortir des espèces ou la remettre en banque. Sa session est tenue par le serveur (`openedBy = SYSTEM`) et elle est close et rouverte chaque fin de mois, avec le solde reporté (politique `CARRY_OVER`). Une seule caisse porte `defaultRegister`. |
 | Session (`CashSession`) | `sessionNumber` | Une période de tenue de caisse par un caissier : ouverture avec un fonds, mouvements, puis clôture avec comptage. Une seule session bloquante (`OPEN` ou `CLOSING_REVIEW`) par caisse **et** par caissier (`openedBy`). |
 | Mouvement (`CashMovement`) | `movementNumber` | Une entrée ou sortie d'espèces dans une session. Type (`movementType`), pièce (`documentType`, `documentNumber`), contrepartie, motif. Toujours en XAF pour les saisies manuelles (`CashRegisterServiceImpl.java:57`). |
 | Pièce jointe de mouvement | `id` numérique (int64) | Référence de fichier (`fileName`, `storagePath`) attachée à un mouvement. Le serveur ne reçoit pas le fichier, seulement son chemin. |
@@ -118,6 +119,15 @@ Aucun type ne produit une entrée (`CASH_IN`) : il n'existe pas de demande d'app
 3. L'écran bascule sur le tableau de bord de la session : `GET .../sessions/{sessionNumber}/summary` pour les totaux et le solde attendu, `GET .../movements?sessionNumber=...` pour le journal.
 4. Pour retrouver la session en cours d'un caissier : `GET .../sessions?openedBy=<identifiant>&status=OPEN`.
 
+**Ouverture par un administrateur (23/11/2026).** Un utilisateur `ADMIN` ou `SUPER_ADMIN` ouvre une session sans validation :
+- ni affectation à la caisse, ni poste autorisé ;
+- hors horaires, sans motif : la session porte `outOfHoursReason = "Ouverture hors horaires par un administrateur"` ;
+- un écart d'ouverture ne bloque pas : la session est directement `OPEN` (jamais `OPENING`), sans billetage obligatoire. L'écart part quand même en revue (`PENDING`) et le responsable est prévenu ; il se décide comme les autres.
+
+La session porte `openingChecksWaivedBy` (l'administrateur), vide pour une ouverture ordinaire. Côté écran, ne pas exiger de motif hors horaires ni de confirmation d'écart quand l'utilisateur est administrateur.
+
+**Confirmer une ouverture.** `PATCH .../sessions/{sessionNumber}/confirm-opening` : le caissier de la session, ou n'importe quel administrateur (qu'il soit le caissier ou non). Le motif de l'écart reste demandé.
+
 ### 3. Enregistrer des mouvements, bons d'entrée et de sortie
 
 Toutes ces routes exigent une session `OPEN` sur une caisse non automatique.
@@ -141,14 +151,14 @@ Un mouvement ne se modifie ni ne se supprime. Pour corriger, saisir un mouvement
 
 Côté caisse, un paiement en espèces est un mouvement `PAYMENT` (pièce `RECEIPT`, `referenceType = PAYMENT_TRANSACTION`, `referenceCode` = numéro de transaction) écrit dans une session ouverte.
 
-1. Le guichet doit avoir une session `OPEN` sur une caisse ordinaire. Charger la session du caissier connecté (parcours 2, étape 4).
-2. `PATCH /sni/api/v1/payments/intents/{intentNumber}/cash` ([route](routes/PaymentController.md#r-patch-sni-api-v1-payments-intents-intentnumber-cash)) avec `receivedBy`, `cashSessionNumber` (exigé, une chaîne vide est refusée), `amount` facultatif.
+1. Charger la session du caissier connecté (parcours 2, étape 4) s'il en a une.
+2. `PATCH /sni/api/v1/payments/intents/{intentNumber}/cash` ([route](routes/PaymentController.md#r-patch-sni-api-v1-payments-intents-intentnumber-cash)) avec `receivedBy`, `cashSessionNumber`, `amount` facultatif. **Depuis le 23/11/2026, `cashSessionNumber` est facultatif** : absent, le paiement va à la session ouverte de la caisse par défaut (`CSR-DEFAULT`). Si cette session est suspendue ou la caisse désactivée, `400` « … indiquez la session de caisse du paiement ».
 3. Le serveur (`PaymentServiceImpl.java:280`) refuse une devise autre que XAF, crée la transaction réussie, puis appelle `recordPayment` (`CashRegisterServiceImpl.java:477`) qui exige une session `OPEN`, une caisse non automatique et un montant positif. Tout échec annule l'ensemble (transaction unique).
 4. Le paiement apparaît dans le journal de la session et augmente `totalPayments` et le solde attendu.
 
 Ne sont pas contrôlés : que la session appartienne à `receivedBy`, que la caisse soit active, que le plafond `maxCashAmount` soit respecté.
 
-Autres chemins qui écrivent un paiement espèces en caisse : la confirmation d'une annonce (parcours 12) et le règlement de facture `POST /sni/api/v1/billing/invoices/{documentNumber}/pay` avec `paymentMethod = CASH` ([route](../billing/routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-documentnumber-pay)) ; ce dernier ne crée le mouvement que si `cashSessionNumber` est non vide (voir Écarts). Les paiements portefeuille et mobile money réussis sont journalisés seuls dans les caisses automatiques. Un remboursement de transaction espèces ne crée aucun mouvement : le saisir en `REFUND` (non vérifié en dehors du module `payment`).
+Autres chemins qui écrivent un paiement espèces en caisse : la confirmation d'une annonce (parcours 12) et le règlement de facture `POST /sni/api/v1/billing/invoices/{documentNumber}/pay` avec `paymentMethod = CASH` ([route](../billing/routes/BillingDocumentController.md#r-post-sni-api-v1-billing-invoices-documentnumber-pay)) ; sans `cashSessionNumber`, le mouvement est écrit dans la caisse par défaut (23/11/2026). Un chèque, un virement ou un mobile money hors plateforme sans session est rattaché à la session de la caisse par défaut, sans entrer dans le compte des espèces. Les paiements portefeuille et mobile money réussis sont journalisés seuls dans les caisses automatiques. Un remboursement de transaction espèces ne crée aucun mouvement : le saisir en `REFUND` (non vérifié en dehors du module `payment`).
 
 ### 6. Demandes de caisse et leur approbation
 
@@ -287,7 +297,7 @@ Autres règles :
 
 ### Écrans
 
-1. **Caisses** : liste, création, activation ou désactivation ; badge « automatique » si `systemManaged`, moyen accepté si `restrictedToMethod`.
+1. **Caisses** : liste, création, activation ou désactivation ; badge « automatique » si `systemManaged`, badge « par défaut » si `defaultRegister`, moyen accepté si `restrictedToMethod`.
 2. **Ma caisse** (caissier) : ouverture de session ; tableau de bord de la session ouverte (synthèse, journal, boutons bon d'entrée, bon de sortie, mouvement, demande) ; clôture avec comptage.
 3. **Sessions** : liste filtrable par caisse, statut, caissier ; détail avec synthèse, mouvements, demandes, anomalies, statistiques, rapport PDF ; file des écarts à valider (`CLOSING_REVIEW`).
 4. **Mouvement** : détail, pièces jointes, signature, PDF, marque d'impression.
@@ -328,7 +338,8 @@ Le droit `CASH:OPEN_SESSION` existe en base mais n'est exigé par aucune route :
 | Déclencheur | Effet |
 | --- | --- |
 | Paiement portefeuille ou mobile money réussi (`PaymentTransactionWorkflowProcessor.java:107`) | Mouvement `PAYMENT` dans la caisse automatique du moyen ; caisse et session créées au besoin ; session close (`CLOSED`, sans écart) et renouvelée quand le total atteint le seuil (10 000 000 XAF par défaut). Un échec est journalisé sans bloquer le paiement. |
-| Worker de fin de mois (`worker/CashSessionMonthEndWorker.java:37`), chaque nuit à 00:05 `Africa/Brazzaville` (`bokati.payment.cash-session.month-end-cron`), une seule passe par jour même à plusieurs instances | Toute session `OPEN` ouverte avant le 1er du mois courant est close par `SYSTEM` au montant attendu, sans comptage (`countedClosingAmount` et `varianceAmount` à `null`, motif explicite), et une nouvelle session est ouverte au nom du même caissier avec ce montant comme fonds (mouvement `OPENING_FLOAT` « Report de la session ... »). Les sessions en `CLOSING_REVIEW` ne sont pas touchées. |
+| Worker de fin de mois (`worker/CashSessionMonthEndWorker.java:37`), chaque nuit à 00:05 `Africa/Brazzaville` (`bokati.payment.cash-session.month-end-cron`), une seule passe par jour même à plusieurs instances | Toute session `OPEN` ouverte avant le 1er du mois courant est close par `SYSTEM` au montant attendu, sans comptage (`countedClosingAmount` et `varianceAmount` à `null`, motif explicite), et une nouvelle session est ouverte au nom du même caissier avec ce montant comme fonds (mouvement `OPENING_FLOAT` « Report de la session ... »). Les sessions en `CLOSING_REVIEW` ne sont pas touchées. La caisse par défaut suit cette règle (report, session rouverte par `SYSTEM`) ; en fin de passage, le worker s'assure qu'elle a une session ouverte. |
+| Démarrage de l'application (`worker/DefaultCashRegisterInitializer.java`) | Crée la caisse par défaut si elle manque et lui ouvre une session `SYSTEM`. Sans effet si tout existe ; un échec n'empêche pas le démarrage (la caisse sera créée au premier paiement sans session). |
 | Clôture définitive (`CLOSED`) par un humain, une validation d'écart ou le système | Courriel avec le PDF de clôture (`cloture-caisse-<session>.pdf`) à tous les comptes actifs `SUPER_ADMIN`, `ADMIN`, `MANAGER`, plus `managerEmail` de la caisse ou, à défaut, l'adresse superviseur (`service/support/CashClosingReportMailer.java:69`). Désactivable par `bokati.payment.cash-session.closing-report.enabled`. |
 | Clôture humaine (avec ou sans écart) et fin de mois d'une caisse ordinaire | Analyse d'anomalies après validation en base (`service/support/CashSessionAnomalyDetectionListener.java:21`) ; si des anomalies nouvelles sont trouvées, alerte WebSocket sur `/topic/admin/alerts` (`alertType = CASH_ANOMALY`, sévérité `CRITICAL`). |
 | Clôture avec écart | Courriel « Écart de caisse à valider · <session> » à l'adresse superviseur (`bokati.payment.cash-session.supervisor-email`). |

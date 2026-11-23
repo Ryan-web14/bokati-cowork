@@ -12,6 +12,9 @@ import java.util.Optional;
 public interface CashRegisterRepository extends JpaRepository<CashRegister, Long> {
 
     @Query(nativeQuery = true, value = "SELECT * FROM cash_register WHERE register_code = :registerCode")
+    /** La caisse par defaut (une seule). */
+    Optional<CashRegister> findFirstByDefaultRegisterTrue();
+
     Optional<CashRegister> findByRegisterCode(@Param("registerCode") String registerCode);
 
     /**

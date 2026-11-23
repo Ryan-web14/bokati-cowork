@@ -179,7 +179,10 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
         CashSession session = session(sessionNumber);
         requireStatus(session, CashSessionStatus.OPENING);
         String actor = actors.resolve(null);
-        requireCashier(session, actor, "confirmer l'ouverture");
+        // Un administrateur confirme l'ouverture de n'importe quelle session, la sienne ou non.
+        if (!actors.isAdmin()) {
+            requireCashier(session, actor, "confirmer l'ouverture");
+        }
         BigDecimal variance = session.getOpeningVariance() == null ? BigDecimal.ZERO : session.getOpeningVariance();
         CashVarianceReview review = null;
         List<String> messages = new ArrayList<>();
@@ -197,6 +200,23 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
         session.setStatus(CashSessionStatus.OPEN);
         sessionRepository.save(session);
         return step(session, null, toResponse(review), messages);
+    }
+
+    @Override
+    public void recordAdminOpeningVariance(CashSession session, String reason) {
+        BigDecimal variance = session.getOpeningVariance() == null ? BigDecimal.ZERO : session.getOpeningVariance();
+        if (variance.signum() == 0) {
+            return;
+        }
+        String resolved = StringUtils.hasText(reason) ? reason.trim()
+                : "Ecart constate a l'ouverture par un administrateur, sans confirmation";
+        session.setOpeningVarianceReason(resolved);
+        sessionRepository.save(session);
+        review(session, CashVarianceKind.OPENING, variance, null, resolved, CashVarianceStatus.PENDING);
+        notifyReviewers("Ecart d'ouverture a revoir · " + session.getSessionNumber(),
+                "La caisse " + session.getCashRegister().getName() + " a ete ouverte par l'administrateur " + session.getOpenedBy()
+                        + " avec un fonds different du dernier comptage : ecart de " + plain(variance) + " XAF. Motif : " + resolved + ".",
+                session.getSessionNumber());
     }
 
     // ------------------------------------------------------- pause et suspension

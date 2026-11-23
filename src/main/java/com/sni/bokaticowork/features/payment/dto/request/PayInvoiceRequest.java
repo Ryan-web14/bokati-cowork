@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 /**
  * Reglement direct d'une facture au guichet.
  *
- * <p>{@code cashSessionNumber} est obligatoire en especes ; pour un cheque, un virement ou un mobile
- * money hors plateforme il rattache le paiement a la session du guichet, sans entrer dans le compte
- * des especes. {@code providerReference} porte le numero du cheque, la reference du virement ou
+ * <p>{@code cashSessionNumber} : session du guichet. Absente, le paiement va a la caisse par defaut
+ * (creee par le systeme). Pour un cheque, un virement ou un mobile money hors plateforme elle
+ * rattache le paiement a la session, sans entrer dans le compte des especes. {@code providerReference} porte le numero du cheque, la reference du virement ou
  * l'identifiant de la transaction chez l'operateur.</p>
  */
 public record PayInvoiceRequest(

@@ -66,6 +66,21 @@ public class CashActorResolver {
         return false;
     }
 
+    /** L'utilisateur connecte est-il administrateur ou super-administrateur ? */
+    public boolean isAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            return false;
+        }
+        for (GrantedAuthority granted : auth.getAuthorities()) {
+            String value = granted.getAuthority();
+            if ("ROLE_ADMIN".equals(value) || "ROLE_SUPER_ADMIN".equals(value) || "ADMIN".equals(value) || "SUPER_ADMIN".equals(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Deux acteurs sont-ils la meme personne (comparaison sans casse ni espaces) ? */
     public static boolean samePerson(String first, String second) {
         return StringUtils.hasText(first) && StringUtils.hasText(second)

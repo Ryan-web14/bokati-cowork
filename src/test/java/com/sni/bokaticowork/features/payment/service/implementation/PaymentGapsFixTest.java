@@ -170,6 +170,23 @@ class PaymentGapsFixTest {
     }
 
     @Test
+    @DisplayName("Paiement en especes sans session : il va a la session de la caisse par defaut")
+    void aCashPaymentWithoutSessionGoesToTheDefaultRegister() {
+        intent.setStatus(PaymentIntentStatus.PENDING);
+        when(paymentOrigin.currentActor()).thenReturn("admin@elleaose.com");
+        when(cashRegisterService.defaultSessionNumber()).thenReturn("CSS-DEF-1");
+
+        try {
+            service.registerCashPayment("PI-1",
+                    new com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest(null, null, new BigDecimal("50"), null, null, null));
+        } catch (RuntimeException ignored) {
+            // la suite (rapprochement, notifications) n'est pas simulee
+        }
+
+        verify(cashRegisterService).recordPayment(eq("CSS-DEF-1"), any(), any(), eq("admin@elleaose.com"));
+    }
+
+    @Test
     @DisplayName("Paiement identique mais plus ancien que la fenetre, ou d'un autre montant : un nouveau paiement")
     void onlyARecentIdenticalPaymentIsReplayed() {
         var guard = new com.sni.bokaticowork.features.payment.service.support.PaymentDuplicateGuard();

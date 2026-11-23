@@ -61,6 +61,25 @@ class CashRegisterAccessGuardTest {
     }
 
     @Test
+    @DisplayName("Un administrateur ouvre sans affectation, depuis un poste non autorise et hors horaires, sans motif")
+    void adminOpensWithoutChecks() {
+        lenient().when(assignmentRepository.findLiveByUser("admin@elleaose.com")).thenReturn(List.of());
+        lenient().when(deviceRepository.findByRegisterCodeOrderByFirstSeenAtAsc("CSR-1")).thenReturn(List.of(
+                com.sni.bokaticowork.features.payment.model.CashRegisterDevice.builder().registerCode("CSR-1").deviceCode("POS-1")
+                        .status(com.sni.bokaticowork.features.payment.enums.CashDeviceStatus.ALLOWED).build()));
+        when(scheduleRepository.findByRegisterCodeOrderByDayOfWeekAscOpensAtAsc("CSR-1")).thenReturn(List.of(
+                com.sni.bokaticowork.features.payment.model.CashRegisterSchedule.builder().registerCode("CSR-1").dayOfWeek(1)
+                        .opensAt(java.time.LocalTime.of(8, 0)).closesAt(java.time.LocalTime.of(18, 0)).build()));
+
+        var clearance = guard.assertCanOpen(register(), "admin@elleaose.com", "POSTE-INCONNU", null, null, true);
+
+        org.assertj.core.api.Assertions.assertThat(clearance.outOfHoursReason()).contains("administrateur");
+        org.assertj.core.api.Assertions.assertThat(clearance.deviceCode()).isEqualTo("POSTE-INCONNU");
+        assertThatThrownBy(() -> guard.assertCanOpen(register(), "admin@elleaose.com", "POSTE-INCONNU", null, null))
+                .isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
     @DisplayName("Une personne non affectee ne peut pas ouvrir de session")
     void unassignedPersonIsRefused() {
         when(assignmentRepository.findLiveByUser(CASHIER)).thenReturn(List.of());
