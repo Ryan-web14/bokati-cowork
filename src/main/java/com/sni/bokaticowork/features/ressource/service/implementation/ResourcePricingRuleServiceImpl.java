@@ -169,7 +169,8 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         ResourcePricingRule rule = ResourcePricingRule.builder()
                 .resource(resource)
                 .resourceBookingUnit(parseUnit(request.getBookingUnit()))
-                .price(request.getPrice())
+                // Un ajustement ne porte pas de prix : il s'applique au prix de base (23/11/2026).
+                .price(StringUtils.hasText(request.getAdjustmentType()) ? null : request.getPrice())
                 .label(request.getLabel())
                 .dayOfWeek(request.getDayOfWeek())
                 .startsAt(request.getStartsAt())
@@ -356,6 +357,10 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
             for (String field : request.getClear()) {
                 clearField(rule, field);
             }
+        }
+        // Un ajustement ne porte pas de prix : il s'applique au prix de base (23/11/2026).
+        if (rule.getAdjustmentType() != null) {
+            rule.setPrice(null);
         }
         List<String> mergedErrors = validateMerged(rule);
         if (!mergedErrors.isEmpty()) {
@@ -567,8 +572,8 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         if (rule.getDayOfWeek() != null && (rule.getDayOfWeek() < 1 || rule.getDayOfWeek() > 7)) {
             errors.add("Demande de règle tarifaire invalide : dayOfWeek doit être compris entre 1 et 7");
         }
-        if (rule.getStartsAt() != null && rule.getEndsAt() != null && !rule.getEndsAt().isAfter(rule.getStartsAt())) {
-            errors.add("Demande de règle tarifaire invalide : endsAt doit suivre startsAt");
+        if (rule.getStartsAt() != null && rule.getEndsAt() != null && rule.getEndsAt().equals(rule.getStartsAt())) {
+            errors.add("Demande de règle tarifaire invalide : startsAt et endsAt sont égaux (plage vide)");
         }
         if (rule.getValidFrom() != null && rule.getValidUntil() != null && rule.getValidUntil().isBefore(rule.getValidFrom())) {
             errors.add("Demande de règle tarifaire invalide : validUntil doit suivre validFrom");
@@ -604,14 +609,19 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         if (!StringUtils.hasText(request.getBookingUnit())) {
             errors.add("Demande de règle tarifaire invalide : l'unité de réservation est requise");
         }
-        if (request.getPrice() == null || request.getPrice() < 0) {
-            errors.add("Demande de règle tarifaire invalide : le prix doit être positif ou nul");
+        boolean adjustment = StringUtils.hasText(request.getAdjustmentType());
+        if (!adjustment && (request.getPrice() == null || request.getPrice() < 0)) {
+            errors.add("Demande de règle tarifaire invalide : un prix de base demande un prix positif ou nul");
+        }
+        if (adjustment && request.getAdjustmentValue() == null) {
+            errors.add("Un ajustement demande sa valeur (adjustmentValue) : pourcentage ou montant, positif pour une majoration, négatif pour une remise");
         }
         if (request.getDayOfWeek() != null && (request.getDayOfWeek() < 1 || request.getDayOfWeek() > 7)) {
             errors.add("Demande de règle tarifaire invalide : dayOfWeek doit être compris entre 1 et 7");
         }
-        if (request.getStartsAt() != null && request.getEndsAt() != null && !request.getEndsAt().isAfter(request.getStartsAt())) {
-            errors.add("Demande de règle tarifaire invalide : endsAt doit suivre startsAt");
+        // Une plage qui passe minuit (22:00 a 06:00) est admise ; seule une plage vide est refusee.
+        if (request.getStartsAt() != null && request.getEndsAt() != null && request.getEndsAt().equals(request.getStartsAt())) {
+            errors.add("Demande de règle tarifaire invalide : startsAt et endsAt sont égaux (plage vide)");
         }
         if (request.getValidFrom() != null && request.getValidUntil() != null && request.getValidUntil().isBefore(request.getValidFrom())) {
             errors.add("Demande de règle tarifaire invalide : validUntil doit suivre validFrom");

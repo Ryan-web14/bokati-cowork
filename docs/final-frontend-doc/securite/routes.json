@@ -1533,6 +1533,88 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/auth/super-admin-setup/form",
+   "package": "security.superadmin",
+   "controller": "SuperAdminSetupFormController",
+   "source": "src/main/java/com/sni/bokaticowork/security/superadmin/SuperAdminSetupFormController.java",
+   "handler": "form",
+   "declaredIn": "SuperAdminSetupFormController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "token",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/super-admin-setup/form",
+   "package": "security.superadmin",
+   "controller": "SuperAdminSetupFormController",
+   "source": "src/main/java/com/sni/bokaticowork/security/superadmin/SuperAdminSetupFormController.java",
+   "handler": "submit",
+   "declaredIn": "SuperAdminSetupFormController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "firstname",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "lastname",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "email",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "password",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "confirmPassword",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "_csrf",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/admin/provisioning/bootstrap-admin",
@@ -1742,6 +1824,12 @@
      "items": {
       "type": "string"
      }
+    },
+    "superAdminSetupUrl": {
+     "type": "string"
+    },
+    "redirectUrl": {
+     "type": "string"
     }
    }
   },

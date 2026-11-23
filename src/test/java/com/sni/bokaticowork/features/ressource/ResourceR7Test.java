@@ -54,7 +54,8 @@ class ResourceR7Test {
     @Test
     void anIncoherentUpdateIsRefused() {
         UpdateResourcePricingRuleRequest request = new UpdateResourcePricingRuleRequest();
-        request.setEndsAt(LocalTime.of(7, 0));
+        // Une plage qui passe minuit est admise (22:00 a 06:00) ; une plage vide ne l'est pas.
+        request.setEndsAt(LocalTime.of(8, 0));
 
         assertThatThrownBy(() -> service().updatePricingRule(7L, request)).isInstanceOf(ValidationException.class);
         verify(repository, never()).save(any());

@@ -36,9 +36,16 @@ import java.util.TreeSet;
  * <ol>
  *   <li>Regle de base d'une unite (sans ajustement) : la plus prioritaire, puis la plus precise
  *   (le plus de conditions), puis la plus recente, parmi celles qui s'appliquent.</li>
- *   <li>Ajustements : un prix fixe remplace la base (le meilleur) ; puis un ecart non cumulable
- *   (le meilleur) et tous les ecarts cumulables, par priorite ; pourcentage en decimal ; jamais
- *   sous zero.</li>
+ *   <li>Prix de base manquant a un instant (23/11/2026) : quand aucune regle de base de l'unite ne
+ *   couvre ce moment (un prix horaire pose pour le lundi seulement, reservation un samedi), il est
+ *   deduit d'une unite voisine au prorata (journee de 10 h ramenee a l'heure, demi-journee, heure
+ *   multipliee). Les ajustements de l'unite s'appliquent ensuite. Avant, le calcul de toute
+ *   l'unite etait abandonne et ses ajustements perdus.</li>
+ *   <li>Ajustements superposes (23/11/2026) : un prix fixe remplace la base (le plus prioritaire) ;
+ *   puis les majorations (ecart positif) : la plus prioritaire des non cumulables et toutes les
+ *   cumulables ; puis les remises (ecart negatif) : parmi les non cumulables la plus prioritaire
+ *   et, a priorite egale, la plus avantageuse pour le client, et toutes les cumulables. Une
+ *   majoration et une remise ne s'excluent jamais. Pourcentage en decimal ; jamais sous zero.</li>
  *   <li>Conditions d'une regle, toutes facultatives : validite, jours, plage horaire, segment de
  *   client, plan d'abonnement, participants, duree, delai avant le debut (anticipe, dernier
  *   moment), canal.</li>
@@ -116,6 +123,13 @@ public class ResourcePriceEngine {
             }
         }
         if (candidates.isEmpty()) {
+            // Une ressource sans aucun prix de base est gratuite. Une ressource qui en a, mais dont
+            // aucun ne vise ce client ou ce creneau, n'est pas gratuite pour autant : on refuse.
+            if (rules.stream().anyMatch(ResourcePriceEngine::isBase)) {
+                throw new BadRequestException("Aucun prix de la ressource " + resource.getCode()
+                        + " ne s'applique à ce client pour ce créneau (prix réservés à d'autres clients, segments ou plans) ·"
+                        + " ajoutez un prix de base général, ou un prix pour ce client.");
+            }
             return PriceResult.free(ResourceBookingUnit.HOUR, multiplier(resource, null, participants));
         }
         ResourceBookingUnit intended = intended(minutes);
@@ -177,7 +191,10 @@ public class ResourcePriceEngine {
 
     private Candidate cost(Resource resource, List<ResourcePricingRule> rules, ResourceBookingUnit unit, LocalDateTime start,
                            LocalDateTime end, int participants, long minutes, PriceContext ctx, boolean imposed) {
-        if (rules.stream().noneMatch(rule -> unit == rule.getResourceBookingUnit() && isBase(rule))) {
+        // Une unite est tarifee si elle porte au moins une regle (prix ou ajustement) ; son prix de
+        // base manquant a un instant est alors deduit d'une unite voisine. Une unite sans aucune regle
+        // n'est jamais inventee, meme imposee : on facturerait autre chose que ce qui a ete demande.
+        if (rules.stream().noneMatch(rule -> unit == rule.getResourceBookingUnit())) {
             return null;
         }
         if (unit != ResourceBookingUnit.HOUR) {
@@ -190,7 +207,7 @@ public class ResourcePriceEngine {
             BigDecimal amount = rate.value.multiply(count).multiply(BigDecimal.valueOf(multiplier)).setScale(4, RoundingMode.HALF_UP);
             return new Candidate(unit, count, multiplier, amount,
                     List.of(new PriceResult.Line(start.toString(), end.toString(), count, rate.value, rate.base.getShortId(),
-                            rate.base.getLabel(), rate.adjustments, amount)));
+                            rate.label, rate.adjustments, amount)));
         }
         // A l'heure : tranches aux bornes des regles et a minuit, prix au prorata.
         List<LocalDateTime> bounds = bounds(rules, start, end);
@@ -215,7 +232,7 @@ public class ResourcePriceEngine {
                         previous.amount().add(lineAmount)));
             } else {
                 lines.add(new PriceResult.Line(a.toString(), b.toString(), hours, rate.value, rate.base.getShortId(),
-                        rate.base.getLabel(), rate.adjustments, lineAmount));
+                        rate.label, rate.adjustments, lineAmount));
             }
             amount = amount.add(lineAmount);
         }
@@ -260,7 +277,12 @@ public class ResourcePriceEngine {
 
     // ------------------------------------------------------------------ regles
 
-    private record Rate(ResourcePricingRule base, BigDecimal value, List<PriceResult.Adjustment> adjustments) {
+    /** Prix d'un instant : regle de base retenue (ou source de la deduction), valeur, ajustements, libelle de la ligne. */
+    private record Rate(ResourcePricingRule base, BigDecimal value, List<PriceResult.Adjustment> adjustments, String label) {
+    }
+
+    /** Base deduite d'une unite voisine. */
+    private record Derived(ResourcePricingRule source, BigDecimal value, String label) {
     }
 
     private static final Comparator<ResourcePricingRule> PRIORITY_ORDER = Comparator
@@ -279,10 +301,25 @@ public class ResourcePriceEngine {
                 .filter(rule -> applies(rule, at, start, minutes, participants, ctx))
                 .toList();
         Optional<ResourcePricingRule> base = applicable.stream().filter(ResourcePriceEngine::isBase).max(BEST);
-        if (base.isEmpty()) {
-            return null;
+        ResourcePricingRule baseRule;
+        BigDecimal value;
+        String label;
+        if (base.isPresent()) {
+            baseRule = base.get();
+            value = BigDecimal.valueOf(baseRule.getPrice());
+            label = baseRule.getLabel();
+        } else {
+            Derived derived = derive(rules, unit, at, start, minutes, participants, ctx);
+            if (derived == null) {
+                derived = reference(rules, unit, at, participants, ctx);
+            }
+            if (derived == null) {
+                return null;
+            }
+            baseRule = derived.source();
+            value = derived.value();
+            label = derived.label();
         }
-        BigDecimal value = BigDecimal.valueOf(base.get().getPrice());
         List<PriceResult.Adjustment> applied = new ArrayList<>();
         List<ResourcePricingRule> adjustments = applicable.stream().filter(rule -> rule.getAdjustmentType() != null).toList();
 
@@ -292,25 +329,171 @@ public class ResourcePriceEngine {
             value = BigDecimal.valueOf(fixed.get().getAdjustmentValue() == null ? 0 : fixed.get().getAdjustmentValue());
             applied.add(adjustment(fixed.get()));
         }
-        List<ResourcePricingRule> deltas = new ArrayList<>();
-        adjustments.stream().filter(rule -> rule.getAdjustmentType() != ResourcePriceAdjustmentType.FIXED_PRICE)
-                .filter(rule -> !Boolean.TRUE.equals(rule.getStackable())).max(BEST).ifPresent(deltas::add);
-        adjustments.stream().filter(rule -> rule.getAdjustmentType() != ResourcePriceAdjustmentType.FIXED_PRICE)
-                .filter(rule -> Boolean.TRUE.equals(rule.getStackable())).forEach(deltas::add);
-        deltas.sort(BEST.reversed());
-        for (ResourcePricingRule delta : deltas) {
-            BigDecimal amount = BigDecimal.valueOf(delta.getAdjustmentValue() == null ? 0 : delta.getAdjustmentValue());
-            value = switch (delta.getAdjustmentType()) {
-                case AMOUNT_DELTA -> value.add(amount);
-                case PERCENT_DELTA -> value.add(value.multiply(amount).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
-                case FIXED_PRICE -> value;
-            };
-            applied.add(adjustment(delta));
+        List<ResourcePricingRule> deltas = adjustments.stream()
+                .filter(rule -> rule.getAdjustmentType() != ResourcePriceAdjustmentType.FIXED_PRICE).toList();
+
+        // Majorations : la plus prioritaire des non cumulables, et toutes les cumulables.
+        List<ResourcePricingRule> surcharges = new ArrayList<>();
+        deltas.stream().filter(rule -> signum(rule) > 0).filter(rule -> !Boolean.TRUE.equals(rule.getStackable()))
+                .max(BEST).ifPresent(surcharges::add);
+        deltas.stream().filter(rule -> signum(rule) > 0).filter(rule -> Boolean.TRUE.equals(rule.getStackable()))
+                .forEach(surcharges::add);
+        surcharges.sort(BEST.reversed());
+        for (ResourcePricingRule surcharge : surcharges) {
+            value = apply(surcharge, value);
+            applied.add(adjustment(surcharge));
+        }
+
+        // Remises : parmi les non cumulables, la plus prioritaire puis la plus avantageuse ; toutes les cumulables.
+        BigDecimal reference = value;
+        Comparator<ResourcePricingRule> bestDiscount = PRIORITY_ORDER
+                .thenComparing((ResourcePricingRule rule) -> reference.subtract(apply(rule, reference)))
+                .thenComparing(BEST);
+        List<ResourcePricingRule> discounts = new ArrayList<>();
+        deltas.stream().filter(rule -> signum(rule) < 0).filter(rule -> !Boolean.TRUE.equals(rule.getStackable()))
+                .max(bestDiscount).ifPresent(discounts::add);
+        deltas.stream().filter(rule -> signum(rule) < 0).filter(rule -> Boolean.TRUE.equals(rule.getStackable()))
+                .forEach(discounts::add);
+        discounts.sort(BEST.reversed());
+        for (ResourcePricingRule discount : discounts) {
+            value = apply(discount, value);
+            applied.add(adjustment(discount));
         }
         if (value.signum() < 0) {
             value = BigDecimal.ZERO;
         }
-        return new Rate(base.get(), value.setScale(4, RoundingMode.HALF_UP), List.copyOf(applied));
+        return new Rate(baseRule, value.setScale(4, RoundingMode.HALF_UP), List.copyOf(applied), label);
+    }
+
+    private static int signum(ResourcePricingRule rule) {
+        return rule.getAdjustmentValue() == null ? 0 : Integer.signum(rule.getAdjustmentValue());
+    }
+
+    private static BigDecimal apply(ResourcePricingRule delta, BigDecimal value) {
+        BigDecimal amount = BigDecimal.valueOf(delta.getAdjustmentValue() == null ? 0 : delta.getAdjustmentValue());
+        return switch (delta.getAdjustmentType()) {
+            case AMOUNT_DELTA -> value.add(amount);
+            case PERCENT_DELTA -> value.add(value.multiply(amount).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+            case FIXED_PRICE -> value;
+        };
+    }
+
+    /** Duree d'une unite en minutes pour les deductions au prorata ; nul pour la semaine et le mois. */
+    private Long unitMinutes(ResourceBookingUnit unit) {
+        return switch (unit) {
+            case HOUR -> 60L;
+            case HALF_DAY -> halfDayMinutes();
+            case DAY -> dayMinutes();
+            case WEEK, MONTH -> null;
+        };
+    }
+
+    /** Unites dont un prix peut etre deduit, de la plus proche a la plus lointaine. */
+    private static List<ResourceBookingUnit> sources(ResourceBookingUnit unit) {
+        return switch (unit) {
+            case HOUR -> List.of(ResourceBookingUnit.HALF_DAY, ResourceBookingUnit.DAY);
+            case HALF_DAY -> List.of(ResourceBookingUnit.DAY, ResourceBookingUnit.HOUR);
+            case DAY -> List.of(ResourceBookingUnit.HALF_DAY, ResourceBookingUnit.HOUR);
+            case WEEK, MONTH -> List.of();
+        };
+    }
+
+    /**
+     * Prix de base deduit quand aucune regle de base de l'unite ne couvre l'instant : le prix de base
+     * d'une unite voisine qui le couvre (sans ses ajustements), ramene au prorata de la duree.
+     */
+    private Derived derive(List<ResourcePricingRule> rules, ResourceBookingUnit unit, LocalDateTime at, LocalDateTime start,
+                           long minutes, int participants, PriceContext ctx) {
+        Long target = unitMinutes(unit);
+        if (target == null) {
+            return null;
+        }
+        for (ResourceBookingUnit source : sources(unit)) {
+            Optional<ResourcePricingRule> base = rules.stream()
+                    .filter(rule -> source == rule.getResourceBookingUnit())
+                    .filter(ResourcePriceEngine::isBase)
+                    .filter(rule -> applies(rule, at, start, minutes, participants, ctx))
+                    .max(BEST);
+            if (base.isPresent()) {
+                long sourceMinutes = unitMinutes(source);
+                BigDecimal value = BigDecimal.valueOf(base.get().getPrice()).multiply(BigDecimal.valueOf(target))
+                        .divide(BigDecimal.valueOf(sourceMinutes), 4, RoundingMode.HALF_UP);
+                String name = StringUtils.hasText(base.get().getLabel())
+                        ? "« " + base.get().getLabel() + " »" : "n° " + base.get().getShortId();
+                return new Derived(base.get(), value, "Déduit du prix " + unitLabel(source) + " " + name + " ("
+                        + base.get().getPrice() + " XAF pour " + duration(sourceMinutes) + ", ramené " + per(unit) + ")");
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Dernier repli : le prix de reference de l'unite, soit sa regle de base la plus generale qui vise
+     * ce client (segment, plan, clients designes, canal, participants, validite), hors de ses jours,
+     * heures, jours feries, duree et delai. Sans lui, un creneau non couvert sortait gratuit.
+     */
+    private Derived reference(List<ResourcePricingRule> rules, ResourceBookingUnit unit, LocalDateTime at, int participants,
+                              PriceContext ctx) {
+        return rules.stream()
+                .filter(rule -> unit == rule.getResourceBookingUnit())
+                .filter(ResourcePriceEngine::isBase)
+                .filter(rule -> appliesToClient(rule, at.toLocalDate(), participants, ctx))
+                .min(Comparator.comparing(ResourcePriceEngine::specificity)
+                        .thenComparing(PRIORITY_ORDER.reversed())
+                        .thenComparing(Comparator.comparing((ResourcePricingRule rule) ->
+                                rule.getCreatedAt() == null ? java.time.Instant.EPOCH : rule.getCreatedAt()).reversed()))
+                .map(rule -> new Derived(rule, BigDecimal.valueOf(rule.getPrice()), "Prix de référence "
+                        + (StringUtils.hasText(rule.getLabel()) ? "« " + rule.getLabel() + " »" : "n° " + rule.getShortId())
+                        + " appliqué hors de ses jours ou heures : aucun prix ne couvre ce créneau"))
+                .orElse(null);
+    }
+
+    /** Conditions qui designent le client (et la validite), sans les conditions de calendrier. */
+    private static boolean appliesToClient(ResourcePricingRule rule, LocalDate date, int participants, PriceContext ctx) {
+        if (!validOn(rule, date)) {
+            return false;
+        }
+        if (StringUtils.hasText(rule.getAudience())) {
+            java.util.Set<String> keys = ctx.audienceKeys();
+            if (com.sni.bokaticowork.features.ressource.dto.request.AudienceRef.split(rule.getAudience()).stream()
+                    .noneMatch(ref -> keys.contains(ref.type() + ":" + ref.code()))) {
+                return false;
+            }
+        }
+        if (StringUtils.hasText(rule.getCustomerSegment())
+                && (ctx.segments() == null || ctx.segments().stream().noneMatch(s -> s.equalsIgnoreCase(rule.getCustomerSegment())))) {
+            return false;
+        }
+        if (StringUtils.hasText(rule.getPlanCode()) && !rule.getPlanCode().equalsIgnoreCase(ctx.planCode())) {
+            return false;
+        }
+        if (rule.getMinParticipants() != null && participants < rule.getMinParticipants()) return false;
+        if (rule.getMaxParticipants() != null && participants > rule.getMaxParticipants()) return false;
+        return !StringUtils.hasText(rule.getChannel()) || rule.getChannel().equalsIgnoreCase(ctx.channel());
+    }
+
+    private static String unitLabel(ResourceBookingUnit unit) {
+        return switch (unit) {
+            case HOUR -> "horaire";
+            case HALF_DAY -> "à la demi-journée";
+            case DAY -> "à la journée";
+            case WEEK -> "à la semaine";
+            case MONTH -> "au mois";
+        };
+    }
+
+    private static String per(ResourceBookingUnit unit) {
+        return switch (unit) {
+            case HOUR -> "à l'heure";
+            case HALF_DAY -> "à la demi-journée";
+            case DAY -> "à la journée";
+            case WEEK -> "à la semaine";
+            case MONTH -> "au mois";
+        };
+    }
+
+    private static String duration(long minutes) {
+        return minutes % 60 == 0 ? (minutes / 60) + " h" : minutes + " min";
     }
 
     private static PriceResult.Adjustment adjustment(ResourcePricingRule rule) {

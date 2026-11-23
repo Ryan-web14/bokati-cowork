@@ -6,6 +6,7 @@ import com.sni.bokaticowork.features.ressource.model.Resource;
 import com.sni.bokaticowork.features.ressource.model.ResourcePricingRule;
 import com.sni.bokaticowork.features.ressource.model.ResourceType;
 import com.sni.bokaticowork.features.ressource.repository.repo.ResourcePricingRuleRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -142,6 +143,115 @@ class ResourcePriceEngineTest {
         rules.get(1).setPriority(99);
 
         assertThat(price(MONDAY.withHour(9), MONDAY.withHour(10), 1, ctx("PUBLIC")).amount()).isEqualByComparingTo("5000");
+    }
+
+    // ------------------------------------------------ 23/11/2026 : prix manquant et superpositions
+
+    /** Configuration relevee sur la salle de l'exploitant : prix horaire le lundi 8 h-18 h, forfait journee, +20 % le samedi. */
+    private void operatorRoom() {
+        ResourcePricingRule weekday = base(ResourceBookingUnit.HOUR, 15000);
+        weekday.setLabel("Tarif heures ouvrables");
+        weekday.setDaysOfWeek("1");
+        weekday.setStartsAt(LocalTime.of(8, 0));
+        weekday.setEndsAt(LocalTime.of(18, 0));
+        weekday.setPriority(10);
+        base(ResourceBookingUnit.DAY, 105014);
+        ResourcePricingRule saturday = adjust(ResourcePriceAdjustmentType.PERCENT_DELTA, 20);
+        saturday.setDaysOfWeek("6");
+        saturday.setStartsAt(LocalTime.of(11, 0));
+        saturday.setEndsAt(LocalTime.of(23, 0));
+    }
+
+    @Test
+    @DisplayName("Samedi sans prix horaire : prix deduit de la journee, puis majoration du samedi (avant : journee entiere facturee)")
+    void aMissingHourlyPriceIsDerivedAndTheSurchargeApplies() {
+        operatorRoom();
+
+        PriceResult result = price(SATURDAY.withHour(12), SATURDAY.withHour(14), 1, ctx("PUBLIC"));
+
+        // 105014 / 10 h = 10501,4 ; +20 % = 12601,68 ; 2 h = 25203,36.
+        assertThat(result.unit()).isEqualTo(ResourceBookingUnit.HOUR);
+        assertThat(result.amount()).isEqualByComparingTo("25203.36");
+        assertThat(result.lines()).singleElement().satisfies(line -> {
+            assertThat(line.baseRuleLabel()).startsWith("Déduit du prix à la journée");
+            assertThat(line.adjustments()).singleElement().extracting(PriceResult.Adjustment::type).isEqualTo("PERCENT_DELTA");
+        });
+    }
+
+    @Test
+    @DisplayName("Heure imposee un samedi : calculee au lieu d'etre refusee")
+    void anImposedHourIsPricedOnSaturday() {
+        operatorRoom();
+
+        PriceResult result = engine().price(desk, SATURDAY.withHour(12), SATURDAY.withHour(14), 1, ResourceBookingUnit.HOUR, ctx("PUBLIC"));
+
+        assertThat(result.amount()).isEqualByComparingTo("25203.36");
+    }
+
+    @Test
+    @DisplayName("Lundi 17 h-19 h : heure ouvrable au tarif, heure suivante deduite de la journee")
+    void aBookingAcrossTheEndOfBusinessHoursIsSplit() {
+        operatorRoom();
+
+        PriceResult result = price(MONDAY.withHour(17), MONDAY.withHour(19), 1, ctx("PUBLIC"));
+
+        assertThat(result.amount()).isEqualByComparingTo("25501.4");
+        assertThat(result.lines()).hasSize(2);
+        assertThat(result.lines().get(0).baseRuleLabel()).isEqualTo("Tarif heures ouvrables");
+    }
+
+    @Test
+    @DisplayName("Majoration du samedi et remise membre se superposent ; avant, la plus prioritaire excluait l'autre")
+    void aSurchargeAndADiscountBothApply() {
+        base(ResourceBookingUnit.HOUR, 10000);
+        adjust(ResourcePriceAdjustmentType.PERCENT_DELTA, 20).setDaysOfWeek("6");
+        ResourcePricingRule member = adjust(ResourcePriceAdjustmentType.PERCENT_DELTA, -10);
+        member.setCustomerSegment("MEMBER");
+
+        // 10000 + 20 % = 12000, puis - 10 % = 10800.
+        assertThat(price(SATURDAY.withHour(9), SATURDAY.withHour(10), 1, ctx("MEMBER")).amount()).isEqualByComparingTo("10800");
+        assertThat(price(SATURDAY.withHour(9), SATURDAY.withHour(10), 1, ctx("PUBLIC")).amount()).isEqualByComparingTo("12000");
+    }
+
+    @Test
+    @DisplayName("Deux remises non cumulables de meme priorite : la plus avantageuse pour le client")
+    void theBestDiscountForTheClientWins() {
+        base(ResourceBookingUnit.HOUR, 10000);
+        adjust(ResourcePriceAdjustmentType.PERCENT_DELTA, -10);
+        adjust(ResourcePriceAdjustmentType.AMOUNT_DELTA, -1500);
+
+        assertThat(price(MONDAY.withHour(9), MONDAY.withHour(10), 1, ctx("PUBLIC")).amount()).isEqualByComparingTo("8500");
+    }
+
+    @Test
+    @DisplayName("Creneau hors de tout prix, sans unite voisine : prix de reference de l'unite (avant : gratuit)")
+    void anUncoveredSlotUsesTheReferencePrice() {
+        ResourcePricingRule weekday = base(ResourceBookingUnit.HOUR, 15000);
+        weekday.setDaysOfWeek("1");
+        weekday.setStartsAt(LocalTime.of(8, 0));
+        weekday.setEndsAt(LocalTime.of(18, 0));
+
+        PriceResult result = price(SATURDAY.withHour(10), SATURDAY.withHour(11), 1, ctx("PUBLIC"));
+
+        assertThat(result.amount()).isEqualByComparingTo("15000");
+        assertThat(result.lines().get(0).baseRuleLabel()).startsWith("Prix de référence");
+    }
+
+    @Test
+    @DisplayName("Prix reserves aux membres : un client public n'est pas servi gratuitement, il est refuse avec la marche a suivre")
+    void pricesForOthersOnlyAreRefusedNotFree() {
+        base(ResourceBookingUnit.HOUR, 8000).setCustomerSegment("MEMBER");
+
+        assertThat(price(MONDAY.withHour(9), MONDAY.withHour(10), 1, ctx("MEMBER")).amount()).isEqualByComparingTo("8000");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> price(MONDAY.withHour(9), MONDAY.withHour(10), 1, ctx("PUBLIC")))
+                .isInstanceOf(com.sni.bokaticowork.core.exception.customs.BadRequestException.class)
+                .hasMessageContaining("ajoutez un prix de base général");
+    }
+
+    @Test
+    @DisplayName("Une ressource sans aucun prix reste gratuite")
+    void aResourceWithoutPricesIsFree() {
+        assertThat(price(MONDAY.withHour(9), MONDAY.withHour(10), 1, ctx("PUBLIC")).amount()).isEqualByComparingTo("0");
     }
 
     @Test

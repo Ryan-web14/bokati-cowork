@@ -192,7 +192,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `resourceCode` | texte | oui | longueur min `1` |
 | `bookingUnit` | texte | oui | longueur min `1` |
-| `price` | entier | oui |  |
+| `price` | entier |  |  |
 | `label` | texte |  |  |
 | `dayOfWeek` | entier |  |  |
 | `startsAt` | [LocalTime](#m-LocalTime) |  |  |
@@ -234,7 +234,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `resourceCodes` | texte[] | oui | éléments min `1` |
 | `bookingUnit` | texte | oui | longueur min `1` |
-| `price` | entier | oui |  |
+| `price` | entier |  |  |
 | `label` | texte |  |  |
 | `dayOfWeek` | entier |  |  |
 | `startsAt` | [LocalTime](#m-LocalTime) |  |  |

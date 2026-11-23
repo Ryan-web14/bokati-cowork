@@ -25,6 +25,13 @@ public class BookingSuggestionServiceImpl implements BookingSuggestionService {
     private final ResourceAvailabilityService availabilityService;
     private final BookingPricingCalculator pricingCalculator;
 
+    private com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPriceContextResolver(com.sni.bokaticowork.features.ressource.service.pricing.PriceContextResolver priceContextResolver) {
+        this.priceContextResolver = priceContextResolver;
+    }
+
     static final int WANTED = 5;
     static final int MAX = 10;
     static final int DAYS_AHEAD = 7;
@@ -42,14 +49,22 @@ public class BookingSuggestionServiceImpl implements BookingSuggestionService {
         int quantity = request.quantity() == null ? 1 : request.quantity();
         java.time.LocalDateTime wanted = request.startedAt();
         java.util.Map<java.time.LocalDateTime, BookingSuggestionResponse> found = new java.util.LinkedHashMap<>();
-        collect(found, resource, wanted.minusHours(4), request.endedAt().plusHours(4), duration, quantity, "nearby_available_slot");
+        // Meme contexte de prix que la verification de disponibilite et la reservation (23/11/2026).
+        String ownerType = org.springframework.util.StringUtils.hasText(request.memberId()) ? "MEMBER"
+                : org.springframework.util.StringUtils.hasText(request.businessCode()) ? "BUSINESS_ENTITY"
+                : org.springframework.util.StringUtils.hasText(request.customerId()) ? "CUSTOMER" : null;
+        String ownerCode = org.springframework.util.StringUtils.hasText(request.memberId()) ? request.memberId()
+                : org.springframework.util.StringUtils.hasText(request.businessCode()) ? request.businessCode() : request.customerId();
+        com.sni.bokaticowork.features.ressource.service.pricing.PriceContext context =
+                priceContextResolver == null ? null : priceContextResolver.forOwner(ownerType, ownerCode);
+        collect(found, resource, wanted.minusHours(4), request.endedAt().plusHours(4), duration, quantity, "nearby_available_slot", context);
         if (found.size() < WANTED) {
             java.time.LocalDate day = wanted.toLocalDate();
-            collect(found, resource, day.atStartOfDay(), day.plusDays(1).atStartOfDay(), duration, quantity, "same_day_slot");
+            collect(found, resource, day.atStartOfDay(), day.plusDays(1).atStartOfDay(), duration, quantity, "same_day_slot", context);
         }
         for (int offset = 1; offset <= DAYS_AHEAD && found.size() < WANTED; offset++) {
             java.time.LocalDate day = wanted.toLocalDate().plusDays(offset);
-            collect(found, resource, day.atStartOfDay(), day.plusDays(1).atStartOfDay(), duration, quantity, "later_day_slot");
+            collect(found, resource, day.atStartOfDay(), day.plusDays(1).atStartOfDay(), duration, quantity, "later_day_slot", context);
         }
         return found.values().stream()
                 .sorted(Comparator.comparing((BookingSuggestionResponse suggestion) ->
@@ -59,17 +74,25 @@ public class BookingSuggestionServiceImpl implements BookingSuggestionService {
     }
 
     private void collect(java.util.Map<java.time.LocalDateTime, BookingSuggestionResponse> found, Resource resource, java.time.LocalDateTime from,
-                         java.time.LocalDateTime to, int duration, int quantity, String reason) {
+                         java.time.LocalDateTime to, int duration, int quantity, String reason,
+                         com.sni.bokaticowork.features.ressource.service.pricing.PriceContext context) {
         for (ResourceAvailabilityWindowResponse window : availabilityService.findRemainingWindows(resource.getCode(), from, to, duration, quantity)) {
             if (found.size() >= MAX * 3) {
                 return;
             }
-            found.computeIfAbsent(window.getStartedAt(), start -> toSuggestion(resource, window, quantity, reason));
+            found.computeIfAbsent(window.getStartedAt(), start -> toSuggestion(resource, window, quantity, reason, context));
         }
     }
 
-    private BookingSuggestionResponse toSuggestion(Resource resource, ResourceAvailabilityWindowResponse window, int quantity, String reason) {
-        BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, window.getStartedAt(), window.getEndedAt(), quantity);
-        return new BookingSuggestionResponse(resource.getCode(), resource.getName(), window.getStartedAt(), window.getEndedAt(), window.getRemainingCapacity(), price.amount(), reason);
+    private BookingSuggestionResponse toSuggestion(Resource resource, ResourceAvailabilityWindowResponse window, int quantity, String reason,
+                                                   com.sni.bokaticowork.features.ressource.service.pricing.PriceContext context) {
+        // Un creneau sans prix applicable reste propose, sans montant : la liste ne tombe pas pour lui.
+        java.math.BigDecimal amount;
+        try {
+            amount = pricingCalculator.calculate(resource, window.getStartedAt(), window.getEndedAt(), quantity, null, context).amount();
+        } catch (com.sni.bokaticowork.core.exception.customs.BadRequestException ex) {
+            amount = null;
+        }
+        return new BookingSuggestionResponse(resource.getCode(), resource.getName(), window.getStartedAt(), window.getEndedAt(), window.getRemainingCapacity(), amount, reason);
     }
 }

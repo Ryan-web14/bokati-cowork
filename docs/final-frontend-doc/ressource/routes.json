@@ -5076,7 +5076,6 @@
   "CreateResourcePricingRuleRequest": {
    "required": [
     "bookingUnit",
-    "price",
     "resourceCode"
    ],
    "type": "object",
@@ -5184,7 +5183,6 @@
   "BulkCreateResourcePricingRuleRequest": {
    "required": [
     "bookingUnit",
-    "price",
     "resourceCodes"
    ],
    "type": "object",

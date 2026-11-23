@@ -1,7 +1,6 @@
 package com.sni.bokaticowork.features.ressource.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +21,7 @@ public class CreateResourcePricingRuleRequest {
     @NotBlank
     private String bookingUnit;
 
-    @NotNull
+    /** Prix d'une regle de base ; facultatif et ignore pour un ajustement (23/11/2026). */
     private Integer price;
 
     private String label;

@@ -52,7 +52,7 @@ class SlotSuggestionsAndOccupancyTest {
         ResourceAvailabilityService availability = mock(ResourceAvailabilityService.class);
         BookingPricingCalculator pricing = mock(BookingPricingCalculator.class);
         when(resources.getResourceForService("RES-SAL-1")).thenReturn(room);
-        when(pricing.calculate(any(Resource.class), any(), any(), anyInt())).thenReturn(new BookingPricingCalculator.Price(
+        when(pricing.calculate(any(Resource.class), any(), any(), anyInt(), any(), any())).thenReturn(new BookingPricingCalculator.Price(
                 ResourceBookingUnit.HOUR, new BigDecimal("10000"), BigDecimal.ONE, new BigDecimal("10000"), "XAF", null));
         // Rien a quatre heures pres ; l'apres-midi libre sur la journee.
         when(availability.findRemainingWindows(eq("RES-SAL-1"), eq(DAY.withHour(4)), eq(DAY.withHour(13)), eq(60), eq(1))).thenReturn(List.of());
