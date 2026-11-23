@@ -102,6 +102,15 @@ public class AccountingSettings {
     }
 
     /** Famille d'evenements comptabilisee (interrupteur par famille, lot F2). */
+    /** Familles d'evenements coupees, en majuscules ({@code "-"} si aucune, pour la requete de la file). */
+    public java.util.List<String> disabledFamilyList() {
+        String disabled = settings.text("accounting.posting.disabled-families", "");
+        java.util.List<String> values = !StringUtils.hasText(disabled) ? java.util.List.of()
+                : Arrays.stream(disabled.split(",")).map(String::trim).filter(StringUtils::hasText)
+                .map(value -> value.toUpperCase(java.util.Locale.ROOT)).toList();
+        return values.isEmpty() ? java.util.List.of("-") : values;
+    }
+
     public boolean familyEnabled(String family) {
         if (!StringUtils.hasText(family)) {
             return true;

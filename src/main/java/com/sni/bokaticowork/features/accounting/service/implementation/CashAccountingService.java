@@ -67,7 +67,7 @@ import java.util.Set;
  */
 @Slf4j
 @Service
-public class CashAccountingService implements PostingOutcomeListener {
+public class CashAccountingService implements PostingOutcomeListener, com.sni.bokaticowork.features.accounting.service.support.PostingPayloadSource {
 
     public static final String MOVEMENT_EVENT = "CASH_MOVEMENT";
     public static final String VARIANCE_RECORDED = "CASH_VARIANCE_RECORDED";
@@ -139,6 +139,8 @@ public class CashAccountingService implements PostingOutcomeListener {
             } catch (RuntimeException exception) {
                 errors.add(movement.getMovementNumber() + " : " + PostingEngine.readable(exception));
                 markMovement(movement.getId(), "FAILED", null, PostingEngine.readable(exception));
+                // Lot K0 (M3) : l'echec devient visible dans les evenements et se retente par « Regenerer ».
+                engine.recordFeedFailure(MOVEMENT_EVENT, movement.getMovementNumber(), FAMILY, null, PostingEngine.readable(exception));
             }
         }
         for (CashVarianceReview review : reviewRepository.findByAccountingStatusOrderByCreatedAtAsc("PENDING", PageRequest.of(0, batch))) {
@@ -148,6 +150,9 @@ public class CashAccountingService implements PostingOutcomeListener {
                 ok++;
             } catch (RuntimeException exception) {
                 errors.add(review.getReviewNumber() + " : " + PostingEngine.readable(exception));
+                // Lot K0 (M3) : l'ecart en echec sort de la file (qui ne se bloque plus) et se retente par « Regenerer ».
+                markReview(review.getId(), true);
+                engine.recordFeedFailure(VARIANCE_RECORDED, review.getReviewNumber(), FAMILY, null, PostingEngine.readable(exception));
             }
         }
         for (CashVarianceReview review : reviewRepository.decisionsToPost(PageRequest.of(0, batch))) {
@@ -157,6 +162,8 @@ public class CashAccountingService implements PostingOutcomeListener {
                 ok++;
             } catch (RuntimeException exception) {
                 errors.add(review.getReviewNumber() + " : " + PostingEngine.readable(exception));
+                markReview(review.getId(), false);
+                engine.recordFeedFailure(VARIANCE_DECIDED, review.getReviewNumber(), FAMILY, null, PostingEngine.readable(exception));
             }
         }
         for (CashVarianceReview review : reviewRepository.supersededAfterPosting()) {
@@ -169,6 +176,41 @@ public class CashAccountingService implements PostingOutcomeListener {
             }
         }
         return new PostingDtos.BatchResult(processed, ok, processed - ok, errors);
+    }
+
+    /** Lot K0 (M3) : ecart dont la lecture a echoue, retire de la file des faits a lire. */
+    private void markReview(Long id, boolean recorded) {
+        newTransaction.executeWithoutResult(status -> reviewRepository.findById(id).ifPresent(review -> {
+            if (recorded) {
+                review.setAccountingStatus("FAILED");
+            } else {
+                review.setDecisionAccountingStatus("FAILED");
+            }
+            reviewRepository.save(review);
+        }));
+    }
+
+    // ------------------------------------------------------------------ relecture (lot K0, M6)
+
+    /** Memes types que le retour du moteur ({@link #supports(String)}). */
+    @Override
+    public void rebuild(String eventType, String reference) {
+        newTransaction.executeWithoutResult(status -> {
+            if (MOVEMENT_EVENT.equals(eventType)) {
+                feedMovement(movementRepository.findByMovementNumber(reference)
+                        .orElseThrow(() -> new ResourceNotFoundException("Mouvement de caisse introuvable : " + reference)));
+                return;
+            }
+            CashVarianceReview review = reviewRepository.findByReviewNumber(reference)
+                    .orElseThrow(() -> new ResourceNotFoundException("Écart de caisse introuvable : " + reference));
+            if (VARIANCE_RECORDED.equals(eventType)) {
+                feedRecorded(review);
+            } else if (VARIANCE_DECIDED.equals(eventType)) {
+                feedDecision(review);
+            } else {
+                feedCancelled(review);
+            }
+        });
     }
 
     void feedMovement(CashMovement movement) {

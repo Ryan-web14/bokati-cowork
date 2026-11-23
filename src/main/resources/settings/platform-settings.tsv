@@ -29,6 +29,7 @@ accounting.closing.off-balance-journal	ACCOUNTING	TEXT	LIVE	HB	Journal de repris
 accounting.closing.opening-journal	ACCOUNTING	TEXT	LIVE	AN	Journal des a-nouveaux de l'exercice suivant
 accounting.closing.profit-account	ACCOUNTING	TEXT	LIVE	131	Compte du resultat en benefice repris en a-nouveau
 accounting.closing.suspense-accounts	ACCOUNTING	TEXT	LIVE	471,585	Comptes d'attente a solder avant la cloture (prefixes separes par des virgules)
+accounting.closing.suspense-exclusions	ACCOUNTING	TEXT	LIVE	4711	Comptes exclus du contrôle des comptes d'attente à la clôture (débours 4711 : créances sur les clients, pas une attente)
 accounting.commitment.alert-days	ACCOUNTING	INTEGER	LIVE	30	Hors bilan : alerte avant echeance, preavis et renouvellement (jours ; aussi a 7 et 1 jour)
 accounting.commitment.given-account	ACCOUNTING	TEXT	LIVE	901	Compte des engagements donnes
 accounting.commitment.given-counter-account	ACCOUNTING	TEXT	LIVE	902	Compte de contrepartie des engagements donnes
@@ -106,13 +107,13 @@ accounting.partner.account	ACCOUNTING	TEXT	LIVE	462	Compte des comptes courants 
 accounting.partner.dividend-account	ACCOUNTING	TEXT	LIVE	465	Compte des dividendes a payer affectes en compte courant
 accounting.partner.interest-account	ACCOUNTING	TEXT	LIVE	671	Compte de charge des interets des comptes courants
 accounting.partner.journal	ACCOUNTING	TEXT	LIVE	OD	Journal des interets et mouvements sans tresorerie des comptes courants
+accounting.payment.CASH.account	ACCOUNTING	TEXT	LIVE		Compte de caisse d'un paiement en espèces sans session de caisse retrouvée ; vide : le fait passe en échec avec son motif au lieu d'aller en 4719
 accounting.payroll.journal	ACCOUNTING	TEXT	LIVE	PA	Journal de paie
 accounting.payroll.section-required	ACCOUNTING	BOOLEAN	LIVE	false	Paie : refuser un salarie sans section analytique
 accounting.period.billing-closure-sync	ACCOUNTING	ENUM	LIVE	PROPOSE	Clore un mois de facturation : PROPOSE (notifier les comptables), LOCK (verrouiller la periode comptable) ou NONE
 accounting.posting.batch-size	ACCOUNTING	INTEGER	LIVE	50	Nombre d'evenements comptables traites par passage du moteur d'imputation
 accounting.posting.disabled-families	ACCOUNTING	TEXT	LIVE		Familles d'evenements non comptabilisees pour l'instant (CASH, SALES, PAYMENT...), separees par des virgules
 accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	RESTART	30000	Intervalle du moteur d'imputation (millisecondes)
-accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	LIVE	30000	Intervalle du moteur d'imputation (millisecondes)
 accounting.provision.journal	ACCOUNTING	TEXT	LIVE	OD	Provisions : journal des dotations, reprises et reclassements
 accounting.provision.short-term-account	ACCOUNTING	TEXT	LIVE	4991	Provisions : compte des provisions pour risques a court terme
 accounting.provision.short-term-expense-account	ACCOUNTING	TEXT	LIVE	6591	Provisions : compte de dotation a court terme
@@ -155,7 +156,7 @@ accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi max
 accounting.sales.client-account	ACCOUNTING	TEXT	LIVE	411	Compte collectif des clients
 accounting.sales.deposit-account	ACCOUNTING	TEXT	LIVE	4191	Compte des acomptes recus des clients (factures d'acompte, soldé par la facture finale)
 accounting.sales.deposit-retention-account	ACCOUNTING	TEXT	LIVE	758	Compte de produit d'une caution retenue (dégâts, impayés)
-accounting.sales.disbursement-account	ACCOUNTING	TEXT	LIVE	4718	Compte des débours refacturés aux clients (frais avancés pour leur compte, hors TVA et hors chiffre d'affaires)
+accounting.sales.disbursement-account	ACCOUNTING	TEXT	LIVE	4711	Compte des débours refacturés aux clients (frais avancés pour leur compte, hors TVA et hors chiffre d'affaires)
 accounting.sales.discount-account	ACCOUNTING	TEXT	LIVE	709	Compte des remises accordees sur facture
 accounting.sales.extra-tax-account	ACCOUNTING	TEXT	LIVE	4431	Compte du centime additionnel facture
 accounting.sales.journal	ACCOUNTING	TEXT	LIVE	VT	Journal des factures et avoirs

@@ -61,6 +61,8 @@ import java.util.stream.Collectors;
 public class PostingEngine {
 
     public static final String SYSTEM_ACTOR = "SYSTEM";
+    /** Evenements qui prennent les donnees relues du fait (une livraison en double d'un evenement en file ne change rien). */
+    private static final java.util.EnumSet<PostingEventStatus> OPEN = java.util.EnumSet.of(PostingEventStatus.FAILED, PostingEventStatus.UNBALANCED);
 
     private final AccPostingEventRepository eventRepository;
     private final AccPostingRuleRepository ruleRepository;
@@ -74,6 +76,13 @@ public class PostingEngine {
     private final CashActorResolver actors;
     private final TransactionTemplate newTransaction;
     private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.accounting.service.support.PostingOutcomeListener> listeners;
+    /** Lot K0 (M3, M6) : sources capables de relire les donnees d'un evenement depuis le fait metier. */
+    private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.accounting.service.support.PostingPayloadSource> payloadSources;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPayloadSources(org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.accounting.service.support.PostingPayloadSource> payloadSources) {
+        this.payloadSources = payloadSources;
+    }
 
     public PostingEngine(AccPostingEventRepository eventRepository, AccPostingRuleRepository ruleRepository,
                          AccEntryRepository entryRepository, AccJournalRepository journalRepository, AccountingEntryService entries,
@@ -109,7 +118,23 @@ public class PostingEngine {
         String ref = reference.trim();
         Optional<AccPostingEvent> existing = eventRepository.findByEventTypeAndReference(type, ref);
         if (existing.isPresent()) {
-            return existing.get();
+            // Lot K0 (M6) : un evenement encore ouvert (en file, en echec, en attente d'equilibrage)
+            // prend les donnees relues du fait ; un evenement comptabilise ou ecarte ne change plus.
+            AccPostingEvent known = existing.get();
+            String fresh = StringUtils.hasText(payload) ? payload : "{}";
+            if (OPEN.contains(known.getStatus()) && (!fresh.equals(known.getPayload())
+                    || date != null && !date.equals(known.getEventDate()))) {
+                return newTransaction.execute(status -> {
+                    AccPostingEvent current = event(known.getId());
+                    current.setPayload(fresh);
+                    if (date != null) {
+                        current.setEventDate(date);
+                    }
+                    current.setReplay(replay);
+                    return eventRepository.save(current);
+                });
+            }
+            return known;
         }
         try {
             return newTransaction.execute(status -> eventRepository.saveAndFlush(AccPostingEvent.builder()
@@ -134,7 +159,8 @@ public class PostingEngine {
         if (!settings.enabled()) {
             return new PostingDtos.BatchResult(0, 0, 0, List.of());
         }
-        List<AccPostingEvent> batch = eventRepository.findByStatusOrderByEventDateAscIdAsc(PostingEventStatus.PENDING,
+        retryFeedFailures();
+        List<AccPostingEvent> batch = eventRepository.queue(PostingEventStatus.PENDING, settings.disabledFamilyList(),
                 PageRequest.of(0, settings.postingBatchSize()));
         int ok = 0;
         int failed = 0;
@@ -172,7 +198,111 @@ public class PostingEngine {
                     + Optional.ofNullable(event.getEntryNumber()).orElse(event.getProvisionalNumber())
                     + ") : contre-passez la piece si elle est fausse");
         }
+        // Lot K0 (M6) : les donnees sont d'abord relues depuis le fait metier, s'il a une source.
+        String refreshError = refresh(event);
+        if (refreshError != null) {
+            return recordFeedFailure(event.getEventType(), event.getReference(), event.getFamily(), event.getEventDate(), refreshError);
+        }
         return run(eventId, true);
+    }
+
+    /**
+     * Lot K0 (M3) : un fait dont la lecture a echoue se retente tout seul, de plus en plus espace
+     * (tout de suite, puis une minute par tentative deja faite, une heure au plus) : un taux de change
+     * saisi apres coup ou une session rattachee suffit, sans action dans l'ecran.
+     */
+    private void retryFeedFailures() {
+        Instant now = Instant.now();
+        for (AccPostingEvent failed : eventRepository.findByStatusAndPayloadOrderByLastAttemptAtAsc(PostingEventStatus.FAILED, "{}",
+                PageRequest.of(0, settings.postingBatchSize()))) {
+            if (!settings.familyEnabled(failed.getFamily())) {
+                continue;
+            }
+            int attempts = failed.getAttempts() == null ? 0 : failed.getAttempts();
+            long waitMinutes = Math.min(60, Math.max(0, attempts - 1));
+            if (failed.getLastAttemptAt() != null && failed.getLastAttemptAt().plusSeconds(waitMinutes * 60).isAfter(now)) {
+                continue;
+            }
+            try {
+                regenerate(failed.getId());
+            } catch (RuntimeException exception) {
+                log.warn("Comptabilite · relecture de {} {} impossible : {}", failed.getEventType(), failed.getReference(), readable(exception));
+            }
+        }
+    }
+
+    /** Relit les donnees de l'evenement depuis sa source ; rend le motif de l'echec, ou rien. */
+    private String refresh(AccPostingEvent event) {
+        if (payloadSources == null) {
+            return null;
+        }
+        for (var source : payloadSources.orderedStream().toList()) {
+            if (source.supports(event.getEventType())) {
+                try {
+                    source.rebuild(event.getEventType(), event.getReference());
+                } catch (RuntimeException exception) {
+                    return readable(exception);
+                }
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Lot K0 (M3) : la lecture d'un fait metier a echoue (taux de change manquant, session de caisse
+     * introuvable...). L'evenement est enregistre en echec avec le motif : il sort de la file des
+     * faits a lire (qui ne se bloque plus) et se retente par « Regenerer » une fois la cause corrigee.
+     */
+    public AccPostingEvent recordFeedFailure(String eventType, String reference, String family, LocalDate date, String reason) {
+        String type = eventType.trim().toUpperCase(Locale.ROOT);
+        String ref = reference.trim();
+        String motive = "Lecture du fait impossible : " + (reason == null ? "motif inconnu" : reason);
+        try {
+            return newTransaction.execute(status -> {
+                AccPostingEvent event = eventRepository.findByEventTypeAndReference(type, ref).orElseGet(() -> AccPostingEvent.builder()
+                        .eventType(type)
+                        .reference(ref)
+                        .family(StringUtils.hasText(family) ? family.trim().toUpperCase(Locale.ROOT) : null)
+                        .eventDate(date == null ? LocalDate.now(AccountingClock.ZONE) : date)
+                        .payload("{}")
+                        .replay(false)
+                        .status(PostingEventStatus.FAILED)
+                        .build());
+                if (event.getStatus() == PostingEventStatus.POSTED || event.getStatus() == PostingEventStatus.IGNORED) {
+                    return event;
+                }
+                event.setStatus(PostingEventStatus.FAILED);
+                event.setFailureReason(motive.length() > 2000 ? motive.substring(0, 2000) : motive);
+                event.setAttempts(event.getAttempts() == null ? 1 : event.getAttempts() + 1);
+                event.setLastAttemptAt(Instant.now());
+                return eventRepository.saveAndFlush(event);
+            });
+        } catch (DataIntegrityViolationException duplicate) {
+            return eventRepository.findByEventTypeAndReference(type, ref).orElseThrow(() -> duplicate);
+        }
+    }
+
+    /**
+     * Lot K0 (M1) : une piece d'evenement validee hors du moteur (completee a la main, validee depuis
+     * la liste des pieces en attente) : l'evenement passe comptabilise et les modules sont prevenus.
+     * Avant, il restait « en attente d'equilibrage » pour toujours.
+     */
+    @org.springframework.context.event.EventListener
+    public void onEntryValidated(com.sni.bokaticowork.features.accounting.service.support.EntryValidatedEvent validated) {
+        if (validated.postingEventId() == null) {
+            return;
+        }
+        eventRepository.findById(validated.postingEventId())
+                .filter(event -> event.getStatus() == PostingEventStatus.UNBALANCED || event.getStatus() == PostingEventStatus.FAILED)
+                .filter(event -> validated.provisionalNumber() != null && validated.provisionalNumber().equals(event.getProvisionalNumber()))
+                .ifPresent(event -> {
+                    event.setStatus(PostingEventStatus.POSTED);
+                    event.setEntryNumber(validated.entryNumber());
+                    event.setFailureReason(null);
+                    event.setPostedAt(Instant.now());
+                    notifyListeners(eventRepository.save(event));
+                });
     }
 
     /** Ecarte un evenement (aucune ecriture) ; une piece en attente qu'il avait produite est rejetee. */
@@ -264,6 +394,14 @@ public class PostingEngine {
             return eventRepository.save(event);
         }
         PostingTemplate.Plan plan = template.evaluate(rule, payload, false);
+        if (plan.lines().isEmpty()) {
+            // Lot K0 (A10) : fait a montant nul (facture a zero, reste a annuler nul) : rien a ecrire.
+            event.setStatus(PostingEventStatus.IGNORED);
+            event.setIgnoredBy(SYSTEM_ACTOR);
+            event.setIgnoredReason("Montant nul : aucune ecriture a passer");
+            event.setFailureReason(null);
+            return eventRepository.save(event);
+        }
         AccJournal journal = journalRepository.findByCode(plan.journalCode())
                 .orElseThrow(() -> new PostingTemplate.PostingException("Journal " + plan.journalCode() + " introuvable"));
 
@@ -349,6 +487,17 @@ public class PostingEngine {
         if (source.getStatus() == EntryStatus.VALIDATED) {
             if (date.isBefore(source.getEntryDate())) {
                 date = source.getEntryDate();
+            }
+            // Lot K0 (M4) : chronologie stricte, la contre-passation prend au plus tot la date de la
+            // derniere piece validee de son journal (avant : refus, et l'annulation restait en echec).
+            if (settings.strictChronology()) {
+                AccPeriod reversalPeriod = periods.firstOpenOnOrAfter(date);
+                Optional<LocalDate> last = entries.lastValidatedDate(source.getJournalCode(), periods.fiscalYearOf(reversalPeriod).getCode());
+                if (last.isPresent() && date.isBefore(last.get())) {
+                    event.setShiftedNote((event.getShiftedNote() == null ? "" : event.getShiftedNote() + " ; ") + "Annulation du "
+                            + event.getEventDate() + " datee du " + last.get() + ", derniere piece du journal " + source.getJournalCode());
+                    date = last.get();
+                }
             }
             var response = entries.reverse(source.getEntryNumber(),
                     new com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Reverse(reason, date));

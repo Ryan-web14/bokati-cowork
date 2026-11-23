@@ -193,7 +193,10 @@ public class PostingTemplate {
                 String thirdParty = blankToNull(substitute(spec.thirdParty(), event, item, lenient, warnings));
                 String lineLabel = blankToNull(substitute(spec.label(), event, item, true, new ArrayList<>()));
                 String reference = blankToNull(substitute(spec.reference(), event, item, true, new ArrayList<>()));
-                String dueText = blankToNull(substitute(spec.dueDate(), event, item, true, new ArrayList<>()));
+                // Lot K0 (revue comptable, A1) : l'echeance s'ecrit comme un chemin ("dueDate"), a la maniere
+                // des montants, ou comme un gabarit ("{dueDate}"). Avant, le chemin nu etait pris au pied de
+                // la lettre et l'echeance de toutes les lignes clients restait vide.
+                String dueText = dueDate(spec.dueDate(), event, item);
                 BigDecimal taxBase = StringUtils.hasText(spec.taxBase()) ? amount(spec.taxBase(), event, item, index) : null;
                 BigDecimal foreign = StringUtils.hasText(spec.foreignAmount()) ? amount(spec.foreignAmount(), event, item, index).abs() : null;
                 if (foreign != null && foreign.signum() == 0) {
@@ -211,7 +214,8 @@ public class PostingTemplate {
                 }
             }
         }
-        if (result.size() < 2 && !lenient) {
+        // Lot K0 (A10) : aucun montant, aucune ligne ; le moteur ecarte alors l'evenement sans ecriture.
+        if (result.size() == 1 && !lenient) {
             throw new PostingException("Le schema " + rule.getCode() + " ne produit que " + result.size()
                     + " ligne(s) pour cet evenement : une piece a au moins un debit et un credit");
         }
@@ -291,7 +295,8 @@ public class PostingTemplate {
         if (!StringUtils.hasText(expression)) {
             throw new PostingException("Ligne " + index + " du schema : montant non indique");
         }
-        String normalized = expression.replace("+", " + ").replace(" - ", " - ").trim();
+        // Lot K0 (M7) : « a-b » sans espaces se lit comme une soustraction, pas comme un seul chemin.
+        String normalized = expression.replace("+", " + ").replaceAll("(?<=[\\w}\\]])-(?=[A-Za-z{])", " - ").trim();
         String[] tokens = normalized.split("\\s+");
         BigDecimal total = BigDecimal.ZERO;
         int sign = 1;
@@ -315,7 +320,10 @@ public class PostingTemplate {
         if (token.matches("-?\\d+(\\.\\d+)?")) {
             return new BigDecimal(token);
         }
-        JsonNode node = path(event, item, token.replace("{", "").replace("}", ""));
+        String name = token.replace("{", "").replace("}", "");
+        // Lot K0 (M7) : dans une repetition, un montant se lit dans l'element ; « event. » pour lire l'evenement.
+        // Avant, un element sans montant prenait celui de l'evenement entier (le total).
+        JsonNode node = item != null && !name.startsWith("event.") ? walk(item, name) : path(event, item, name);
         if (node == null || node.isNull() || node.isMissingNode()) {
             return BigDecimal.ZERO;
         }
@@ -419,6 +427,15 @@ public class PostingTemplate {
         };
     }
 
+    private String dueDate(String spec, JsonNode event, JsonNode item) {
+        if (!StringUtils.hasText(spec)) {
+            return null;
+        }
+        String value = spec.contains("{") ? substitute(spec, event, item, true, new ArrayList<>())
+                : spec.matches("\\d{4}-\\d{2}-\\d{2}.*") ? spec : text(path(event, item, spec.trim()));
+        return blankToNull(value);
+    }
+
     private static LocalDate date(String value) {
         if (!StringUtils.hasText(value)) {
             return null;
@@ -426,7 +443,7 @@ public class PostingTemplate {
         try {
             return LocalDate.parse(value.length() > 10 ? value.substring(0, 10) : value);
         } catch (RuntimeException exception) {
-            return null;
+            throw new PostingException("Échéance illisible : « " + value + " » (date attendue au format AAAA-MM-JJ)");
         }
     }
 

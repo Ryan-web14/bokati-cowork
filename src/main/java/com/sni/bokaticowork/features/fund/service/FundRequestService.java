@@ -779,6 +779,13 @@ public class FundRequestService {
         data.put("section", line.getSection());
         data.put("natureSection", nature == null ? null : nature.getDefaultSection());
         data.put("beneficiaryCode", request.getBeneficiaryCode());
+        // Lot K0 (revue comptable, A12) : une nature sur un compte fournisseur porte le fournisseur ;
+        // la TVA deductible porte son code et sa base, pour la declaration par taux.
+        String natureAccount = (String) data.get("natureAccount");
+        data.put("natureThirdParty", natureAccount != null && natureAccount.startsWith("40") ? line.getSupplierCode() : null);
+        java.math.BigDecimal net = line.getAmount().subtract(line.getVatAmount());
+        data.put("vatCode", line.getVatAmount() == null || line.getVatAmount().signum() <= 0 || net.signum() <= 0 ? null
+                : "TVA" + line.getVatAmount().movePointRight(2).divide(net, 0, java.math.RoundingMode.HALF_UP).toPlainString());
         accountingEvents.publish("EXPENSE_JUSTIFIED", "FUNDING", line.getNumber(), line.getExpenseDate(), data);
         recompute(request);
         notifier.toBeneficiary(request, "La depense « " + line.getDesignation() + " » (" + plain(line.getAmount()) + " XAF) est validee");

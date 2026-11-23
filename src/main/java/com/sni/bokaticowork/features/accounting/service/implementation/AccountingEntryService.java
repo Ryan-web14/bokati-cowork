@@ -65,6 +65,8 @@ public class AccountingEntryService {
     private final AnalyticAllocator analyticAllocator;
     /** Garde des comptes tenus par le fichier des immobilisations (lot F18), absente d'un contexte reduit. */
     private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.accounting.service.support.FixedAssetIntake> fixedAssets;
+    /** Lot K0 (M1) : previent le moteur quand une piece d'evenement est validee. */
+    private final org.springframework.context.ApplicationEventPublisher publisher;
 
     /** Probleme qui empeche la validation directe ; il suit la politique des pieces desequilibrees. */
     record Issue(PendingReason reason, String detail) {
@@ -401,6 +403,10 @@ public class AccountingEntryService {
                 .forEach(line -> chart.registerThirdParty(line.getAccountNumber(),
                         accounts.containsKey(line.getAccountNumber()) ? accounts.get(line.getAccountNumber()).getThirdPartyType() : null,
                         line.getThirdPartyCode(), null));
+        if (entry.getPostingEventId() != null) {
+            publisher.publishEvent(new com.sni.bokaticowork.features.accounting.service.support.EntryValidatedEvent(
+                    entry.getPostingEventId(), entry.getProvisionalNumber(), entry.getEntryNumber()));
+        }
         messages.add("Piece validee sous le numero " + entry.getEntryNumber());
         return messages;
     }

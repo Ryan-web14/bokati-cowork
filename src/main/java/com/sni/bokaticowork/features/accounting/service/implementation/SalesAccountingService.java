@@ -63,7 +63,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class SalesAccountingService {
+public class SalesAccountingService implements com.sni.bokaticowork.features.accounting.service.support.PostingPayloadSource {
 
     public static final String INVOICE_ISSUED = "INVOICE_ISSUED";
     public static final String CREDIT_NOTE_ISSUED = "CREDIT_NOTE_ISSUED";
@@ -71,6 +71,11 @@ public class SalesAccountingService {
     public static final String PAYMENT_RECEIVED = "PAYMENT_RECEIVED";
     public static final String PAYMENT_REFUNDED = "PAYMENT_REFUNDED";
     public static final String WALLET_ENTRY = "WALLET_ENTRY";
+    public static final String CREDIT_NOTE_APPLIED = "CREDIT_NOTE_APPLIED";
+    /** Lot K0 (M6) : types que ce service sait relire depuis la facturation, les paiements et le portefeuille. */
+    static final Set<String> SOURCE_TYPES = Set.of(INVOICE_ISSUED, CREDIT_NOTE_ISSUED, INVOICE_CANCELLED, PAYMENT_RECEIVED, PAYMENT_REFUNDED,
+            WALLET_ENTRY, CREDIT_NOTE_APPLIED, "DEPOSIT_APPLIED", "RECEIVABLE_TRANSFER", "WITHHOLDING_RECORDED", "WITHHOLDING_CANCELLED",
+            "SECURITY_DEPOSIT_MOVEMENT", "LATE_ALLOCATION", "ALLOCATION_REVERSAL");
 
     static final Set<BillingDocumentType> INVOICES = EnumSet.of(BillingDocumentType.INVOICE, BillingDocumentType.CORRECTIVE_INVOICE,
             BillingDocumentType.DEBIT_NOTE);
@@ -130,7 +135,7 @@ public class SalesAccountingService {
                     + "AND d.issued_at IS NOT NULL AND d.deleted_at IS NULL AND d.document_number IS NOT NULL AND NOT EXISTS (SELECT 1 FROM acc_posting_event e "
                     + "WHERE e.event_type = CASE WHEN d.document_type = 'CREDIT_NOTE' THEN 'CREDIT_NOTE_ISSUED' ELSE 'INVOICE_ISSUED' END "
                     + "AND e.reference = d.document_number) ORDER BY d.issued_at LIMIT ?", String.class, batch)
-                    .forEach(number -> counter.run(number, () -> feedDocument(number)));
+                    .forEach(number -> counter.run(null, number, () -> feedDocument(number)));
             // Une facture annulee par avoir est deja contre-passee par l'avoir : pas de seconde contre-passation.
             jdbc.queryForList("SELECT d.document_number FROM billing_document d WHERE d.status IN ('CANCELLED', 'VOIDED') AND d.document_number IS NOT NULL "
                     + "AND NOT EXISTS (SELECT 1 FROM billing_document c WHERE c.document_type = 'CREDIT_NOTE' AND c.original_document_number = d.document_number "
@@ -138,7 +143,18 @@ public class SalesAccountingService {
                     + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type IN ('INVOICE_ISSUED', 'CREDIT_NOTE_ISSUED') AND e.reference = d.document_number) "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_CANCELLED' AND e.reference = d.document_number) "
                     + "ORDER BY d.cancelled_at LIMIT ?", String.class, batch)
-                    .forEach(number -> counter.run(number, () -> feedCancellation(number)));
+                    .forEach(number -> counter.run(INVOICE_CANCELLED, number, () -> feedCancellation(number)));
+        }
+        if (settings.familyEnabled("SALES")) {
+            // Lot K0 (A5) : avoir impute sur une autre facture (du meme client ou de son entreprise), une
+            // fois l'avoir et la facture cible comptabilises.
+            jdbc.queryForList("SELECT c.document_number FROM billing_document c WHERE c.document_type = 'CREDIT_NOTE' "
+                    + "AND c.applied_to_document_number IS NOT NULL "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'CREDIT_NOTE_ISSUED' AND e.reference = c.document_number AND e.status = 'POSTED') "
+                    + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_ISSUED' AND e.reference = c.applied_to_document_number AND e.status = 'POSTED') "
+                    + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'CREDIT_NOTE_APPLIED' AND e.reference = c.document_number) "
+                    + "ORDER BY c.applied_at LIMIT ?", String.class, batch)
+                    .forEach(number -> counter.run(CREDIT_NOTE_APPLIED, number, () -> feedCreditNoteApplied(number)));
         }
         if (settings.familyEnabled("SALES")) {
             // Lot B3 : acomptes deduits d'une facture finale deja comptabilisee, une piece par acompte.
@@ -146,7 +162,7 @@ public class SalesAccountingService {
                     + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_ISSUED' AND e.reference = dp.deducted_on) "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'DEPOSIT_APPLIED' AND e.reference = dp.deposit_invoice_number) "
                     + "ORDER BY dp.deducted_at LIMIT ?", String.class, batch)
-                    .forEach(number -> counter.run(number, () -> feedDepositApplied(number)));
+                    .forEach(number -> counter.run("DEPOSIT_APPLIED", number, () -> feedDepositApplied(number)));
         }
         if (settings.familyEnabled("SALES")) {
             // Lot B6 : reglement transfere d'un client a l'autre lors d'un changement de client (D6).
@@ -155,7 +171,7 @@ public class SalesAccountingService {
                     + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_ISSUED' AND e.reference = c.new_document_number) "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'RECEIVABLE_TRANSFER' AND e.reference = c.new_document_number) "
                     + "ORDER BY c.created_at LIMIT ?", String.class, batch)
-                    .forEach(number -> counter.run(number, () -> feedReceivableTransfer(number)));
+                    .forEach(number -> counter.run("RECEIVABLE_TRANSFER", number, () -> feedReceivableTransfer(number)));
         }
         if (settings.familyEnabled("SALES")) {
             // Lot C6 : retenues a la source sur des factures deja comptabilisees ; une retenue annulee
@@ -164,12 +180,12 @@ public class SalesAccountingService {
                     + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'INVOICE_ISSUED' AND e.reference = w.document_number) "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'WITHHOLDING_RECORDED' AND e.reference = w.withholding_number) "
                     + "ORDER BY w.created_at LIMIT ?", String.class, batch)
-                    .forEach(number -> counter.run(number, () -> feedWithholding(number)));
+                    .forEach(number -> counter.run("WITHHOLDING_RECORDED", number, () -> feedWithholding(number)));
             jdbc.queryForList("SELECT w.withholding_number FROM billing_withholding w WHERE w.status = 'CANCELLED' "
                     + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'WITHHOLDING_RECORDED' AND e.reference = w.withholding_number) "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'WITHHOLDING_CANCELLED' AND e.reference = w.withholding_number) "
                     + "ORDER BY w.cancelled_at LIMIT ?", String.class, batch)
-                    .forEach(number -> counter.run(number, () -> feedWithholdingCancellation(number)));
+                    .forEach(number -> counter.run("WITHHOLDING_CANCELLED", number, () -> feedWithholdingCancellation(number)));
         }
         if (settings.familyEnabled("SALES")) {
             // Lot C7 : mouvements de caution (restitution, retenue, imputation), une fois la facture de la caution comptabilisee.
@@ -178,7 +194,7 @@ public class SalesAccountingService {
                     + "AND m.wallet_settled = FALSE "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'SECURITY_DEPOSIT_MOVEMENT' AND e.reference = m.movement_number) "
                     + "ORDER BY m.created_at LIMIT ?", String.class, batch)
-                    .forEach(number -> counter.run(number, () -> feedSecurityDepositMovement(number)));
+                    .forEach(number -> counter.run("SECURITY_DEPOSIT_MOVEMENT", number, () -> feedSecurityDepositMovement(number)));
         }
         if (settings.familyEnabled("PAYMENT")) {
             // Lot C9 : affectation apres coup d'une somme en attente, une fois le paiement comptabilise.
@@ -187,14 +203,14 @@ public class SalesAccountingService {
                     + "AND EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'PAYMENT_RECEIVED' AND e.reference = t.transaction_number) "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'LATE_ALLOCATION' AND e.reference = CONCAT('ALLOC-', a.id)) "
                     + "ORDER BY a.allocated_at LIMIT ?", Long.class, batch)
-                    .forEach(id -> counter.run("ALLOC-" + id, () -> feedLateAllocation(id)));
+                    .forEach(id -> counter.run("LATE_ALLOCATION", "ALLOC-" + id, () -> feedLateAllocation(id)));
         }
         if (settings.familyEnabled("PAYMENT")) {
             // Lot R4 : affectation annulee alors qu'elle etait comptabilisee, la somme revient en attente.
             jdbc.queryForList("SELECT r.id FROM payment_allocation_reversal r WHERE r.accounting_required "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'ALLOCATION_REVERSAL' AND e.reference = CONCAT('UNALLOC-', r.id)) "
                     + "ORDER BY r.reversed_at LIMIT ?", Long.class, batch)
-                    .forEach(id -> counter.run("UNALLOC-" + id, () -> feedAllocationReversal(id)));
+                    .forEach(id -> counter.run("ALLOCATION_REVERSAL", "UNALLOC-" + id, () -> feedAllocationReversal(id)));
         }
         if (settings.familyEnabled("PAYMENT")) {
             Instant settled = Instant.now().minusSeconds(60L * Math.max(0, settings.paymentDelayMinutes()));
@@ -202,13 +218,13 @@ public class SalesAccountingService {
                     + "AND COALESCE(t.paid_at, t.created_at) <= ? AND NOT EXISTS (SELECT 1 FROM acc_posting_event e "
                     + "WHERE e.event_type IN ('PAYMENT_RECEIVED', 'PAYMENT_REFUNDED') AND e.reference = t.transaction_number) "
                     + "ORDER BY COALESCE(t.paid_at, t.created_at) LIMIT ?", String.class, java.sql.Timestamp.from(settled), batch)
-                    .forEach(number -> counter.run(number, () -> feedTransaction(number)));
+                    .forEach(number -> counter.run(PAYMENT_RECEIVED, number, () -> feedTransaction(number)));
         }
         if (settings.familyEnabled("WALLET")) {
             jdbc.queryForList("SELECT w.entry_number FROM wallet_ledger_entry w WHERE w.entry_type NOT IN ('HOLD', 'HOLD_RELEASE') "
                     + "AND NOT EXISTS (SELECT 1 FROM acc_posting_event e WHERE e.event_type = 'WALLET_ENTRY' AND e.reference = w.entry_number) "
                     + "ORDER BY w.created_at LIMIT ?", String.class, batch)
-                    .forEach(number -> counter.run(number, () -> feedWalletEntry(number)));
+                    .forEach(number -> counter.run(WALLET_ENTRY, number, () -> feedWalletEntry(number)));
         }
         return counter.result();
     }
@@ -218,13 +234,20 @@ public class SalesAccountingService {
         int ok;
         final List<String> errors = new ArrayList<>();
 
-        void run(String reference, Runnable action) {
+        void run(String eventType, String reference, Runnable action) {
             processed++;
             try {
                 newTransaction.executeWithoutResult(status -> action.run());
                 ok++;
             } catch (RuntimeException exception) {
-                errors.add(reference + " : " + PostingEngine.readable(exception));
+                String reason = PostingEngine.readable(exception);
+                errors.add(reference + " : " + reason);
+                // Lot K0 (M3) : le fait passe en echec avec son motif ; il quitte la tete de la file des
+                // faits a lire et se retente par « Regenerer » une fois la cause corrigee.
+                String type = eventType != null ? eventType : documentEventType(reference);
+                if (type != null) {
+                    engine.recordFeedFailure(type, reference, familyOf(type), null, reason);
+                }
             }
         }
 
@@ -281,15 +304,30 @@ public class SalesAccountingService {
                 continue;
             }
             Map<String, Object> item = new LinkedHashMap<>();
-            item.put("account", productAccount(line));
+            String account = productAccount(line);
+            item.put("account", account);
             item.put("amount", amount);
             item.put("label", line.getDescription());
+            // Lot K0 (A2) : une ligne sur un compte de tiers (caution 165, debours) porte le client ;
+            // sans lui, la piece partait en attente d'equilibrage.
+            if (thirdPartyAccount(account)) {
+                item.put("thirdParty", customerCode(document));
+            }
             lines.add(item);
             gross = gross.add(amount);
         }
         data.put("lines", lines);
         // Remise : ecart entre le brut des lignes et la base taxable (remises de lignes et de document).
-        data.put("reduction", gross.subtract(taxable).subtract(nonTaxable));
+        BigDecimal reduction = gross.subtract(taxable).subtract(nonTaxable);
+        // Lot K0 (A8) : une « remise » negative au-dela des arrondis de conversion (1 XAF par ligne) n'est
+        // pas une remise mais une facture incoherente : elle n'est plus passee au 709 en silence.
+        BigDecimal tolerance = BigDecimal.valueOf(Math.max(1, lines.size()));
+        if (reduction.signum() < 0 && reduction.abs().compareTo(tolerance) > 0) {
+            throw new IllegalStateException("Facture " + number + " incohérente : ses lignes totalisent " + gross.stripTrailingZeros().toPlainString()
+                    + " XAF hors taxes, moins que sa base taxable et sa part non taxable (" + taxable.add(nonTaxable).stripTrailingZeros().toPlainString()
+                    + " XAF). Corrigez la facture, puis régénérez l'événement.");
+        }
+        data.put("reduction", reduction);
         data.put("vatAmount", vat);
         data.put("extraTaxAmount", extra);
         // En devise, le total est la somme des parties converties : la piece reste equilibree.
@@ -311,6 +349,12 @@ public class SalesAccountingService {
         data.put("extraTaxCode", extra.signum() > 0 ? settings.text("accounting.vat.extra-tax-code", "CA") : null);
         data.put("vatBase", taxable);
         data.put("vatReference", data.get("letteringReference"));
+        // Lot K0 (A4) : avoir sur une facture d'acompte, il solde le 4191 et non un produit.
+        if (creditNote && StringUtils.hasText(document.getOriginalDocumentNumber()) && !StringUtils.hasText(document.getDepositForDocumentNumber())) {
+            documentRepository.findByDocumentNumber(document.getOriginalDocumentNumber())
+                    .map(BillingDocument::getDepositForDocumentNumber).filter(StringUtils::hasText)
+                    .ifPresent(depositFor -> data.put("depositFor", depositFor));
+        }
         if (paymentRegime()) {
             // Regime des encaissements : la TVA attend en 4438 jusqu'au reglement. Un avoir reprend
             // l'attente de sa facture tant qu'elle la couvre, sinon la TVA deja exigible.
@@ -320,7 +364,134 @@ public class SalesAccountingService {
                 data.put("extraTaxAccount", pending);
             }
         }
+        // Lot K0 (A7) : une ligne de TVA par taux, chacune avec son code et sa base.
+        data.put("vatLines", vatLines(document, fx, vat, taxable, (String) data.get("vatAccount")));
         engine.receive(creditNote ? CREDIT_NOTE_ISSUED : INVOICE_ISSUED, number, "SALES", date, json(data), replay(date));
+    }
+
+    /**
+     * Lot K0 (A7) : TVA ventilee par taux. Le montant de TVA du document est reparti au prorata de la
+     * TVA des lignes de chaque taux (remises de document comprises) ; le dernier taux prend le reste,
+     * pour que la somme egale la TVA du document.
+     */
+    List<Map<String, Object>> vatLines(BillingDocument document, Conversion fx, BigDecimal vat, BigDecimal taxable, String account) {
+        if (vat.signum() == 0) {
+            return List.of();
+        }
+        Map<BigDecimal, BigDecimal[]> byRate = new java.util.TreeMap<>();
+        for (BillingDocumentLine line : documentLineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document)) {
+            if (Boolean.TRUE.equals(line.getOptional()) || line.getVatRate() == null || line.getVatRate().signum() <= 0) {
+                continue;
+            }
+            BigDecimal rate = line.getVatRate().compareTo(BigDecimal.ONE) < 0 ? line.getVatRate().movePointRight(2) : line.getVatRate();
+            BigDecimal[] sums = byRate.computeIfAbsent(rate.stripTrailingZeros(), ignored -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+            sums[0] = sums[0].add(money(line.getVatAmount()));
+            sums[1] = sums[1].add(money(line.getTaxableAmount()));
+        }
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (byRate.size() <= 1) {
+            Map<String, Object> single = new LinkedHashMap<>();
+            single.put("account", account);
+            single.put("amount", vat);
+            single.put("base", taxable);
+            single.put("taxCode", vatCode(document, vat));
+            single.put("rateLabel", byRate.isEmpty() ? "" : byRate.keySet().iterator().next().toPlainString() + " %");
+            result.add(single);
+            return result;
+        }
+        BigDecimal lineVat = byRate.values().stream().map(sums -> sums[0]).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal lineBase = byRate.values().stream().map(sums -> sums[1]).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal vatLeft = vat;
+        BigDecimal baseLeft = taxable;
+        int index = 0;
+        for (Map.Entry<BigDecimal, BigDecimal[]> rate : byRate.entrySet()) {
+            index++;
+            boolean last = index == byRate.size();
+            BigDecimal share = last || lineVat.signum() == 0 ? vatLeft
+                    : vat.multiply(rate.getValue()[0]).divide(lineVat, 0, RoundingMode.HALF_UP);
+            BigDecimal base = last || lineBase.signum() == 0 ? baseLeft
+                    : taxable.multiply(rate.getValue()[1]).divide(lineBase, 0, RoundingMode.HALF_UP);
+            vatLeft = vatLeft.subtract(share);
+            baseLeft = baseLeft.subtract(base);
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("account", account);
+            item.put("amount", money(share));
+            item.put("base", money(base));
+            item.put("taxCode", "TVA" + rate.getKey().toPlainString());
+            item.put("rateLabel", rate.getKey().toPlainString() + " %");
+            result.add(item);
+        }
+        return result;
+    }
+
+    /** Lot K0 (A5) : avoir impute sur une autre facture, D 411 du titulaire de l'avoir / C 411 du client de la facture. */
+    void feedCreditNoteApplied(String creditNoteNumber) {
+        BillingDocument creditNote = documentRepository.findByDocumentNumber(creditNoteNumber).orElseThrow();
+        BillingDocument target = documentRepository.findByDocumentNumber(creditNote.getAppliedToDocumentNumber()).orElseThrow();
+        LocalDate date = date(creditNote.getAppliedAt() == null ? Instant.now() : creditNote.getAppliedAt());
+        Conversion fx = conversion(creditNote.getCurrency(), creditNote.getExchangeRate(), date);
+        BigDecimal value = money(creditNote.getTotalAmount());
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("creditNoteNumber", creditNoteNumber);
+        data.put("documentNumber", target.getDocumentNumber());
+        data.put("holderCode", customerCode(creditNote));
+        data.put("customerCode", customerCode(target));
+        // L'avoir est au credit du 411 du titulaire sous la reference de sa facture d'origine.
+        data.put("creditNoteReference", StringUtils.hasText(creditNote.getOriginalDocumentNumber()) ? creditNote.getOriginalDocumentNumber() : creditNoteNumber);
+        data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
+        data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
+        data.put("amount", fx.apply(value));
+        // Regime des encaissements : la compensation regle la facture cible, sa TVA devient exigible.
+        data.put("vatTransfers", paymentRegime() ? vatTransfers(target.getDocumentNumber(), value, false) : List.of());
+        data.put("vatPendingAccount", settings.text("accounting.vat.pending-account", "4438"));
+        engine.receive(CREDIT_NOTE_APPLIED, creditNoteNumber, "SALES", date, json(data), replay(date));
+    }
+
+    // ------------------------------------------------------------------ relecture (lot K0, M6)
+
+    @Override
+    public boolean supports(String eventType) {
+        return eventType != null && SOURCE_TYPES.contains(eventType.toUpperCase(java.util.Locale.ROOT));
+    }
+
+    @Override
+    public void rebuild(String eventType, String reference) {
+        newTransaction.executeWithoutResult(status -> {
+            switch (eventType.toUpperCase(java.util.Locale.ROOT)) {
+                case INVOICE_ISSUED, CREDIT_NOTE_ISSUED -> feedDocument(reference);
+                case INVOICE_CANCELLED -> feedCancellation(reference);
+                case PAYMENT_RECEIVED, PAYMENT_REFUNDED -> feedTransaction(reference);
+                case WALLET_ENTRY -> feedWalletEntry(reference);
+                case CREDIT_NOTE_APPLIED -> feedCreditNoteApplied(reference);
+                case "DEPOSIT_APPLIED" -> feedDepositApplied(reference);
+                case "RECEIVABLE_TRANSFER" -> feedReceivableTransfer(reference);
+                case "WITHHOLDING_RECORDED" -> feedWithholding(reference);
+                case "WITHHOLDING_CANCELLED" -> feedWithholdingCancellation(reference);
+                case "SECURITY_DEPOSIT_MOVEMENT" -> feedSecurityDepositMovement(reference);
+                case "LATE_ALLOCATION" -> feedLateAllocation(Long.parseLong(reference.substring("ALLOC-".length())));
+                case "ALLOCATION_REVERSAL" -> feedAllocationReversal(Long.parseLong(reference.substring("UNALLOC-".length())));
+                default -> throw new IllegalStateException("Type " + eventType + " non relisible");
+            }
+        });
+    }
+
+    /** Type d'evenement d'un document de facturation (facture ou avoir), pour enregistrer un echec de lecture. */
+    private String documentEventType(String number) {
+        return documentRepository.findByDocumentNumber(number)
+                .map(document -> document.getDocumentType() == BillingDocumentType.CREDIT_NOTE ? CREDIT_NOTE_ISSUED : INVOICE_ISSUED)
+                .orElse(null);
+    }
+
+    private static String familyOf(String type) {
+        return switch (type) {
+            case PAYMENT_RECEIVED, PAYMENT_REFUNDED -> "PAYMENT";
+            case WALLET_ENTRY -> "WALLET";
+            default -> "SALES";
+        };
+    }
+
+    private boolean thirdPartyAccount(String account) {
+        return account != null && chart.find(account).map(found -> found.getThirdPartyType() != null).orElse(false);
     }
 
     /** Acompte deduit de la facture finale : D 4191 / C 411, TVA en attente liberee au prorata (lot B3). */
@@ -361,6 +532,9 @@ public class SalesAccountingService {
         data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
         data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
         data.put("amount", fx.apply(money((BigDecimal) change.get("transferred_amount"))));
+        // Lot K0 (A6) : le reglement transfere solde la nouvelle facture, sa TVA en attente devient exigible.
+        data.put("vatTransfers", paymentRegime() ? vatTransfers(newDocumentNumber, money((BigDecimal) change.get("transferred_amount")), false) : List.of());
+        data.put("vatPendingAccount", settings.text("accounting.vat.pending-account", "4438"));
         engine.receive("RECEIVABLE_TRANSFER", newDocumentNumber, "SALES", date, json(data), replay(date));
     }
 
@@ -386,6 +560,8 @@ public class SalesAccountingService {
         data.put("counterAccount", retained ? settings.text("accounting.sales.deposit-retention-account", "758")
                 : settings.text("accounting.sales.client-account", "411"));
         data.put("thirdParty", retained ? null : customerCode(invoice));
+        // Lot K0 (A2) : le 165 est suivi par client, sa ligne porte toujours le client.
+        data.put("depositThirdParty", customerCode(invoice));
         data.put("reference", "APPLY".equals(kind) ? row.get("target_document_number") : retained ? movementNumber : invoice.getDocumentNumber());
         data.put("amount", fx.apply(money((BigDecimal) row.get("amount"))));
         engine.receive("SECURITY_DEPOSIT_MOVEMENT", movementNumber, "SALES", date, json(data), replay(date));
@@ -406,6 +582,9 @@ public class SalesAccountingService {
         data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
         data.put("unallocatedAccount", settings.text("accounting.sales.unallocated-account", "4719"));
         data.put("amount", fx.apply(money((BigDecimal) row.get("allocated_amount"))));
+        // Lot K0 (A6) : regime des encaissements, la facture reglee apres coup libere sa TVA en attente.
+        data.put("vatTransfers", paymentRegime() ? vatTransfers(document.getDocumentNumber(), money((BigDecimal) row.get("allocated_amount")), false) : List.of());
+        data.put("vatPendingAccount", settings.text("accounting.vat.pending-account", "4438"));
         engine.receive("LATE_ALLOCATION", "ALLOC-" + allocationId, "SALES", date, json(data), replay(date));
     }
 
@@ -424,6 +603,9 @@ public class SalesAccountingService {
         data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
         data.put("unallocatedAccount", settings.text("accounting.sales.unallocated-account", "4719"));
         data.put("amount", fx.apply(money((BigDecimal) row.get("amount"))));
+        // Lot K0 (A6) : l'affectation annulee remet en attente la TVA qu'elle avait liberee.
+        data.put("vatTransfers", paymentRegime() ? vatTransfers(document.getDocumentNumber(), money((BigDecimal) row.get("amount")), true) : List.of());
+        data.put("vatPendingAccount", settings.text("accounting.vat.pending-account", "4438"));
         engine.receive("ALLOCATION_REVERSAL", "UNALLOC-" + reversalId, "SALES", date, json(data), replay(date));
     }
 
@@ -463,6 +645,21 @@ public class SalesAccountingService {
         String original = document.getDocumentType() == BillingDocumentType.CREDIT_NOTE ? CREDIT_NOTE_ISSUED : INVOICE_ISSUED;
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("documentNumber", number);
+        if (StringUtils.hasText(document.getDepositForDocumentNumber()) && money(document.getPaidAmount()).signum() > 0) {
+            // Lot K0 (A4) : facture d'acompte en partie reglee, reste repris par la facture finale. La part
+            // reglee est deja deduite (DEPOSIT_APPLIED) : seul le reste non regle quitte le 4191 et le 411.
+            // Contre-passer tout le TTC laissait le 4191 debiteur et le 411 crediteur de la part reglee.
+            LocalDate day = date(document.getCancelledAt() == null ? Instant.now() : document.getCancelledAt());
+            Conversion fx = conversion(document.getCurrency(), document.getExchangeRate(), day);
+            data.put("depositFor", document.getDepositForDocumentNumber());
+            data.put("customerCode", customerCode(document));
+            data.put("journalCode", settings.text("accounting.sales.journal", "VT"));
+            data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
+            data.put("depositAccount", settings.text("accounting.sales.deposit-account", "4191"));
+            data.put("amount", fx.apply(money(document.getTotalAmount()).subtract(money(document.getPaidAmount())).max(BigDecimal.ZERO)));
+            engine.receive(INVOICE_CANCELLED, number, "SALES", day, json(data), replay(day));
+            return;
+        }
         data.put("_reverse", Map.of("eventType", original, "reference", number, "reason", "Document annule"));
         LocalDate date = date(document.getCancelledAt() == null ? Instant.now() : document.getCancelledAt());
         engine.receive(INVOICE_CANCELLED, number, "SALES", date, json(data), replay(date));
@@ -482,6 +679,9 @@ public class SalesAccountingService {
 
     void feedTransaction(String number) {
         PaymentTransaction transaction = transactionRepository.findByTransactionNumber(number).orElseThrow();
+        // Lot K0 (M6) : une relecture ne refait pas le suivi des creances deja fait a la premiere lecture.
+        boolean known = !jdbc.queryForList("SELECT 1 FROM acc_posting_event WHERE event_type IN ('PAYMENT_RECEIVED', 'PAYMENT_REFUNDED') "
+                + "AND reference = ? AND payload <> '{}'", Integer.class, number).isEmpty();
         String originalNumber = originalTransaction(transaction);
         boolean refund = originalNumber != null;
         PaymentTransaction source = refund ? transactionRepository.findByTransactionNumber(originalNumber).orElse(transaction) : transaction;
@@ -550,7 +750,7 @@ public class SalesAccountingService {
             data.put("foreignAmount", foreignAmount);
         }
         engine.receive(refund ? PAYMENT_REFUNDED : PAYMENT_RECEIVED, number, "PAYMENT", date, json(data), replay(date));
-        if (!refund && receivableRisks != null) {
+        if (!refund && !known && receivableRisks != null) {
             // Reste du suivi et reprise de la depreciation au prorata de ce qui est encaisse.
             for (Map<String, Object> item : allocations) {
                 receivableRisks.onPayment((String) item.get("documentNumber"), (BigDecimal) item.get("amount"), date);
@@ -596,7 +796,8 @@ public class SalesAccountingService {
         if (com.sni.bokaticowork.features.billing.service.implementation.SecurityDepositService.WALLET_SOURCE.equals(entry.getSourceType())) {
             // Decision CD6 : la caution d'abonnement passe du 165 au portefeuille du client.
             counter = settings.text("accounting.sales.security-deposit-account", "165");
-            counterThirdParty = null;
+            // Lot K0 (A2) : le 165 est un compte de tiers, la ligne porte le client (avant : sans tiers, piece en attente).
+            counterThirdParty = entry.getWallet().getOwnerCode();
         }
         data.put("counterAccount", counter);
         data.put("counterThirdParty", counterThirdParty);
@@ -623,7 +824,15 @@ public class SalesAccountingService {
                 CashAccountingService.RegisterBooks books = cash.ensureBooks(found.get().getCashRegister());
                 return new Treasury(books.treasuryAccount(), books.journalCode(), null);
             }
-            return new Treasury(settings.text("accounting.payment.CASH.account", "4719"), settings.text("accounting.payment.CASH.journal", "ENC"), null);
+            // Lot K0 (A9) : sans session retrouvee, les especes partaient en 4719 « encaissements a
+            // identifier » sans alerte. Elles vont au compte de caisse regle, sinon le fait passe en echec.
+            String account = settings.text("accounting.payment.CASH.account", "");
+            if (!StringUtils.hasText(account)) {
+                throw new IllegalStateException("Paiement en espèces " + transaction.getTransactionNumber()
+                        + " sans session de caisse retrouvée : rattachez-le à une session, ou indiquez le compte de caisse par défaut "
+                        + "(réglage accounting.payment.CASH.account), puis régénérez l'événement");
+            }
+            return new Treasury(account, settings.text("accounting.payment.CASH.journal", "ENC"), null);
         }
         Map<PaymentMethod, String[]> defaults = Map.of(
                 PaymentMethod.MOBILE_MONEY, new String[]{"5212", "MM-5212"},
@@ -681,7 +890,8 @@ public class SalesAccountingService {
         String type = line.getLineType() == null ? "SERVICE" : line.getLineType().name();
         if ("DISBURSEMENT".equals(type)) {
             // Lot C10 : debours, compte de tiers (decision CD9), ni produit ni TVA.
-            return settings.text("accounting.sales.disbursement-account", "4718");
+            // Lot K0 (A3) : 4711, et non plus 4718 qui est le compte des ecarts d'equilibrage a regulariser.
+            return settings.text("accounting.sales.disbursement-account", "4711");
         }
         String fallback = switch (type) {
             case "PRODUCT" -> "701";

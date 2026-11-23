@@ -456,6 +456,13 @@ public class BillingDocument {
     @Column(name = "deposit_for_document_number", length = 60)
     private String depositForDocumentNumber;
 
+    /** Lot K0 (revue comptable, A5) : facture sur laquelle cet avoir a ete impute, et quand. */
+    @Column(name = "applied_to_document_number", length = 60)
+    private String appliedToDocumentNumber;
+
+    @Column(name = "applied_at")
+    private Instant appliedAt;
+
     /** Lot B11 : affaire a laquelle la piece appartient. */
     @Column(name = "deal_code", length = 40)
     private String dealCode;

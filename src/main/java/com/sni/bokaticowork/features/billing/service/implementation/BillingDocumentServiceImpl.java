@@ -2937,6 +2937,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         applyPayment(targetInvoiceNumber, creditNote.getTotalAmount());
 
         creditNote.setStatus(BillingDocumentStatus.APPLIED);
+        // Lot K0 (A5) : la comptabilite passe la compensation D 411 titulaire / C 411 client de la facture.
+        creditNote.setAppliedToDocumentNumber(targetInvoiceNumber);
+        creditNote.setAppliedAt(Instant.now());
         BillingDocument savedCreditNote = documentRepository.save(creditNote);
 
         fiscalAuditService.log(FiscalAuditService.CREDIT_NOTE_APPLIED,

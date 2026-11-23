@@ -30,10 +30,17 @@ Fait métier (dans sa transaction)
 | `PENDING` | En file | Le moteur le traitera |
 | `POSTED` | Pièce produite (validée, ou brouillard) | Une pièce fausse se contre-passe |
 | `UNBALANCED` | Pièce produite mais en attente d'équilibrage (déséquilibre, compte absent ou inactif, tiers manquant, contrepartie non autorisée), selon la politique du lot F1 | Corriger le paramétrage (compte, schéma), puis **Régénérer** ; ou **Écarter** |
-| `FAILED` | Échec technique : aucun schéma actif, variable non résolue, données illisibles, journal absent, période introuvable | Corriger, puis **Régénérer** ; activer un schéma remet en file les échecs de son type |
+| `FAILED` | Échec technique : aucun schéma actif, variable non résolue, données illisibles, journal absent, période introuvable ; ou **lecture du fait impossible** (motif commençant par « Lecture du fait impossible : », données `{}`), par exemple taux de change manquant, paiement en espèces sans session, facture incohérente | Corriger (à la source pour une lecture impossible), puis **Régénérer** ; activer un schéma remet en file les échecs de son type |
 | `IGNORED` | Aucune écriture : schéma « sans écriture », fait antérieur à la bascule, ou écarté par un comptable (motif) | Aucune |
 
-**Régénérer** rejette la pièce en attente (suivi `REGENERATED`) et en calcule une nouvelle avec les schémas et le plan du moment. Un événement `POSTED` ne se régénère pas.
+**Régénérer** relit d'abord les données du fait à la source (facture, avoir, paiement, portefeuille, caisse, depuis le lot K0) : une correction faite dans la facturation passe dans la pièce. Puis la pièce en attente est rejetée (suivi `REGENERATED`) et une nouvelle est calculée avec les schémas et le plan du moment. Si la relecture échoue, l'événement reste `FAILED` avec le nouveau motif. Un événement `POSTED` ne se régénère pas.
+
+Depuis le lot K0 :
+- une pièce en attente complétée et validée à la main fait passer son événement `POSTED` (numéro définitif renseigné) ;
+- un fait à montant nul est `IGNORED` avec le motif « Montant nul : aucune écriture à passer » ;
+- une contre-passation automatique est datée au plus tôt de la dernière pièce de son journal (mention dans `shiftedNote`) ;
+- nouveau type `CREDIT_NOTE_APPLIED` (avoir imputé sur une autre facture, du même client ou de son entreprise) ;
+- nouveaux schémas `SALES_DEPOSIT_CREDIT_NOTE`, `SALES_DEPOSIT_REMAINDER_CANCELLED`, `SALES_CREDIT_NOTE_APPLIED` ; les factures ont une ligne de TVA par taux.
 
 ## Schémas d'écriture (`acc_posting_rule`)
 

@@ -229,8 +229,15 @@ public class ClosingService {
         });
         controls.put("SUSPENSE_ACCOUNTS", () -> {
             List<String> issues = new ArrayList<>();
+            // Lot K0 (A3) : les debours (4711) sont des creances sur les clients, pas une attente a solder.
+            List<String> exclusions = AccountingPeriodService.split(settings.text("accounting.closing.suspense-exclusions", "4711"));
             for (String prefix : AccountingPeriodService.split(settings.text("accounting.closing.suspense-accounts", "471,585"))) {
                 BigDecimal balance = balanceOf(year, prefix);
+                for (String excluded : exclusions) {
+                    if (excluded.startsWith(prefix.trim()) && !excluded.equals(prefix.trim())) {
+                        balance = balance.subtract(balanceOf(year, excluded));
+                    }
+                }
                 if (balance.signum() != 0) {
                     issues.add("Comptes " + prefix + " : solde " + plain(balance));
                 }
