@@ -48,6 +48,12 @@ Détail : [ecarts.md](ecarts.md), 85 écarts avec fichier, ligne, effet et lot.
 | K5 | Analytique | N1 à N18 |
 | K6 | Points de norme arbitrés par l'expert-comptable, puis appliqués | X1 à X8 |
 
-## Décisions
+## Décisions (23/11/2026)
 
-À prendre avec l'exploitant avant K0 (voir la conversation du 23/11/2026).
+| # | Question | Décision |
+|---|---|---|
+| D1 | Comptabilité déjà active en prod ? | Pas encore : aucun rattrapage de pièces, on corrige le code |
+| D2 | Pièce validée mal placée | Reclasser (pièce OD qui déplace une ligne) et Corriger (contre-passation et pièce juste en une action) ; recomptabiliser une pièce automatique avec les données à jour ; pièces liées |
+| D3 | Fait arrivé en retard | Garde sa date si sa période est ouverte : la chronologie stricte ne s'impose que dans le mois ; période verrouillée, premier jour ouvert avec mention |
+| D4 | Créances de plus de 365 jours | Proposer seulement ; un rejet est durable et ne revient que si la situation change (nouveau palier, contentieux) |
+| D5 | Points de norme X1 à X8 | À faire trancher par l'expert-comptable avant K6 |
